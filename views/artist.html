@@ -1,35 +1,15 @@
-
 {% extends "layout.html" %}
 
 
-{% block subheader %}
-
-{{ subheader_message }}
-
-{% endblock %}
-
-    {% block body %}
-
-<ul>
-
-{% for key in sortedA %}
-    key: {{key}} <br>
-    {% for rec in sortedA[key] %}
-    -- {{rec}} <br>
-
-    {% endfor %}
-      {% endfor %}
-</ul>
-
-results here
- <footer>
+artist here
+    <footer>
       <a href="https://gomix.com">
         Remix this in Gomix
       </a>
     </footer>
 
 
-
+results here
 
     <!-- Your web-app is https, so your scripts need to be too -->
     <script src="https://code.jquery.com/jquery-2.2.1.min.js"
@@ -39,4 +19,3 @@ results here
 
   </body>
 </html>
-{% endblock %}
