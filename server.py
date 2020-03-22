@@ -13,8 +13,10 @@
 import os
 import spotipy
 import spotipy.oauth2 as oauth2
+import json
 import spotipy.util as util
 from flask import Flask, request, render_template, jsonify
+
 
 # Support for gomix's 'front-end' and 'back-end' UI.
 app = Flask(__name__, static_folder='public', template_folder='views')
@@ -43,25 +45,45 @@ def apply_kr_hello(response):
 def homepage():
     """Displays the homepage."""
     return render_template('index.html')
-    
+
+@app.route('/artist')
+def artistpage():
+    """Displays the homepage."""
+    return render_template('artist.html')
+
+
 @app.route('/dreams', methods=['GET', 'POST'])
 def dreams():
     """Simple API endpoint for dreams. 
     In memory, ephemeral, like real dreams.
     """
-  
+    dreamsize = DREAMS.__len__()
+    DREAMS.append("request received "+str(dreamsize))
+    localreq = request
+
+    print "test "+str(dreamsize)
     # Add a dream to the in-memory database, if given. 
-    if 'dreams' in request.args:
-        DREAMS.append(request.args['dreams'])    
-        print 'test '+request.args['dreams']    
-    
-    results = useClientSecret('death')
-    print results
-                    
+    if 'dream' in request.args:
+        DREAMS.append(request.args['dream'])
+        print "adding someting"
+        usePersonalPassword()
+
+    print "TEST 2"
+    #results = useClientSecret('death')
+    #jsonresults = json.dumps(results, ensure_ascii=False)
+    #print 'updated'
+    #print jsonresults
+
     # Return the list of remembered dreams. 
     return jsonify(DREAMS)
+    #return jsonresults
 
-  
+
+@app.route('/callback/')
+def spotifycallback():
+    print 'receivedcallback'
+    return render_template('artist.html')
+
 
 def useClientSecret(artist):
     client_id='47821343906643e3a7a156c5a3376c6d'
@@ -79,7 +101,42 @@ def useClientSecret(artist):
     results = spotify.search(q='artist:'+artist, type='artist')
 
     return results
-    
+
+
+def usePersonalPassword():
+    your_username='dmossakowski'
+    scope='playlist-read-private'
+    client_id='47821343906643e3a7a156c5a3376c6d'
+    client_secret = '73e4faa12b224532ac22e57b39141435'
+    #redirect_uri='https://beta.developer.spotify.com/dashboard/applications/47821343906643e3a7a156c5a3376c6d'
+    redirect_uri = 'http://localhost:5000/callback2/'
+
+
+    token = util.prompt_for_user_token(
+        username=your_username,
+        scope=scope,
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri)
+
+    if token:
+        sp = spotipy.Spotify(auth=token)
+        results = sp.user_playlist(your_username)
+        tracks = results['tracks']
+        which = 1
+        while tracks:
+            for item in tracks['items']:
+                track = item['track']
+                print(which, track['name'], ' --', track['artists'][0]['name'])
+                which += 1
+            tracks = sp.next(tracks)
+
+    else:
+        print("Can't get token for", your_username)
+
+    print 'received token '
+
+
   
 if __name__ == '__main__':
     app.run()
