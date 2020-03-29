@@ -1,5 +1,7 @@
 import base64
 import urllib
+from functools import wraps
+
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for, session, request, render_template, jsonify
 #from flask_oauthlib.client import OAuth, OAuthException
@@ -10,6 +12,8 @@ import json
 import analyze
 import os
 import traceback
+import time
+import datetime
 #import tensorflow as tf
 
 
@@ -31,6 +35,29 @@ oauth = OAuth(app)
 
 genres = {"test": "1"}
 authenticated = False
+
+
+def login_required(fn):
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+
+        if session != None and session.get('expires_at') is not  None:
+            now = int(datetime.datetime.now().timestamp())
+            #expiresAt = session['expires_at']
+            expiresAtLocaltime = session['expires_at_localtime']
+
+
+            if expiresAtLocaltime < now:
+                session["wants_url"] = request.url
+                return redirect(url_for("login"))
+
+        #elif session != None and session.get('token') != None:
+            else:
+                return fn(*args, **kwargs)
+        else:
+            session["wants_url"] = request.url
+            return redirect(url_for("login"))
+    return decorated_function
 
 
 def fetch_token():
@@ -93,6 +120,11 @@ def login():
 
     callback = url_for('spotify_authorized', _external=True)
 
+    #print(" request.referrer " + request.referrer)
+
+    #print(" request.args.get('next') ="+request.args.get('next'))
+
+
     callback2 = url_for(
         'spotify_authorized',
         next=request.args.get('next') or request.referrer or None,
@@ -143,6 +175,9 @@ def spotify_authorized():
 
         session['access_token'] = (resp['access_token'], '')
         session['refresh_token'] = (resp['refresh_token'], '')
+        session['expires_at'] = resp['expires_at']
+        session['expires_in'] = resp['expires_in']
+        session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
         #
         # me = spotify.get('/v1/me')
         #getPlaylists(session['oauth_token'], 'dmossakowski')
@@ -150,7 +185,11 @@ def spotify_authorized():
         global authenticated
         authenticated = True
             #print me.data
-        return render_template('index.html')
+
+        if session["wants_url"] is not None:
+            return redirect(session["wants_url"])
+
+        #return render_template('index.html')
         #return me.data
         #return "logged in"
         #return 'logged in token '.format(session['oauth_token'])
@@ -162,6 +201,7 @@ def spotify_authorized():
     except OAuthError as e:
         print (" error in authentication ", traceback.format_exc())
         return render_template('index.html')
+
 
 
 
@@ -199,31 +239,28 @@ def refreshToken():
 
 
 
+
 @app.route('/playlists')
+@login_required
 def get_playlists():
     #print ("getting playlist authenticated? ",authenticated)
+    #return redirect(url_for('login'))
 
-    if not authenticated:
-        return login()
-
-    if (session!=None and session.get('token')!=None):
-        oauthtoken = session['token']['access_token']
-    else:
-        print("not loggged in")
-        return redirect(url_for('login'))
-
+    session["wants_url"] = None
     library = {}
-    #print ("retrieving playlists...")
-    #library['playlists'] = getAllMeItems('playlists')
-    #print ("retrieving tracks...")
-    #library['tracks'] = getAllMeItems('tracks')
-    #print ("retrieving albums...")
-    #library['albums'] = getAllMeItems('albums')
+    print ("retrieving playlists...")
+    library['playlists'] = getAllMeItems('playlists')
+    print ("retrieving tracks...")
+    library['tracks'] = getAllMeItems('tracks')
+    print ("retrieving albums...")
+    library['albums'] = getAllMeItems('albums')
 
+    library['audio_features'] = getAudioFeatures(library['tracks'])
 
-    library = analyze.loadLibraryFromFiles()
+    #library = analyze.loadLibraryFromFiles()
 
-    return render_template('index.html', subheader_message="Playlists retrieved ")
+    return render_template('index.html', sortedA=library['albums'],
+                           subheader_message="Playlists retrieved with track count "+str(len(library['tracks'])))
 
 
 
@@ -277,11 +314,15 @@ def getAllMeItems(type, file_path="data/"):
 
 
 @app.route('/audio_features')
+@login_required
 def getAudioFeatures(file_path='data/'):
     print ("retrieving audio features...")
     library = analyze.loadLibraryFromFiles()
 
-    audioFeatures = getAudioFeatures(library['tracks'])
+    audioFeatures = library['audio_features']
+    if audioFeatures == None:
+        audioFeatures = getAudioFeatures(library['tracks'])
+
     if audioFeatures == None:
         return render_template('index.html', subheader_message="Failed to get audio features ")
 
@@ -295,7 +336,7 @@ def getAudioFeatures(file_path='data/'):
     with (open(file_path+'/audio_features.json', "w")) as outfile:
         json.dump(library['audio_features'], outfile, indent=4)
 
-    return render_template('index.html', subheader_message="Playlists retrieved ")
+    return render_template('index.html', sortedA=audioFeatures, subheader_message="Audio features retrieved ")
 
 
 def getAudioFeatures(tracks):
@@ -304,7 +345,7 @@ def getAudioFeatures(tracks):
         oauthtoken = session['token']['access_token']
     else:
         print("not loggged in")
-        return redirect(url_for('login'))
+        return render_template('index.html', subheader_message="No oauthtoken.. bad flow ")
 
     #username = '127108998'
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
@@ -318,8 +359,6 @@ def getAudioFeatures(tracks):
         trackid = track["track"]["id"]
         ids.append(trackid)
         limit-=1
-        if (len(features)==3700):
-            print (' start deubg')
         if (limit == 0 or (len(features)+len(ids))==len(tracks)):
             api_url = api_url_base+"?ids=" + ",".join(ids)
             featureBatch = retrieveAudioFeatures(api_url, auth_header)
@@ -341,12 +380,10 @@ def retrieveAudioFeatures(api_url, auth_header):
 
     # check if message='The access token expired'
     # status 401
-    if ('error' in response):
-        print ("response had an error ",response['error']['status'])
-        if (response['error']['status'] == 401 ):
-            #refreshToken()
+    if 'error' in response:
+        print ("response had an error ", response['error']['status'])
+        if response['error']['status'] == 401:
             login()
-            print ("")
             return None
     items = response
 
@@ -360,8 +397,9 @@ def analyzeLocal():
     library = analyze.loadLibraryFromFiles()
 
     if library:
+        start = time.process_time()
         sortedA = analyze.process(library)
-        return render_template('index.html', sortedA=sortedA)
+        return render_template('index.html', subheader_message="Local data processed in " +str(time.process_time() - start), sortedA=sortedA)
     else:
         return render_template('index.html', subheader_message="Local data not found. Click to retrieve.")
 
@@ -384,6 +422,8 @@ def getlibrary():
 @app.route("/hello")
 def hello():
     return "Hello mister"
+
+
 
 if __name__ == '__main__':
     app.run()
