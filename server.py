@@ -333,13 +333,10 @@ def getAudioFeatures(file_path='data/'):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    with (open(file_path+'/audio_features.json', "w")) as outfile:
-        json.dump(library['audio_features'], outfile, indent=4)
-
     return render_template('index.html', sortedA=audioFeatures, subheader_message="Audio features retrieved ")
 
 
-def getAudioFeatures(tracks):
+def getAudioFeatures(tracks, file_path='data/'):
     print ("Retrieving data from spotify for type ",type)
     if (session!=None and session.get('token')!=None):
         oauthtoken = session['token']['access_token']
@@ -369,6 +366,10 @@ def getAudioFeatures(tracks):
             features+=featureBatch
             limit=100
             ids.clear()
+
+    with (open(file_path+'/audio_features.json', "w")) as outfile:
+        json.dump(features, outfile, indent=4)
+
     return features
 
 
