@@ -1,8 +1,8 @@
 Flask
 Flask-OAuthlib
 gunicorn
-spotipy
+#spotipy
 authlib
 #tensorflow
-keras
+#keras
 python-dotenv
