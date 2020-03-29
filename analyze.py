@@ -32,6 +32,10 @@ def loadLibraryFromFiles(directory="data/"):
         tracks = json.load(tracksfile)
         library['playlists'] = tracks
 
+    with (open(path+'audio_features.json', "r")) as f:
+        data = json.load(f)
+        library['audio_features'] = data
+
     return library
 
 
