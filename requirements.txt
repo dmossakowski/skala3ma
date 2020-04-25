@@ -1,3 +1,5 @@
+pandas
+scikit-learn
 Flask
 Flask-OAuthlib
 gunicorn
@@ -6,3 +8,5 @@ authlib
 #tensorflow
 #keras
 python-dotenv
+matplotlib
+numpy

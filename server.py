@@ -1,21 +1,24 @@
 import base64
+import io
 import urllib
 from functools import wraps
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, url_for, session, request, render_template, jsonify
+from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response
 #from flask_oauthlib.client import OAuth, OAuthException
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 import requests
 import json
+
+from matplotlib.backends.backend_template import FigureCanvas
+
 import analyze
+import graph as saagraph
 import os
 import traceback
 import time
 import datetime
-#import tensorflow as tf
-
 
 load_dotenv()
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
@@ -41,7 +44,7 @@ def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
 
-        if session != None and session.get('expires_at') is not  None:
+        if session != None and session.get('expires_at') is not None:
             now = int(datetime.datetime.now().timestamp())
             #expiresAt = session['expires_at']
             expiresAtLocaltime = session['expires_at_localtime']
@@ -102,8 +105,10 @@ spotify = oauth.register(
 
 @app.route('/')
 def index():
-
-    return render_template('index.html')
+    hellomsg = 'Welcome to Spotify Analyzer'
+    if session.get('username'):
+        hellomsg = 'Welcome '+session.get('username')+' to Spotify Analyzer'
+    return render_template('index.html', subheader_message=hellomsg)
 
     #accessToken = session.get('access_token')
     #session2 = session
@@ -121,9 +126,7 @@ def login():
     callback = url_for('spotify_authorized', _external=True)
 
     #print(" request.referrer " + request.referrer)
-
     #print(" request.args.get('next') ="+request.args.get('next'))
-
 
     callback2 = url_for(
         'spotify_authorized',
@@ -139,6 +142,15 @@ def revoke():
     spotify.revoke()
 
 
+@app.route('/logout')
+def logout():
+    print("doing revoke")
+    session.pop('token', None)
+    #spotify.revoke
+    return render_template('index.html',
+                           subheader_message="Logged out ")
+
+
 #@app.route('/authorize')
 #def authorize():
 #    token = oauth.twitter.authorize_access_token()
@@ -149,8 +161,7 @@ def revoke():
 
 @app.route('/login/authorized')
 def spotify_authorized():
-    print ("spotify is calling /login/authorized ...")
-
+    print("spotify is calling /login/authorized ...")
     try:
         error = request.args.get('error')
         print(str(request))
@@ -170,7 +181,6 @@ def spotify_authorized():
         #if isinstance(resp, OAuthException):
         #    return 'Access denied: {0}'.format(resp.message)
 
-
         session['token'] = resp
 
         session['access_token'] = (resp['access_token'], '')
@@ -186,6 +196,9 @@ def spotify_authorized():
         authenticated = True
             #print me.data
 
+        userId = getAllMeItems('')
+        session['username'] = userId
+
         if session["wants_url"] is not None:
             return redirect(session["wants_url"])
 
@@ -200,7 +213,8 @@ def spotify_authorized():
         #)
     except OAuthError as e:
         print (" error in authentication ", traceback.format_exc())
-        return render_template('index.html')
+        return render_template('index.html',
+                               subheader_message="Authentication error "+str(traceback.format_exc()))
 
 
 
@@ -248,14 +262,20 @@ def get_playlists():
 
     session["wants_url"] = None
     library = {}
-    print ("retrieving playlists...")
-    library['playlists'] = getAllMeItems('playlists')
-    print ("retrieving tracks...")
-    library['tracks'] = getAllMeItems('tracks')
-    print ("retrieving albums...")
-    library['albums'] = getAllMeItems('albums')
+    print("retrieving profile...")
+    userId = getAllMeItems('')
 
-    library['audio_features'] = getAudioFeatures(library['tracks'])
+
+    file_path = userId+"-data/"
+
+    print ("retrieving playlists...")
+    library['playlists'] = getAllMeItems('playlists', file_path)
+    print ("retrieving tracks...")
+    library['tracks'] = getAllMeItems('tracks', file_path)
+    print ("retrieving albums...")
+    library['albums'] = getAllMeItems('albums', file_path)
+
+    library['audio_features'] = getAudioFeatures(library['tracks'], file_path)
 
     #library = analyze.loadLibraryFromFiles()
 
@@ -284,6 +304,9 @@ def getAllMeItems(type, file_path="data/"):
     if ('error' in response):
         print ("response had an error ",response['error']['status'])
         print ("")
+
+    if len(type) == 0:
+        return response.get('display_name')
     items = response['items']
 
     received = response['limit']*(response['offset'])
@@ -327,24 +350,28 @@ def getAudioFeatures(file_path='data/'):
         return render_template('index.html', subheader_message="Failed to get audio features ")
 
     library['audio_features'] = audioFeatures
-    print (" done")
+    #print (" done")
 
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    return render_template('index.html', sortedA=audioFeatures, subheader_message="Audio features retrieved ")
+
+    bar = saagraph.create_dataseries()
+
+    return render_template('index.html', sortedA=audioFeatures,
+                           subheader_message="Audio features retrieved "+str(len(audioFeatures)),
+                           plot=bar)
 
 
 def getAudioFeatures(tracks, file_path='data/'):
-    print ("Retrieving data from spotify for type ",type)
+    print ("Retrieving audio features from spotify for type ",type)
     if (session!=None and session.get('token')!=None):
         oauthtoken = session['token']['access_token']
     else:
         print("not loggged in")
         return render_template('index.html', subheader_message="No oauthtoken.. bad flow ")
 
-    #username = '127108998'
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
     api_url_base = 'https://api.spotify.com/v1/audio-features/'
     # api_url = 'https://api.spotify.com/v1/me/playlists'
@@ -352,6 +379,7 @@ def getAudioFeatures(tracks, file_path='data/'):
     limit = 100
     ids=[]
     features=[]
+    lastFeatureBatch={}
     for track in tracks:
         trackid = track["track"]["id"]
         ids.append(trackid)
@@ -361,8 +389,11 @@ def getAudioFeatures(tracks, file_path='data/'):
             featureBatch = retrieveAudioFeatures(api_url, auth_header)
             if featureBatch==None:
                 print('no features returned')
-                break
+                #break
+                featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
+
             featureBatch = featureBatch.get('audio_features')
+            lastFeatureBatch = featureBatch
             features+=featureBatch
             limit=100
             ids.clear()
@@ -392,7 +423,7 @@ def retrieveAudioFeatures(api_url, auth_header):
 
 
 
-@app.route("/analyze/local")
+@app.route("/analyze")
 def analyzeLocal():
 
     library = analyze.loadLibraryFromFiles()
@@ -400,7 +431,9 @@ def analyzeLocal():
     if library:
         start = time.process_time()
         sortedA = analyze.process(library)
-        return render_template('index.html', subheader_message="Local data processed in " +str(time.process_time() - start), sortedA=sortedA)
+        return render_template('index.html', subheader_message="Local data processed in " +
+                                                               str(time.process_time() - start)+"ms",
+                               sortedA=sortedA, diagramVersion="test")
     else:
         return render_template('index.html', subheader_message="Local data not found. Click to retrieve.")
 
@@ -416,14 +449,27 @@ def getlibrary():
 
     #for ()
 
+    bar = saagraph.create_dataseries()
+    return render_template('index.html', plot=bar)
 
-    return render_template('index.html')
 
 
 @app.route("/hello")
 def hello():
     return "Hello mister"
 
+
+@app.route('/plot.png')
+def plot_png():
+    fig = analyze.create_figure1()
+
+    #output = io.BytesIO()
+    #FigureCanvas(fig).print_figure(output)
+    img = io.BytesIO()
+    fig.savefig(img)
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+    #return Response(output.getvalue(), mimetype='image/png')
 
 
 if __name__ == '__main__':
