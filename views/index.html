@@ -10,16 +10,18 @@
 
     {% block body %}
 
-<ul>
 
-{% for key in sortedA %}
-    key: {{key}} <br>
-    {% for rec in sortedA[key] %}
-    -- {{rec}} <br>
+    <div class="chart" id="bargraph">
+    <script>
+        var graphs = {{plot | safe}};
+        Plotly.plot('bargraph',graphs,{});
+    </script>
+    </div>
 
-    {% endfor %}
-      {% endfor %}
-</ul>
+<img src="/plot.png?{{diagramVersion}}" alt="my plot">
+<br><br>
+
+
 
  <footer>
       <a href="https://gomix.com">

@@ -11,39 +11,57 @@
 <html>
   <head>
     <title>spotify music analyzer</title>
-    <meta name="description" content="A cool thing made with Gomix">
+    <meta name="description" content="Spotify Library Analyzer">
     <link id="favicon" rel="icon" href="https://gomix.com/favicon-app.ico" type="image/x-icon">
+
+    <link href='http://fonts.googleapis.com/css?family=Bitter' rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" type="text/css" href="public/style.css" media="screen"/>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/public/style.css">
+    <!--meta http-equiv="X-UA-Compatible" content="IE=edge"-->
+    <!--meta name="viewport" content="width=device-width, initial-scale=1"-->
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+
+
+
   </head>
   <body>
+  <div class="form-style-10">
+
     <header>
       <h1>
-        spotify music analyzer
+        Spotify Music Analyzer
       </h1>
+       {% block subheader %} {% endblock %}
     </header>
 
     <main>
 
-        {% block subheader %} {% endblock %}
+
+
         <br><br>
       <!--form action="/login">
         <button type="submit">Login</button>
       </form-->
 
       <form action="/playlists">
-        <button type="submit">Retrieve server playlists</button>
+        <button type="submit">Retrieve data from Spotify</button>
       </form>
 
 
       <form action="/audio_features">
-        <button type="submit">Retrieve audio features</button>
+        <button type="submit">Process audio features</button>
       </form>
 
-      <form action="/analyze/local">
+      <form action="/analyze">
         <button type="submit">Process playlists</button>
+      </form>
+
+
+      <form action="/logout">
+        <button type="submit">Logout</button>
       </form>
 
 
@@ -55,3 +73,7 @@
 
     {% block body %} {% endblock %}
 
+
+
+  </div>
+  </body>
