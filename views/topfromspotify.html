@@ -20,7 +20,7 @@
 						</h3>
 
 <br><br>
-	<!--h4><a href="/datadownload">Update all Spotify data</a></li></h4-->
+	<h4><a href="/datadownload">Update all Spotify data</a></li></h4>
 
     <div class="chart" id="bargraph">
     <script>
@@ -30,11 +30,15 @@
     </div>
 </div>
 				</div>
+<!--/div-->
 <br>
 {% endblock %}
 
+
 	{% block secondarycontent %}
+
 
 {% include 'topartists_block.html' %}
 
+{% include 'toptracks_block.html' %}
 {% endblock %}

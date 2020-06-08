@@ -1,0 +1,56 @@
+
+{% extends "layout.html" %}
+
+				{% block topcontent %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"-->
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+					<br>	<h3>Time series</h3>
+
+
+
+{{ subheader_message }}
+                        <br>
+                        Track listing by date added.
+    <div class="chart" id="bargraph" width="100%">
+    <script>
+        var graphs = {{plot | safe}};
+        Plotly.plot('bargraph',graphs,{});
+    </script>
+    </div>
+                    </div></div></div><!--/div-->
+	{% endblock %}
+
+
+{% block secondarycontent %}
+
+<div class="container-fluid">
+
+
+
+
+
+<table class="table thead-dark table-hover">
+         <thead><tr>
+         <th>Time added</th><th>Artist</th><th>Track name</th><th>Album</th>
+             </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+         {% for key in sortedA %}
+
+            {% for rec in sortedA[key] %}
+                <tr><td width="250">{{key}}</td> <td> {{rec.artist}}</td> <td><i>{{rec.trackname}}</i></td>  <td><i>{{rec.albumname}} </i></td>
+                    </tr>
+             {% endfor %}
+
+         {% endfor %}
+         </tbody>
+     </table>
+
+                    </div>
+
+	{% endblock %}
+

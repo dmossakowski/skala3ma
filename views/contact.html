@@ -13,12 +13,12 @@
 	<meta name="keywords" content="free html5, free template, free bootstrap, html5, css3, mobile first, responsive" />
 	<meta name="author" content="FREEHTML5.CO" />
 
-  <!-- 
+  <!--
 	//////////////////////////////////////////////////////
 
-	FREE HTML5 TEMPLATE 
+	FREE HTML5 TEMPLATE
 	DESIGNED & DEVELOPED by FREEHTML5.CO
-		
+
 	Website: 		http://freehtml5.co/
 	Email: 			info@freehtml5.co
 	Twitter: 		http://twitter.com/fh5co
@@ -42,7 +42,7 @@
 	<link rel="shortcut icon" href="favicon.ico">
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'>
-	
+
 	<!-- Animate.css -->
 	<link rel="stylesheet" href="public/css/animate.css">
 	<!-- Icomoon Icon Fonts-->
@@ -60,7 +60,8 @@
 	<!-- CS Select -->
 	<link rel="stylesheet" href="public/css/cs-select.css">
 	<link rel="stylesheet" href="public/css/cs-skin-border.css">
-	
+
+
 	<link rel="stylesheet" href="public/css/style.css">
 
 
@@ -70,43 +71,6 @@
 	<!--[if lt IE 9]>
 	<script src="public/js/respond.min.js"></script>
 	<![endif]-->
-	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-
-<script>
-//https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
-
-		var eventSource = new EventSource("/progress");
-		eventSource.onmessage = function(e) {
-			var targetContainer = document.getElementById('progressMessages');
-    		//targetContainer.innerHTML = "<pre>"+e.data+"</pre>";
-    		targetContainer.innerHTML = e.data;
-
-    		console.log('progress '+e.data+' '+e.msg)
-    		console.log(e)
-
-
-			if(e.data.includes('100')){
-				//console.log(' closing source ')
-				//eventSource.close()
-			}
-		};
-
-
-
-		function retrieveData() {
-      $.ajax({
-           type: "GET",
-           url: '/datadownload',
-           data:{action:'call_this'},
-           success:function(html) {
-             alert(html);
-           }
-
-      });
- }
-	</script>
-
 
 	</head>
 	<body>
@@ -117,64 +81,44 @@
 			<div class="container">
 				<div class="nav-header">
 					<a href="#" class="js-fh5co-nav-toggle fh5co-nav-toggle dark"><i></i></a>
-					<h1 id="fh5co-logo"><a href="/">Spotify Library Analyzer</a></h1>
+					<h1 id="fh5co-logo"><a href="index.html"><i class="icon-home"></i>Home<span>state</span></a></h1>
 					<!-- START #fh5co-menu-wrap -->
 					<nav id="fh5co-menu-wrap" role="navigation">
 						<ul class="sf-menu" id="fh5co-primary-menu">
-
-						{% if username is defined %}
-
-
-
-
-							<!--li><a href="/progresstest">Progress</a></li-->
-							<li><a href="#" onClick="retrieveData()">Update data</a></li>
+							<li><a href="index.html">Home</a></li>
 							<li>
-								<a href="/analyze" class="fh5co-sub-ddown">Analysis</a>
+								<a href="properties.html" class="fh5co-sub-ddown">Properties</a>
 								<ul class="fh5co-sub-menu">
-									<li><a href="/topartists">Top Artists</a></li>
-
-									<li><a href="/analyze">Track list</a></li>
-									<!--li><a href="/audio_features">Audio Features</a></li-->
-									<li><a href="/orphanedTracks">Orphaned Tracks</a></li>
+									<li><a href="#">Family</a></li>
+									<li><a href="#">CSS3 &amp; HTML5</a></li>
+									<li><a href="#">Angular JS</a></li>
+									<li><a href="#">Node JS</a></li>
+									<li><a href="#">Django &amp; Python</a></li>
 								</ul>
 							</li>
-								{% endif %}
-							<!--li><a href="blog.html">Blog</a></li-->
-							<!--li class="active"><a href="blog.html">Blog</a></li-->
-							<!--li><a href="contact.html">Contact</a></li-->
-							{% if username is defined %}
-							<li><a href="/logout">Logout</a></li>
-							{% endif %}
+							<li><a href="agent.html">Agent</a></li>
+							<li><a href="blog.html">Blog</a></li>
+							<li class="active"><a href="contact.html">Contact</a></li>
 						</ul>
 					</nav>
 				</div>
 			</div>
-
 		</header>
 
-
-						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
-			<div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div>
 		<!-- end:header-top -->
 
-				 {% block topcontent %} {% endblock %}
-
-
-				 {% block secondarycontent %} {% endblock %}
-
-		<!-- aside id="fh5co-hero" class="js-fullheight">
+		<aside id="fh5co-hero" class="js-fullheight">
 			<div class="flexslider js-fullheight">
 				<ul class="slides">
-			   	<li style="background-image: url(public/images/timeseries1.png);">
+			   	<li style="background-image: url(public/images//img_bg_3.jpg);">
 			   		<div class="overlay"></div>
 			   		<div class="container-fluid">
 			   			<div class="row">
 				   			<div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
 			   				<div class="slider-text-inner">
-			   				CONTENT
-
-		   					</div>
+		   						<h2 class="heading-title">Contact Us</h2>
+		   						<p class="fh5co-lead">Designed with <i class="icon-heart3"></i> by the fine folks at <a href="http://freehtml5.co" target="_blank">FreeHTML5.co</a></p>
+			   				</div>
 			   			</div>
 				   		</div>
 			   		</div>
@@ -182,24 +126,73 @@
 			  	</ul>
 		  	</div>
 		</aside>
-		-->
+
+		<div id="fh5co-contact">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+						<h3>Contact Information</h3>
+						<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
+					</div>
+				</div>
+				<form action="#">
+					<div class="row animate-box">
+						<div class="col-md-6">
+							<h3 class="section-title">Our Address</h3>
+							<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
+							<ul class="contact-info">
+								<li><i class="icon-location-pin"></i>198 West 21th Street, Suite 721 New York NY 10016</li>
+								<li><i class="icon-phone2"></i>+ 1235 2355 98</li>
+								<li><i class="icon-mail"></i><a href="#">info@yoursite.com</a></li>
+								<li><i class="icon-globe2"></i><a href="#">www.yoursite.com</a></li>
+							</ul>
+						</div>
+						<div class="col-md-6">
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<input type="text" class="form-control" placeholder="Name">
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<input type="text" class="form-control" placeholder="Email">
+									</div>
+								</div>
+								<div class="col-md-12">
+									<div class="form-group">
+										<textarea name="" class="form-control" id="" cols="30" rows="7" placeholder="Message"></textarea>
+									</div>
+								</div>
+								<div class="col-md-12">
+									<div class="form-group">
+										<input type="submit" value="Send Message" class="btn btn-primary">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div id="map" class="fh5co-map"></div>
+		<!-- fh5co-blog-section -->
 
 		<footer>
 			<div id="footer">
 				<div class="container">
 					<div class="row row-bottom-padded-md">
 						<div class="col-md-3">
-							<h3 class="section-title">About Spotify Analyzer</h3>
-							<p>Analyze Spotify data from various angles. Using flask, Bootstrap javascript library, plotly,
-								matplotlib, tensor-flow.
-							</p>
+							<h3 class="section-title">About Homestate</h3>
+							<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics.</p>
 						</div>
-						
+
 						<div class="col-md-3 col-md-push-1">
 							<h3 class="section-title">Links</h3>
 							<ul>
 								<li><a href="#">Home</a></li>
-
+								<li><a href="#">Properties</a></li>
+								<li><a href="#">Agent</a></li>
 								<li><a href="#">Blog</a></li>
 								<li><a href="#">API</a></li>
 								<li><a href="#">FAQ / Contact</a></li>
@@ -209,11 +202,10 @@
 						<div class="col-md-3">
 							<h3 class="section-title">Information</h3>
 							<ul>
-								<!--li><a href="#">Terms &amp; Condition</a></li>
+								<li><a href="#">Terms &amp; Condition</a></li>
 								<li><a href="#">License</a></li>
-								<li><a href="#">Privacy &amp; Policy</a></li-->
-								<li><a href="#">Pexel</a></li>
-								<li><a href="https://www.pexels.com/photo/people-having-a-concert-1190297.jpg">Concert image</a></li>
+								<li><a href="#">Privacy &amp; Policy</a></li>
+								<li><a href="#">Contact Us</a></li>
 							</ul>
 						</div>
 						<div class="col-md-3">
@@ -223,8 +215,8 @@
 								<div class="row">
 									<div class="col-md-12 col-md-offset-0">
 										<div class="form-group">
-											<!--input type="text" class="form-control" id="email" placeholder="Enter your email">
-											<button type="submit" class="btn btn-default"><i class="icon-paper-plane"></i></button-->
+											<input type="text" class="form-control" id="email" placeholder="Enter your email">
+											<button type="submit" class="btn btn-default"><i class="icon-paper-plane"></i></button>
 										</div>
 									</div>
 								</div>
@@ -240,14 +232,14 @@
 								<a href="#"><i class="icon-dribbble2"></i></a>
 								<a href="#"><i class="icon-youtube"></i></a>
 							</p>
-							<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> / Demo Images: <a href="https://unsplash.com/" target="_blank">Unsplash</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
+							<p>Copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> / Demo Images: <a href="https://unsplash.com/" target="_blank">Unsplash</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
 						</div>
 					</div>
 				</div>
 			</div>
 		</footer>
 
-	
+
 
 	</div>
 	<!-- END fh5co-page -->
@@ -276,8 +268,11 @@
 	<!-- CS Select -->
 	<script src="public/js/classie.js"></script>
 	<script src="public/js/selectFx.js"></script>
+	<!-- Google Map -->
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCefOgb1ZWqYtj7raVSmN4PL2WkTrc-KyA&sensor=false"></script>
+	<script src="public/js/google_map.js"></script>
 
-	
+
 	<!-- Main JS -->
 	<script src="public/js/main.js"></script>
 

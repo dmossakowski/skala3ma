@@ -1,0 +1,60 @@
+
+
+
+
+		<div id="fh5co-blog-section" class="fh5co-section-gray">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+						<h3>Your top genres </h3>
+						<p>Spotify thinks that these are your top genres.  </p>
+
+
+							{% for genre in genres %}
+								<font size="24">{{ genre[0] }}</font>{{ genre[1] }} &nbsp;&nbsp;&nbsp;&nbsp;
+							{% endfor %}
+
+<br><br><br><br><br>
+						<h3>Your top artists </h3>
+						<p>Spotify thinks that these are your top artists.  </p>
+					</div>
+				</div>
+			</div>
+
+	<script type="text/javascript">
+    function playPreview(audioId){
+    	var audio = document.getElementById(audioId)
+		audio.play();
+	}
+
+	function stopPreview(audioId){
+    	var audio = document.getElementById(audioId)
+		audio.pause();
+	}
+</script>
+			<div class="container">
+					{% for track in library['topartists'] %}
+					{% if loop.index < 51 %}
+
+					<div class="col-md-2" style="height: 400px">
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box">
+							<a href=""><img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt=""></a>
+							<div class="blog-text">
+
+									<a href="{{ track['external_urls'][0]}}">{{ track['name'] }}</a>
+									<!--span class="comment"><a href="">{{ track['popularity'] }}<i class="icon-bubble2"></i></a></span-->
+
+							</div>
+						</div>
+					</div>
+
+					{% endif %}
+					 {% endfor %}
+
+
+<div class="row row-bottom-padded-lg">
+	</div>
+
+		</div>
+		<!-- fh5co-blog-section -->
+
