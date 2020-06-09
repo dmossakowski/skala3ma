@@ -1,0 +1,44 @@
+
+
+{% extends "layout.html" %}
+
+{% block topcontent %}
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+						<br><h3>Progress test</h3>
+
+						<a href="" onclick="retrieveData()" class="deletebtn"><div id="retrieveDataLink">Retrieve fake data</div></a>
+						<p></p>
+					</div>
+				</div>
+			</div>
+<!--
+progresstest.html
+
+
+<br>
+<div class="progress" style="width: 50%; margin: 50px;">
+		<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+			<span class="progress-bar-label">0%</span>
+		</div>
+
+	</div>
+
+
+<h2>
+{{ subheader_message }}</h2>
+    <div class="chart" id="bargraph">
+    <script>
+        var graphs = {{plot | safe}};
+        Plotly.plot('bargraph',graphs,{});
+    </script>
+    </div>
+
+-->
+
+<br>
+								{% endblock %}
+
+
+

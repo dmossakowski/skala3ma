@@ -4,13 +4,13 @@ import urllib
 from functools import wraps
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response
+from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, stream_with_context
 #from flask_oauthlib.client import OAuth, OAuthException
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 import requests
 import json
-
+import pandas as pd
 from matplotlib.backends.backend_template import FigureCanvas
 
 import analyze
@@ -19,6 +19,7 @@ import os
 import traceback
 import time
 import datetime
+from threading import Thread
 
 load_dotenv()
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
@@ -32,6 +33,7 @@ SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
 SPOTIFY_APP_SECRET = os.getenv('SPOTIFY_APP_SECRET')
 
 app = Flask(__name__, static_folder='public', template_folder='views')
+
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
@@ -39,28 +41,31 @@ oauth = OAuth(app)
 genres = {"test": "1"}
 authenticated = False
 
+session_dataLoadingProgressMsg = 'dataLoadingProgressMsg'
+
+gdata = {}
+templateArgs = {}
+
 
 def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-
         if session != None and session.get('expires_at') is not None:
             now = int(datetime.datetime.now().timestamp())
             #expiresAt = session['expires_at']
             expiresAtLocaltime = session['expires_at_localtime']
 
-
             if expiresAtLocaltime < now:
                 session["wants_url"] = request.url
                 return redirect(url_for("login"))
-
-        #elif session != None and session.get('token') != None:
             else:
                 return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
             return redirect(url_for("login"))
     return decorated_function
+
+
 
 
 def fetch_token():
@@ -95,20 +100,29 @@ spotify = oauth.register(
     fetch_token=fetch_token,
     update_token=update_token,
     client_kwargs = {
-            'scope': 'user-library-read '
-#'scope': 'playlist-read-private  user-library-read  user-top-read'
+            'scope': 'user-library-read user-top-read'
+    #'scope': 'playlist-read-private  user-library-read  user-top-read'
     }
-
 )
-
 
 
 @app.route('/')
 def index():
+    session['hellomsg'] = 'Welcome to Spotify Analyzer'
     hellomsg = 'Welcome to Spotify Analyzer'
+    _setUserSessionMsg(None)
+    library = analyze.loadLibraryFromFiles(_getDataPath())
+    genres = analyze.getTopGenreSet(library)
+
     if session.get('username'):
         hellomsg = 'Welcome '+session.get('username')+' to Spotify Analyzer'
-    return render_template('index.html', subheader_message=hellomsg)
+
+        l = analyze.getLibrarySize(library)
+        #_setUserSessionMsg("Library size: "+l)
+        return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library, **session)
+    else:
+
+        return render_template('login.html', subheader_message=hellomsg, genres=genres, library=library,  **session)
 
     #accessToken = session.get('access_token')
     #session2 = session
@@ -121,7 +135,7 @@ def index():
 
 @app.route('/login')
 def login():
-    print ("doing login",str(request))
+    print ("doing login",str(request.referrer))
 
     callback = url_for('spotify_authorized', _external=True)
 
@@ -146,9 +160,13 @@ def revoke():
 def logout():
     print("doing revoke")
     session.pop('token', None)
+    session.pop('username', None)
+    session.pop('wants_url', None)
+    _setUserSessionMsg('You have been logged out')
     #spotify.revoke
-    return render_template('index.html',
-                           subheader_message="Logged out ")
+    return render_template('login.html',
+                           subheader_message="Logged out ",
+                           library={}, **session)
 
 
 #@app.route('/authorize')
@@ -168,7 +186,7 @@ def spotify_authorized():
 
         if str(error) == 'access_denied':
             print ("access is denied ",error)
-            return render_template('index.html', subheader_message="Not authorized")
+            return render_template('index.html', subheader_message="Not authorized", library={}, **session)
 
         acc = spotify.fetch_access_token(scope='user-library-read')
         resp = spotify.authorize_access_token()
@@ -182,12 +200,13 @@ def spotify_authorized():
         #    return 'Access denied: {0}'.format(resp.message)
 
         session['token'] = resp
-
         session['access_token'] = (resp['access_token'], '')
         session['refresh_token'] = (resp['refresh_token'], '')
         session['expires_at'] = resp['expires_at']
         session['expires_in'] = resp['expires_in']
         session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
+        session.dataLoadingProgressMsg = ''
+
         #
         # me = spotify.get('/v1/me')
         #getPlaylists(session['oauth_token'], 'dmossakowski')
@@ -199,8 +218,11 @@ def spotify_authorized():
         userId = getAllMeItems('')
         session['username'] = userId
 
-        if session["wants_url"] is not None:
+        if session.get("wants_url") is not None:
             return redirect(session["wants_url"])
+        else:
+            return redirect("/")
+            #print('This should never happen. wants_url missing in session')
 
         #return render_template('index.html')
         #return me.data
@@ -214,9 +236,9 @@ def spotify_authorized():
     except OAuthError as e:
         print (" error in authentication ", traceback.format_exc())
         return render_template('index.html',
-                               subheader_message="Authentication error "+str(traceback.format_exc()))
-
-
+                               subheader_message="Authentication error "+str(traceback.format_exc()),
+                               library={},
+                               **session)
 
 
 @app.route('/api/token')
@@ -242,7 +264,6 @@ def refreshToken():
     #payloadEncoded = requests.utils.requote_uri(payload)
     payloadEncoded = payloadEncoded.encode('ascii')
 
-
     #t = oauth.create_client("spotify")
     #token = t.fetch_token()
     responseraw = requests.post(api_url, data=payloadEncoded, headers=auth_header)
@@ -252,44 +273,220 @@ def refreshToken():
     response = json.loads(responseraw.text)
 
 
-
-
-@app.route('/playlists')
+@app.route('/datadownload')
 @login_required
-def get_playlists():
-    #print ("getting playlist authenticated? ",authenticated)
-    #return redirect(url_for('login'))
+def downloadData():
+    library = _retrieveSpotifyData()
 
+
+
+    return render_template('index.html', sortedA=library.get('playlists'),
+                           subheader_message="Playlists retrieved with track count "+str(len(library['tracks'])),
+                           library=library,
+                            **session)
+
+
+
+
+
+
+@app.route('/orphanedTracks')
+def getOrphanedTracks():
+    tracks = analyze.getOrphanedTracks(analyze.loadLibraryFromFiles(_getDataPath()))
+    library= {}
+    library['tracks'] = tracks
+
+    return render_template('orphanedTracks.html', sortedA=tracks,
+                           subheader_message="Orphaned tracks count "+str(len(library['tracks'])),
+                           library=library,
+                            **session)
+
+
+
+@app.route('/topartists')
+def getTopArtists():
+    tracks = analyze.getOrphanedTracks(analyze.loadLibraryFromFiles(_getDataPath()))
+    library = analyze.loadLibraryFromFiles(_getDataPath())
+    library['tracks'] = tracks
+    genres = analyze.getTopGenreSet(library)
+
+    return render_template('topartists.html', sortedA=tracks,
+                           subheader_message="Orphaned tracks count "+str(len(library['tracks'])),
+                           library=library,
+                           genres=genres,
+                            **session)
+
+
+def _getGlobalKey(msgtype = ''):
+    key = msgtype + 'backgroundMsg'
+    if (session.get('username')):
+        key = session['username'] + key
+    return key
+
+
+def _getUserSessionMsg(msgtype = ''):
+    return gdata.get(_getGlobalKey(msgtype))
+
+
+def _setUserSessionMsg(msg='', msgtype=''):
+    gdata[_getGlobalKey(msgtype)] = msg
+
+
+def _getDataPath():
+    if (session.get('username')):
+        return session['username'] + "-data/"
+    return "data/"
+
+
+@app.route('/progresstest')
+@login_required
+def progresspage():
+    if session.get('dataLoadingProgressMsg') is None:
+        session['dataLoadingProgressMsg'] = ''
+
+    if gdata.get(session['username']+'backgroundMsg') is None:
+        gdata[(session['username'] + 'backgroundMsg')] = ''
+
+    x = 0
+    #while x <= 20:
+    #    session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
+    #    gdata[(session['username'] + 'backgroundMsg')] = "gdata: "+str(x)+" - "+str(datetime.datetime.now())
+    #    print("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
+    #          + ' session: ' + session['dataLoadingProgressMsg']
+    #          + ' gdata:' + gdata.get(session['username'] + 'backgroundMsg'))
+    #    x = x + 1
+    #    time.sleep(0.5)
+    return render_template('progresstest.html',
+                           subheader_message="Testing progress " + str(session['expires_at_localtime'])
+                                             + "x: "+str(x)+" - "+str(datetime.datetime.now()),
+                           **session)
+
+
+@app.route('/progressStart')
+@login_required
+def progressstart():
+    if session.get('dataLoadingProgressMsg') is None:
+        session['dataLoadingProgressMsg'] = ''
+
+    #_retrieveSpotifyData()
+    x = 0
+    max = 976
+    _setUserSessionMsg("Starting fake data load at " + str(datetime.datetime.now()))
+    time.sleep(3)
+    while x <= max:
+        #session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
+        _setUserSessionMsg("Loading fake data: "+str(x)+"/"+str(max)+" at "+str(datetime.datetime.now()))
+        print("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
+              + ' session: ' + session['dataLoadingProgressMsg']
+              + ' gdata:' + _getUserSessionMsg())
+        x = x + 1
+        time.sleep(0.2)
+
+    _setUserSessionMsg("Fake data loaded: " + str(x) + "/" + str(max) + " at " + str(datetime.datetime.now()))
+    #session['dataLoadingProgressMsg'] = 'starting at ' + str(datetime.datetime.now())
+    return render_template('progresstest.html',
+                           subheader_message="Testing progress " + str(session['username']),
+                           **session)
+
+
+def generate(sessionLocal):
+    x = 0
+    started = str(datetime.datetime.now())
+    with app.app_context():
+        #print("generator started...")
+        #thread = Thread(target=_retrieveSpotifyData, args=(session))
+        #thread.start()
+
+        lib = analyze.loadLibraryFromFiles(_getDataPath())
+        #session['dataLoadingProgressMsg'] = userId
+        while _getUserSessionMsg():
+            #s = "data: {x:" + str(x) + ', generator ' \
+            s = 'data: ' + _getUserSessionMsg()
+            #+ sessionLocal['dataLoadingProgressMsg'] \
+            #+ ' library: '+analyze.getLibrarySize(lib) \
+
+            yield s + "\n\n"
+            #print("generator yielding: " + s)
+            x = x + 10
+            time.sleep(0.5)
+
+
+@app.route('/progress')
+def progress():
+    if session.get('dataLoadingProgressMsg') is None:
+        print('setting dataLoadingProgressMsg to empty')
+        session['dataLoadingProgressMsg'] = ''
+
+    if _getUserSessionMsg() is None:
+        _setUserSessionMsg('')
+
+    #print('progress called. gdata:' + _getUserSessionMsg() + ' has: '+session.get('dataLoadingProgressMsg'))
+    #@copy_current_request_context
+
+    return Response(stream_with_context(generate(session)), mimetype='text/event-stream')
+
+
+
+@app.route('/progressSimple')
+def progressSimple():
+    if session.get('dataLoadingProgressMsg') is None:
+        session.dataLoadingProgressMsg = ''
+
+    print("progress started")
+    def generateOLD():
+        x = 0
+        print(str(datetime.datetime.now()))
+        yield "data:" + str(x) + " - " + str(datetime.datetime.now()) + "\n\n"
+        #while x <= 100:
+        #    yield "data:" + str(x) + "\n msg: "+ str(datetime.date) + "\n\n"
+        #    x = x + 10
+        #    time.sleep(0.5)
+    return Response(generateOLD(), mimetype='text/event-stream')
+
+
+
+def _retrieveSpotifyData():
     session["wants_url"] = None
+    infoMsg = 'Loading profile...'
+    _setUserSessionMsg(infoMsg)
     library = {}
     print("retrieving profile...")
     userId = getAllMeItems('')
 
+    file_path = _getDataPath()
 
-    file_path = userId+"-data/"
+    print("retrieving top artists...")
+    _setUserSessionMsg("Profile loaded. Loading top artists..." + analyze.getLibrarySize(library))
+    library['topartists'] = getAllMeItems('top/artists', file_path)
 
-    print ("retrieving playlists...")
+    print("retrieving top tracks...")
+    _setUserSessionMsg("Top artists loaded. Loading top tracks..." + analyze.getLibrarySize(library))
+    library['toptracks'] = getAllMeItems('top/tracks', file_path)
+
+    print("retrieving playlists...")
+    _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
     library['playlists'] = getAllMeItems('playlists', file_path)
-    print ("retrieving tracks...")
+
+    print("retrieving tracks...")
+    _setUserSessionMsg("Profile loaded. Loading tracks..." + analyze.getLibrarySize(library))
     library['tracks'] = getAllMeItems('tracks', file_path)
-    print ("retrieving albums...")
+    print("retrieving albums...")
+    _setUserSessionMsg("Profile loaded. Loading albums..." + analyze.getLibrarySize(library))
     library['albums'] = getAllMeItems('albums', file_path)
-
+    print("retrieving audio_features...")
+    _setUserSessionMsg("Profile loaded. Loading audio features..." + analyze.getLibrarySize(library))
     library['audio_features'] = getAudioFeatures(library['tracks'], file_path)
-
-    #library = analyze.loadLibraryFromFiles()
-
-    return render_template('index.html', sortedA=library['albums'],
-                           subheader_message="Playlists retrieved with track count "+str(len(library['tracks'])))
+    _setUserSessionMsg("All data loaded "+analyze.getLibrarySize(library))
+    return library
 
 
-
-def getAllMeItems(type, file_path="data/"):
-    print ("Retrieving data from spotify for type ",type)
+def getAllMeItems(itemtype, file_path="data/"):
+    print ("Retrieving data from spotify for type ", itemtype)
+    _setUserSessionMsg('Loading ' + str(itemtype)+'...')
     oauthtoken = session['token']['access_token']
     #username = '127108998'
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
-    api_url = 'https://api.spotify.com/v1/me/{}'.format(type)
+    api_url = 'https://api.spotify.com/v1/me/{}'.format(itemtype)
     # api_url = 'https://api.spotify.com/v1/me/playlists'
 
     limit = 50
@@ -302,10 +499,10 @@ def getAllMeItems(type, file_path="data/"):
     # check if message='The access token expired'
     # status 401
     if ('error' in response):
-        print ("response had an error ",response['error']['status'])
+        print ("response had an error ", response['error']['status'])
         print ("")
 
-    if len(type) == 0:
+    if len(itemtype) == 0:
         return response.get('display_name')
     items = response['items']
 
@@ -318,19 +515,36 @@ def getAllMeItems(type, file_path="data/"):
         response = json.loads(requests.get(api_url, params=payload, headers=auth_header).text)
         lastbatch = response['items']
         items = items + response['items']
-        if (type == 'tracks'):
+        if (itemtype == 'tracks'):
             for track in items:
                 ids.append(track["track"]["id"])
+        _setUserSessionMsg('Loading '+str(itemtype)+'... '+str(len(items))+'/'+str(response['total']))
 
-    #Sif (len(ids)>0):
+    print('retrieved '+str(itemtype)+' size '+str(len(items)))
+    _setUserSessionMsg('Loaded all '+str(itemtype))
 
-    print('retrieved '+str(type)+' size '+str(len(items)))
+    for item in items:
+        if item.get('track'):
+            item['track']['available_markets'] = None
+            item['track']['album']['available_markets'] = None
+            #item['track']['album']['images'] = None
+            item['track']['album']['artists'] = None
+            item['track']['album']['external_urls'] = None
+            item['track']['artists'][0]['external_urls'] = None
+            item['track']['external_urls'] = None
+        if item.get('album'):
+            item['album']['available_markets'] = None
+            item['album']['copyrights'] = None
+            item['album']['tracks'] = None
+        if item.get('available_markets'):
+            item['available_markets'] = None
 
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    with (open(file_path+'/'+str(type)+'.json', "w")) as outfile:
+    itemtype = itemtype.replace("/", "")
+    with (open(file_path+'/'+str(itemtype)+'.json', "w")) as outfile:
         json.dump(items, outfile, indent=4)
 
     return items
@@ -347,7 +561,9 @@ def getAudioFeatures(file_path='data/'):
         audioFeatures = getAudioFeatures(library['tracks'])
 
     if audioFeatures == None:
-        return render_template('index.html', subheader_message="Failed to get audio features ")
+        return render_template('index.html', subheader_message="Failed to get audio features ",
+                               library=library,
+                               **session)
 
     library['audio_features'] = audioFeatures
     #print (" done")
@@ -359,9 +575,9 @@ def getAudioFeatures(file_path='data/'):
 
     bar = saagraph.create_dataseries()
 
-    return render_template('index.html', sortedA=audioFeatures,
+    return render_template('timeseries.html', sortedA=audioFeatures,
                            subheader_message="Audio features retrieved "+str(len(audioFeatures)),
-                           plot=bar)
+                           plot=bar, **session)
 
 
 def getAudioFeatures(tracks, file_path='data/'):
@@ -370,7 +586,7 @@ def getAudioFeatures(tracks, file_path='data/'):
         oauthtoken = session['token']['access_token']
     else:
         print("not loggged in")
-        return render_template('index.html', subheader_message="No oauthtoken.. bad flow ")
+        return render_template('index.html', subheader_message="No oauthtoken.. bad flow ", library={}, **session)
 
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
     api_url_base = 'https://api.spotify.com/v1/audio-features/'
@@ -394,8 +610,8 @@ def getAudioFeatures(tracks, file_path='data/'):
 
             featureBatch = featureBatch.get('audio_features')
             lastFeatureBatch = featureBatch
-            features+=featureBatch
-            limit=100
+            features += featureBatch
+            limit = 100
             ids.clear()
 
     with (open(file_path+'/audio_features.json', "w")) as outfile:
@@ -426,16 +642,26 @@ def retrieveAudioFeatures(api_url, auth_header):
 @app.route("/analyze")
 def analyzeLocal():
 
-    library = analyze.loadLibraryFromFiles()
+    library = analyze.loadLibraryFromFiles(_getDataPath())
 
     if library:
         start = time.process_time()
         sortedA = analyze.process(library)
-        return render_template('index.html', subheader_message="Local data processed in " +
-                                                               str(time.process_time() - start)+"ms",
-                               sortedA=sortedA, diagramVersion="test")
+
+        #data = {'First Column Name': ['First value', 'Second value', ...],
+        #        'Second Column Name': ['First value', 'Second value', ...],
+        #        ....
+        #        }
+        #data = pd
+
+        return render_template('timeseries.html', subheader_message="Local data processed in " +
+                                                               str(time.process_time() - start)+"ms. Track count "
+                                +str(len(sortedA)),
+                               sortedA=sortedA, diagramVersion="test", library=library, **session)
     else:
-        return render_template('index.html', subheader_message="Local data not found. Click to retrieve.")
+        return render_template('index.html', subheader_message="Local data not found. Click to retrieve.",
+                               library={},
+                               **session)
 
 
 @app.route("/library")
@@ -450,7 +676,7 @@ def getlibrary():
     #for ()
 
     bar = saagraph.create_dataseries()
-    return render_template('index.html', plot=bar)
+    return render_template('timeseries.html', plot=bar)
 
 
 
@@ -472,7 +698,22 @@ def plot_png():
     #return Response(output.getvalue(), mimetype='image/png')
 
 
+@app.route('/contact-us.html')
+def contactus():
+    return render_template('contact-us.html')
+
+
+@app.route('/contact.html')
+def contact():
+    return render_template('contact.html')
+
+
+@app.route('/login.html')
+def blog():
+    return render_template('login.html', **session)
+
+
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', threaded=True)
 
 index()

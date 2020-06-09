@@ -7,6 +7,7 @@ from datetime import datetime, date, time, timedelta
 import numpy as np
 import pandas as pd
 import numpy.random
+from collections import Counter
 #import matplotlib.pyplot as plt
 #import matplotlib.cm as cm
 import plotly
@@ -21,6 +22,48 @@ from matplotlib.figure import Figure
 from sklearn.preprocessing import MinMaxScaler
 
 
+def getEmptyLibrary():
+    library = {}
+    library['tracks'] = []
+    library['albums'] = []
+    library['playlists'] = []
+    library['audio_features'] = []
+    library['toptracks'] = []
+    library['topartists'] = []
+    return library
+
+def getLibrarySize(library):
+    s = ''
+    if library is None:
+        return s
+    if library.get('playlists'):
+        s = s + ' Playlists: '+str(len(library.get('playlists')))
+    if library.get('albums'):
+        s = s + ', Albums: '+str(len(library.get('albums')))
+    if library.get('tracks'):
+        s = s + ', Tracks: ' + str(len(library.get('tracks')))
+    if library.get('audio_features'):
+        s = s + ', Audio features: '+str(len(library.get('audio_features')))
+    if library.get('toptracks'):
+            s = s + ', Top tracks: ' + str(len(library.get('toptracks')))
+    if library.get('topartists'):
+            s = s + ', Top tracks: ' + str(len(library.get('topartists')))
+
+    return s
+
+
+def getTopGenreSet(library):
+    genres = []
+    cnt = Counter()
+
+    for track in library['topartists']:
+        genres.extend(track.get('genres'))
+
+    for word in genres:
+        cnt[word] += 1
+    return cnt.most_common(10)
+
+
 def loadLibraryFromFiles(directory="data/"):
     library = {}
 
@@ -32,7 +75,8 @@ def loadLibraryFromFiles(directory="data/"):
     numberA = 10
     strA = "someString"
 
-    path = "data/"
+    #path = "data/"
+    path = directory
 
     with open(path+"tracks.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
@@ -45,6 +89,14 @@ def loadLibraryFromFiles(directory="data/"):
     with open(path+"playlists.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
         library['playlists'] = tracks
+
+    with open(path + "toptracks.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['toptracks'] = tracks
+
+    with open(path + "topartists.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['topartists'] = tracks
 
         library['audio_features'] = loadAudioFeatures(path)
 
@@ -110,9 +162,9 @@ def process(library):
 
     sortedA = artistsByDate.keys()
     sortedA = sorted(sortedA)
-    print (len(artistsByDate))
+    #print (len(artistsByDate))
     for key in sortedA:
-        print (key, str(len(artistsByDate[key])))
+        #print (key, str(len(artistsByDate[key])))
         for rec in artistsByDate[key]:
             printinfo = (rec['artist']).encode('utf-8')
             #popularity = str(artistsByDate[key][0]['track']['popularity'])
@@ -129,6 +181,63 @@ def process(library):
     #return sortedA
     return artistsByDate
 
+
+
+
+# returns tracks of artists who have been added but whose albums were never added
+# ordered by time added
+def getOrphanedTracks(library):
+    artistsByDate = defaultdict(list)
+    artistsRanking = {} #defaultdict(list)
+
+    epoch = datetime.utcfromtimestamp(0)
+    now = datetime.now()
+    tracksbydate = {}
+    trackA = library['tracks']
+    alltracks = []
+    c = 0
+
+    # ["track"]["artists"][0]['name']
+    albumArtists = []
+    for album in library['albums']:
+        albumArtists.append(album['album']['artists'][0]['name'])
+
+    albumArtists = set(albumArtists)
+
+
+
+    for track in library['tracks']:
+        artist = track["track"]["artists"][0]['name']
+
+        if artist in albumArtists:
+                continue
+
+        dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
+
+        track['track']['dateaddedDisplay'] =  dt.strftime('%B %Y')
+        #rec["age"] = (now - dt).total_seconds()
+
+        trackid = track["track"]["album"]["uri"]
+        albumid = track["track"]["uri"]
+        #print str(addedat)+" ||  "+trackname+" || "+artist
+        #artistsByDate.setdefault(rec["addedat"], []).append(rec)
+        #ss = rec["addedat"]
+
+        #artistsByDate[rec["addedat"]].append(rec)
+
+        #rank = { "songcount":1 , "albumcount":1, "addedcount":1 }
+        #if rec["artist"] in artistsRanking:
+        #    rank = artistsRanking[rec["artist"]]
+        #    rank["songcount"] = rank["songcount"] + 1
+        #else:
+        #    artistsRanking[rec["artist"]] = { "songcount":1 , "albumcount":1, "addedcount":1 }
+
+        #c = c+1
+        alltracks.append(track)
+
+    alltracks = sorted(alltracks, key=lambda k: k['added_at'], reverse=True)
+
+    return alltracks
 
 
 def getIds(library):
@@ -455,3 +564,9 @@ def create_figure1():
     axis.plot(xs, ys)
     return fig
 
+
+
+if __name__ == '__main__':
+    library = loadLibraryFromFiles()
+
+    getOrphanedTracks(library)
