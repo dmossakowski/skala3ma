@@ -1,56 +1,48 @@
 
 {% extends "layout.html" %}
 
-				{% block topcontent %}
+{% block topcontent %}
+<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"-->
-			<div class="container">
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-					<br>	<h3>Time series</h3>
+    <div class="container">
+        <div class="row text-center heading-section">
+					<!--div class="col-md-8 col-md-offset-2 text-center heading-section animate-box"-->
+					<br>	<h3>Track features as a time series</h3>
 
 
 
 {{ subheader_message }}
                         <br>
-                        Track listing by date added.
-    <div class="chart" id="bargraph" width="100%">
+                        The Plotly graph below shows features for all tracks added. It is interactive so try it out. Hover to find
+                    track's name and click on the various features on the right to show/hide them.
+            <div class="chart" id="bargraph"  style="width:1200px;height:600px;">
     <script>
         var graphs = {{plot | safe}};
+        var layout = {
+          autosize: false,
+          width: 900,
+          height: 500,
+          margin: {
+            l: 50,
+            r: 50,
+            b: 100,
+            t: 100,
+            pad: 4
+          },
+          paper_bgcolor: '#7f7f7f',
+          plot_bgcolor: '#c7c7c7'
+        };
         Plotly.plot('bargraph',graphs,{});
     </script>
-    </div>
-                    </div></div></div><!--/div-->
+            </div>
+        </div>
+    </div><!--/div--><!--/div-->
 	{% endblock %}
 
-
+</div>
 {% block secondarycontent %}
 
-<div class="container-fluid">
-
-
-
-
-
-<table class="table thead-dark table-hover">
-         <thead><tr>
-         <th>Time added</th><th>Artist</th><th>Track name</th><th>Album</th>
-             </tr>
-         </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-         {% for key in sortedA %}
-
-            {% for rec in sortedA[key] %}
-                <tr><td width="250">{{key}}</td> <td> {{rec.artist}}</td> <td><i>{{rec.trackname}}</i></td>  <td><i>{{rec.albumname}} </i></td>
-                    </tr>
-             {% endfor %}
-
-         {% endfor %}
-         </tbody>
-     </table>
-
-                    </div>
 
 	{% endblock %}
 

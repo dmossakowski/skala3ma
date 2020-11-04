@@ -1,0 +1,20 @@
+
+		<div  style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+						<br><h3>Your top genres </h3>
+						<p>Spotify thinks that these are your top genres.  </p>
+
+
+							{% for genre in genres %}
+						<nobr><font style="font-size:{{  genre[1] * genre[1]  }}px">&nbsp;&nbsp;{{ genre[0] }}&nbsp;&nbsp;</font></nobr>
+							{% endfor %}
+
+<br><br>
+
+					</div>
+				</div>
+			</div>
+		</div>

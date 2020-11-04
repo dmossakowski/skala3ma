@@ -76,31 +76,51 @@
 <script>
 //https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
+
+
+
+
+	function retrieveData() {
+		var targetContainer = document.getElementById('progressMessages');
+    	targetContainer.innerHTML = "<h3>Loading...</h3>";
+
 		var eventSource = new EventSource("/progress");
+		var lastUpdate = ' ';
 		eventSource.onmessage = function(e) {
 			var targetContainer = document.getElementById('progressMessages');
-    		//targetContainer.innerHTML = "<pre>"+e.data+"</pre>";
-    		targetContainer.innerHTML = e.data;
+    		targetContainer.innerHTML = "<h3>"+e.data+"</h3>";
+    		//targetContainer.innerHTML = e.data;
+    		lastUpdate = e.data;
 
     		console.log('progress '+e.data+' '+e.msg)
     		console.log(e)
 
 
-			if(e.data.includes('100')){
-				//console.log(' closing source ')
-				//eventSource.close()
+			if(e.data.includes('All data loaded')){
+				console.log(' closing source ')
+				eventSource.close()
 			}
 		};
 
 
+		var targetContainer = document.getElementById('progressMessages');
+    		//targetContainer.innerHTML = "<pre>"+e.data+"</pre>";
+    		//targetContainer.innerHTML = " ";
+		var updateButtonContainer = document.getElementById('updateButton');
+		updateButtonContainer.innerHTML = ""
 
-		function retrieveData() {
+
+
+    		//console.log('Loading... ')
       $.ajax({
            type: "GET",
            url: '/datadownload',
            data:{action:'call_this'},
            success:function(html) {
-             alert(html);
+             //alert(html);
+             //window.location.href = '/topartists'
+             //targetContainer.innerHTML = "<h3>"+lastUpdate+"<br>";
+             updateButtonContainer.innerHTML = 'Choose Analysis from the main menu'
            }
 
       });
@@ -108,8 +128,12 @@
 	</script>
 
 
+
 	</head>
 	<body>
+
+
+
 		<div id="fh5co-wrapper">
 		<div id="fh5co-page">
 
@@ -124,19 +148,21 @@
 
 						{% if username is defined %}
 
-
-
-
 							<!--li><a href="/progresstest">Progress</a></li-->
-							<li><a href="#" onClick="retrieveData()">Update data</a></li>
-							<li>
-								<a href="/analyze" class="fh5co-sub-ddown">Analysis</a>
-								<ul class="fh5co-sub-menu">
-									<li><a href="/topartists">Top Artists</a></li>
+							<li><a href="/dataload">Update data</a></li>
 
-									<li><a href="/analyze">Track list</a></li>
+							<li>
+								<a href="/orphanedTracks" class="fh5co-sub-ddown">Analysis</a>
+								<ul class="fh5co-sub-menu">
+									<li><a href="/audio_features">Audio features graph</a></li>
+									<li><a href="/orphanedTracks">Orphaned tracks</a></li>
+									<li><a href="/topartists">Top artists</a></li>
+									<li><a href="/topgenres">Top genres</a></li>
+
+									<li><a href="/trackslist">Track list</a></li>
 									<!--li><a href="/audio_features">Audio Features</a></li-->
-									<li><a href="/orphanedTracks">Orphaned Tracks</a></li>
+
+
 								</ul>
 							</li>
 								{% endif %}
@@ -145,6 +171,8 @@
 							<!--li><a href="contact.html">Contact</a></li-->
 							{% if username is defined %}
 							<li><a href="/logout">Logout</a></li>
+							{% else %}
+							<li><a href="/logout">Login</a></li>
 							{% endif %}
 						</ul>
 					</nav>
@@ -155,7 +183,7 @@
 
 
 						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
-			<div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div>
+			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div>
 		<!-- end:header-top -->
 
 				 {% block topcontent %} {% endblock %}

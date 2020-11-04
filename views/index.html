@@ -11,15 +11,26 @@
 
 
 					<br>	<h3>{{ subheader_message }}</h3>
+	<div style="text-align: left;">This site is a collection of various types of analysis on your Spotify data.
+		<b>Top artists</b> shows a text graph of your artists and genres as known by Spotify.
+		<b>Tracks list</b> is a track list ordered by last added.
 
-						<h3>Playlists:		<b>{{'0' if library['playlists'] == None else  library['playlists']|length}}</b>
+		Current work involves Plotly and data clustering using
+						scikit-learn packages to plot features against time to analyze evolution (or lack thereof)
+		of  musical tastes. <b>Orphaned tracks</b> analysis is trying to find all tracks that have been abandoned. This means that
+									you never added any albums of this artist. Maybe you liked one song and forgot about
+									this cool band? Or maybe it's a stinker?
+	</div><br><br>
+
+						<img src="public/images/spotify-app-logo.png">
+						<!--<h3>Playlists:		<b>{{'0' if library['playlists'] == None else  library['playlists']|length}}</b>
 <br>
 					Albums:	<b>{{'0' if library['albums'] == None else  library['albums']|length}}</b>
 							<br>
 						Tracks:	<b>{{'0' if library['tracks'] == None else  library['tracks']|length}}</b>
-						</h3>
+						</h3>-->
 
-<br><br>
+
 	<!--h4><a href="/datadownload">Update all Spotify data</a></li></h4-->
 
     <div class="chart" id="bargraph">
@@ -30,11 +41,9 @@
     </div>
 </div>
 				</div>
-<br>
 {% endblock %}
 
 	{% block secondarycontent %}
 
-{% include 'topartists_block.html' %}
 
 {% endblock %}

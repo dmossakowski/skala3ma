@@ -8,10 +8,10 @@ import analyze
 from sklearn.cluster import KMeans
 
 
-def _getFeatures(keys=['danceability','energy','key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness',
+def _getFeatures(dataPath, keys=['danceability','energy','key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness',
           'valence', 'tempo']):
-    dataOrig = analyze.loadAudioFeatures()
-    fullLib = analyze.loadLibraryFromFiles()
+    dataOrig = analyze.loadAudioFeatures(dataPath)
+    #fullLib = analyze.loadLibraryFromFiles(dataPath)
     # list: 3799 of dict:18
     # [{'danceability': 0.469, 'energy': 0.625, 'key': 4, 'loudness': -5.381, 'mode': 0, 'speechiness': 0.0306, 'acousticness': 0.00515, 'instrumentalness': 2.03e-05, 'liveness': 0.0682, 'valence': 0.325, 'tempo': 76.785, 'type': 'audio_features', 'id': '6PBzdsMi6YNdYAevzozBRi', 'uri': 'spotify:track:6PBzdsMi6YNdYAevzozBRi', 'track_href': 'https://api.spotify.com/v1/tracks/6PBzdsMi6YNdYAevzozBRi', 'analysis_url': 'https://api.spotify
     #  {'danceability': 0.76, 'energy': 0.608, 'key': 9, 'loudness': -8.673, 'mode': 0, 'speechiness': 0.0347, 'acousticness': 0.315, 'instrumentalness': 0.79, 'liveness': 0.121, 'valence': 0.727, 'tempo': 119.032, 'type': 'audio_features', 'id': '4dJYJTPbUgFK5pCQ5bYD4g', 'uri': 'spotify:track:4dJYJTPbUgFK5pCQ5bYD4g', 'track_href': 'https://api.spotify.com/v1/tracks/4dJYJTPbUgFK5pCQ5bYD4g', 'analysis_url': 'https://api.spotify.com/v1/audio-analysis/4dJYJTPbUgFK5pCQ5bYD4g', 'duration_ms': 254118, 'time_signature': 4}
@@ -34,8 +34,8 @@ def _getFeatures(keys=['danceability','energy','key', 'loudness', 'mode', 'speec
     return dataArray
 
 
-def _getTrackTuples():
-    fullLib = analyze.loadLibraryFromFiles()
+def _getTrackTuples(dataPath):
+    fullLib = analyze.loadLibraryFromFiles(dataPath)
 
     # dataArray list:8  3799
     # one row per audio feature
@@ -78,15 +78,15 @@ def _getTrackTuples():
 
 
 
-def create_dataseries():
+def create_dataseries(dataPath):
     keys = ['danceability', 'energy', 'key', 'loudness', 'speechiness', 'acousticness', 'instrumentalness']
     keys = ['danceability', 'energy', 'key', 'loudness', 'valence', 'speechiness', 'tempo', 'time_signature']
     # keys = ['danceability', 'energy', 'loudness']
     # keys = ['danceability', 'energy']
 
-    dataToDisplay = _getFeatures(keys)
+    dataToDisplay = _getFeatures(dataPath, keys)
     dataToDisplay = np.array(dataToDisplay)
-    dataSeries = np.array(_getTrackTuples())
+    dataSeries = np.array(_getTrackTuples(dataPath))
 
     fig = go.Figure()
 
@@ -95,20 +95,20 @@ def create_dataseries():
         fig.add_trace(go.Scattergl(x=dataSeries[:,0],
                                     y=dataToDisplay[i],
                     mode="markers",
-                                   #marker_symbol='line-ew',
-                                   marker_symbol='diamond-wide',
-                                      #marker=dict(size=[2,2,3,4,5,2,3,4] , color=[0,1,2,3,4,5,6,7,8,9])
-                                      marker=dict(
-                                          #color="blue",
-                                          colorscale='Viridis',
-                                          line_width=0,
-                                          opacity=0.6,
-                                          size=8
-                                      )
-                                      ,
-                               name= keys[i],
-                  hoverinfo="text",
-                               hovertext=dataSeries[:,1]))
+                    #marker_symbol='line-ew',
+                    marker_symbol='diamond-wide',
+                    #marker=dict(size=[2,2,3,4,5,2,3,4] , color=[0,1,2,3,4,5,6,7,8,9])
+                    marker=dict(
+                    #color="blue",
+                        colorscale='Viridis',
+                        line_width=0,
+                        opacity=0.6,
+                        size=8
+                    )
+            ,
+        name= keys[i],
+        hoverinfo="text",
+        hovertext=dataSeries[:,1]))
 
     graphJSON = fig.to_json()
 

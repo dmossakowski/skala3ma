@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import numpy.random
 from collections import Counter
-#import matplotlib.pyplot as plt
-#import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import plotly
 import plotly.graph_objects as go
 import plotly.express as px
@@ -47,7 +47,7 @@ def getLibrarySize(library):
     if library.get('toptracks'):
             s = s + ', Top tracks: ' + str(len(library.get('toptracks')))
     if library.get('topartists'):
-            s = s + ', Top tracks: ' + str(len(library.get('topartists')))
+            s = s + ', Top artists: ' + str(len(library.get('topartists')))
 
     return s
 
@@ -56,18 +56,31 @@ def getTopGenreSet(library):
     genres = []
     cnt = Counter()
 
-    for track in library['topartists']:
+    if library is None:
+        return genres
+
+    for track in library.get('topartists'):
         genres.extend(track.get('genres'))
 
     for word in genres:
         cnt[word] += 1
-    return cnt.most_common(10)
+
+    mostcommon=[]
+    c=11
+    # put the weight as the second param instead of number of time it appears
+    for i, mc in enumerate(cnt.most_common(c)):
+        mostcommon.append([mc[0],c-i])
+    #return cnt.most_common(12)
+    return mostcommon
 
 
 def loadLibraryFromFiles(directory="data/"):
     library = {}
 
     if not os.path.exists(directory):
+        return None
+
+    if not os.path.exists(directory+"tracks.json"):
         return None
 
     # Dream database. Store dreams in memory for now.
