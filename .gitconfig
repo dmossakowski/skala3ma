@@ -1,2 +1,2 @@
 [core]
-	excludesfile = /etc/.gitignore-global
+  excludesfile = /etc/.gitignore-global

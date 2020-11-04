@@ -1,27 +1,31 @@
-Welcome to the Gomix BETA (Flask / Python Edition™)
-===================================================
+Additive Spotify Analyzer
+=========================
 
-Click `"Show"` in the header to see your app live. Updates to your code will instantly deploy and update live.
+Collection of various analysis on Spotify data. Initially this was copied from Gomix. 
 
-Gomix is a developer playground that lets you code a real web-app without the slow setup and deployment steps.
+For suggesting an analysis to make add an issue here on GitHub. 
 
-[About Gomix](https://gomix.com/about)
-
-
-Your Project
-------------
-
-On the back-end,
-- your app starts at `server.py`
-- add frameworks and packages in `requirements.txt`
-- safely store app secrets in `.env`
-
-On the front-end,
-- edit `client.js`, `style.css` and `index.html`
-- drag in `assets`, like images or music, to add them to your project
+Data retrieved from Spotify:
+- All tracks saved (liked)
+- All albums saved
+- All artists liked
+- All playlists created 
+- Top 50 tracks
+- Top 50 artists
 
 
-A Kenneth Reitz Project™ (inspired by Fog Creek)
-----------------------------------------------
 
- ۜ\(סּںסּَ` )/ۜ
+Technologies used
+-----------------
+
+- Python 3
+- Flask
+- OAuth libraries for authentication with Spotify
+- Numpy
+- Pandas
+- matplotlib for generating a plot (not used right now) 
+- Plotly for plotting features as a timeseries
+- sklearn for clustering and preprocessing the data
+- Jinja2 templates
+
+
