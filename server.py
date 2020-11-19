@@ -670,7 +670,7 @@ def getAudioFeatures(file_path='data/'):
     bar = saagraph.create_dataseries(_getDataPath())
 
     return render_template('timeseries.html', sortedA=audioFeatures,
-                           subheader_message="Audio features retrieved "+str(len(audioFeatures)),
+                           subheader_message=str(len(audioFeatures)),
                            plot=bar, **session)
 
 

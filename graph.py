@@ -3,6 +3,9 @@ from datetime import datetime, date, time, timedelta
 import numpy as np
 import plotly.graph_objects as go
 import datetime
+
+from sklearn.preprocessing import MinMaxScaler
+
 import analyze
 
 from sklearn.cluster import KMeans
@@ -46,8 +49,8 @@ def _getTrackTuples(dataPath):
     datesadded = []
     artists = []
 
-    date_time_str = '2020-02-16T19:54:58Z'
-    date_time_obj = datetime.datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%SZ')
+    #date_time_str = '2020-02-16T19:54:58Z'
+    #date_time_obj = datetime.datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%SZ')
     dataSeries = []
     for i, item in enumerate(fullLib['tracks']):
         dataSeriesItem = []
@@ -76,16 +79,32 @@ def _getTrackTuples(dataPath):
     # 2020-02-16T19:54:58Z
     return dataSeries
 
-
-
+# this is called from Audio Features Graph
+#
 def create_dataseries(dataPath):
     keys = ['danceability', 'energy', 'key', 'loudness', 'speechiness', 'acousticness', 'instrumentalness']
     keys = ['danceability', 'energy', 'key', 'loudness', 'valence', 'speechiness', 'tempo', 'time_signature']
+    keys = ['danceability', 'energy', 'key', 'loudness', 'valence', 'speechiness', 'tempo']
+
     # keys = ['danceability', 'energy', 'loudness']
     # keys = ['danceability', 'energy']
 
     dataToDisplay = _getFeatures(dataPath, keys)
     dataToDisplay = np.array(dataToDisplay)
+
+    reshapen = dataToDisplay[2].reshape(-1, 1)
+
+    # call MinMaxScaler object
+    min_max_scaler = MinMaxScaler()
+    # feed in a numpy array
+    dataToDisplay[2] = min_max_scaler.fit_transform(dataToDisplay[2].reshape(-1, 1)).reshape(-1)
+    dataToDisplay[3] = min_max_scaler.fit_transform(dataToDisplay[3].reshape(-1, 1)).reshape(-1)
+    dataToDisplay[6] = min_max_scaler.fit_transform(dataToDisplay[6].reshape(-1, 1)).reshape(-1)
+
+    #keyNormalized2 = keyNormalized.reshape(-1)
+
+    #dataToDisplay = min_max_scaler.fit_transform(dataToDisplay)
+
     dataSeries = np.array(_getTrackTuples(dataPath))
 
     fig = go.Figure()

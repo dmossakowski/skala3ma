@@ -10,12 +10,11 @@
 					<!--div class="col-md-8 col-md-offset-2 text-center heading-section animate-box"-->
 					<br>	<h3>Track features as a time series</h3>
 
-
-
-{{ subheader_message }}
-                        <br>
-                        The Plotly graph below shows features for all tracks added. It is interactive so try it out. Hover to find
+                        The Plotly graph below shows {{ subheader_message }} features for all your tracks mapped in a time series. Hover to find
                     track's name and click on the various features on the right to show/hide them.
+Key, loudness and tempo are normalized using sklearn.preprocessing.MinMaxScaler and the rest are already normalized by Spotify.
+
+
             <div class="chart" id="bargraph"  style="width:1200px;height:600px;">
     <script>
         var graphs = {{plot | safe}};
