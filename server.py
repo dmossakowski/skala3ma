@@ -238,7 +238,8 @@ def spotify_authorized():
             #print me.data
 
         userId = getAllMeItems('')
-        session['username'] = userId
+        session['id'] = userId[0]
+        session['username'] = userId[1]
         print(str(session.get("wants_url")))
 
         if session.get("wants_url") is not None:
@@ -277,7 +278,6 @@ def refreshToken():
 
     oauthtoken = session['token']['refresh_token']
 
-    # username = '127108998'
     basic = base64.standard_b64encode((SPOTIFY_APP_ID+':'+SPOTIFY_APP_SECRET).encode())
     auth_header = {'Authorization': 'Authorization Basic {basic}'.format(basic=basic)}
                  #  'Content-Type': 'application/x-www-form-urlencoded'}
@@ -307,7 +307,7 @@ def downloadData():
     def handle_sub_view(session):
         with app.test_request_context():
             from flask import request
-            print(" starting new thread"+session.get('username'))
+            print(" starting new thread "+str(session.get('username')))
             #request = req
             print(request.url)
             # Do Expensive work
@@ -407,8 +407,8 @@ def getTopGenres():
 
 def _getGlobalKey(msgtype = ''):
     key = msgtype + 'backgroundMsg'
-    if (session.get('username')):
-        key = session['username'] + key
+    if (session.get('id')):
+        key = session['id'] + key
     return key
 
 
@@ -421,8 +421,8 @@ def _setUserSessionMsg(msg='', msgtype=''):
 
 
 def _getDataPath():
-    if (session.get('username')):
-        return session['username'] + "-data/"
+    if (session.get('id')):
+        return session['id'] + "-data/"
     return "data/"
 
 
@@ -432,16 +432,16 @@ def progresspage():
     if session.get('dataLoadingProgressMsg') is None:
         session['dataLoadingProgressMsg'] = ''
 
-    if gdata.get(session['username']+'backgroundMsg') is None:
-        gdata[(session['username'] + 'backgroundMsg')] = ''
+    if gdata.get(session['id']+'backgroundMsg') is None:
+        gdata[(session['id'] + 'backgroundMsg')] = ''
 
     x = 0
     #while x <= 20:
     #    session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
-    #    gdata[(session['username'] + 'backgroundMsg')] = "gdata: "+str(x)+" - "+str(datetime.datetime.now())
+    #    gdata[(session['id'] + 'backgroundMsg')] = "gdata: "+str(x)+" - "+str(datetime.datetime.now())
     #    print("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
     #          + ' session: ' + session['dataLoadingProgressMsg']
-    #          + ' gdata:' + gdata.get(session['username'] + 'backgroundMsg'))
+    #          + ' gdata:' + gdata.get(session['id'] + 'backgroundMsg'))
     #    x = x + 1
     #    time.sleep(0.5)
     return render_template('progresstest.html',
@@ -539,7 +539,7 @@ def _retrieveSpotifyData(session):
     _setUserSessionMsg(infoMsg)
     library = {}
     print("retrieving profile...")
-    userId = getAllMeItems('')
+    #userId = getAllMeItems('')
 
     file_path = _getDataPath()
 
@@ -573,7 +573,7 @@ def getAllMeItems(itemtype, file_path="data/"):
     print ("Retrieving data from spotify for type ", itemtype)
     _setUserSessionMsg('Loading ' + str(itemtype)+'...')
     oauthtoken = session['token']['access_token']
-    #username = '127108998'
+
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
     api_url = 'https://api.spotify.com/v1/me/{}'.format(itemtype)
     # api_url = 'https://api.spotify.com/v1/me/playlists'
@@ -585,6 +585,7 @@ def getAllMeItems(itemtype, file_path="data/"):
     responseraw = requests.get(api_url, params=payload, headers=auth_header)
     response = json.loads(responseraw.text)
 
+
     # check if message='The access token expired'
     # status 401
     if ('error' in response):
@@ -592,7 +593,8 @@ def getAllMeItems(itemtype, file_path="data/"):
         print ("")
 
     if len(itemtype) == 0:
-        return response.get('display_name')
+        return [response.get('id'), response.get('display_name')]
+
     items = response['items']
 
     received = response['limit']*(response['offset'])
