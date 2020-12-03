@@ -5,6 +5,37 @@
 
 {% block topcontent %}
 
+
+{% if username is not defined %}
+
+		<aside id="fh5co-hero" class="js-fullheight">
+			<div class="flexslider js-fullheight">
+				<ul class="slides">
+			   	<li style="background-image: url(public/images/people-having-a-concert-1190297.jpg);">
+			   		<div class="overlay"></div>
+			   		<div class="container-fluid">
+			   			<div class="row">
+				   			<div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
+			   				<div class="slider-text-inner">
+<br><br>
+												<a href="/login"><img src="public/images/Spotify_Logo_RGB_Green.png" width="470"><br>
+		   						<h2 class="heading-title">Click to login</h2></a>
+								<br><br><br>
+
+
+		   					</div>
+			   			</div>
+				   		</div>
+			   		</div>
+
+
+			   	</li>
+			  	</ul>
+		  	</div>
+		</aside>
+
+{% endif %}
+
 			<!--div class="container"-->
 				<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">

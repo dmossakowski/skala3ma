@@ -123,13 +123,13 @@ spotify = oauth.register(
 @app.route('/')
 def index():
     session['hellomsg'] = 'Welcome to Spotify Analyzer'
-    hellomsg = 'Welcome to Spotify Analyzer'
+    hellomsg = 'Welcome to Additive Spotify Analyzer'
     _setUserSessionMsg(None)
     library = analyze.loadLibraryFromFiles(_getDataPath())
 
     if session.get('username'):
         genres = analyze.getTopGenreSet(library)
-        hellomsg = 'Welcome '+session.get('username')+' to Spotify Analyzer'
+        hellomsg = 'Welcome '+session.get('username')
 
         l = analyze.getLibrarySize(library)
         #_setUserSessionMsg("Library size: "+l)
