@@ -1,3 +1,4 @@
+from gevent import monkey; monkey.patch_socket()
 import base64
 import io
 import urllib
@@ -9,6 +10,7 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
 #from flask_oauthlib.client import OAuth, OAuthException
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
+
 import requests
 import json
 import pandas as pd
@@ -210,7 +212,7 @@ def spotify_authorized():
             print ("access is denied ",error)
             return render_template('index.html', subheader_message="Not authorized", library={}, **session)
 
-        acc = spotify.fetch_access_token(scope='user-library-read')
+        #acc = spotify.fetch_access_token(scope='user-library-read')
         resp = spotify.authorize_access_token()
         print ("spotify calls us now ", str(resp))
         if resp is None:
@@ -545,11 +547,15 @@ def _retrieveSpotifyData(session):
 
     print("retrieving top artists...")
     #_setUserSessionMsg("Loading top artists..." + analyze.getLibrarySize(library))
-    library['topartists'] = getAllMeItems('top/artists', file_path)
+    library['topartists_short_term'] = getAllMeItems('top/artists', file_path, "short_term")
+    library['topartists_medium_term'] = getAllMeItems('top/artists', file_path, "medium_term")
+    library['topartists_long_term'] = getAllMeItems('top/artists', file_path, "long_term")
 
     print("retrieving top tracks...")
     #_setUserSessionMsg("Top artists loaded. Loading top tracks..." + analyze.getLibrarySize(library))
-    library['toptracks'] = getAllMeItems('top/tracks', file_path)
+    library['toptracks_short_term'] = getAllMeItems('top/tracks', file_path, "short_term")
+    library['toptracks_medium_term'] = getAllMeItems('top/tracks', file_path, "medium_term")
+    library['toptracks_long_term'] = getAllMeItems('top/tracks', file_path, "long_term")
 
     print("retrieving playlists...")
     #_setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
@@ -569,15 +575,20 @@ def _retrieveSpotifyData(session):
     return library
 
 
-def getAllMeItems(itemtype, file_path="data/"):
+def getAllMeItems(itemtype, file_path="data/", time_range=""):
     print ("Retrieving data from spotify for type ", itemtype)
     _setUserSessionMsg('Loading ' + str(itemtype)+'...')
     oauthtoken = session['token']['access_token']
 
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
-    api_url = 'https://api.spotify.com/v1/me/{}'.format(itemtype)
+
+    if len(time_range) > 0:
+        api_url = 'https://api.spotify.com/v1/me/{}?time_range={}'.format(itemtype, time_range)
+    else:
+        api_url = 'https://api.spotify.com/v1/me/{}'.format(itemtype)
     # api_url = 'https://api.spotify.com/v1/me/playlists'
 
+    print("url used " + str(api_url))
     limit = 50
     offset = 0
     lastbatch = []
@@ -635,7 +646,10 @@ def getAllMeItems(itemtype, file_path="data/"):
         os.makedirs(directory)
 
     itemtype = itemtype.replace("/", "")
-    with (open(file_path+'/'+str(itemtype)+'.json', "w")) as outfile:
+    if len(time_range) > 0:
+        time_range = "_"+time_range
+
+    with (open(file_path+'/'+str(itemtype)+str(time_range)+'.json', "w")) as outfile:
         json.dump(items, outfile, indent=4)
 
     return items

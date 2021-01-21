@@ -28,8 +28,12 @@ def getEmptyLibrary():
     library['albums'] = []
     library['playlists'] = []
     library['audio_features'] = []
-    library['toptracks'] = []
-    library['topartists'] = []
+    library['toptracks_short_term'] = []
+    library['topartists_short_term'] = []
+    library['toptracks_medium_term'] = []
+    library['topartists_medium_term'] = []
+    library['toptracks_long_term'] = []
+    library['topartists_long_term'] = []
     return library
 
 def getLibrarySize(library):
@@ -44,10 +48,10 @@ def getLibrarySize(library):
         s = s + ', Tracks: ' + str(len(library.get('tracks')))
     if library.get('audio_features'):
         s = s + ', Audio features: '+str(len(library.get('audio_features')))
-    if library.get('toptracks'):
-            s = s + ', Top tracks: ' + str(len(library.get('toptracks')))
-    if library.get('topartists'):
-            s = s + ', Top artists: ' + str(len(library.get('topartists')))
+    if library.get('toptracks_medium_term'):
+            s = s + ', Top tracks: ' + str(len(library.get('toptracks_medium_term')))
+    if library.get('topartists_medium_term'):
+            s = s + ', Top artists: ' + str(len(library.get('topartists_medium_term')))
 
     return s
 
@@ -59,7 +63,7 @@ def getTopGenreSet(library):
     if library is None:
         return genres
 
-    for track in library.get('topartists'):
+    for track in library.get('topartists_medium_term'):
         genres.extend(track.get('genres'))
 
     for word in genres:
@@ -83,6 +87,12 @@ def loadLibraryFromFiles(directory="data/"):
     if not os.path.exists(directory+"tracks.json"):
         return None
 
+    if not os.path.exists(directory+"audio_features.json"):
+        return None
+
+    if not os.path.exists(directory+"topartists_medium_term.json"):
+        return None
+
     # Dream database. Store dreams in memory for now.
     dreamsA = ['Python. Python, everywhere.']
     numberA = 10
@@ -103,13 +113,29 @@ def loadLibraryFromFiles(directory="data/"):
         tracks = json.load(tracksfile)
         library['playlists'] = tracks
 
-    with open(path + "toptracks.json", "r") as tracksfile:
+    with open(path + "toptracks_long_term.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
-        library['toptracks'] = tracks
+        library['toptracks_long_term'] = tracks
 
-    with open(path + "topartists.json", "r") as tracksfile:
+    with open(path + "toptracks_medium_term.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
-        library['topartists'] = tracks
+        library['toptracks_medium_term'] = tracks
+
+    with open(path + "toptracks_short_term.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['toptracks_short_term'] = tracks
+
+    with open(path + "topartists_long_term.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['topartists_long_term'] = tracks
+
+    with open(path + "topartists_medium_term.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['topartists_medium_term'] = tracks
+
+    with open(path + "topartists_short_term.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['topartists_short_term'] = tracks
 
         library['audio_features'] = loadAudioFeatures(path)
 
