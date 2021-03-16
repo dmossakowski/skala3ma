@@ -15,25 +15,25 @@ body {
   line-height: 1.6;
   font-size: 16px;
   background: #fff;
-  color: #848484;
+  color: #333333;
   font-weight: 300;
   overflow-x: hidden; }
 body.fh5co-offcanvas {
   overflow: hidden; }
 
 a {
-  color: #44C662;
+  color: #33a632;
   -webkit-transition: 0.5s, ease;
   -o-transition: 0.5s, ease;
   transition: 0.5s, ease; }
 a:hover {
   text-decoration: none;
-  color: #44C662; }
+  color: #336633; }
 
 p, ul, ol {
   margin-bottom: 1.5em;
   font-size: 16px;
-  color: #848484;
+  color: #333333;
   font-family: "Open Sans", Arial, sans-serif; }
 
 h1, h2, h3, h4, h5, h6 {
@@ -236,7 +236,8 @@ figure {
   margin: 7px 0 0 0 !important; }
 
 .sf-menu {
-  float: right; }
+  float: right;
+  width: 400; }
 
 .sf-menu ul {
   box-shadow: none;

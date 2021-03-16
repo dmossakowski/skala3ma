@@ -1,7 +1,7 @@
 
 
 
-<div style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+<div style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 			<div class="container" >
 
 				<div class="row">
@@ -30,7 +30,9 @@
 
 					<div class="col-md-2" style="height: 400px">
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box">
-							<a href=""><img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt=""></a>
+							{% if track['images']|length >0 %}
+								<a href=""><img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt=""></a>
+							{% endif %}
 							<div class="blog-text">
 
 									<a href="{{ track['external_urls'][0]}}">{{ track['name'] }}</a>

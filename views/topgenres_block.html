@@ -1,5 +1,5 @@
 
-		<div  style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+		<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 
 			<div class="container">
 				<div class="row">
@@ -9,7 +9,8 @@
 
 
 							{% for genre in genres %}
-						<nobr><font style="font-size:{{  genre[1] * genre[1]  }}px">&nbsp;&nbsp;{{ genre[0] }}&nbsp;&nbsp;</font></nobr>
+						<nobr><font style="font-size:{{  genre[1] * genre[1]  }}px; color:#999999">&nbsp;&nbsp;{{ genre[0] }}&nbsp;&nbsp;</font></nobr>
+
 							{% endfor %}
 
 <br><br>

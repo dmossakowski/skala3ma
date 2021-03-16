@@ -225,6 +225,9 @@ def process(library):
 
 # returns tracks of artists who have been added but whose albums were never added
 # ordered by time added
+# 20210304 - added Counter to also count artists from tracks directly as the album logic
+# did not work with compilations so now if there are also more than 3 tracks by the same artist
+# it will not consider these tracks orphaned
 def getOrphanedTracks(library):
     artistsByDate = defaultdict(list)
     artistsRanking = {} #defaultdict(list)
@@ -242,14 +245,21 @@ def getOrphanedTracks(library):
         albumArtists.append(album['album']['artists'][0]['name'])
 
     albumArtists = set(albumArtists)
+    trackArtists = []
 
+    cnt = Counter()
 
+    for track in library['tracks']:
+        cnt[track['track']["artists"][0]['name']] += 1
 
     for track in library['tracks']:
         artist = track["track"]["artists"][0]['name']
 
         if artist in albumArtists:
-                continue
+            continue
+
+        if cnt[artist] > 3:
+            continue
 
         dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
 

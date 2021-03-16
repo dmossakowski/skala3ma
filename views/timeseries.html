@@ -14,7 +14,7 @@
                     track's name and click on the various features on the right to show/hide them.
 Key, loudness and tempo are normalized using sklearn.preprocessing.MinMaxScaler and the rest are already normalized by Spotify.
 
-    <div class="chart" id="bargraph"  style="width:1200px;height:600px;">
+    <div class="chart" id="bargraph"  style="width:100%;height:600px;">
     <script>
         var graphs = {{plot | safe}};
         Plotly.plot('bargraph',graphs,{});

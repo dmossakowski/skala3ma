@@ -62,7 +62,10 @@
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
 							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
 							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')">
+							{% if track['track']['album']['images']|length >0 %}
+
 							<a href="#"><img class="img-responsive" src="{{ track['track']['album']['images'][0]['url'] }}" alt=""></a>
+							{% endif %}
 							<div class="blog-text">
 								<div class="prod-title">
 									<h3>{{ track['track']['artists'][0]['name'] }}</h3>

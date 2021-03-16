@@ -10,34 +10,38 @@
 				<div class="row text-center heading-section">
 					<!--div class="col-md-8 col-md-offset-2 text-center heading-section animate-box"-->
 					<br>	<h3>Tracks list </h3>
-
 {{ subheader_message }}
-                        <br>
-                        This is a test of Jinja looping.
-
                 </div>
             </div><!--/div--><!--/div-->
 
 
 <div class="container-fluid">
-
-<table class="table thead-dark table-hover">
+<table class="table thead-dark table-hover" data-toggle="table"  data-filter-control="true" >
          <thead><tr>
-         <th>Time added</th><th>Artist</th><th>Track name</th><th>Album</th>
-             </tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">Time added</th>
+         <th data-field="artist" data-filter-control="input">Artist</th>
+         <th data-field="track" data-filter-control="input">Track name</th>
+         <th data-field="album" data-filter-control="input">Album</th>
+         </tr>
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
          {% for key in sortedA %}
 
             {% for rec in sortedA[key] %}
-                <tr><td width="250">{{key}}</td> <td> {{rec.artist}}</td> <td><i>{{rec.trackname}}</i></td>  <td><i>{{rec.albumname}} </i></td>
+                <tr><td>{{key}}</td> <td> {{rec.artist}}</td> <td><i>{{rec.trackname}}</i></td>  <td><i>{{rec.albumname}} </i></td>
                     </tr>
              {% endfor %}
 
          {% endfor %}
          </tbody>
      </table>
+
+    <script>
+  $(function() {
+    $('#table').bootstrapTable()
+  })
+</script>
 
                     </div>
 

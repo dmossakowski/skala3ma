@@ -59,6 +59,8 @@
 	<link rel="stylesheet" href="public/css/magnific-popup.css">
 	<!-- Date Picker -->
 	<link rel="stylesheet" href="public/css/bootstrap-datepicker.min.css">
+	<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.css">
+
 	<!-- CS Select -->
 	<link rel="stylesheet" href="public/css/cs-select.css">
 	<link rel="stylesheet" href="public/css/cs-skin-border.css">
@@ -154,12 +156,24 @@
 							<li>
 								<a href="/orphanedTracks" class="fh5co-sub-ddown">Analysis</a>
 								<ul class="fh5co-sub-menu">
-									<li><a href="/audio_features">Audio features graph</a></li>
 									<li><a href="/orphanedTracks">Orphaned tracks</a></li>
-									<li><a href="/topartists">Top artists</a></li>
+									<li>
+										 <a href="/topartists">Favorite artist gallery</a></li>
+
+
 									<li><a href="/topgenres">Top genres</a></li>
-									<li><a href="/trackslist">Track list</a></li>
+									<li><a href="/trackslist">Track list (updated)</a></li>
 									<!--li><a href="/audio_features">Audio Features</a></li-->
+
+								</ul>
+							</li>
+							<li>
+								<a href="/orphanedTracks" class="fh5co-sub-ddown">Charts</a>
+								<ul class="fh5co-sub-menu">
+									<li><a href="/audio_features">Audio features</a></li>
+
+									<li><a href="/favorite_artists_over_time">Favorite artists</a></li>
+
 
 								</ul>
 							</li>
@@ -181,7 +195,7 @@
 
 
 						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
-			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div>
+			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
 		<!-- end:header-top -->
 
 				 {% block topcontent %} {% endblock %}
@@ -299,6 +313,8 @@
 	<script src="public/js/jquery.flexslider-min.js"></script>
 	<!-- Date Picker -->
 	<script src="public/js/bootstrap-datepicker.min.js"></script>
+	<script src="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.js"></script>
+		<script src="https://unpkg.com/bootstrap-table@1.18.2/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 	<!-- CS Select -->
 	<script src="public/js/classie.js"></script>
 	<script src="public/js/selectFx.js"></script>
@@ -306,6 +322,7 @@
 	
 	<!-- Main JS -->
 	<script src="public/js/main.js"></script>
+
 
 	</body>
 </html>

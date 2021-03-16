@@ -15,7 +15,7 @@ def _getFeatures(dataPath, keys=['danceability', 'energy', 'key', 'loudness', 'm
                                  'instrumentalness', 'liveness',
                                  'valence', 'tempo']):
     dataOrig = analyze.loadAudioFeatures(dataPath)
-    # fullLib = analyze.loadLibraryFromFiles(dataPath)
+    #fullLib = analyze.loadLibraryFromFiles(dataPath)
     # list: 3799 of dict:18
     # [{'danceability': 0.469, 'energy': 0.625, 'key': 4, 'loudness': -5.381, 'mode': 0, 'speechiness': 0.0306, 'acousticness': 0.00515, 'instrumentalness': 2.03e-05, 'liveness': 0.0682, 'valence': 0.325, 'tempo': 76.785, 'type': 'audio_features', 'id': '6PBzdsMi6YNdYAevzozBRi', 'uri': 'spotify:track:6PBzdsMi6YNdYAevzozBRi', 'track_href': 'https://api.spotify.com/v1/tracks/6PBzdsMi6YNdYAevzozBRi', 'analysis_url': 'https://api.spotify
     #  {'danceability': 0.76, 'energy': 0.608, 'key': 9, 'loudness': -8.673, 'mode': 0, 'speechiness': 0.0347, 'acousticness': 0.315, 'instrumentalness': 0.79, 'liveness': 0.121, 'valence': 0.727, 'tempo': 119.032, 'type': 'audio_features', 'id': '4dJYJTPbUgFK5pCQ5bYD4g', 'uri': 'spotify:track:4dJYJTPbUgFK5pCQ5bYD4g', 'track_href': 'https://api.spotify.com/v1/tracks/4dJYJTPbUgFK5pCQ5bYD4g', 'analysis_url': 'https://api.spotify.com/v1/audio-analysis/4dJYJTPbUgFK5pCQ5bYD4g', 'duration_ms': 254118, 'time_signature': 4}
@@ -30,10 +30,27 @@ def _getFeatures(dataPath, keys=['danceability', 'energy', 'key', 'loudness', 'm
 
     dataArray = []
 
+    if len(dataOrig) == 0:
+        return dataArray
+
+    dummyLine = {'danceability': 0, 'energy': 0, 'key': 8, 'loudness': -8, 'mode': 1, 'speechiness': 0,
+     'acousticness': 0, 'instrumentalness': 0, 'liveness': 0, 'valence': 0, 'tempo': 102,
+     'type': 'audio_features', 'id': 'dummyTrack', 'uri': 'spotify:track:dummyTrack',
+     'track_href': 'https://api.spotify.com/v1/dummytrack',
+     'analysis_url': 'https://api.spotify.com/v1/audio-analysis/dummytrack', 'duration_ms': 666,
+     'time_signature': 4}
+
+
     for key in dataOrig[0]:
         if key in keys:
             # data[key] = [li[key] for li in dataOrig]
-            dataArray.append([li[key] for li in dataOrig])
+            for i,li in enumerate(dataOrig):
+                #print (str(key)+str(li))
+                if li is None:
+                    dataOrig[i] = dummyLine
+            t = [li[key] for li in dataOrig]
+
+            dataArray.append(t)
 
     return dataArray
 
@@ -224,6 +241,139 @@ def create_dataseries(dataPath):
                                    hoverinfo="text",
                                    hovertext=dataSeries[:, 1]))
 
+    graphJSON = fig.to_json()
+    return graphJSON
+
+
+
+
+# this is called to create favorite artists graph
+def create_top_artists_graph(dataPath):
+    fullLib = analyze.loadLibraryFromFiles(dataPath)
+
+    topartists = []
+
+    topartists.append([art['name'] for i, art in enumerate(fullLib['topartists_long_term'])][:50])
+    topartists.append([art['name'] for art in fullLib['topartists_medium_term']][:50])
+    topartists.append([art['name'] for art in fullLib['topartists_short_term']][:20])
+
+    #topartists = np.array(topartists)
+    #topartists = topartists.reshape(-1,1)
+    topartistsranking = []
+    topartistsrankingM = {}
+
+    for i, artistlist in enumerate(topartists):
+        topartistsranking.append([])
+        for j, artist in enumerate(artistlist):
+            topartistsrankingM.setdefault(artist, [None, None, None])
+
+    for i in range(50):
+        for j in range(3):
+            artist = topartists[j][i:i+1]
+            if len(artist) > 0:
+                a = topartistsrankingM.get(artist[0])
+                a[j] = i+1 # so that most favorite artist is at position 1 instead of 0
+
+    #print(' done')
+
+    #colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(len(topartistsrankingM))]
+    color = ('rgba(' + str(np.random.randint(0, high=200)) + ',' +
+             str(np.random.randint(0, high=250)) + ',' +
+             str(np.random.randint(0, high=100)))
+
+    colors = ['rgba(200,121,121','rgba(60,121,60','rgba(121,60,256','rgba(33,33,33',
+              'rgba(200,180,60','rgba(121,200,33','rgba(33,121,255','rgba(121,66,33',
+              'rgba(255,60,121', 'rgba(33,170,121', 'rgba(0,66,66', 'rgba(121,66,121',
+              'rgba(255,60,0', 'rgba(33,155,0', 'rgba(66,200,0', 'rgba(121,66,0',
+              'rgba(255,0,33','rgba(66,121,255','rgba(66,66,255','rgba(66,200,200']
+
+
+    #weights = [random.randint(15, 35) for i in range(50)]
+    xaxis = ['Long Term (several years)','Medium Term (last six months)', 'Very recent (last four weeks)']
+    data = []
+    for i, (artist, yaxis)  in enumerate(topartistsrankingM.items()):
+        #weights2 = [*range(11, len(topartistsrankingM)+5)]
+        #weights3 = [x/2 for x in range(1,len(topartistsrankingM))]
+        weights2 = 10
+        #color = colors[i % len(colors)]
+        red = 200*((len(topartistsrankingM)-i)/len(topartistsrankingM))
+        color = ('rgba(' + str(red) + ',' + \
+                 str(np.random.randint(0, high=100)) + ',' + \
+                 str(np.random.randint(0, high=120)))
+        #color = yaxis
+        #visibletrace = 'legendonly'
+        yaxisStrings = yaxis.copy()
+        for i,y in enumerate(yaxisStrings):
+            if y is None:
+                yaxisStrings[i] = '--'
+            else:
+                yaxisStrings[i] = str(yaxis[i])
+
+        hovertemplatetext = '<b>' + artist + ' </b><br>All time popularity: ' + yaxisStrings[0] + \
+               '<br>In the last six months: ' + yaxisStrings[1] + '<br>Recently: ' + yaxisStrings[2] + \
+               '<extra></extra>'
+        if len(list(filter(None, yaxis))) > 1:
+            visibletrace = True
+            mode = "markers+text+lines"
+            text = ['<b>'+artist+'</b>','<b>'+artist+'</b>','<b>'+artist+'</b>']
+            hovertemplate=hovertemplatetext
+            marker = {'opacity': 0.1, 'size': 11, 'symbol': 'diamond-wide-dot'}
+        else:
+            mode = "markers+lines"
+            text= ''
+            visibletrace = True
+            hovertemplate=hovertemplatetext
+            marker = {'opacity': 0.7, 'size': 11, 'symbol': 'diamond-wide-dot'}
+        #print("")
+
+        data.append(go.Scatter(x=xaxis, y=yaxis,
+                                mode=mode,
+                                marker=marker,
+                                line={'color':color+',0.5)', 'width':1, 'dash':'dot'},
+                               #line={'width': 1, 'dash': 'dot'},
+                                name = artist,
+                                #hoverinfo='text',
+                                text=text,
+                                #hovertext = text,
+                               hovertemplate=hovertemplate,
+                               #color=color,
+                                textfont={'size': weights2, 'color': color+',1)'},
+                               #textfont={'size': weights2},
+                               visible=visibletrace
+                               )
+                    )
+
+    tickvals = [1,5,10,15,20,25,30,35,40,45,50]
+    ticktext = ['1', '5', '10', 'Seven', 'Nine', 'Eleven']
+
+    default_linewidth = 2
+    highlighted_linewidth_delta = 2
+    layout = go.Layout({'title':'Change of artist popularity over time',
+                        'font':{ 'size':15},
+                        'xaxis': {'showgrid': False, 'showticklabels': True, 'zeroline': False},
+                        'yaxis': {'showgrid': True, 'showticklabels': True, 'zeroline': False,
+                                  'autorange':'reversed',
+                                  #'tick0':1, 'dtick':'2', 'nticks':10,
+                                  'tickvals': tickvals,
+                                  #'tickmode':'array', 'tickvals':tickvals, 'ticktext':ticktext
+                                  },
+                        'legend':{ 'font':{ 'size':11 }},
+                        'hovermode':'y',
+                        'hoverlabel_align' : 'right',
+                        #'width' : 1200,
+                        'height' : 750,
+                        'margin' : { 'l':50, 'r':50, 'b':50, 't':80,'pad':4 }
+    })
+
+    #fig = go.Figure(data=data, layout=layout)
+    #fig.update_yaxes(automargin=True)
+    #fig.update_traces(textposition='top right')
+
+    fig = go.FigureWidget(data=data, layout=layout)
+    fig.layout.hovermode = 'closest'
+    fig.layout.hoverdistance = -1  # ensures no "gaps" for selecting sparse data
+
+    #fig.show()
     graphJSON = fig.to_json()
     return graphJSON
 
