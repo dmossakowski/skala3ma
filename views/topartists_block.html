@@ -28,15 +28,14 @@
 					{% for track in library['topartists_medium_term'] %}
 					{% if loop.index < 51 %}
 
-					<div class="col-md-2" style="height: 400px">
+					<div class="col-md-3">
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box">
 							{% if track['images']|length >0 %}
-								<a href=""><img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt=""></a>
+								<img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt="">
 							{% endif %}
 							<div class="blog-text">
+								<h4>	{{ track['name'] }}</h4>
 
-									<a href="{{ track['external_urls'][0]}}">{{ track['name'] }}</a>
-									<!--span class="comment"><a href="">{{ track['popularity'] }}<i class="icon-bubble2"></i></a></span-->
 
 							</div>
 						</div>

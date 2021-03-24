@@ -46,24 +46,41 @@
 		for learning Python and data analysis.
 
 		The source code for this app is on <a href="https://github.com/dmossakowski/additive-spotify-analyzer">GitHub</a>.
-							For issues or suggestions use
-		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">GitHub issues</a><br><br>
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">Join the discussion</a> there or
+
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">add an issue</a><br><br>
+
+
+	{% if lastmodified is defined and lastmodified %}
+
+		<i>Your data was last updated: {{ lastmodified }}</i><br><br>
+	{% endif %}
+
+
+<div style="text-align: center;">
+		<br>
+<img src="public/images/spotify-app-logo.png">
+</div>
+
 
 		<h4>Updates</h4>
-		<li>20200313 -  Added filters to <a href="/trackslist">tracks list</a>
+
+		<li>20210317 -  Added <a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a> for the app!
+
+		<li>20210316 -  Added <a href="/playlistDashboard">playlist dashboard</a>
+		 which shows all your private and followed playlists; another view opens the playlist with full track list and a sample preview.
+
+</li>
+		<li>20210313 -  Added filters to <a href="/trackslist">tracks list</a>
 		 using Bootstrap extension bootstrap-table-filter-control as per
 			<a href="https://examples.bootstrap-table.com/#extensions/filter-control.html">this site</a>. You can filter on all columns.
 </li>
-		<li>20200112 -  Added new Plotly chart for <a href="/favorite_artists_over_time">favorite artists</a> -
+		<li>20210112 -  Added new Plotly chart for <a href="/favorite_artists_over_time">favorite artists</a> -
 		is an analysis on your top artists across time. You can also read an article about it on
 						<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1">Hackernoon</a></li>
-	</div><div style="text-align: center;">
-		<br>
-
-</div><div style="text-align: center;">
 	</div><br><br>
 
-						<img src="public/images/spotify-app-logo.png">
+
 						<!--<h3>Playlists:		<b>{{'0' if library['playlists'] == None else  library['playlists']|length}}</b>
 <br>
 					Albums:	<b>{{'0' if library['albums'] == None else  library['albums']|length}}</b>

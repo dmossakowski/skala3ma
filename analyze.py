@@ -2,6 +2,7 @@
 
 import json
 import os
+import glob
 import random
 from datetime import datetime, date, time, timedelta
 import numpy as np
@@ -34,7 +35,9 @@ def getEmptyLibrary():
     library['topartists_medium_term'] = []
     library['toptracks_long_term'] = []
     library['topartists_long_term'] = []
+    library['playlists-tracks'] = []
     return library
+
 
 def getLibrarySize(library):
     s = ''
@@ -78,20 +81,48 @@ def getTopGenreSet(library):
     return mostcommon
 
 
-def loadLibraryFromFiles(directory="data/"):
-    library = {}
-
-    if not os.path.exists(directory):
+def getUpdateDt(directory=None):
+    if not isLibraryValid(directory):
         return None
+    list_of_files = glob.glob(directory+"/*json")  # * means all if need specific format then *.csv
+    if len(list_of_files) is 0:
+        return None
+    latest_file = max(list_of_files, key=os.path.getmtime)
+    if latest_file is not None:
+        latest_file = os.path.getmtime(latest_file)
+    return latest_file
+
+
+def getUpdateDtStr(directory=None):
+    dt = getUpdateDt(directory)
+    if dt is None:
+        return None
+    return datetime.fromtimestamp(dt).strftime('%c')
+
+# checks if all files are present and correct
+def isLibraryValid(directory=None):
+    if not os.path.exists(directory):
+        return False
 
     if not os.path.exists(directory+"tracks.json"):
-        return None
+        return False
 
     if not os.path.exists(directory+"audio_features.json"):
-        return None
+        return False
 
     if not os.path.exists(directory+"topartists_medium_term.json"):
-        return None
+        return False
+
+    if not os.path.exists(directory+"playlists-tracks.json"):
+        return False
+
+    return True
+
+def loadLibraryFromFiles(directory=None):
+    library = {}
+
+    if not isLibraryValid(directory):
+        return None;
 
     # Dream database. Store dreams in memory for now.
     dreamsA = ['Python. Python, everywhere.']
@@ -112,6 +143,11 @@ def loadLibraryFromFiles(directory="data/"):
     with open(path+"playlists.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
         library['playlists'] = tracks
+
+    with open(path+"playlists-tracks.json", "r") as tracksfile:
+        tracks = json.load(tracksfile)
+        library['playlists-tracks'] = tracks
+
 
     with open(path + "toptracks_long_term.json", "r") as tracksfile:
         tracks = json.load(tracksfile)
@@ -143,9 +179,12 @@ def loadLibraryFromFiles(directory="data/"):
 
 
 def loadAudioFeatures(path="data/"):
-    with (open(path+'audio_features.json', "r")) as f:
-        data = json.load(f)
-        return data
+    try:
+        with (open(path+'audio_features.json', "r")) as f:
+            data = json.load(f)
+            return data
+    except ValueError:
+        return []
 
 
 # orders artists by which had last added a song to

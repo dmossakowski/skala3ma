@@ -29,14 +29,15 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 						<br>
-						<h3>{{ subheader_message }} </h3>
-						<p>
+						<h3>{{ subheader_message }} </h3>{% if playlistName is not none  %}
+				<a href="playlistDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
 
-							This analysis is trying to find all tracks that have been abandoned. This means that you added a song to
-							your library but you never added any albums of this artist. Maybe you liked one song and forgot about
-									this cool band?  These could be some gems
-							(or some real stinkers)!  </p>
 
+
+						{% else %}
+
+
+						{% endif %}
 
 
 					</div>
@@ -55,10 +56,56 @@
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 
-					{% for track in library['tracks'] %}
+
+				{% if playlistName is none  %}
+	<table class="table table-borderless thead-dark table-hover table-dark table-sm border-0" data-toggle="table" >
+         <thead borderless><tr>
+		 <th></th>
+         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Name</th>
+         <th data-field="artist" data-filter-control="input">Description</th>
+         <th data-field="Owner" data-filter-control="select">Owner</th>
+         <th data-filter-control-placeholder>Followers</th>
+		 <th data-field="trackcount" data-filter-control="select">Track count</th>
+
+         </tr>
+         </thead>
+    <tbody borderless>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+         {% for key in library['playlists-tracks'] %}
+
+
+                <tr><td>
+					{% if key['images']|length >0 %}
+
+							<a href="playlistDashboard?playlistName={{key['name']}}"><img class="img-responsive" src="{{ key['images'][0]['url'] }}" alt="" width="100"></a>
+							{% endif %}
+
+					</td>
+					<td><a href="playlistDashboard?playlistName={{key['name']}}"><b>{{key['name']}}</b></a></td> <td><i>{{key['description']}}</i></td>
+					<td><i>{{key['owner']['display_name']}} </i></td><td class="text-right"> {{key['followers']['total']}}</td>
+					<td class="text-right"> {{key['tracks']['total']}}</td>
+                    </tr>
+
+
+         {% endfor %}
+         </tbody>
+     </table>
+
+
+{% endif %}
+
+
+{% if playlistName is not none  %}
+
+
+
+
+
+					{% for track in playlist['tracks']['items'] %}
 					{% if loop.index < 200 %}
 
-					<div class="col-lg-3 col-md-4 col-sm-6">
+<div class=" col-md-2 ">
+
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
 							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
 							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')">
@@ -68,7 +115,7 @@
 							{% endif %}
 							<div class="blog-text">
 								<div class="prod-title">
-									<h3>{{ track['track']['artists'][0]['name'] }}</h3>
+									<h4>{{ track['track']['artists'][0]['name'] }}</h4>
 									<span class="posted_by">{{ track['track']['name'] }}</span>
 									<br>
 									<span class="posted_by">{{ track['track']['dateaddedDisplay'] }}</span>
@@ -79,18 +126,19 @@
 									Your browser isn't invited for super fun time.
 									</audio>
 
-									<p></p>
 
 								</div>
 							</div>
 						</div>
 					</div>
-
 					{% endif %}
 					 {% endfor %}
 
 
 
+
+
+{% endif %}
 
 
 			</div>

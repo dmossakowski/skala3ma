@@ -305,7 +305,7 @@ th {
 
   .table-bordered th,
   .table-bordered td {
-    border: 1px solid #ddd !important;
+    border: 4px solid #ddd !important;
   }
 }
 @font-face {
@@ -2856,7 +2856,7 @@ th {
   padding: 8px;
   line-height: 1.42857;
   vertical-align: top;
-  border-top: 1px solid #ddd;
+  border-top: 3px solid #ddd;
 }
 .table > thead > tr > th {
   vertical-align: bottom;
@@ -2887,7 +2887,7 @@ th {
 }
 
 .table-bordered {
-  border: 1px solid #ddd;
+  border: 0px solid #ddd;
 }
 .table-bordered > thead > tr > th,
 .table-bordered > thead > tr > td,
@@ -2895,7 +2895,7 @@ th {
 .table-bordered > tbody > tr > td,
 .table-bordered > tfoot > tr > th,
 .table-bordered > tfoot > tr > td {
-  border: 1px solid #ddd;
+  border: 0px solid #ddd;
 }
 .table-bordered > thead > tr > th,
 .table-bordered > thead > tr > td {

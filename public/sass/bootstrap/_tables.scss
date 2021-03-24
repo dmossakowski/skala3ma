@@ -4,6 +4,7 @@
 
 
 table {
+  border: 0;
   background-color: $table-bg;
 }
 caption {
@@ -23,6 +24,7 @@ th {
   width: 100%;
   max-width: 100%;
   margin-bottom: $line-height-computed;
+  border: 0;
   // Cells
   > thead,
   > tbody,
@@ -33,7 +35,7 @@ th {
         padding: $table-cell-padding;
         line-height: $line-height-base;
         vertical-align: top;
-        border-top: 1px solid $table-border-color;
+        border-top: 0px solid $table-border-color;
       }
     }
   }
@@ -85,22 +87,24 @@ th {
 //
 // Add borders all around the table and between all the columns.
 
-.table-bordered {
-  border: 1px solid $table-border-color;
+.table-bordered{
+  //border: 0px solid $table-border-color;
+  border: 0;
   > thead,
   > tbody,
   > tfoot {
     > tr {
       > th,
       > td {
-        border: 1px solid $table-border-color;
+        border: 6px solid $table-border-color;
       }
     }
   }
   > thead > tr {
     > th,
     > td {
-      border-bottom-width: 2px;
+      //border-bottom-width: 2px;
+      border: 0;
     }
   }
 }
@@ -177,7 +181,7 @@ table {
     margin-bottom: ($line-height-computed * 0.75);
     overflow-y: hidden;
     -ms-overflow-style: -ms-autohiding-scrollbar;
-    border: 1px solid $table-border-color;
+    //border: 1px solid $table-border-color;
 
     // Tighten up spacing
     > .table {

@@ -115,16 +115,16 @@
 
 
 
-    		//console.log('Loading... ')
+    	//console.log('Loading... ')
       $.ajax({
            type: "GET",
            url: '/datadownload',
            data:{action:'call_this'},
            success:function(html) {
              //alert(html);
-             //window.location.href = '/topartists'
-             //targetContainer.innerHTML = "<h3>"+lastUpdate+"<br>";
-             updateButtonContainer.innerHTML = 'Choose Analysis from the main menu'
+             //window.location.href = '/'
+             //targetContainer.innerHTML = "<h3>"+html+lastUpdate+"<br>";
+             updateButtonContainer.innerHTML = 'Choose analysis from the main menu'
            }
 
       });
@@ -143,16 +143,32 @@
 			<div class="container">
 				<div class="nav-header">
 					<a href="#" class="js-fh5co-nav-toggle fh5co-nav-toggle dark"><i></i></a>
-					<h1 id="fh5co-logo"><a href="/">Additive Spotify Analyzer</a></h1>
+					<h1 id="fh5co-logo"><a href="/">Additive Spotify Analyzer</a> </h1>
+
+
 					<!-- START #fh5co-menu-wrap -->
 					<nav id="fh5co-menu-wrap" role="navigation">
+
 						<ul class="sf-menu" id="fh5co-primary-menu">
 
+							<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/" target="_blank"><i class="icon-github"></i></a></li>
+							<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank"><i class="icon-facebook2"></i></a></li>
+								<li><a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1" target="_blank"><i class="icon-dribbble2"></i></a>
+								</li>
 						{% if username is defined %}
 
 							<!--li><a href="/progresstest">Progress</a></li-->
 							<li><a href="/dataload">Update data</a></li>
 
+							<li>
+								<a href="/playlistDashboard" class="fh5co-sub-ddown">Playlists</a>
+								<ul class="fh5co-sub-menu">
+									<li><a href="/playlistDashboard">Dashboard (new)</a></li>
+
+									<!--li><a href="/audio_features">Audio Features</a></li-->
+
+								</ul>
+							</li>
 							<li>
 								<a href="/orphanedTracks" class="fh5co-sub-ddown">Analysis</a>
 								<ul class="fh5co-sub-menu">
@@ -188,6 +204,7 @@
 							{% endif %}
 						</ul>
 					</nav>
+
 				</div>
 			</div>
 
@@ -228,59 +245,41 @@
 			<div id="footer">
 				<div class="container">
 					<div class="row row-bottom-padded-md">
-						<div class="col-md-3">
+						<div class="col-lg-5">
 							<h3 class="section-title">About Spotify Analyzer</h3>
 							<p>Analyze Spotify data from various angles. Using flask, Bootstrap javascript library, plotly,
 								matplotlib, tensor-flow.
 							</p>
 						</div>
-						
-						<div class="col-md-3 col-md-push-1">
+
+
+						<div class="col-lg-5">
 							<h3 class="section-title">Links</h3>
 							<ul>
-								<li><a href="#">Home</a></li>
+								<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a></li>
 
-								<li><a href="#">Blog</a></li>
-								<li><a href="#">API</a></li>
-								<li><a href="#">FAQ / Contact</a></li>
-							</ul>
-						</div>
+								<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">GitHub discssion</a></li>
+								<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">GitHub issues</a></li>
+								<li><a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1">Hackernoon article on favorite artists graph</a></li>
+								<li><a href="https://hackernoon.com/spotify-audio-features-time-series-in-additive-spotify-analyzer-lp1q34vh">
+									Hackernoon article on audio features time series</i></a></li>
 
-						<div class="col-md-3">
-							<h3 class="section-title">Information</h3>
-							<ul>
-								<!--li><a href="#">Terms &amp; Condition</a></li>
-								<li><a href="#">License</a></li>
-								<li><a href="#">Privacy &amp; Policy</a></li-->
-								<li><a href="#">Pexel</a></li>
-								<li><a href="https://www.pexels.com/photo/people-having-a-concert-1190297.jpg">Concert image</a></li>
 							</ul>
-						</div>
-						<div class="col-md-3">
-							<h3 class="section-title">Newsletter</h3>
-							<p>Subscribe for our newsletter</p>
-							<form class="form-inline" id="fh5co-header-subscribe">
-								<div class="row">
-									<div class="col-md-12 col-md-offset-0">
-										<div class="form-group">
-											<!--input type="text" class="form-control" id="email" placeholder="Enter your email">
-											<button type="submit" class="btn btn-default"><i class="icon-paper-plane"></i></button-->
-										</div>
-									</div>
-								</div>
-							</form>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-12">
 							<p class="fh5co-social-icons">
-								<a href="#"><i class="icon-twitter2"></i></a>
-								<a href="#"><i class="icon-facebook2"></i></a>
-								<a href="#"><i class="icon-instagram"></i></a>
-								<a href="#"><i class="icon-dribbble2"></i></a>
-								<a href="#"><i class="icon-youtube"></i></a>
+								<a href="https://github.com/dmossakowski/additive-spotify-analyzer"><i class="icon-github"></i></a>
+								<a href="https://www.facebook.com/AdditiveSpotifyAnalyzer"><i class="icon-facebook2"></i></a>
+								<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1"><i class="icon-dribbble2"></i></a>
+
+
+								<!--a href="#"><i class="icon-dribbble2"></i></a>
+								<a href="#"><i class="icon-youtube"></i></a-->
 							</p>
-							<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> / Demo Images: <a href="https://unsplash.com/" target="_blank">Unsplash</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
+							<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
+								Demo Images: <a href="https://pexels.com/" target="_blank">Pexels</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
 						</div>
 					</div>
 				</div>

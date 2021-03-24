@@ -1,0 +1,183 @@
+
+
+
+{% extends "layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+						<br>
+						<h3>{{ subheader_message }} </h3>
+
+
+					</div>
+
+	<script type="text/javascript">
+    function playPreview(audioId){
+    	var audio = document.getElementById(audioId)
+		audio.play();
+	}
+
+	function stopPreview(audioId){
+    	var audio = document.getElementById(audioId)
+		audio.pause();
+	}
+</script>
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+				<table class="table thead-dark table-hover" data-toggle="table"  data-filter-control="true" >
+         <thead><tr>
+		 <th>Img</th>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
+         <th data-field="artist" data-filter-control="input">Description</th>
+         <th data-field="track" data-filter-control="input">Owner</th>
+         <th data-field="followers" data-filter-control="input">Followers</th>
+
+			 <th data-field="trackcount" data-filter-control="input">Track count</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+         {% for key in library['playlists-tracks'] %}
+
+
+                <tr><td>
+					{% if key['images']|length >0 %}
+
+							<a href="#"><img class="img-responsive" src="{{ key['images'][0]['url'] }}" alt="" width="100"></a>
+							{% endif %}
+
+					</td>
+					<td> {{key['name']}}</td> <td><i>{{key['description']}}</i></td>
+					<td><i>{{key['owner']['display_name']}} </i></td><td> {{key['followers']['total']}}</td>
+					<td> {{key['tracks']['total']}}</td>
+                    </tr>
+
+
+         {% endfor %}
+         </tbody>
+     </table>
+
+
+
+
+
+
+					{% for track in library['playlists-tracks'] %}
+					{% if loop.index < 200 %}
+
+
+
+
+					<div class="col-lg-4 col-md-2 col-sm-4">
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
+							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')">
+							{% if track['images']|length >0 %}
+
+							<a href="#"><img class="img-responsive" src="{{ track['images'][0]['url'] }}" alt=""></a>
+							{% endif %}
+							<div class="blog-text">
+								<div class="prod-title">
+									<h3>{{ track['name'] }}</h3>
+									<span class="posted_by">{{ track['name'] }}</span>
+									<br>
+									<span class="posted_by">{{ track['owner']['display_name'] }}</span>
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+									<p></p>
+
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{% endif %}
+					 {% endfor %}
+
+
+
+
+
+
+					<table class="table table-borderless thead-dark table-hover table-dark table-sm border-0" data-toggle="table" >
+         <thead borderless><tr>
+		 <th></th>
+         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Artist</th>
+         <th data-field="artist" data-filter-control="input">Title</th>
+
+
+         </tr>
+         </thead>
+    <tbody borderless>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+         {% for track in playlist['tracks']['items'] %}
+
+
+                <tr ><td>
+
+					<div >
+			<audio id="trackPreview2{{ loop.index }}"  preload="auto">
+									<source src="{{ track['track']['preview_url'] }}" controls></source>
+									Your browser isn't invited for super fun time.
+									</audio>
+
+					{% if  track['track']['album']['images'][0]['url']  |length >0 %}
+
+							<img class="img-responsive" src="{{ track['track']['album']['images'][0]['url'] }}" alt="" width="100"
+							onmouseover="playPreview('trackPreview2{{ loop.index }}')" ;
+							 onmouseleave="stopPreview('trackPreview2{{ loop.index }}')">
+					{% endif %}
+					</div>
+					</td>
+					<td> {{ track['track']['artists'][0]['name'] }}</td> <td><i>{{ track['track']['name'] }}
+
+					<span onmouseover="playPreview('trackPreview2{{ loop.index }}')" ;
+							 onmouseleave="stopPreview('trackPreview2{{ loop.index }}')"
+						  class="glyphicon glyphicon-music" aria-hidden="true"></span>
+					</i></td>
+
+
+                    </tr>
+
+
+         {% endfor %}
+         </tbody>
+     </table>
+
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}

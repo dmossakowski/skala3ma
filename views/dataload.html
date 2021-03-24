@@ -10,8 +10,22 @@
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 <br><br>
 						<div id="progressMessages" class="section-title">
-							<h3>{{ subheader_message }}
-							  Click below to load newest data...</h3></div>
+							<h3>{{ subheader_message }}</h3>
+
+		{% if lastmodified is defined and lastmodified %}
+
+				<i>Your data was last updated : {{ lastmodified }}</i><br>
+							{{ sizetext }}<br>
+					<br>
+
+							<h3>Click below to load newest data...</h3></div>
+		{% else %}
+							<h3>Click below to load data</h3></div>
+		{% endif %}
+
+
+
+
 <div id="updateButton"><a href="#" onClick="retrieveData()" style="font-size: 24px;font-weight: bold;">
 	<input type="button" value="Update"/></a>
 </div>

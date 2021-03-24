@@ -33,6 +33,7 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
 SPOTIFY_APP_SECRET = os.getenv('SPOTIFY_APP_SECRET')
+DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
 app = Flask(__name__, static_folder='public', template_folder='views')
 
@@ -115,7 +116,7 @@ spotify = oauth.register(
     fetch_token=fetch_token,
     update_token=update_token,
     client_kwargs = {
-            'scope': 'user-library-read user-top-read'
+            'scope': 'user-library-read user-top-read playlist-read-private playlist-read-collaborative'
     #'scope': 'playlist-read-private  user-library-read  user-top-read'
     }
 )
@@ -133,8 +134,9 @@ def index():
         hellomsg = 'Welcome '+session.get('username')
 
         l = analyze.getLibrarySize(library)
+        lastModifiedDt = analyze.getUpdateDtStr(_getDataPath())
         #_setUserSessionMsg("Library size: "+l)
-        return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library, **session)
+        return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library, sizetext=l, lastmodified=lastModifiedDt, **session)
     else:
 
         return render_template('index.html', subheader_message=hellomsg, genres={}, library={},  **session)
@@ -301,8 +303,18 @@ def refreshToken():
 @app.route('/datadownload')
 @login_required
 def downloadData():
+
+    #dataAgeS = analyze.getUpdateDtStr(_getDataPath())
+    #dataAge = analyze.getUpdateDt(_getDataPath())
+    #maxAge = dataAge + 15 * 60 # one hour
+    #currentTime = time.time()
+    #newt = datetime.datetime.fromtimestamp(maxAge).strftime('%c')
+    #if maxAge > currentTime:
+     #   return "Your data was last loaded on " + dataAgeS
+
+    #return dataAgeS+" loading <br>"+newt
+    #print(" datadownload")
     library = _retrieveSpotifyData(session)
-    print(" datadownload")
 
     @copy_current_request_context
     def handle_sub_view(session):
@@ -358,13 +370,54 @@ def getOrphanedTracks():
 
 
 
+@app.route('/playlistDashboard')
+@login_required
+def getPlaylistDashboard():
+    library = analyze.loadLibraryFromFiles(_getDataPath())
+    if library is None:
+        return render_template('dataload.html', subheader_message="",
+                               library=library,
+                               **session)
+
+    playlistName = request.args.get('playlistName')
+    playlist = None
+    if playlistName is not None:
+        subheader_message = "Playlist " + playlistName
+        for playlist in library['playlists-tracks']:
+            if playlist['name'] == playlistName:
+                break
+    else:
+        subheader_message = "Playlists count: " + str(len(library['playlists-tracks']))
+        tracks = library['playlists-tracks']
+
+
+
+    #library= {}
+    #library['tracks'] = tracks
+
+    return render_template('playlistDashboard.html', playlistName=playlistName, playlist=playlist,
+                           subheader_message=subheader_message,
+                           library=library,
+                            **session)
+
+
+
+
+
 @app.route('/dataload')
 @login_required
 def dataload():
 
+    dt = analyze.getUpdateDtStr(_getDataPath())
+    l = None
+    if dt is not None:
+        library = analyze.loadLibraryFromFiles(_getDataPath())
+        l = analyze.getLibrarySize(library)
+
+
     return render_template('dataload.html', sortedA=None,
                            subheader_message="",
-                           library={},
+                           library={}, lastmodified=dt, sizetext=l,
                             **session)
 
 
@@ -423,8 +476,8 @@ def _setUserSessionMsg(msg='', msgtype=''):
 
 def _getDataPath():
     if (session.get('id')):
-        return session['id'] + "-data/"
-    return "data/"
+        return str(DATA_DIRECTORY)+"/"+session['id']+"/"
+    return str(DATA_DIRECTORY)+"/"
 
 
 @app.route('/progresstest')
@@ -560,6 +613,12 @@ def _retrieveSpotifyData(session):
     #_setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
     library['playlists'] = getAllMeItems('playlists', file_path)
 
+    print("retrieving playlist tracks...")
+    # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
+    # when retrieving all user playlists, tracks are not included so we need to do another request
+    # in the end we will have all playlists with their tracks for the user
+    library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
+
     print("retrieving tracks...")
     #_setUserSessionMsg("Loading tracks..." + analyze.getLibrarySize(library))
     library['tracks'] = getAllMeItems('tracks', file_path)
@@ -574,7 +633,7 @@ def _retrieveSpotifyData(session):
     return library
 
 
-def getAllMeItems(itemtype, file_path="data/", time_range=""):
+def getAllMeItems(itemtype, file_path=None, time_range=""):
     print ("Retrieving data from spotify for type ", itemtype)
     _setUserSessionMsg('Loading ' + str(itemtype)+'...')
     oauthtoken = session['token']['access_token']
@@ -730,7 +789,9 @@ def getAudioFeatures(tracks, file_path='data/'):
     return features
 
 
-
+# this expects a url that retrieves some batch of data
+# the URL is not modified in the method and just the raw
+# results are returned
 def retrieveAudioFeatures(api_url, auth_header):
     payload = {}
     responseraw = requests.get(api_url, params=payload, headers=auth_header)
@@ -746,6 +807,81 @@ def retrieveAudioFeatures(api_url, auth_header):
     items = response
 
     return items
+
+
+
+
+# playlists come with id for retrieval tracks:
+# "tracks": {
+#             "href": "https://api.spotify.com/v1/playlists/047sooHidTDdnTo9BMRANV/tracks",
+#             "total": 23
+#         },
+# this method loops over all playlists downloaded (public and private)
+# and it generates one json file for each playlist
+def getPlaylistTracks(playlists, file_path='data/'):
+    print ("Retrieving playlist tracks from spotify for all playlists ")
+    if (session!=None and session.get('token')!=None):
+        oauthtoken = session['token']['access_token']
+    else:
+        print("not loggged in")
+        return render_template('index.html', subheader_message="No oauthtoken.. bad flow ", library={}, **session)
+
+    auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
+    api_url_base = 'https://api.spotify.com/v1/playlists/'
+    # api_url = 'https://api.spotify.com/v1/me/playlists'
+
+    limit = 100
+    ids=[]
+    tracks=[]
+    playlistsWithTracks=[]
+
+    for playlist in playlists:
+        id = playlist["id"]
+        #ids.append(id)
+        limit-=1
+        #if (limit == 0 or (len(tracks)+len(ids))==len(playlists)):
+        api_url = api_url_base+"" + id
+        featureBatch = retrieveAudioFeatures(api_url, auth_header)
+        if featureBatch==None:
+            print('no features returned')
+            #break
+            featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
+
+        next = featureBatch['tracks']['next']
+        while next is not None:
+            featureBatch2 = retrieveAudioFeatures(next, auth_header)
+            featureBatch['tracks']['items'].extend(featureBatch2['items'])
+            next = featureBatch2['next']
+        #featureBatch = featureBatch.get('audio_features')
+        #lastFeatureBatch = featureBatch
+        #tracks += featureBatch
+        _setUserSessionMsg('Loading playlists... ' + str(len(playlistsWithTracks)) + '/' + str(len(playlists)))
+        #limit = 100
+        #ids.clear()
+        playlistsWithTracks.append(featureBatch)
+
+        for item in featureBatch['tracks']['items']:
+            if item.get('track'):
+                item['track']['available_markets'] = None
+                item['track']['album']['available_markets'] = None
+                # item['track']['album']['images'] = None
+                item['track']['album']['artists'] = None
+                item['track']['album']['external_urls'] = None
+                item['track']['artists'][0]['external_urls'] = None
+                item['track']['external_urls'] = None
+            if item.get('album'):
+                item['album']['available_markets'] = None
+                item['album']['copyrights'] = None
+                item['album']['tracks'] = None
+            if item.get('available_markets'):
+                item['available_markets'] = None
+
+    with (open(file_path+'/playlists-tracks.json', "w")) as outfile:
+        json.dump(playlistsWithTracks, outfile, indent=4)
+
+    return playlistsWithTracks
+
+
 
 
 
