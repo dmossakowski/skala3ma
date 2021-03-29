@@ -41,7 +41,19 @@
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
 
-					<br>	<h3>{{ subheader_message }}</h3>
+					<br>
+				{% if display_name is defined and display_name %}
+
+						<h3>Welcome {{ display_name }}
+							{% if profileimageurl is defined and profileimageurl %}
+								<img src="{{ profileimageurl }}" width="150">
+							{% endif %}
+							</h3>
+				{% else %}
+						Welcome to Additive Spotify Analyzer
+
+				{% endif %}
+
 	<div style="text-align: left;">This site is a collection of various types of analysis on your Spotify data and a test bed
 		for learning Python and data analysis.
 

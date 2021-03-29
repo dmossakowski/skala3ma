@@ -36,6 +36,7 @@ def getEmptyLibrary():
     library['toptracks_long_term'] = []
     library['topartists_long_term'] = []
     library['playlists-tracks'] = []
+    library['profile'] = []
     return library
 
 
@@ -85,7 +86,7 @@ def getUpdateDt(directory=None):
     if not isLibraryValid(directory):
         return None
     list_of_files = glob.glob(directory+"/*json")  # * means all if need specific format then *.csv
-    if len(list_of_files) is 0:
+    if len(list_of_files) == 0:
         return None
     latest_file = max(list_of_files, key=os.path.getmtime)
     if latest_file is not None:
@@ -116,7 +117,9 @@ def isLibraryValid(directory=None):
     if not os.path.exists(directory+"playlists-tracks.json"):
         return False
 
+
     return True
+
 
 def loadLibraryFromFiles(directory=None):
     library = {}
@@ -132,50 +135,90 @@ def loadLibraryFromFiles(directory=None):
     #path = "data/"
     path = directory
 
-    with open(path+"tracks.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['tracks'] = tracks
+    try:
+        with open(path+"tracks.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['tracks'] = tracks
 
-    with open(path+"albums.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['albums'] = tracks
+        with open(path+"albums.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['albums'] = tracks
 
-    with open(path+"playlists.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['playlists'] = tracks
+        with open(path+"playlists.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['playlists'] = tracks
 
-    with open(path+"playlists-tracks.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['playlists-tracks'] = tracks
+        with open(path+"playlists-tracks.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['playlists-tracks'] = tracks
 
 
-    with open(path + "toptracks_long_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['toptracks_long_term'] = tracks
+        with open(path + "toptracks_long_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['toptracks_long_term'] = tracks
 
-    with open(path + "toptracks_medium_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['toptracks_medium_term'] = tracks
+        with open(path + "toptracks_medium_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['toptracks_medium_term'] = tracks
 
-    with open(path + "toptracks_short_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['toptracks_short_term'] = tracks
+        with open(path + "toptracks_short_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['toptracks_short_term'] = tracks
 
-    with open(path + "topartists_long_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['topartists_long_term'] = tracks
+        with open(path + "topartists_long_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['topartists_long_term'] = tracks
 
-    with open(path + "topartists_medium_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['topartists_medium_term'] = tracks
+        with open(path + "topartists_medium_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['topartists_medium_term'] = tracks
 
-    with open(path + "topartists_short_term.json", "r") as tracksfile:
-        tracks = json.load(tracksfile)
-        library['topartists_short_term'] = tracks
+        with open(path + "topartists_short_term.json", "r") as tracksfile:
+            tracks = json.load(tracksfile)
+            library['topartists_short_term'] = tracks
 
         library['audio_features'] = loadAudioFeatures(path)
 
+        if not os.path.exists(directory + "profile.json"):
+            library['profile'] = None
+        else:
+            with open(path + "profile.json", "r") as file:
+                j = json.load(file)
+                library['profile'] = j
+
+
+    except ValueError:
+        return []
+
     return library
+
+
+
+def getRandomUsername(directory):
+    if not os.path.exists(directory):
+        return False
+
+    list_of_files = os.listdir(directory)
+    if len(list_of_files) == 0:
+        return None
+
+    r = random.randint(0, len(list_of_files)-1)
+    return list_of_files[r]
+
+
+
+def loadRandomLibrary(directory):
+    username = getRandomUsername(directory)
+    return loadLibraryFromFiles(directory+"/"+username+"/")
+
+
+def getRandomPlaylistName(directory):
+    library = loadRandomLibrary(directory)
+
+    playlists = library['playlists']
+    r = random.randint(0, len(playlists)-1)
+    randomPlaylist = playlists[r]
+    return randomPlaylist['name']
 
 
 def loadAudioFeatures(path="data/"):
@@ -258,7 +301,6 @@ def process(library):
 
     #return sortedA
     return artistsByDate
-
 
 
 

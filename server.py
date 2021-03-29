@@ -22,6 +22,7 @@ import traceback
 import time
 import datetime
 import threading
+import random
 
 load_dotenv()
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
@@ -132,11 +133,20 @@ def index():
     if session.get('username'):
         genres = analyze.getTopGenreSet(library)
         hellomsg = 'Welcome '+session.get('username')
+        profile = library['profile']
+        if profile is None:
+            profileimageurl=None
+            display_name = session.get('username')
+        else:
+            profileimageurl = profile['images'][0]['url']
+            display_name = profile['display_name']
 
         l = analyze.getLibrarySize(library)
         lastModifiedDt = analyze.getUpdateDtStr(_getDataPath())
         #_setUserSessionMsg("Library size: "+l)
-        return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library, sizetext=l, lastmodified=lastModifiedDt, **session)
+        return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library,
+                               sizetext=l, lastmodified=lastModifiedDt, profileimageurl=profileimageurl,
+                               display_name=display_name, **session)
     else:
 
         return render_template('index.html', subheader_message=hellomsg, genres={}, library={},  **session)
@@ -240,15 +250,19 @@ def spotify_authorized():
         authenticated = True
             #print me.data
 
-        userId = getAllMeItems('')
-        session['id'] = userId[0]
-        session['username'] = userId[1]
-        print(str(session.get("wants_url")))
+        meProfile = getAllMeItems('')
+
+        session['id'] = meProfile['id']
+        session['username'] = meProfile['display_name']
+        #print(str(session.get("wants_url")))
 
         if session.get("wants_url") is not None:
             return redirect(session["wants_url"])
         else:
-            return redirect("/dataload")
+            if analyze.getUpdateDt(_getDataPath()) is not None:
+                return redirect("/")
+            else:
+                return redirect("/dataload")
             #return redirect("/")
             #print('This should never happen. wants_url missing in session')
 
@@ -351,14 +365,21 @@ def downloadData():
 
 
 @app.route('/orphanedTracks')
-@login_required
+#@login_required
 def getOrphanedTracks():
-    library = analyze.loadLibraryFromFiles(_getDataPath())
+    username = request.args.get('username')
+
+    if username is None:
+        dataPath = _getDataPath()
+    else:
+        dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
+
+    library = analyze.loadLibraryFromFiles(dataPath)
     if library is None:
         return render_template('dataload.html', subheader_message="",
                                library=library,
                                **session)
-    tracks = analyze.getOrphanedTracks(analyze.loadLibraryFromFiles(_getDataPath()))
+    tracks = analyze.getOrphanedTracks(analyze.loadLibraryFromFiles(dataPath))
     library= {}
     library['tracks'] = tracks
 
@@ -370,10 +391,22 @@ def getOrphanedTracks():
 
 
 
+
+
+
 @app.route('/playlistDashboard')
-@login_required
+#@login_required
 def getPlaylistDashboard():
-    library = analyze.loadLibraryFromFiles(_getDataPath())
+
+    username = request.args.get('username')
+
+    if username is None:
+        dataPath = _getDataPath()
+    else:
+        #dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
+        dataPath = str(DATA_DIRECTORY) + "/127108998/"
+
+    library = analyze.loadLibraryFromFiles(dataPath)
     if library is None:
         return render_template('dataload.html', subheader_message="",
                                library=library,
@@ -402,6 +435,83 @@ def getPlaylistDashboard():
 
 
 
+
+@app.route('/publicPlaylistDashboard')
+def getPublicPlaylistDashboard():
+    library = analyze.loadLibraryFromFiles(str(DATA_DIRECTORY)+"/127108998/")
+    if library is None:
+        return render_template('dataload.html', subheader_message="",
+                               library=library,
+                               **session)
+
+    playlistName = request.args.get('playlistName')
+    playlist = None
+    if playlistName is not None:
+        subheader_message = "Playlist " + playlistName
+        for playlist in library['playlists-tracks']:
+            if playlist['name'] == playlistName:
+                break
+    else:
+        subheader_message = "Playlists count: " + str(len(library['playlists-tracks']))
+        tracks = library['playlists-tracks']
+
+
+
+    #library= {}
+    #library['tracks'] = tracks
+
+    return render_template('playlistDashboard.html', playlistName=playlistName, playlist=playlist,
+                           subheader_message=subheader_message,
+                           library=library,
+                            **session)
+
+
+
+
+
+@app.route('/randomPlaylist')
+#@login_required
+def getRandomPlaylist():
+
+    #username = request.args.get('username')
+
+    #if username is None:
+    #    dataPath = _getDataPath()
+    #else:
+        #dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
+    #    dataPath = str(DATA_DIRECTORY) + "/127108998/"
+
+
+    #playlistName = request.args.get('playlistName')
+
+    playlists = None
+
+    while playlists is None:
+        username = analyze.getRandomUsername(DATA_DIRECTORY)
+        library = analyze.loadLibraryFromFiles(DATA_DIRECTORY + "/" + username + "/")
+        if library is not None and library['playlists'] is not None and len(library['playlists'])>0:
+            playlists = library['playlists']
+
+    playlist = None
+
+    while playlist is None:
+
+        r = random.randint(0, len(playlists) - 1)
+        randomPlaylist = playlists[r]
+
+        if len(library['playlists-tracks'][r]) > 1:
+            playlist = library['playlists-tracks'][r]
+            playlistName = playlist['name']
+            subheader_message = "Playlist '" + playlistName+"'"
+
+
+    #library= {}
+    #library['tracks'] = tracks
+
+    return render_template('randomPlaylist.html', playlistName=playlistName, playlist=playlist,
+                           subheader_message=subheader_message,
+                           library=library,
+                            **session)
 
 
 @app.route('/dataload')
@@ -593,7 +703,7 @@ def _retrieveSpotifyData(session):
     _setUserSessionMsg(infoMsg)
     library = {}
     print("retrieving profile...")
-    #userId = getAllMeItems('')
+    profile = getAllMeItems('')
 
     file_path = _getDataPath()
 
@@ -609,15 +719,6 @@ def _retrieveSpotifyData(session):
     library['toptracks_medium_term'] = getAllMeItems('top/tracks', file_path, "medium_term")
     library['toptracks_long_term'] = getAllMeItems('top/tracks', file_path, "long_term")
 
-    print("retrieving playlists...")
-    #_setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
-    library['playlists'] = getAllMeItems('playlists', file_path)
-
-    print("retrieving playlist tracks...")
-    # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
-    # when retrieving all user playlists, tracks are not included so we need to do another request
-    # in the end we will have all playlists with their tracks for the user
-    library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
 
     print("retrieving tracks...")
     #_setUserSessionMsg("Loading tracks..." + analyze.getLibrarySize(library))
@@ -629,6 +730,17 @@ def _retrieveSpotifyData(session):
     #_setUserSessionMsg("Loading audio features..." )
     library['audio_features'] = getAudioFeatures(library['tracks'], file_path)
     _setUserSessionMsg("All data loaded <br>"+analyze.getLibrarySize(library))
+
+    print("retrieving playlists...")
+    # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
+    library['playlists'] = getAllMeItems('playlists', file_path)
+
+    print("retrieving playlist tracks...")
+    # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
+    # when retrieving all user playlists, tracks are not included so we need to do another request
+    # in the end we will have all playlists with their tracks for the user
+    library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
+
     print("All data downloaded "+analyze.getLibrarySize(library))
     return library
 
@@ -661,13 +773,16 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
         print ("response had an error ", response['error']['status'])
         print ("")
 
-    if len(itemtype) == 0:
-        return [response.get('id'), response.get('display_name')]
+    #if len(itemtype) == 0:
+    #    return [response.get('id'), response.get('display_name')]
 
-    items = response['items']
+    items = response.get('items')
+    if items is None:
+        saveData(str(DATA_DIRECTORY)+"/"+response.get('id')+"/", "profile", time_range, response)
+        return response
 
     received = response['limit']*(response['offset'])
-    ids=[]
+    ids = []
 
     while (len(items) < response['total']):
         offset+=limit
@@ -699,6 +814,12 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
         if item.get('available_markets'):
             item['available_markets'] = None
 
+    saveData(file_path, itemtype, time_range, items)
+
+    return items
+
+
+def saveData(file_path, itemtype, time_range, d):
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -708,9 +829,7 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
         time_range = "_"+time_range
 
     with (open(file_path+'/'+str(itemtype)+str(time_range)+'.json', "w")) as outfile:
-        json.dump(items, outfile, indent=4)
-
-    return items
+        json.dump(d, outfile, indent=4)
 
 
 @app.route('/audio_features')
@@ -922,6 +1041,9 @@ def analyzeLocal():
 @login_required
 def getFavoriteArtistsOverTime(file_path='data/'):
     #print ("retrieving audio features...")
+
+    library = analyze.loadRandomLibrary(DATA_DIRECTORY)
+
     library = analyze.loadLibraryFromFiles(_getDataPath())
 
     if library is None or library.get('topartists_short_term') is None:
@@ -938,6 +1060,7 @@ def getFavoriteArtistsOverTime(file_path='data/'):
     return render_template('favorite_artists_over_time.html', sortedA=None,
                            subheader_message='',
                            plot=bar, **session)
+
 
 
 

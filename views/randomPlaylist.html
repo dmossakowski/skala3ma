@@ -30,7 +30,7 @@
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 						<br>
 						<h3>{{ subheader_message }} </h3>{% if playlistName is not none  %}
-				<a href="playlistDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+
 
 
 
@@ -77,8 +77,8 @@
                 <tr><td>
 					{% if key['images']|length >0 %}
 
-							<a href="playlistDashboard?playlistName={{key['name']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
-					{% endif %}
+							<a href="playlistDashboard?playlistName={{key['name']}}"><img class="img-responsive" src="{{ key['images'][0]['url'] }}" alt="" width="100"></a>
+							{% endif %}
 
 					</td>
 					<td><a href="playlistDashboard?playlistName={{key['name']}}"><b>{{key['name']}}</b></a></td> <td><i>{{key['description']}}</i></td>
