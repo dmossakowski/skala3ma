@@ -133,7 +133,9 @@ def index():
     if session.get('username'):
         genres = analyze.getTopGenreSet(library)
         hellomsg = 'Welcome '+session.get('username')
-        profile = library['profile']
+        profile = None
+        if library is not None:
+            profile = library.get('profile')
         if profile is None:
             profileimageurl=None
             display_name = session.get('username')
@@ -468,6 +470,8 @@ def getPublicPlaylistDashboard():
 
 
 
+def publicPlaylist(playlist):
+    return playlist['public'] is True and len(playlist['tracks']['items']) > 2
 
 @app.route('/randomPlaylist')
 #@login_required
@@ -486,23 +490,38 @@ def getRandomPlaylist():
 
     playlists = None
 
-    while playlists is None:
-        username = analyze.getRandomUsername(DATA_DIRECTORY)
-        library = analyze.loadLibraryFromFiles(DATA_DIRECTORY + "/" + username + "/")
-        if library is not None and library['playlists'] is not None and len(library['playlists'])>0:
-            playlists = library['playlists']
+    #while playlists is None:
+    #    username = analyze.getRandomUsername(DATA_DIRECTORY)
+    #    library = analyze.loadLibraryFromFiles(DATA_DIRECTORY + "/" + username + "/")
+    #    if library is not None and library['playlists'] is not None and len(library['playlists'])>0:
+    #        playlists = library['playlists']
 
-    playlist = None
+    playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
 
-    while playlist is None:
+    if playlist is None:
+        return render_template('dataload.html', sortedA=None,
+                               subheader_message="",
+                               library={},
+                               **session)
 
-        r = random.randint(0, len(playlists) - 1)
-        randomPlaylist = playlists[r]
+    #while playlists is None or len(playlists)==0:
+    #    playlists = analyze.getRandom(DATA_DIRECTORY, 'playlists-tracks')
 
-        if len(library['playlists-tracks'][r]) > 1:
-            playlist = library['playlists-tracks'][r]
-            playlistName = playlist['name']
-            subheader_message = "Playlist '" + playlistName+"'"
+    #r = random.randint(0, len(playlists) - 1)
+
+    #for i in range(0,len(playlists)):
+    #    i = (i + r)%len(playlists)
+    #    if playlists[i]['public'] is True:
+    #        playlist = playlists[i]
+    #        break
+
+    #for playlist in playlists:
+    #    if playlist['public'] is True:
+    #print(' playlist is public ' +playlist['name']+ ' owner:'+playlist['owner']['display_name'])
+
+
+    playlistName = playlist['name']
+    subheader_message = "Playlist '" + playlistName+"'"
 
 
     #library= {}
@@ -510,7 +529,7 @@ def getRandomPlaylist():
 
     return render_template('randomPlaylist.html', playlistName=playlistName, playlist=playlist,
                            subheader_message=subheader_message,
-                           library=library,
+                           library=None,
                             **session)
 
 
@@ -729,7 +748,7 @@ def _retrieveSpotifyData(session):
     print("retrieving audio_features...")
     #_setUserSessionMsg("Loading audio features..." )
     library['audio_features'] = getAudioFeatures(library['tracks'], file_path)
-    _setUserSessionMsg("All data loaded <br>"+analyze.getLibrarySize(library))
+
 
     print("retrieving playlists...")
     # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
@@ -741,6 +760,7 @@ def _retrieveSpotifyData(session):
     # in the end we will have all playlists with their tracks for the user
     library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
 
+    _setUserSessionMsg("All data loaded <br>" + analyze.getLibrarySize(library))
     print("All data downloaded "+analyze.getLibrarySize(library))
     return library
 
@@ -956,6 +976,7 @@ def getPlaylistTracks(playlists, file_path='data/'):
 
     for playlist in playlists:
         id = playlist["id"]
+        name = playlist["name"]
         #ids.append(id)
         limit-=1
         #if (limit == 0 or (len(tracks)+len(ids))==len(playlists)):
@@ -966,15 +987,24 @@ def getPlaylistTracks(playlists, file_path='data/'):
             #break
             featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
 
-        next = featureBatch['tracks']['next']
-        while next is not None:
-            featureBatch2 = retrieveAudioFeatures(next, auth_header)
-            featureBatch['tracks']['items'].extend(featureBatch2['items'])
-            next = featureBatch2['next']
+        featureBatchTracks = featureBatch.get('tracks')
+        if featureBatchTracks is None:
+            print('skipping playlist which has no tracks ' + str(name))
+            continue
+
+        if featureBatchTracks.get('next') is not None and len(featureBatch['tracks']['items']) < 80:
+            next = featureBatch['tracks']['next']
+            while next is not None:
+                featureBatch2 = retrieveAudioFeatures(next, auth_header)
+                featureBatch['tracks']['items'].extend(featureBatch2['items'])
+                next = featureBatch2['next']
+
+
         #featureBatch = featureBatch.get('audio_features')
         #lastFeatureBatch = featureBatch
         #tracks += featureBatch
         _setUserSessionMsg('Loading playlists... ' + str(len(playlistsWithTracks)) + '/' + str(len(playlists)))
+        #print (" size "+str(len(featureBatch['tracks']['items'])))
         #limit = 100
         #ids.clear()
         playlistsWithTracks.append(featureBatch)

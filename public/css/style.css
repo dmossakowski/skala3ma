@@ -1056,11 +1056,11 @@ div.cs-select span {
   display: inline-block;
   margin-bottom: 20px; }
 .fh5co-blog .blog-text span.posted_by {
-  color: rgba(0, 0, 0, 0.3); }
+  color: rgba(0, 0, 0, 0.5); }
 .fh5co-blog .blog-text span.comment {
   float: right; }
 .fh5co-blog .blog-text span.comment a {
-  color: rgba(0, 0, 0, 0.3); }
+  color: rgba(0, 0, 0, 0.5); }
 .fh5co-blog .blog-text span.comment a i {
   color: #44C662;
   padding-left: 7px; }

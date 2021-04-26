@@ -120,12 +120,16 @@
 									<br>
 									<span class="posted_by">{{ track['track']['dateaddedDisplay'] }}</span>
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+								{% if track['track']['preview_url'] != None %}
+
+
 
 									<audio id="trackPreview{{ loop.index }}"  preload="auto">
 									<source src="{{ track['track']['preview_url'] }}" controls></source>
 									Your browser isn't invited for super fun time.
 									</audio>
-
+									{% else %}
+								{% endif %}
 
 								</div>
 							</div>

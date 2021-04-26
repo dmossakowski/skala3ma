@@ -143,10 +143,14 @@
                 <tr ><td>
 
 					<div >
+						{% if track['track']['preview_url'] != None %}
+
 			<audio id="trackPreview2{{ loop.index }}"  preload="auto">
 									<source src="{{ track['track']['preview_url'] }}" controls></source>
 									Your browser isn't invited for super fun time.
 									</audio>
+
+						{% endif %}
 
 					{% if  track['track']['album']['images'][0]['url']  |length >0 %}
 
