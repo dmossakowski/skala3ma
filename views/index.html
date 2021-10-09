@@ -54,6 +54,8 @@
 
 				{% endif %}
 
+
+
 	<div style="text-align: left;">This site is a collection of various types of analysis on your Spotify data and a test bed
 		for learning Python and data analysis.
 
@@ -69,27 +71,15 @@
 	{% endif %}
 
 
+<div id="fblikebutton"  class="fb-like" data-href="https://www.facebook.com/AdditiveSpotifyAnalyzer" data-width="" data-layout="button" data-action="like" data-size="small" data-share="true"></div>
+
+
 <div style="text-align: center;">
 		<br>
 <img src="public/images/spotify-app-logo.png">
 </div>
 
 
-		<h4>Updates</h4>
-
-		<li>20210317 -  Added <a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a> for the app!
-
-		<li>20210316 -  Added <a href="/playlistDashboard">playlist dashboard</a>
-		 which shows all your private and followed playlists; another view opens the playlist with full track list and a sample preview.
-
-</li>
-		<li>20210313 -  Added filters to <a href="/trackslist">tracks list</a>
-		 using Bootstrap extension bootstrap-table-filter-control as per
-			<a href="https://examples.bootstrap-table.com/#extensions/filter-control.html">this site</a>. You can filter on all columns.
-</li>
-		<li>20210112 -  Added new Plotly chart for <a href="/favorite_artists_over_time">favorite artists</a> -
-		is an analysis on your top artists across time. You can also read an article about it on
-						<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1">Hackernoon</a></li>
 	</div><br><br>
 
 
@@ -103,12 +93,14 @@
 
 	<!--h4><a href="/datadownload">Update all Spotify data</a></li></h4-->
 
+						{% if plot is defined and plot %}
     <div class="chart" id="bargraph">
     <script>
         var graphs = {{plot | safe}};
         Plotly.plot('bargraph',graphs,{});
     </script>
     </div>
+						{% endif %}
 </div>
 				</div>
 {% endblock %}

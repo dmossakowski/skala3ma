@@ -5,10 +5,19 @@ import plotly.graph_objects as go
 import datetime
 import functools as functools
 from sklearn.preprocessing import MinMaxScaler
+import logging
 
 import analyze
 
 from sklearn.cluster import KMeans
+from functools import lru_cache
+
+
+def cache_clear():
+    logging.info(" create_top_artists_graph cache_info:" + str(create_top_artists_graph.cache_info()))
+    create_top_artists_graph.cache_clear()
+    logging.info(" create_dataseries cache_info:" + str(create_dataseries.cache_info()))
+    create_dataseries.cache_clear()
 
 
 def _getFeatures(dataPath, keys=['danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness',
@@ -152,6 +161,7 @@ def create_dataseriesOrig(dataPath):
 
 # this is called from Audio Features Graph
 #
+@lru_cache(maxsize=128)
 def create_dataseries(dataPath):
     keys = ['danceability', 'energy', 'key', 'loudness', 'speechiness', 'acousticness', 'instrumentalness']
     keys = ['danceability', 'energy', 'key', 'loudness', 'valence', 'speechiness', 'tempo', 'time_signature']
@@ -213,7 +223,7 @@ def create_dataseries(dataPath):
         #dataSeries = np.delete(dataSeries, dataSeriesMsk, axis=0)
         #dataToDisplay = np.delete(dataToDisplay, dataSeriesMsk)
         #dataToDisplay = np.delete(dataToDisplay, dataSeriesMsk, axis=2)
-    print(" removed " )
+    logging.info(" removed " )
     #dataToDisplay = np.delete(dataToDisplay, dataSeriesMsk)
     #for i, item in enumerate(dataSeries):
      #   for j, key in enumerate(keys):
@@ -248,6 +258,7 @@ def create_dataseries(dataPath):
 
 
 # this is called to create favorite artists graph
+@lru_cache(maxsize=128)
 def create_top_artists_graph(dataPath):
     fullLib = analyze.loadLibraryFromFiles(dataPath)
 

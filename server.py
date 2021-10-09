@@ -23,6 +23,9 @@ import time
 import datetime
 import threading
 import random
+import logging
+import sqlite3 as lite
+
 
 load_dotenv()
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
@@ -35,6 +38,7 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
 SPOTIFY_APP_SECRET = os.getenv('SPOTIFY_APP_SECRET')
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
 
 app = Flask(__name__, static_folder='public', template_folder='views')
 
@@ -49,6 +53,61 @@ session_dataLoadingProgressMsg = 'dataLoadingProgressMsg'
 
 gdata = {}
 templateArgs = {}
+processedDataDir = "/additivespotifyanalyzer"
+
+
+#logging.basicConfig(filename=DATA_DIRECTORY+'/std.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',
+ #                   encoding='utf-8', level=logging.DEBUG)
+
+@app.before_first_request
+def init():
+    print ('initializing server...')
+
+    r = random.randint(0, 10000)
+    init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
+    # init_logging(console_loglevel=logging.DEBUG)
+
+    if not os.path.exists(DATA_DIRECTORY):
+        print("DATA_DIRECTORY does not exist... this will not end welll....")
+
+    if not os.path.exists(DATA_DIRECTORY+"/users"):
+        os.mkdir(DATA_DIRECTORY+"/users")
+        print('Created users directory')
+
+    if not os.path.exists(DATA_DIRECTORY + "/db"):
+        os.mkdir(DATA_DIRECTORY + "/db")
+        print('Created db directory')
+
+    analyze.init()
+
+def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
+    """Set up logging to file and console."""
+    if log_file is not None:
+        if append:
+            filemode_val = 'a'
+        else:
+            filemode_val = 'w'
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
+                            # datefmt='%m-%d %H:%M',
+                            filename=log_file,
+                            filemode=filemode_val)
+    # define a Handler which writes INFO messages or higher to the sys.stderr
+
+    console = logging.StreamHandler()
+    console.setLevel(console_loglevel)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter("%(asctime)s %(message)s")
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
+    #global LOG
+    #LOG = logging.getLogger(__name__)
+
+
+init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
+#init_logging(console_loglevel=logging.DEBUG)
+
 
 class ExportingThread(threading.Thread):
     def __init__(self):
@@ -87,13 +146,13 @@ def login_required(fn):
 
 def fetch_token():
     #log.info('fetch_token')
-    print ("fetching token... ")
+    logging.info ("fetching token... ")
     return session.get('token')
 
 
 def update_token(name, token, refresh_token=None, access_token=None):
     #log.info('update_token')
-    print ("updating token... ")
+    logging.info ("updating token... ")
     session['token'] = token
     return session['token']
 
@@ -164,7 +223,7 @@ def index():
 
 @app.route('/login')
 def login():
-    print ("doing login",str(request.referrer)," client_id",str(SPOTIFY_APP_ID))
+    logging.info ("doing login "+str(request.referrer)+" client_id "+str(SPOTIFY_APP_ID))
 
     callback = url_for('spotify_authorized', _external=True)
 
@@ -181,13 +240,13 @@ def login():
 
 @app.route('/revoke')
 def revoke():
-    print ("doing revoke")
+    logging.info ("doing revoke")
     spotify.revoke()
 
 
 @app.route('/logout')
 def logout():
-    print("doing revoke")
+    logging.info("doing revoke")
     session.pop('token', None)
     session.pop('username', None)
     session.pop('wants_url', None)
@@ -216,18 +275,18 @@ def logout():
 
 @app.route('/login/authorized')
 def spotify_authorized():
-    print("spotify is calling /login/authorized ...")
+    logging.info("spotify is calling /login/authorized ...")
     try:
         error = request.args.get('error')
-        print(str(request))
+        logging.info(str(request))
 
         if str(error) == 'access_denied':
-            print ("access is denied ",error)
+            logging.info ("access is denied ",error)
             return render_template('index.html', subheader_message="Not authorized", library={}, **session)
 
         #acc = spotify.fetch_access_token(scope='user-library-read')
         resp = spotify.authorize_access_token()
-        print ("spotify calls us now ", str(resp))
+        logging.info ("spotify calls us now " + str(resp))
         if resp is None:
             return 'Access denied: reason={0} error={1}'.format(
                 request.args['error_reason'],
@@ -278,7 +337,7 @@ def spotify_authorized():
            # request.args.get('next')
         #)
     except OAuthError as e:
-        print (" error in authentication ", traceback.format_exc())
+        logging.info(" error in authentication ", traceback.format_exc())
         return render_template('index.html',
                                subheader_message="Authentication error "+str(traceback.format_exc()),
                                library={},
@@ -287,12 +346,12 @@ def spotify_authorized():
 
 @app.route('/api/token')
 def spotify_token():
-    print ("spotify is calling /api/token ...")
+    logging.info("spotify is calling /api/token ...")
 
 
 def refreshToken():
     if (session==None or session.get('token')==None):
-        print(" no valid seession, need to login")
+        logging.info(" no valid seession, need to login")
         return login()
 
     oauthtoken = session['token']['refresh_token']
@@ -311,7 +370,7 @@ def refreshToken():
     #token = t.fetch_token()
     responseraw = requests.post(api_url, data=payloadEncoded, headers=auth_header)
     if (responseraw.status_code==400):
-        print(" error response received when refreshing the token "+responseraw.text)
+        logging.info(" error response received when refreshing the token "+responseraw.text)
         return
     response = json.loads(responseraw.text)
 
@@ -336,9 +395,9 @@ def downloadData():
     def handle_sub_view(session):
         with app.test_request_context():
             from flask import request
-            print(" starting new thread "+str(session.get('username')))
+            logging.info(" starting new thread "+str(session.get('username')))
             #request = req
-            print(request.url)
+            logging.info(request.url)
             # Do Expensive work
             _retrieveSpotifyData(session)
 
@@ -374,7 +433,7 @@ def getOrphanedTracks():
     if username is None:
         dataPath = _getDataPath()
     else:
-        dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
+        dataPath = str(DATA_DIRECTORY)+"/users/"+username+ "/"
 
     library = analyze.loadLibraryFromFiles(dataPath)
     if library is None:
@@ -406,7 +465,7 @@ def getPlaylistDashboard():
         dataPath = _getDataPath()
     else:
         #dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
-        dataPath = str(DATA_DIRECTORY) + "/127108998/"
+        dataPath = str(DATA_DIRECTORY) + "/users/127108998/"
 
     library = analyze.loadLibraryFromFiles(dataPath)
     if library is None:
@@ -414,21 +473,23 @@ def getPlaylistDashboard():
                                library=library,
                                **session)
 
-    playlistName = request.args.get('playlistName')
+    playlistId = request.args.get('playlistId')
+    playlistName = None
     playlist = None
-    if playlistName is not None:
+    if playlistId is not None:
+        playlist = analyze.getPlaylist(session['id'], library['playlists'], playlistId)
+        playlist = playlist[0] #getPlaylist always returns a list
+        playlistName = playlist['name']
         subheader_message = "Playlist " + playlistName
-        for playlist in library['playlists-tracks']:
-            if playlist['name'] == playlistName:
-                break
     else:
-        subheader_message = "Playlists count: " + str(len(library['playlists-tracks']))
-        tracks = library['playlists-tracks']
+        subheader_message = "Playlists count: " + str(len(library['playlists']))
+        library['playlists-tracks'] = analyze.getPlaylist(session['id'], library['playlists'])
+        tracks = library['playlists']
 
-
-
-    #library= {}
-    #library['tracks'] = tracks
+    if playlist is None and library['playlists-tracks'] is None:
+        return render_template('dataload.html', subheader_message="",
+                                   library=library,
+                                   **session)
 
     return render_template('playlistDashboard.html', playlistName=playlistName, playlist=playlist,
                            subheader_message=subheader_message,
@@ -440,7 +501,7 @@ def getPlaylistDashboard():
 
 @app.route('/publicPlaylistDashboard')
 def getPublicPlaylistDashboard():
-    library = analyze.loadLibraryFromFiles(str(DATA_DIRECTORY)+"/127108998/")
+    library = analyze.loadLibraryFromFiles(str(DATA_DIRECTORY)+"/users/127108998/")
     if library is None:
         return render_template('dataload.html', subheader_message="",
                                library=library,
@@ -473,30 +534,35 @@ def getPublicPlaylistDashboard():
 def publicPlaylist(playlist):
     return playlist['public'] is True and len(playlist['tracks']['items']) > 2
 
-@app.route('/randomPlaylist')
+
+@app.route('/testdb')
+def testDB():
+    logging.info("testing db")
+    playlistName = request.args.get('name')
+
+    ret = "done"
+    if playlistName is not None:
+        ret = analyze.testDb(playlistName)
+
+    #playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
+    #playlistId = playlist['id']
+    #logging.info("playlist " + str(playlist))
+    return ret
+    #return redirect(url_for('getRandomPlaylist', playlistId=playlistId))
+
+
+@app.route('/playlist')
 #@login_required
-def getRandomPlaylist():
+def getPlaylist():
+    playlistId = request.args.get('playlistId')
 
-    #username = request.args.get('username')
+    # r = request
+    # username = request.args.get('username')
 
-    #if username is None:
-    #    dataPath = _getDataPath()
-    #else:
-        #dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
-    #    dataPath = str(DATA_DIRECTORY) + "/127108998/"
+    playlist = None
 
-
-    #playlistName = request.args.get('playlistName')
-
-    playlists = None
-
-    #while playlists is None:
-    #    username = analyze.getRandomUsername(DATA_DIRECTORY)
-    #    library = analyze.loadLibraryFromFiles(DATA_DIRECTORY + "/" + username + "/")
-    #    if library is not None and library['playlists'] is not None and len(library['playlists'])>0:
-    #        playlists = library['playlists']
-
-    playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
+    if playlistId is not None:
+        playlist = analyze.getPublicPlaylist(playlistId)
 
     if playlist is None:
         return render_template('dataload.html', sortedA=None,
@@ -504,33 +570,63 @@ def getRandomPlaylist():
                                library={},
                                **session)
 
-    #while playlists is None or len(playlists)==0:
-    #    playlists = analyze.getRandom(DATA_DIRECTORY, 'playlists-tracks')
-
-    #r = random.randint(0, len(playlists) - 1)
-
-    #for i in range(0,len(playlists)):
-    #    i = (i + r)%len(playlists)
-    #    if playlists[i]['public'] is True:
-    #        playlist = playlists[i]
-    #        break
-
-    #for playlist in playlists:
-    #    if playlist['public'] is True:
-    #print(' playlist is public ' +playlist['name']+ ' owner:'+playlist['owner']['display_name'])
-
+    #https: // localhost: 5000 / playlist?playlistId = 6
+    #HoWLyjABf4N7oSItTrv94
+    #https: // localhost: 5000 / playlist?playlistId = 1
+    #KQnGup7xI7Zyk9lBhcoD5
 
     playlistName = playlist['name']
-    subheader_message = "Playlist '" + playlistName+"'"
+    subheader_message = "Playlist '" + playlistName + "' by "+playlist['owner']['display_name']
 
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
 
-    #library= {}
-    #library['tracks'] = tracks
-
-    return render_template('randomPlaylist.html', playlistName=playlistName, playlist=playlist,
+    return render_template("randomPlaylist.html", playlistName=playlistName, playlist=playlist,
                            subheader_message=subheader_message,
                            library=None,
-                            **session)
+                           **session)
+
+
+@app.route('/randomPlaylist')
+#@login_required
+def getRandomPlaylist():
+
+
+    #playlistName = request.args.get('playlistName')
+
+    #playlists = None
+
+    #while playlists is None:
+    #    username = analyze.getRandomUsername(DATA_DIRECTORY)
+    #    library = analyze.loadLibraryFromFiles(DATA_DIRECTORY + "/" + username + "/")
+    #    if library is not None and library['playlists'] is not None and len(library['playlists'])>0:
+    #        playlists = library['playlists']
+
+    #logging.info("getting random playlist")
+
+    playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
+
+
+    #playlist = None
+
+    if playlist is None:
+        return render_template('dataload.html', sortedA=None,
+                               subheader_message="",
+                               library={},
+                               **session)
+
+
+    playlistId = playlist['id']
+    logging.info("playlist " + str(playlist))
+
+    return redirect(url_for('getPlaylist', playlistId=playlistId))
 
 
 @app.route('/dataload')
@@ -605,7 +701,7 @@ def _setUserSessionMsg(msg='', msgtype=''):
 
 def _getDataPath():
     if (session.get('id')):
-        return str(DATA_DIRECTORY)+"/"+session['id']+"/"
+        return str(DATA_DIRECTORY)+"/users/"+session['id']+"/"
     return str(DATA_DIRECTORY)+"/"
 
 
@@ -647,7 +743,7 @@ def progressstart():
     while x <= max:
         #session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
         _setUserSessionMsg("Loading fake data: "+str(x)+"/"+str(max)+" at "+str(datetime.datetime.now()))
-        print("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
+        logging.info("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
               + ' session: ' + session['dataLoadingProgressMsg']
               + ' gdata:' + _getUserSessionMsg())
         x = x + 1
@@ -685,13 +781,13 @@ def generate(sessionLocal):
 @app.route('/progress')
 def progress():
     if session.get('dataLoadingProgressMsg') is None:
-        print('setting dataLoadingProgressMsg to empty')
+        logging.info('setting dataLoadingProgressMsg to empty')
         session['dataLoadingProgressMsg'] = ''
 
     if _getUserSessionMsg() is None:
         _setUserSessionMsg('')
 
-    print('progress called. gdata:' + _getUserSessionMsg() + ' has: '+session.get('dataLoadingProgressMsg'))
+    logging.info('progress called. gdata:' + _getUserSessionMsg() + ' has: '+session.get('dataLoadingProgressMsg'))
     #@copy_current_request_context
 
     return Response(stream_with_context(generate(session)), mimetype='text/event-stream')
@@ -703,10 +799,10 @@ def progressSimple():
     if session.get('dataLoadingProgressMsg') is None:
         session.dataLoadingProgressMsg = ''
 
-    print("progress started")
+    logging.info("progress started")
     def generateOLD():
         x = 0
-        print(str(datetime.datetime.now()))
+        logging.info(str(datetime.datetime.now()))
         yield "data:" + str(x) + " - " + str(datetime.datetime.now()) + "\n\n"
         #while x <= 100:
         #    yield "data:" + str(x) + "\n msg: "+ str(datetime.date) + "\n\n"
@@ -721,52 +817,57 @@ def _retrieveSpotifyData(session):
     infoMsg = 'Loading profile...'
     _setUserSessionMsg(infoMsg)
     library = {}
-    print("retrieving profile...")
+    logging.info("retrieving profile...")
     profile = getAllMeItems('')
 
     file_path = _getDataPath()
 
-    print("retrieving top artists...")
+    logging.info("retrieving top artists...")
     #_setUserSessionMsg("Loading top artists..." + analyze.getLibrarySize(library))
     library['topartists_short_term'] = getAllMeItems('top/artists', file_path, "short_term")
     library['topartists_medium_term'] = getAllMeItems('top/artists', file_path, "medium_term")
     library['topartists_long_term'] = getAllMeItems('top/artists', file_path, "long_term")
 
-    print("retrieving top tracks...")
+    logging.info("retrieving top tracks...")
     #_setUserSessionMsg("Top artists loaded. Loading top tracks..." + analyze.getLibrarySize(library))
     library['toptracks_short_term'] = getAllMeItems('top/tracks', file_path, "short_term")
     library['toptracks_medium_term'] = getAllMeItems('top/tracks', file_path, "medium_term")
     library['toptracks_long_term'] = getAllMeItems('top/tracks', file_path, "long_term")
 
 
-    print("retrieving tracks...")
+    logging.info("retrieving tracks...")
     #_setUserSessionMsg("Loading tracks..." + analyze.getLibrarySize(library))
     library['tracks'] = getAllMeItems('tracks', file_path)
-    print("retrieving albums...")
+    logging.info("retrieving albums...")
     #_setUserSessionMsg("Loading albums..." + analyze.getLibrarySize(library))
     library['albums'] = getAllMeItems('albums', file_path)
-    print("retrieving audio_features...")
+    logging.info("retrieving audio_features...")
     #_setUserSessionMsg("Loading audio features..." )
     library['audio_features'] = getAudioFeatures(library['tracks'], file_path)
 
 
-    print("retrieving playlists...")
+    logging.info("retrieving playlists...")
     # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
     library['playlists'] = getAllMeItems('playlists', file_path)
 
-    print("retrieving playlist tracks...")
+    logging.info("retrieving playlist tracks...")
     # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
     # when retrieving all user playlists, tracks are not included so we need to do another request
     # in the end we will have all playlists with their tracks for the user
     library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
 
     _setUserSessionMsg("All data loaded <br>" + analyze.getLibrarySize(library))
-    print("All data downloaded "+analyze.getLibrarySize(library))
+    logging.info("All data downloaded "+analyze.getLibrarySize(library))
+
+    #expire cache in analyze to force reload files from disk
+    analyze.cache_clear()
+    saagraph.cache_clear()
+
     return library
 
 
 def getAllMeItems(itemtype, file_path=None, time_range=""):
-    print ("Retrieving data from spotify for type ", itemtype)
+    logging.info ("Retrieving data from spotify for type " + str(itemtype))
     _setUserSessionMsg('Loading ' + str(itemtype)+'...')
     oauthtoken = session['token']['access_token']
 
@@ -778,7 +879,7 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
         api_url = 'https://api.spotify.com/v1/me/{}'.format(itemtype)
     # api_url = 'https://api.spotify.com/v1/me/playlists'
 
-    print("url used " + str(api_url))
+    logging.info("url used " + str(api_url))
     limit = 50
     offset = 0
     lastbatch = []
@@ -790,15 +891,15 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
     # check if message='The access token expired'
     # status 401
     if ('error' in response):
-        print ("response had an error ", response['error']['status'])
-        print ("")
+        logging.info("response had an error %s", str(response['error']['status']))
+        logging.info("")
 
     #if len(itemtype) == 0:
     #    return [response.get('id'), response.get('display_name')]
 
     items = response.get('items')
     if items is None:
-        saveData(str(DATA_DIRECTORY)+"/"+response.get('id')+"/", "profile", time_range, response)
+        saveData(str(DATA_DIRECTORY)+"/users/"+response.get('id')+"/", "profile", time_range, response)
         return response
 
     received = response['limit']*(response['offset'])
@@ -815,7 +916,7 @@ def getAllMeItems(itemtype, file_path=None, time_range=""):
                 ids.append(track["track"]["id"])
         _setUserSessionMsg('Loading '+str(itemtype)+'... '+str(len(items))+'/'+str(response['total']))
 
-    print('retrieved '+str(itemtype)+' size '+str(len(items)))
+    logging.info('retrieved '+str(itemtype)+' size '+str(len(items)))
     _setUserSessionMsg('Loaded '+str(len(items))+' '+str(itemtype))
 
     for item in items:
@@ -849,7 +950,7 @@ def saveData(file_path, itemtype, time_range, d):
         time_range = "_"+time_range
 
     with (open(file_path+'/'+str(itemtype)+str(time_range)+'.json', "w")) as outfile:
-        json.dump(d, outfile, indent=4)
+        json.dump(d, outfile, indent=0)
 
 
 @app.route('/audio_features')
@@ -888,11 +989,11 @@ def getAudioFeatures(file_path='data/'):
 
 
 def getAudioFeatures(tracks, file_path='data/'):
-    print ("Retrieving audio features from spotify for tracks ")
+    logging.info ("Retrieving audio features from spotify for tracks ")
     if (session!=None and session.get('token')!=None):
         oauthtoken = session['token']['access_token']
     else:
-        print("not loggged in")
+        logging.info("not loggged in")
         return render_template('index.html', subheader_message="No oauthtoken.. bad flow ", library={}, **session)
 
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
@@ -909,9 +1010,9 @@ def getAudioFeatures(tracks, file_path='data/'):
         limit-=1
         if (limit == 0 or (len(features)+len(ids))==len(tracks)):
             api_url = api_url_base+"?ids=" + ",".join(ids)
-            featureBatch = retrieveAudioFeatures(api_url, auth_header)
+            featureBatch = retrieveBatch(api_url, auth_header)
             if featureBatch==None:
-                print('no features returned')
+                logging.info('no features returned')
                 #break
                 featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
 
@@ -931,7 +1032,7 @@ def getAudioFeatures(tracks, file_path='data/'):
 # this expects a url that retrieves some batch of data
 # the URL is not modified in the method and just the raw
 # results are returned
-def retrieveAudioFeatures(api_url, auth_header):
+def retrieveBatch(api_url, auth_header):
     payload = {}
     responseraw = requests.get(api_url, params=payload, headers=auth_header)
     response = json.loads(responseraw.text)
@@ -939,7 +1040,7 @@ def retrieveAudioFeatures(api_url, auth_header):
     # check if message='The access token expired'
     # status 401
     if 'error' in response:
-        print ("response had an error ", response['error']['status'])
+        logging.info ("response had an error ", response['error']['status'])
         if response['error']['status'] == 401:
             login()
             return None
@@ -958,11 +1059,11 @@ def retrieveAudioFeatures(api_url, auth_header):
 # this method loops over all playlists downloaded (public and private)
 # and it generates one json file for each playlist
 def getPlaylistTracks(playlists, file_path='data/'):
-    print ("Retrieving playlist tracks from spotify for all playlists ")
+    logging.info ("Retrieving playlist tracks from spotify for all playlists ")
     if (session!=None and session.get('token')!=None):
         oauthtoken = session['token']['access_token']
     else:
-        print("not loggged in")
+        logging.info("not loggged in")
         return render_template('index.html', subheader_message="No oauthtoken.. bad flow ", library={}, **session)
 
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
@@ -975,27 +1076,28 @@ def getPlaylistTracks(playlists, file_path='data/'):
     playlistsWithTracks=[]
 
     for playlist in playlists:
+        oneplaylistWithTracks=[]
         id = playlist["id"]
         name = playlist["name"]
         #ids.append(id)
         limit-=1
         #if (limit == 0 or (len(tracks)+len(ids))==len(playlists)):
         api_url = api_url_base+"" + id
-        featureBatch = retrieveAudioFeatures(api_url, auth_header)
+        featureBatch = retrieveBatch(api_url, auth_header)
         if featureBatch==None:
-            print('no features returned')
+            logging.info('no features returned')
             #break
             featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
 
         featureBatchTracks = featureBatch.get('tracks')
         if featureBatchTracks is None:
-            print('skipping playlist which has no tracks ' + str(name))
+            logging.info('skipping playlist which has no tracks ' + str(name))
             continue
 
         if featureBatchTracks.get('next') is not None and len(featureBatch['tracks']['items']) < 80:
             next = featureBatch['tracks']['next']
             while next is not None:
-                featureBatch2 = retrieveAudioFeatures(next, auth_header)
+                featureBatch2 = retrieveBatch(next, auth_header)
                 featureBatch['tracks']['items'].extend(featureBatch2['items'])
                 next = featureBatch2['next']
 
@@ -1007,7 +1109,7 @@ def getPlaylistTracks(playlists, file_path='data/'):
         #print (" size "+str(len(featureBatch['tracks']['items'])))
         #limit = 100
         #ids.clear()
-        playlistsWithTracks.append(featureBatch)
+        oneplaylistWithTracks.append(featureBatch)
 
         for item in featureBatch['tracks']['items']:
             if item.get('track'):
@@ -1025,9 +1127,12 @@ def getPlaylistTracks(playlists, file_path='data/'):
             if item.get('available_markets'):
                 item['available_markets'] = None
 
-    with (open(file_path+'/playlists-tracks.json', "w")) as outfile:
-        json.dump(playlistsWithTracks, outfile, indent=4)
+        #with (open(file_path+'/playlists-tracks'+str(id)+'.json', "w")) as outfile:
+        #    json.dump(oneplaylistWithTracks, outfile, indent=4)
 
+        playlistsWithTracks.append(oneplaylistWithTracks)
+
+    analyze.addPlaylists(playlistsWithTracks)
     return playlistsWithTracks
 
 
@@ -1070,9 +1175,7 @@ def analyzeLocal():
 @app.route('/favorite_artists_over_time')
 @login_required
 def getFavoriteArtistsOverTime(file_path='data/'):
-    #print ("retrieving audio features...")
-
-    library = analyze.loadRandomLibrary(DATA_DIRECTORY)
+    #logging.info ("retrieving audio features...")
 
     library = analyze.loadLibraryFromFiles(_getDataPath())
 
@@ -1101,7 +1204,7 @@ def getlibrary():
     library = analyze.loadLibraryFromFiles(_getDataPath())
 
     if library is None:
-        print(" library is None")
+        logging.info(" library is None")
     tracksWoAlbum = []
     analyze.process(library)
 
@@ -1146,5 +1249,10 @@ def blog():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', threaded=True, debug=True)
+    print('Executing main')
+    #init()
+    app.run(host='localhost', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+
+
+
 

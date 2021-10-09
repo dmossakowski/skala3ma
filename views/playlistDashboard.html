@@ -77,11 +77,24 @@
                 <tr><td>
 					{% if key['images']|length >0 %}
 
-							<a href="playlistDashboard?playlistName={{key['name']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
+						{% if key['public']  %}
+							<a href="playlist?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
+					 	{% else %}
+							<a href="playlistDashboard?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
+						{% endif %}
 					{% endif %}
 
 					</td>
-					<td><a href="playlistDashboard?playlistName={{key['name']}}"><b>{{key['name']}}</b></a></td> <td><i>{{key['description']}}</i></td>
+					<td>
+						{% if key['public']  %}
+							<a href="playlist?playlistId={{key['id']}}"><b>{{key['name']}} </b></a></td> <td><i>{{key['description']}}</i><br>
+						<a href="https://open.spotify.com/playlist/{{playlist['id']}}">
+								<img src="public/images/spotify-green-icon.png" width="20"></a></a>
+						{% else %}
+							<a href="playlistDashboard?playlistId={{key['id']}}"><b>{{key['name']}}</b></a></td> <td><i><br>{{key['description']}}</i></a>
+						{% endif %}
+
+					</td>
 					<td><i>{{key['owner']['display_name']}} </i></td><td class="text-right"> {{key['followers']['total']}}</td>
 					<td class="text-right"> {{key['tracks']['total']}}</td>
                     </tr>

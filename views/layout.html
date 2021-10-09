@@ -129,6 +129,55 @@
 
       });
  }
+
+
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '280503233781760',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v10.0'
+    });
+
+    FB.AppEvents.logPageView();
+
+    FB.getLoginStatus(function(response) {
+    	statusChangeCallback(response);
+	});
+
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+
+	function checkLoginState() {
+  		FB.getLoginStatus(function(response) {
+    		statusChangeCallback(response);
+  		});
+	}
+
+	function statusChangeCallback(response)
+	{
+		//console.log('layout.html statusChangeCallback');
+		//console.log(response)
+		if (response.status=="connected")
+		{
+			//console.log(' is connected boy')
+
+		}else{
+			//console.log(' iz no connect boy')
+			//document.getElementById("fbbutton").style.visibility="visible";
+		}
+	}
+
+// page id 106971141475589
+</script>
 	</script>
 
 
@@ -141,9 +190,13 @@
 
 		<header id="fh5co-header-section" class="sticky-banner">
 			<div class="container">
+
 				<div class="nav-header">
-					<a href="#" class="js-fh5co-nav-toggle fh5co-nav-toggle dark"><i></i></a>
+
+
 					<h1 id="fh5co-logo"><a href="/">Additive Spotify Analyzer</a> </h1>
+
+
 
 
 					<!-- START #fh5co-menu-wrap -->
@@ -151,10 +204,18 @@
 
 						<ul class="sf-menu" id="fh5co-primary-menu">
 
-							<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/" target="_blank"><i class="icon-github"></i></a></li>
-							<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank"><i class="icon-facebook2"></i></a></li>
-								<li><a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1" target="_blank"><i class="icon-dribbble2"></i></a>
+							<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/" target="_blank" title="GitHub"><i class="icon-github"></i></a>
+
+
+							</li>
+							<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
+
+</li>
+								<li><a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1" target="_blank" title="Hackernoon article"><i class="icon-dribbble2"></i></a>
 								</li>
+
+
+
 						{% if username is defined %}
 
 							<!--li><a href="/progresstest">Progress</a></li-->
@@ -198,12 +259,8 @@
 							<!--li><a href="blog.html">Blog</a></li-->
 							<!--li class="active"><a href="blog.html">Blog</a></li-->
 							<!--li><a href="contact.html">Contact</a></li-->
-							{% if username is defined %}
+							{% if username is not defined %}
 
-
-
-							<li><a href="/logout">Logout</a></li>
-							{% else %}
 							<li>
 								<a href="/#" class="fh5co-sub-ddown">Demo</a>
 								<ul class="fh5co-sub-menu">
@@ -215,11 +272,16 @@
 							</li>
 							<li><a href="/login">Login</a></li>
 							{% endif %}
+
+
 						</ul>
+
 					</nav>
 
 				</div>
+
 			</div>
+
 
 		</header>
 
@@ -269,6 +331,14 @@
 						<div class="col-lg-5">
 							<h3 class="section-title">Links</h3>
 							<ul>
+
+							{% if username is defined %}
+
+
+
+								<li><a href="/logout">Logout</a></li>
+							{% endif %}
+
 								<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a></li>
 
 								<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">GitHub discssion</a></li>
@@ -278,7 +348,19 @@
 									Hackernoon article on audio features time series</i></a></li>
 
 							</ul>
+
+
 						</div>
+
+						<div  class="col-md-2">
+
+<div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with" data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div>
+<br><br>
+
+
+
+				</div>
+
 					</div>
 					<div class="row">
 						<div class="col-md-12">
@@ -288,7 +370,7 @@
 								<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1"><i class="icon-dribbble2"></i></a>
 
 
-								<!--a href="#"><i class="icon-dribbble2"></i></a>
+						<!--a href="#"><i class="icon-dribbble2"></i></a>
 								<a href="#"><i class="icon-youtube"></i></a-->
 							</p>
 							<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
@@ -296,7 +378,6 @@
 						</div>
 					</div>
 				</div>
-			</div>
 		</footer>
 
 	
