@@ -78,7 +78,7 @@
 					{% if key['images']|length >0 %}
 
 						{% if key['public']  %}
-							<a href="playlist?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
+							<a href="playlist/{{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
 					 	{% else %}
 							<a href="playlistDashboard?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
 						{% endif %}
@@ -87,8 +87,8 @@
 					</td>
 					<td>
 						{% if key['public']  %}
-							<a href="playlist?playlistId={{key['id']}}"><b>{{key['name']}} </b></a></td> <td><i>{{key['description']}}</i><br>
-						<a href="https://open.spotify.com/playlist/{{playlist['id']}}">
+							<a href="playlist/{{key['id']}}"><b>{{key['name']}} </b></a></td> <td><i>{{key['description']}}</i><br>
+						<a href="https://open.spotify.com/playlist/{{key['id']}}" target="_blank">
 								<img src="public/images/spotify-green-icon.png" width="20"></a></a>
 						{% else %}
 							<a href="playlistDashboard?playlistId={{key['id']}}"><b>{{key['name']}}</b></a></td> <td><i><br>{{key['description']}}</i></a>

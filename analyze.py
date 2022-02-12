@@ -35,11 +35,8 @@ DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 PLAYLISTS_TRACKS_DB = DATA_DIRECTORY + "/db/playlists-tracks.sqlite"
 PLAYLISTS_TRACKS_TABLE = "playliststracks"
 
-processedDataDir = "/additivespotifyanalyzer"
 lru_cache.DEBUG = True
 
-publicPlaylistFile = {}
-publicPlaylistDb = None
 
 def init():
     logging.info('initializing analyze...')
@@ -331,7 +328,7 @@ def getRandomPlaylist(directory, dtype, restriction):
 
 
     logging.info("public playlists file is "+str(PLAYLISTS_TRACKS_DB))
-    #data = getOrGeneratePublicPlaylistsFile(directory,publicPlaylistFile, dtype, restriction)
+
 
     #if data is None:
     #    return None
@@ -784,7 +781,7 @@ def dataofish():
 
     kmeans = KMeans(n_clusters=3).fit(df)
     centroids = kmeans.cluster_centers_
-    print(centroids)
+    #print(centroids)
     xs = df['x']
     ys = df['y']
 

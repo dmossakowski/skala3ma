@@ -736,7 +736,7 @@ def dataofish():
 
     kmeans = KMeans(n_clusters=3).fit(df)
     centroids = kmeans.cluster_centers_
-    print(centroids)
+    #print(centroids)
     xs = df['x']
     ys = df['y']
 
