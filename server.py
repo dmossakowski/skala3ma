@@ -24,6 +24,8 @@ import datetime
 import threading
 import random
 import logging
+import competitionsEngine
+
 import sqlite3 as lite
 
 
@@ -527,6 +529,193 @@ def getPublicPlaylistDashboard():
                            subheader_message=subheader_message,
                            library=library,
                             **session)
+
+
+
+
+
+
+@app.route('/competitionDashboard')
+#@login_required
+def getCompetitionDashboard():
+
+    username = request.args.get('username')
+    name = request.args.get('name')
+    date = request.args.get('date')
+    gym = request.args.get('gym')
+    comp = {}
+    competitionId=None
+
+
+    if name is not None and date is not None and gym is not None:
+
+        competitionId = competitionsEngine.addCompetition(None, name, date, gym)
+        comp = competitionsEngine.getCompetition(competitionId)
+        return redirect(url_for('getCompetition', competitionId=competitionId))
+
+    subheader_message='Create new competition '
+    competitions= competitionsEngine.getCompetitions()
+
+    return render_template('competitionDashboard.html',
+                           subheader_message=subheader_message,
+                           competitions=competitions,
+                           competitionName=None,
+                            **session)
+
+
+
+@app.route('/competitionDashboard/<competitionId>/register')
+def addCompetitionClimber(competitionId):
+
+    username = request.args.get('username')
+    name = request.args.get('name')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+
+    comp = competitionsEngine.getCompetition(competitionId)
+    subheader_message = 'Please register for ' + comp['name'] + ' on ' + comp['date']
+
+    climber=None
+    if username is None:
+        dataPath = _getDataPath()
+    else:
+        #dataPath = str(DATA_DIRECTORY)+"/"+username+ "/"
+        dataPath = str(DATA_DIRECTORY) + "/users/127108998/"
+
+    if name is not None and sex is not None and club is not None:
+        climber = competitionsEngine.addClimber(None, competitionId, name, club, sex)
+        subheader_message = 'You have been registered! Thanks!'
+
+
+    competitions= competitionsEngine.getCompetitions()
+
+    return render_template('competitionClimber.html',
+                           subheader_message=subheader_message,
+                           competition=comp,
+                           competitionId=competitionId,
+                           climber=climber,
+                            **session)
+
+
+
+
+@app.route('/competitionDashboard/<competitionId>')
+#@login_required
+def getCompetition(competitionId):
+    #competitionId = request.args.get('competitionId')
+
+
+    #   logging.info(session['id']+' competitionId '+competitionId)
+    # r = request
+    # username = request.args.get('username')
+
+    competition = None
+
+    if competitionId is not None:
+        competitionsEngine.recalculate(competitionId)
+        competition = competitionsEngine.getCompetition(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+
+    subheader_message = "Competition '" + competition['name'] + "' on "+competition['date']
+
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
+
+    return render_template("competitionDashboard.html", competitionId=competitionId, competition=competition,
+                           subheader_message=subheader_message,
+                           library=None,
+                           **session)
+
+
+
+
+@app.route('/competitionDashboard/<competitionId>/climber/<climberId>')
+#@login_required
+def getCompetitionClimber(competitionId, climberId):
+    #competitionId = request.args.get('competitionId')
+
+    routesUpdated = []
+    for i in range(100):
+        routeChecked = request.args.get("route"+str(i)) != None
+        if routeChecked: routesUpdated.append(i)
+
+
+    #   logging.info(session['id']+' competitionId '+competitionId)
+    # r = request
+    # username = request.args.get('username')
+
+    competition = None
+
+    if climberId is not None:
+        if len(routesUpdated) > 0:
+            competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
+            competition = competitionsEngine.getCompetition(competitionId)
+            return render_template('competitionDashboard.html', sortedA=None,
+                                   competition=competition,
+                                   competitionId=competitionId,
+                                   subheader_message="Climber routes saved",
+                                   **session)
+
+
+        climber = competitionsEngine.getClimber(competitionId,climberId)
+
+
+    if climber is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No climber found",
+                               **session)
+    elif climber is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="error  ",
+                                   library={},
+                                   **session)
+    elif len(climber) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    competition = competitionsEngine.getCompetition(competitionId)
+    subheader_message = climber['name']+"   from "+climber['club']
+
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
+
+    return render_template("competitionDashboard.html", climberId=climberId, climber=climber,
+                           subheader_message=subheader_message,
+                           competitionId=competitionId,
+                           **session)
+
 
 
 
