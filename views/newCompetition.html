@@ -1,0 +1,171 @@
+
+
+
+{% extends "layoutfsgt.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>{{ subheader_message }} </h3>
+
+						{% if competitionName is not none  %}
+				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+
+				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
+
+						{% else %}
+<form action="/competitionDashboard">
+						<label for="name">Name:</label>:<br> <input name="name" size="40" /><br><br>
+				<label for="date">Date:</label>: <br><input name="date" size="30" /><br><br>
+
+
+	<label for="club">Mur:</label><br><select name="gym" id="gym">
+							<option value="--" size="20" >Choose</option>
+							{% for club in reference_data['clubs'] %}
+
+							<option value="{{reference_data['clubs'][club]}}" size="20" >{{reference_data['clubs'][club]}}</option>
+							{% endfor %}
+
+
+
+							</select>
+							<br><br>
+
+
+
+<button >Add</button>
+					</form>
+
+						{% endif %}
+
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+
+
+
+{% if climber is not none and climber is not undefined  %}
+<div class="container">
+	<div class="row">
+				Name {{ climber['name'] }}
+	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
+
+
+
+				{{ climber['routesClimbed'] }}
+
+</div>
+		<div class="row">
+			<form targt="/competitionDashboard/{{competitionId}}/updateRoutes">
+<table style="width:100%"><tr>
+
+					{% for i in range(100) %}
+<td style="width:10%">
+
+						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
+								 {{i}}</a>
+
+
+								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
+								{% if i in climber['routesClimbed'] %}checked{% endif %}
+
+								></h3>
+
+</td>
+	{% if i%10==9 %} </tr><tr> {% endif %}
+
+</td>
+
+					{%endfor%}
+</tr>
+			</table>
+				<button>Submit</button>
+				</form>
+
+</div>
+	</div>
+				{% endif %}
+
+
+
+
+
+
+
+{% if competitions is not none  %}
+
+
+
+
+
+					{% for competitionId in competitions %}
+
+
+<div class=" col-md-2 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							>
+
+							<a href="competitionDashboard/{{ competitionId }}">
+							<div class="blog-text">
+								<div class="prod-title">
+									<h4>{{ competitions[competitionId]['name'] }}</h4>
+									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
+									<br>
+									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+
+
+{% endif %}
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}

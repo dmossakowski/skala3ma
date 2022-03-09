@@ -5,13 +5,26 @@
 
 {% block topcontent %}
 
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
 
 {% endblock %}
 
 
 	{% block secondarycontent %}
 
-	<div  style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
@@ -20,11 +33,16 @@
 
 						{% if competitionName is not none  %}
 				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
-
+{{competitionId}}
 				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
 
 						{% else %}
-
+<form action="/competitionDashboard">
+						Name: <input name="name" size="30" /><br>
+				Date: <input name="date" size="30" /><br>
+				Mur: <input name="gym" size="30" /><br>
+<button >Add</button>
+					</form>
 
 						{% endif %}
 
@@ -110,11 +128,10 @@
 						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
 								 {{i}}</a>
 
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
+								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}">
 								{% if i in climber['routesClimbed'] %}checked{% endif %}
 
-								></h3>
+								</h3>
 
 </td>
 	{% if i%10==9 %} </tr><tr> {% endif %}
@@ -139,15 +156,14 @@
 
 
 <div class="container-fluid">
-<table class="table thead-dark table-hover"  data-toggle="table">
+<table class="table thead-dark table-hover"  >
          <thead><tr>
          <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
-         <th data-field="artist" data-sortable="True">Sex</th>
-         <th data-field="track" data-sortable="True">Club</th>
-         <th data-field="category" data-sortable="True">Category</th>
-         <th data-field="routes" data-filter-control="input">Routes climbed</th>
-		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
-			 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
+         <th data-field="artist" data-filter-control="input">Sex</th>
+         <th data-field="track" data-filter-control="input">Club</th>
+         <th data-field="track" data-filter-control="input">Category</th>
+         <th data-field="album" data-filter-control="input">Routes climbed</th>
+			 <th>Score</th>
 
          </tr>
          </thead>
@@ -155,29 +171,12 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
     				{% for climberId in competition['climbers'] %}
 
-		 {% if (competition['climbers'][climberId]['rank'] == 1) %}
-		 <tr style="background: #CFC">
-		{% elif competition['climbers'][climberId]['rank'] == 2 %}
-			 <tr style="background: #AEA">
-		{% elif competition['climbers'][climberId]['rank'] == 3 %}
-			 <tr style="background: #9C9">
-		{% else  %}
-			 <tr style="background: #EEE">
-		{% endif  %}
-
-			 <td><a href="/competitionDashboard/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+		 <tr><td><a href="/competitionDashboard/{{ competitionId }}/climber/{{ climberId}}">{{ competition['climbers'][climberId]['name'] }}</a></td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td> <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
 			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
 			 <td><i>{{ competition['climbers'][climberId]['routesClimbed']}} </i> -
 					{{ competition['climbers'][climberId]['routesClimbed']|length }} routes </i></td>
-			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
-			 <td>
-				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->
-				 <b>{{ competition['climbers'][climberId]['rank'] }}</b>
-				 <!--/font-->
-
-			 </td>
+			 <td><b>{{ competition['climbers'][climberId]['score'] }}  </b></td>
                     </tr>
              {% endfor %}
 

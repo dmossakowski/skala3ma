@@ -4,7 +4,8 @@ import json
 import os
 import glob
 import random
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
+import time
 import numpy as np
 import pandas as pd
 import numpy.random
@@ -17,6 +18,12 @@ import plotly.express as px
 import tracemalloc
 import sqlite3 as lite
 import uuid
+import copy
+from threading import RLock
+
+sql_lock = RLock()
+from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
+    stream_with_context, copy_current_request_context
 
 from sklearn.cluster import KMeans
 
@@ -29,6 +36,8 @@ from functools import lru_cache
 import logging
 from dotenv import load_dotenv
 
+
+
 load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
@@ -39,60 +48,87 @@ COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 COMPETITIONS_TABLE = "competitions"
 # ID, name, club, m/f, list of climbs
 CLIMBERS_TABLE = "climbers"
+ROUTES_TABLE = "routes"
+ROUTES_CLIMBED_TABLE = "routes_climbed"
+GYM_TABLE = "gym_table"
+#comps = {}
+#climbers = {}
 
-
-comps = {}
-climbers = {}
-
+emptyResults = {"M":{ "0":[], "1":[], "2":[]}, "F":{"0":[], "1":[], "2":[] }}
 
 
 def addCompetition(id, name, date, gym):
     if id is None:
         id = str(uuid.uuid4())
 
+    #comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
+    competition = {"id": id, "name": name, "date": date, "gym": gym, "status":"preopen", "climbers": {},
+                   "results": copy.deepcopy(emptyResults)}
+    # write this competition to db
+    add_competition(id, name, date, gym, competition);
 
-    comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
     return id
 
 
-addCompetition("abc","FSGT 2021/2022", "20220101", "ESC 15")
-addCompetition("def", "FSGT 2021/2022", "20220207", "Tremblay")
-addCompetition("ghi","FSGT 2021/2022", "20220312", "Roc 14")
 
 
+# add climber to a competition
+def addClimber(climberId, competitionId, email, name, club, sex, category=0):
 
-def addClimber(climberId, competitionId, name, club, sex):
+    if email is None:
+        raise ValueError('Email cannot be None')
 
     if climberId is None:
         climberId = str(uuid.uuid4())
 
-    competition = comps[competitionId]
-    print(comps)
+
+    try:
+        category = int(category)
+    except:
+        raise ValueError('category must be an integer')
+
+    if sex=='m' or sex=='M':
+        sex='M'
+    elif sex=='f' or sex=='F':
+        sex='F'
+    else:
+        raise ValueError('Only valid values are mfMF')
+
+    competition = get_competition(competitionId)
+    #print(comps)
     climbers = competition['climbers']
+
+    for climberId in climbers:
+        if climbers[climberId]['email']==email:
+            return climbers[climberId]
+
     print(competition)
-    climbers [climberId] = { "name":name, "club" :club, "sex":sex, "routesClimbed":[], "score":0}
+    climbers [climberId] = {"id":climberId, "email":email, "name":name, "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
+
+    update_competition(competitionId, competition)
+
+
     return climbers[climberId]
-
-addClimber("c1","abc","Bob Mob", "Nanterre","M")
-addClimber("c2","abc","Mary J", "Ville","F")
-addClimber("c3","abc","Jean Li", "ESC15","F")
-addClimber("c4","abc","Rose Rose", "Ville","F")
-
-addClimber("c3","def","Jean Li", "ESC15","F")
-addClimber("c4","def","Rose Rose", "Ville","F")
 
 
 def getCompetitions():
-    return comps
+    return get_all_competitions()
+
+def getClimber(competitionId, climberId):
+    comp = get_competition(competitionId)
+    return comp['climbers'][climberId]
+
 
 def getCompetition(competitionId):
     print("retreiving competition"+str(competitionId))
-    return comps[competitionId]
+    return get_competition(competitionId)
+    #return comps[competitionId]
 
 
 def addRouteClimbed(competitionId, climberId, routeNumber):
-    print(comps)
-    comp = comps[competitionId]
+    #print(comps)
+    #comp = comps[competitionId]
+    comp = get_competition(competitionId)
     climber = comp['climbers'][climberId]
     if climber is None:
         return
@@ -100,103 +136,114 @@ def addRouteClimbed(competitionId, climberId, routeNumber):
     routes_climbed = climber['routesClimbed']
     print (routes_climbed)
     routes_climbed.append(routeNumber)
+    update_competition(competitionId, comp)
+    return comp
 
 
 def setRoutesClimbed(competitionId, climberId, routeList):
-    climber = getClimber(competitionId, climberId)
+    comp = get_competition(competitionId)
+
+    climber = comp['climbers'][climberId]
+
     if climber is None:
         return
-    climber['routesClimbed']=[]
+    climber['routesClimbed'] = []
     for route in routeList:
-        addRouteClimbed(competitionId,climberId,route)
-    recalculate(competitionId)
+        routes_climbed = climber['routesClimbed']
+        print(routes_climbed)
+        routes_climbed.append(route)
+    comp = recalculate(competitionId, comp)
+    update_competition(competitionId, comp)
 
 
-addRouteClimbed("abc","c1",1)
-addRouteClimbed("abc","c1",12)
-addRouteClimbed("abc","c1",24)
-addRouteClimbed("abc","c1",21)
-addRouteClimbed("abc","c1",51)
-
-
-addRouteClimbed("abc","c2",1)
-addRouteClimbed("abc","c2",12)
-addRouteClimbed("abc","c2",24)
-addRouteClimbed("abc","c2",21)
-addRouteClimbed("abc","c2",51)
-
-addRouteClimbed("abc","c3",1)
-addRouteClimbed("abc","c3",12)
-addRouteClimbed("abc","c3",24)
-addRouteClimbed("abc","c3",25)
-addRouteClimbed("abc","c3",52)
-
-
-addRouteClimbed("abc","c4",1)
-addRouteClimbed("abc","c4",13)
-addRouteClimbed("abc","c4",24)
-addRouteClimbed("abc","c4",26)
-addRouteClimbed("abc","c4",52)
-
-
-addRouteClimbed("def","c3",1)
-addRouteClimbed("def","c3",12)
-addRouteClimbed("def","c3",24)
-
-
-addRouteClimbed("def","c4",1)
-addRouteClimbed("def","c4",12)
-addRouteClimbed("def","c4",25)
-
-
-def getRouteRepeats(competitionId):
-
-    comp = comps[competitionId]
-    pointsPerRoute=[]
+# calculates points per route per sex
+# first loop counts how many times the route was climbed
+# second loop iterates over this same list but then does 1000/times the route was climbed
+def _getRouteRepeats(competitionId, sex, comp):
     pointsPerRoute = [0 for i in range(100)]
     for climber in comp['climbers']:
-        print (climber)
-        routesClimbed = (comp['climbers'][climber]['routesClimbed'])
+        if comp['climbers'][climber]['sex'] != sex:
+            continue
+        print(climber)
+        routesClimbed = comp['climbers'][climber]['routesClimbed']
         print(routesClimbed)
         for r in routesClimbed:
             pointsPerRoute[r]=pointsPerRoute[r]+1
 
-
-    print (pointsPerRoute)
+    logging.info("route repeats: ")
+    logging.info(pointsPerRoute)
 
     for i, r in enumerate(pointsPerRoute):
         if r == 0 :
             pointsPerRoute[i]=1000
         else:
             pointsPerRoute[i]=1000/r
-
-    print(pointsPerRoute)
+    logging.info("points per route: ")
+    logging.info(pointsPerRoute)
 
     return pointsPerRoute
 
 
 
-def recalculate(competitionId):
-    print('calculating...')
-    comp = comps[competitionId]
-    for climberId in comps[competitionId]['climbers']:
-        calculatePointsPerClimber(competitionId,climberId)
+def recalculate(competitionId, comp=None):
+    logging.info('calculating...')
+    if comp is None:
+        comp = get_competition(competitionId)
+    comp['results'] = copy.deepcopy(emptyResults)
+    for climberId in comp['climbers']:
+        comp = _calculatePointsPerClimber(competitionId,climberId, comp)
 
-def calculatePointsPerClimber(competitionId, climberId):
-    routeRepeats = getRouteRepeats(competitionId)
-    comp = comps[competitionId]
-    routesClimbed = (comp['climbers'][climberId]['routesClimbed'])
+    #rank climbers
+    for climberId in comp['climbers']:
+        try:
+            climbersex = comp['climbers'][climberId]['sex']
+            climbercat = str(comp['climbers'][climberId]['category'])
+
+            comp['climbers'][climberId]['rank'] = comp['results'][climbersex][climbercat].index(comp['climbers'][climberId]['score'])+1
+        except ValueError:
+            comp['climbers'][climberId]['rank'] = -1
+
+    results = comp['results']
+    for sex in results:
+        for cat in results[sex]:
+            pointsA = results[sex][cat]
+            if len(pointsA) == 0:
+                continue
+            #pointsA.sort()
+            #pointsA = results[sex][cat].sort()
+            #results[sex][cat] = pointsA.sort()
+    if comp is None:
+        comp = update_competition(competitionId, comp)
+
+    return comp
+
+
+def _calculatePointsPerClimber(competitionId, climberId, comp):
+    routesClimbed = comp['climbers'][climberId]['routesClimbed']
+    sex = comp['climbers'][climberId]['sex']
+
+    if sex == "M":
+        routeRepeats = _getRouteRepeats(competitionId, "M", comp)
+    elif sex == "F":
+        routeRepeats = _getRouteRepeats(competitionId, "F", comp)
+    else:
+        return None;
     points = 0
-    for i,v in enumerate(routesClimbed):
-        points+=routeRepeats[v]
-        print(str(v)+" "+str(routeRepeats[v])+" " +str(points))
-    comp['climbers'][climberId]['score']=points
-    print(points)
+    for i, v in enumerate(routesClimbed):
+        points += routeRepeats[v]
+        print(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
 
+    comp['climbers'][climberId]['score'] = points
+    climbersex = comp['climbers'][climberId]['sex']
+    climbercat = str(comp['climbers'][climberId]['category'])
+    pointsA = comp['results'][climbersex][climbercat]
+    pointsA.append(points)
+    pointsA.sort(reverse=True)
+    comp['climbers'][climberId]['rank'] = pointsA.index(points)
+    #(comp['results'][climbersex][climbercat]).append(points)
 
-
-def getClimber(competitionId,id):
-    return comps[competitionId]['climbers'][id]
+    logging.info("results" + str(climbersex)+str(climbercat)+ " add "+str(points))
+    return comp
 
 
 
@@ -204,218 +251,75 @@ lru_cache.DEBUG = True
 
 
 def init():
-    logging.info('initializing analyze...')
+    logging.info('initializing competition engine...')
 
-    if not os.path.exists(COMPETITIONS_DB):
+    if os.path.exists(DATA_DIRECTORY) and not os.path.exists(COMPETITIONS_DB):
         db = lite.connect(COMPETITIONS_DB)
 
         # ptype 0-public
         cursor = db.cursor()
-        cursor.execute('''CREATE TABLE if not exists ''' + COMPETITIONS_TABLE +
-                           '''(id text NOT NULL UNIQUE, owner text not null, ptype integer, jsondata json)''')
+
+        cursor.execute('''CREATE TABLE if not exists ''' + COMPETITIONS_TABLE + '''(
+                       id text NOT NULL UNIQUE, 
+                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null, 
+                       jsondata json)''')
+
+        cursor.execute('''CREATE TABLE if not exists ''' + CLIMBERS_TABLE + '''(
+                       id text NOT NULL UNIQUE, 
+                       fid text,
+                       gid text,  
+                       name text,
+                       fname text, 
+                       gname text, 
+                       nick text, 
+                       sex text,
+                       email text not null, 
+                       fpictureurl text,
+                       gpictureurl text,
+                       role integer not null, 
+                       isgod boolean not null check(role IN (0,1)), 
+                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
+
+        cursor.execute('''CREATE TABLE if not exists ''' + GYM_TABLE + '''(
+                               id text NOT NULL UNIQUE, 
+                               gymid text not null, 
+                               gymname text not null, 
+                               isadmin boolean not null check(isadmin IN (0,1)), 
+                               added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
+
+        cursor.execute('''CREATE TABLE if not exists ''' + ROUTES_TABLE + '''(
+                       id text NOT NULL UNIQUE, 
+                       gymid text not null, 
+                       routenum text not null, 
+                       routedesc text not null, 
+                       routegrade text not null, 
+                       isadmin boolean not null check(isadmin IN (0,1)), 
+                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
+
+        cursor.execute('''CREATE TABLE if not exists ''' + ROUTES_CLIMBED_TABLE + '''(
+                       id text NOT NULL UNIQUE, 
+                       competitionId text not null, 
+                       climberId text not null, 
+                       routes json not null, 
+                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
+
         db.commit()
+        add_testing_data()
+        add_test_routes()
+        user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
+                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+
+        user_authenticated_fb("c1", "Bob Mob2", "bob@mob.com",
+                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+
+        user_authenticated_fb("c2", "Mary J", "mary@j.com",
+                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+
         print('created ' + COMPETITIONS_DB)
 
 
 
-def testDb(playlistname):
-    list_of_files = glob.glob(DATA_DIRECTORY + "/**/playlists-tracks.json", recursive=True)
-    if len(list_of_files) == 0:
-        return None
 
-    ret = playlistname+" "
-    for filename in list_of_files:
-        if playlistname not in filename:
-            continue
-        ret = ret + ' converting  playlists' + str(filename)
-        with open(filename, "r") as f:
-            data = json.load(f)
-            addPlaylists([data])
-            ret = ret + " loaded playlsits from file "+str(len(data))
-    return ret
-
-
-def cache_clear():
-    logging.info("clearing analyze cache")
-    logging.info(" loadAudioFeatures cache_info:" + str(loadAudioFeatures.cache_info()))
-    loadAudioFeatures.cache_clear()
-    logging.info(" loadAudioFeatures cache_info:"+str(loadLibraryFromFiles.cache_info()))
-    loadLibraryFromFiles.cache_clear()
-    #logging.info(" loadAudioFeatures cache_info:"+str(getOrGeneratePublicPlaylistsFile.cache_info()))
-    #getOrGeneratePublicPlaylistsFile.cache_clear()
-
-
-def getEmptyLibrary():
-    library = {}
-    library['tracks'] = []
-    library['albums'] = []
-    library['playlists'] = []
-    library['audio_features'] = []
-    library['toptracks_short_term'] = []
-    library['topartists_short_term'] = []
-    library['toptracks_medium_term'] = []
-    library['topartists_medium_term'] = []
-    library['toptracks_long_term'] = []
-    library['topartists_long_term'] = []
-    library['playlists-tracks'] = []
-    library['profile'] = []
-    return library
-
-
-def getLibrarySize(library):
-    s = ''
-    if library is None:
-        return s
-    if library.get('playlists'):
-        s = s + ' Playlists: '+str(len(library.get('playlists')))
-    if library.get('albums'):
-        s = s + ', Albums: '+str(len(library.get('albums')))
-    if library.get('tracks'):
-        s = s + ', Tracks: ' + str(len(library.get('tracks')))
-    if library.get('audio_features'):
-        s = s + ', Audio features: '+str(len(library.get('audio_features')))
-    if library.get('toptracks_medium_term'):
-            s = s + ', Top tracks: ' + str(len(library.get('toptracks_medium_term')))
-    if library.get('topartists_medium_term'):
-            s = s + ', Top artists: ' + str(len(library.get('topartists_medium_term')))
-
-    return s
-
-
-def getTopGenreSet(library):
-    genres = []
-    cnt = Counter()
-
-    if library is None:
-        return genres
-
-    for track in library.get('topartists_medium_term'):
-        genres.extend(track.get('genres'))
-
-    for word in genres:
-        cnt[word] += 1
-
-    mostcommon=[]
-    c=11
-    # put the weight as the second param instead of number of time it appears
-    for i, mc in enumerate(cnt.most_common(c)):
-        mostcommon.append([mc[0],c-i])
-    #return cnt.most_common(12)
-    return mostcommon
-
-
-def getUpdateDt(directory=None):
-    if not isLibraryValid(directory):
-        return None
-    list_of_files = glob.glob(directory+"/tracks.json")  # * means all if need specific format then *.csv
-    if len(list_of_files) == 0:
-        return None
-    latest_file = max(list_of_files, key=os.path.getmtime)
-    if latest_file is not None:
-        latest_file = os.path.getmtime(latest_file)
-    return latest_file
-
-
-def getUpdateDtStr(directory=None):
-    dt = getUpdateDt(directory)
-    if dt is None:
-        return None
-    return datetime.fromtimestamp(dt).strftime('%c')
-
-# checks if all files are present and correct
-def isLibraryValid(directory=None):
-    if not os.path.exists(directory):
-        return False
-
-    if not os.path.exists(directory+"tracks.json"):
-        return False
-
-    if not os.path.exists(directory+"audio_features.json"):
-        return False
-
-    if not os.path.exists(directory+"topartists_medium_term.json"):
-        return False
-
-    #if not os.path.exists(directory+"playlists-tracks.json"):
-    #    return False
-
-    return True
-
-
-@lru_cache(maxsize=16)
-def loadLibraryFromFiles(directory=None):
-    library = {}
-
-    if not isLibraryValid(directory):
-        return None;
-
-
-    # Dream database. Store dreams in memory for now.
-    dreamsA = ['Python. Python, everywhere.']
-    numberA = 10
-    strA = "someString"
-
-    tracemalloc.start()
-
-
-    #path = "data/"
-    path = directory
-
-    try:
-        with open(path+"tracks.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['tracks'] = tracks
-
-        with open(path+"albums.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['albums'] = tracks
-
-        with open(path+"playlists.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['playlists'] = tracks
-
-        #with open(path+"playlists-tracks.json", "r") as tracksfile:
-         #   tracks = json.load(tracksfile)
-          #  library['playlists-tracks'] = tracks
-
-        with open(path + "toptracks_long_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['toptracks_long_term'] = tracks
-
-        with open(path + "toptracks_medium_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['toptracks_medium_term'] = tracks
-
-        with open(path + "toptracks_short_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['toptracks_short_term'] = tracks
-
-        with open(path + "topartists_long_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['topartists_long_term'] = tracks
-
-        with open(path + "topartists_medium_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['topartists_medium_term'] = tracks
-
-        with open(path + "topartists_short_term.json", "r") as tracksfile:
-            tracks = json.load(tracksfile)
-            library['topartists_short_term'] = tracks
-
-        library['audio_features'] = loadAudioFeatures(path)
-
-        if not os.path.exists(directory + "profile.json"):
-            library['profile'] = None
-        else:
-            with open(path + "profile.json", "r") as file:
-                j = json.load(file)
-                library['profile'] = j
-
-
-    except ValueError:
-        return []
-
-    return library
 
 
 
@@ -479,6 +383,7 @@ def getPlaylist(username, playlists, playlistId=None):
     #res = res[0]
     return playlists
 
+
 # Returns a random playlist
 # restriction should be a function that operates on a playlist to figure out if it should be added or not
 # example:
@@ -540,18 +445,7 @@ def addPlaylists(playlistsWithTracks):
     logging.info("added playlists:"+str(count))
 
 
-def loadRandomLibrary(directory):
-    username = getRandomUsername(directory)
-    return loadLibraryFromFiles(directory+"/"+username+"/")
 
-
-def getRandomPlaylistName(directory):
-    library = loadRandomLibrary(directory)
-
-    playlists = library['playlists']
-    r = random.randint(0, len(playlists)-1)
-    randomPlaylist = playlists[r]
-    return randomPlaylist['name']
 
 
 @lru_cache(maxsize=16)
@@ -564,474 +458,315 @@ def loadAudioFeatures(path="data/"):
         return []
 
 
-# orders artists by which had last added a song to
-def process(library):
-    artistsByDate = defaultdict(list)
-    artistsRanking = {} #defaultdict(list)
 
-    epoch = datetime.utcfromtimestamp(0)
-    now = datetime.now()
-    tracksbydate = {}
-    trackA = library['tracks']
-    alltracks = []
-    c = 0
-    for track in library['tracks']:
-        rec = {}
-        artists = track["track"]["artists"]
-        rec["artist"] = artists[0]['name']
-        rec["trackname"] = track["track"]["name"]
-        rec["albumname"] = track["track"]["album"]["name"]
-        rec["addedat"] = str(track["added_at"])
-        dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
-        rec["age"] = (now - dt).total_seconds()
-        rec["type"] = "track"
-        trackid = track["track"]["album"]["uri"]
-        albumid = track["track"]["uri"]
-        #print str(addedat)+" ||  "+trackname+" || "+artist
-        #artistsByDate.setdefault(rec["addedat"], []).append(rec)
-        ss = rec["addedat"]
-        artistsByDate[rec["addedat"]].append(rec)
 
-        #rank = { "songcount":1 , "albumcount":1, "addedcount":1 }
-        if rec["artist"] in artistsRanking:
-            rank = artistsRanking[rec["artist"]]
-            rank["songcount"] = rank["songcount"] + 1
+
+def add_competition(id, name, date, gym, competition):
+    db = lite.connect(COMPETITIONS_DB)
+    if id is None:
+        id = str(uuid.uuid4())
+
+    cursor = db.cursor()
+
+    cursor.execute("INSERT  INTO " + COMPETITIONS_TABLE + " VALUES (?, datetime('now'), ?) ",
+                   [id, json.dumps(competition)])
+
+    logging.info('user id '+str(id))
+
+    db.commit()
+    db.close()
+    logging.info("added competition:"+str(name))
+
+
+def update_competition(id, competition):
+    db = lite.connect(COMPETITIONS_DB)
+    if id is None:
+        return None;
+
+    cursor = db.cursor()
+
+    cursor.execute("update  " + COMPETITIONS_TABLE + " set jsondata=? where id=?  ",
+                   [json.dumps(competition), id])
+
+    logging.info('updated competition  id '+str(id))
+
+    db.commit()
+    db.close()
+
+
+
+
+def get_competition(id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    one = cursor.execute(
+        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' where id=? LIMIT 1;''',[id])
+    one = one.fetchone()
+
+    if one is None or one[0] is None:
+        return None
+    else:
+        return json.loads(one[0])
+
+
+def get_all_competitions():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' ;''')
+
+    comps = {}
+    if rows is not None and rows.arraysize > 0:
+        for row in rows.fetchall():
+            comp = row[0]
+            comp = json.loads(row[0])
+            comps[comp['id']] = comp
+
+    return comps
+
+
+def get_climber(id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    one = cursor.execute(
+        '''SELECT * FROM ''' + CLIMBERS_TABLE + ''' where id=? LIMIT 1;''',[id])
+    one = one.fetchone()
+
+
+    if one is None or one[1] is None:
+        return None
+
+    if one[1] is not None:
+        return one
+    else:
+        return None
+
+
+def get_climber_by_email(email):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    one = cursor.execute(
+        '''SELECT * FROM ''' + CLIMBERS_TABLE + ''' where email=? LIMIT 1;''',[email])
+    one = one.fetchone()
+
+
+    if one is None or one[0] is None:
+        return None
+
+    if one[0] is not None:
+        return one[0]
+    else:
+        return None
+
+
+
+def user_authenticated_fb(fid, name, email, picture):
+    climber = get_climber_by_email(email)
+    climberId = str(uuid.uuid4())
+
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        if climber is None:
+            cursor.execute("INSERT  INTO " + CLIMBERS_TABLE +
+                           "(id, fid, fname, email, fpictureurl, role, isgod, added_at) " +
+                            " values (?,?,?,?, ?,?,?,datetime('now')) ",
+                           [str(climberId), str(fid),  str(name), str(email), str(picture), 0, 0])
+            logging.info('added user id ' + str(email))
         else:
-            artistsRanking[rec["artist"]] = { "songcount":1 , "albumcount":1, "addedcount":1 }
+            cursor.execute("UPDATE "+CLIMBERS_TABLE+" set fid = ?, fname= ?, fpictureurl=? where email =? ",
+                           [str(fid), str(name), str(picture), str(email)])
+            logging.info('updated user id ' + str(email))
 
-        c = c+1
-        alltracks.append(rec)
-
-    for album in library['albums']:
-        rec = {}
-        artists = album["album"]["artists"]
-        rec["artist"] = artists[0]['name']
-        rec["albumname"] = album["album"]["name"]
-        rec["trackname"] = ""
-        rec["addedat"] = album["added_at"]
-        rec["type"] = "album"
-        dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
-        rec["age"] = (now - dt).total_seconds()
-        #print str(addedat)+" ||  "+trackname+" || "+artist
-        alltracks.append(rec)
-
-    sortedA = artistsByDate.keys()
-    sortedA = sorted(sortedA)
-    #print (len(artistsByDate))
-    for key in sortedA:
-        #print (key, str(len(artistsByDate[key])))
-        for rec in artistsByDate[key]:
-            printinfo = (rec['artist']).encode('utf-8')
-            #popularity = str(artistsByDate[key][0]['track']['popularity'])
-            trackname = (rec['trackname']).encode('utf-8')
-            albumname = (rec['albumname']).encode('utf-8')
-            #print '-- ', rec["type"], printinfo, 'album:', albumname, ' track: ', trackname, rec["addedat"], rec["age"]
-
-            #printinfo = (artistsByDate[key]['artist']).encode('utf-8')
-            ##popularity = str(artistsByDate[key][0]['track']['popularity'])
-            #trackname = (artistsByDate[key]['trackname']).encode('utf-8')
-            #printinfo2 = str(len(artistsByDate[key]))
-            #print '-- ', printinfo, trackname, printinfo2
-
-    #return sortedA
-    return artistsByDate
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(name))
 
 
 
-# returns tracks of artists who have been added but whose albums were never added
-# ordered by time added
-# 20210304 - added Counter to also count artists from tracks directly as the album logic
-# did not work with compilations so now if there are also more than 3 tracks by the same artist
-# it will not consider these tracks orphaned
-def getOrphanedTracks(library):
-    artistsByDate = defaultdict(list)
-    artistsRanking = {} #defaultdict(list)
 
-    epoch = datetime.utcfromtimestamp(0)
-    now = datetime.now()
-    tracksbydate = {}
-    trackA = library['tracks']
-    alltracks = []
-    c = 0
+def user_registered_for_competition(climberId, name, email, sex):
+    climber = get_climber_by_email(email)
 
-    # ["track"]["artists"][0]['name']
-    albumArtists = []
-    for album in library['albums']:
-        albumArtists.append(album['album']['artists'][0]['name'])
+    if climberId is None:
+        climberId = str(uuid.uuid4())
 
-    albumArtists = set(albumArtists)
-    trackArtists = []
-
-    cnt = Counter()
-
-    for track in library['tracks']:
-        cnt[track['track']["artists"][0]['name']] += 1
-
-    for track in library['tracks']:
-        artist = track["track"]["artists"][0]['name']
-
-        if artist in albumArtists:
-            continue
-
-        if cnt[artist] > 3:
-            continue
-
-        dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
-
-        track['track']['dateaddedDisplay'] =  dt.strftime('%B %Y')
-        #rec["age"] = (now - dt).total_seconds()
-
-        trackid = track["track"]["album"]["uri"]
-        albumid = track["track"]["uri"]
-        #print str(addedat)+" ||  "+trackname+" || "+artist
-        #artistsByDate.setdefault(rec["addedat"], []).append(rec)
-        #ss = rec["addedat"]
-
-        #artistsByDate[rec["addedat"]].append(rec)
-
-        #rank = { "songcount":1 , "albumcount":1, "addedcount":1 }
-        #if rec["artist"] in artistsRanking:
-        #    rank = artistsRanking[rec["artist"]]
-        #    rank["songcount"] = rank["songcount"] + 1
-        #else:
-        #    artistsRanking[rec["artist"]] = { "songcount":1 , "albumcount":1, "addedcount":1 }
-
-        #c = c+1
-        alltracks.append(track)
-
-    alltracks = sorted(alltracks, key=lambda k: k['added_at'], reverse=True)
-
-    #nowy comment
-    return alltracks
-
-
-def getIds(library):
-    artistsByDate = defaultdict(list)
-    artistsRanking = {} #defaultdict(list)
-
-    epoch = datetime.utcfromtimestamp(0)
-    now = datetime.now()
-    tracksbydate = {}
-    trackA = library['tracks']
-    alltracks = []
-    c = 0
-    for track in library['tracks']:
-        rec = {}
-        artists = track["track"]["artists"]
-        rec["artist"] = artists[0]['name']
-        rec["trackname"] = track["track"]["name"]
-        rec["albumname"] = track["track"]["album"]["name"]
-        rec["addedat"] = str(track["added_at"])
-        dt = datetime.strptime(track["added_at"], "%Y-%m-%dT%H:%M:%SZ")
-        rec["age"] = (now - dt).total_seconds()
-        rec["type"] = "track"
-        trackid = track["track"]["album"]["uri"]
-        albumid = track["track"]["uri"]
-        #print str(addedat)+" ||  "+trackname+" || "+artist
-        #artistsByDate.setdefault(rec["addedat"], []).append(rec)
-        ss = rec["addedat"]
-        artistsByDate[rec["addedat"]].append(rec)
-
-        #rank = { "songcount":1 , "albumcount":1, "addedcount":1 }
-        if rec["artist"] in artistsRanking:
-            rank = artistsRanking[rec["artist"]]
-            rank["songcount"] = rank["songcount"] + 1
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        if climber is None:
+            cursor.execute("INSERT  INTO " + CLIMBERS_TABLE +
+                           "(id, email, name, sex, role, isgod, added_at) " +
+                            " values (?,?,?,?, ?,?,datetime('now')) ",
+                           [str(climberId),  str(email), str(name), str(sex),  0, 0])
+            logging.info('added user id ' + str(email))
         else:
-            artistsRanking[rec["artist"]] = { "songcount":1 , "albumcount":1, "addedcount":1 }
-
-        c = c+1
-        alltracks.append(rec)
-
-
-def create_figureTest():
-    X = [1, 2, 3, 4]
-    Ys = np.array([[4, 8, 12, 16],
-                   [1, 4, 9, 16],
-                   [17, 10, 13, 18],
-                   [9, 10, 18, 11],
-                   [4, 15, 17, 6],
-                   [7, 10, 8, 7],
-                   [9, 0, 10, 11],
-                   [14, 1, 15, 5],
-                   [8, 15, 9, 14],
-                   [20, 7, 1, 5]])
-    nCols = len(X)
-    nRows = Ys.shape[0]
-
-    colors = cm.rainbow(np.linspace(0, 1, len(Ys)))
-
-    cs = [colors[i // len(X)] for i in range(len(Ys) * len(X))]  # could be done with numpy's repmat
-    Xs = X * nRows  # use list multiplication for repetition
-    plt.scatter(Xs, Ys.flatten(), color=cs)
-    plt.figure(2)
-
-    plt.clf()
-    #plt.imshow(heatmap.T, extent=extent, origin='lower')
-    plt.show()
-
-
-def create_figure():
-    dataOrig = loadAudioFeatures()
-    fullLib = loadLibraryFromFiles()
-    # list: 3799 of dict:18
-    # [{'danceability': 0.469, 'energy': 0.625, 'key': 4, 'loudness': -5.381, 'mode': 0, 'speechiness': 0.0306, 'acousticness': 0.00515, 'instrumentalness': 2.03e-05, 'liveness': 0.0682, 'valence': 0.325, 'tempo': 76.785, 'type': 'audio_features', 'id': '6PBzdsMi6YNdYAevzozBRi', 'uri': 'spotify:track:6PBzdsMi6YNdYAevzozBRi', 'track_href': 'https://api.spotify.com/v1/tracks/6PBzdsMi6YNdYAevzozBRi', 'analysis_url': 'https://api.spotify
-    #  {'danceability': 0.76, 'energy': 0.608, 'key': 9, 'loudness': -8.673, 'mode': 0, 'speechiness': 0.0347, 'acousticness': 0.315, 'instrumentalness': 0.79, 'liveness': 0.121, 'valence': 0.727, 'tempo': 119.032, 'type': 'audio_features', 'id': '4dJYJTPbUgFK5pCQ5bYD4g', 'uri': 'spotify:track:4dJYJTPbUgFK5pCQ5bYD4g', 'track_href': 'https://api.spotify.com/v1/tracks/4dJYJTPbUgFK5pCQ5bYD4g', 'analysis_url': 'https://api.spotify.com/v1/audio-analysis/4dJYJTPbUgFK5pCQ5bYD4g', 'duration_ms': 254118, 'time_signature': 4}
-    #  {'danc..
-    dtype= [('danceability', '<f8'), ('energy', '<f8'), ('key', '<f8'), ('loudness', '<f8'), ('mode', '<f8'),
-            ('speechiness', '<f8'), ('acousticness', '<f8'), ('instrumentalness', '<f8'), ('liveness', '<f8'), ('valence', '<f8'),
-            ('tempo', '<f8'), ('type', '<f8'), ('id', '<f8'), ('duration_ms', '<f8'), ('time_signature', '<f8'), ]
-
-    keys = ['danceability', 'energy', 'key', 'loudness', 'mode','speechiness','acousticness', 'instrumentalness']
-    #keys = ['danceability', 'energy', 'loudness']
-    #keys = ['danceability', 'energy']
-
-    # ('danceability','energy','key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness',
-    #      'valence', 'tempo'):
-
-    dataArray = []
-    for key in dataOrig[0]:
-        if key in keys:
-            #data[key] = [li[key] for li in dataOrig]
-            dataArray.append([li[key] for li in dataOrig])
-
-    # dataArray list:8  3799
-    # one row per audio feature
-    # [[0.469, 0.76, 0.598, 0.706, 0.756, 0.555, 0.53, 0.716, 0.481, 0.415, 0.684, 0.593, 0.395, 0.487, 0.671, 0.691, 0.155, 0.61, 0.171, 0.203, 0.181,
-    #  [0.625, 0.608, 0.509, 0.653, 0.549, 0.71, 0.362, 0.685, 0.491, 0.42, 0.62, 0.626, 0.704, 0.757, 0.603, 0.669, 0
-    #  [4, 9, 9, 7, 7, 10, 5, 4, 11, 3, 0, 4, 5, 0, 4, 1, 10, 11, 7, 2, 10, 10, 10, 0, 8, 9, 11, 6, 11, 6, 10, 1, 0, 3, 0,
-
-    dataArray = np.array(dataArray)
-
-    # call MinMaxScaler object
-    min_max_scaler = MinMaxScaler()
-    # feed in a numpy array
-    minmaxscaled = min_max_scaler.fit_transform(dataArray)
-    # wrap it up if you need a dataframe
-    #df = pd.DataFrame(X_train_norm)
-
-    dataArrayMean = np.mean(dataArray)
-    dataArrayStd = np.std(dataArray)
-    allsongsstandardized = (dataArray - dataArrayMean) / dataArrayStd
-
-    X_train_norm = allsongsstandardized
-    X_train_norm = np.flip(np.rot90(X_train_norm, 1))
-
-    #allsongs = []
-    #for songOrig in dataArray:
-    #    song = []
-    #    for key in keys:
-    #        song.append(dataArray[key])
-    #    allsongs.append(song)
-
-    # allsongs: list:3799 x 8\
-    # one row per song
-    #[[0.469, 0.625, 4, -5.381, 0, 0.0306, 0.00515, 2.03e-05],
-    # [0.76, 0.608, 9, -8.673, 0, 0.0347, 0.315, 0.79],
-    # [0.598, 0.509, 9, -9.719, 1, 0.0269, 0.593, 0.0503],
-
-    #X1 = np.array(dataArray)
-    #y = np.array(dataArray2)
-
-    #kmeans = KMeans(algorithm='auto', copy_x=True, init='k-means++', max_iter=3000,
-     #      n_clusters=5, n_init=10, n_jobs=1, precompute_distances='auto',
-      #     random_state=None, tol=0.0001, verbose=0)
-    kmeans = KMeans(n_clusters=17)
-    kmeans.fit(X_train_norm)
-
+            cursor.execute("UPDATE "+CLIMBERS_TABLE+" set sex = ?  where email =? ",
+                           [str(sex), str(email)])
+            logging.info('updated user id ' + str(email))
 
-    predict = kmeans.predict(X_train_norm)
-    #data['cluster'] = predict
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(name))
+
 
-    fig = go.Figure(data=X_train_norm.__array__())
-    fig.write_html('first_figure.html', auto_open=True)
 
-    pd.plotting.parallel_coordinates(pd.array(X_train_norm),0)
-    plt.show()
-    #print(numpy.info(X1))
 
-    centroids = kmeans.cluster_centers_
-    correct = 0
-    #for i in range(len(X1)):
-    #    predict_me = np.array(X1[i].astype(float))
-    #    predict_me = predict_me.reshape(-1, len(predict_me))
-    #    prediction = kmeans.predict(predict_me)
-    #    print(prediction[0])
-
-    #print(correct / len(X1))
-    X2 = dataArray[0]
-
-    nCols = len(X2)
-    nRows = dataArray.shape[0]
-
-    colors = cm.rainbow(np.linspace(0, 1, len(dataArray)))
-
-    cs1 = [colors[i // len(dataArray)] for i in range(len(dataArray) * len(dataArray))]  # could be done with numpy's repmat
-    cs2 = kmeans.labels_.astype(float)
-    # cs3 = cs2 ** nRows
-    #cs3 = np.repeat(cs2, nRows)
-    #Xs1 = dataArray * nRows  # use list multiplication for repetition
-
-    for i, center in enumerate(kmeans.cluster_centers_):
-        j = i%len(X_train_norm[0])
-        k = (i+1)%len(X_train_norm[0])
-        plt.figure(i)
-        plt.suptitle("scatterplot "+str(i)+" "+str(j)+":"+str(k))
-        #plt.scatter(X_train_norm[:, j], X_train_norm[:, k], c=cs2, s=5, alpha=0.4)
-        #plt.scatter(centroids[:,j], centroids[:,k], c='black', s=5)
-        plt.plot(X_train_norm[:, j], 'r.', markersize=1)
-        plt.plot(centroids[:,j], 'b.', markersize=2)
-
-
-    #plt.scatter(X_train_norm[:, 0], X_train_norm[:, 1], c=cs2, s=5, alpha=0.4)
-    #plt.scatter(X_train_norm[:, 0], X_train_norm[:, 2], c=cs2, s=5, alpha=0.4)
-
-    #plt.plot(allsongsstandardized)
-    #plt.figure(2)
-    #plt.plot(dataArray[0],' r.', markersize=1)
-    #plt.figure(3)
-    #plt.plot(dataArray[1], 'b.', markersize=1)
-    #plt.figure(4)
-    #plt.plot(dataArray[2], 'y.', markersize=1)
-
-    #plt.scatter(dataArray[0], dataArray[3], c="blue", alpha=0.1)
-
-    #plt.figure(5)
-    #plt.scatter(dataArray[0], dataArray[0], c="blue", alpha=0.1)
-
-    #plt.subplot(321, label="one")
-    #plt.hist(dataArray[0], bins=200)
-    #plt.title("exess")
-    #plt.subplot(322, label="two")
-    #plt.hist(dataArray[1], bins=200)
-    #plt.title("222222")
-    #plt.subplot(323)
-    #plt.hist(dataArray[2], bins=200)
-    #plt.title("ex333333ess")
-
-    #plt.scatter(Xs1[1], Ys[1], c="blue", alpha=0.1)
-
-    #plt.scatter(Xs1, Ys.flatten(), color=cs)
-
-    plt.grid(True)
-    plt.show()
-
-
-    clusteredSongs = [[] for i in range(kmeans.n_clusters)]
-    for i, cluster in enumerate(cs2):
-        songCluster = clusteredSongs[int(cluster)]
-        track = next((item for item in fullLib['tracks'] if item['track']['id'] == dataOrig[i]['id']), None)
-        if (track is not None):
-            songCluster.append({**track,**dataOrig[i]})
-            #print(str(i)+' '+str(track['track']['artists'][0]['name'])+ ' - '+
-            #      str(track['track']['album']['name'])+ ' - '+
-             #     str(track['track']['name'])+' song '+str(dataOrig[i])+' ' )
-
-
-    return plt.figure(3)
-
-
-
-def dataofish():
-    from pandas import DataFrame
-    import matplotlib.pyplot as plt
-    from sklearn.cluster import KMeans
-
-    Data = {
-        'x': [25, 34, 22, 27, 33, 33, 31, 22, 35, 34, 67, 54, 57, 43, 50, 57, 59, 52, 65, 47, 49, 48, 35, 33, 44, 45,
-              38, 43, 51, 46],
-        'y': [79, 51, 53, 78, 59, 74, 73, 57, 69, 75, 51, 32, 40, 47, 53, 36, 35, 58, 59, 50, 25, 20, 14, 12, 20, 5, 29,
-              27, 8, 7]
-        }
-
-    df = DataFrame(Data, columns=['x', 'y'])
-
-    kmeans = KMeans(n_clusters=3).fit(df)
-    centroids = kmeans.cluster_centers_
-    #print(centroids)
-    xs = df['x']
-    ys = df['y']
-
-    plt.scatter(df['x'], df['y'], c=kmeans.labels_.astype(float), s=50, alpha=0.5)
-    plt.scatter(centroids[:, 0], centroids[:, 1], c='red', s=50)
-    plt.show()
-
-
-def create_figure_working():
-    dataOrig = loadAudioFeatures()
-
-
-
-    dtype= [('danceability', '<f8'), ('energy', '<f8'), ('key', '<f8'), ('loudness', '<f8'), ('mode', '<f8'),
-            ('speechiness', '<f8'), ('acousticness', '<f8'), ('instrumentalness', '<f8'), ('liveness', '<f8'), ('valence', '<f8'),
-            ('tempo', '<f8'), ('type', '<f8'), ('id', '<f8'), ('duration_ms', '<f8'), ('time_signature', '<f8'), ]
-
-    data = {}
-    dataArray = []
-    for key in dataOrig[0]:
-        if key in ('danceability', 'energy', 'key', 'loudness', 'mode','speechiness','acousticness', 'instrumentalness'):
-
-            #('danceability','energy','key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness',
-             #      'valence', 'tempo'):
-
-            data[key] = [li[key] for li in dataOrig]
-            dataArray.append([li[key] for li in dataOrig])
-
-
-    Ys = np.array(dataArray)
-    X = dataArray[0]
-
-
-    #array = np.fromiter(data.iteritems(), dtype=dtype, count=len(data))
-
-    #plt.figure(3)
-    nCols = len(X)
-    nRows = Ys.shape[0]
-
-    colors = cm.rainbow(np.linspace(0, 1, len(Ys)))
-
-    cs = [colors[i // len(X)] for i in range(len(Ys) * len(X))]  # could be done with numpy's repmat
-    Xs = X * nRows  # use list multiplication for repetition
-    plt.scatter(Xs, Ys.flatten(), color=cs)
-
-    #plt.figure()
-
-    #plt.clf()
-    #plt.imshow(heatmap.T, extent=extent, origin='lower')
-    plt.grid(True)
-    plt.show()
-
-
-    return plt.figure(3)
-
-
-
-
-def create_figure11():
-    # Generate some test data
-    x = np.random.randn(8873)
-    y = np.random.randn(8873)
-
-    heatmap, xedges, yedges = np.histogram2d(x, y, bins=50)
-    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-
-    plt.figure(3)
-    plt.clf()
-    plt.imshow(heatmap.T, extent=extent, origin='lower')
-    #plt.show()
-    return plt.figure(3)
-
-
-def create_figure1():
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    xs = range(100)
-    ys = [random.randint(1, 50) for x in xs]
-    axis.plot(xs, ys)
-    return fig
-
+# select * from routes group by gymid order by max(added_at);
+def get_route(gymid, routenum):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT * FROM ''' + CLIMBERS_TABLE +
+        ''' where gymid=? and routenum=? group by gymid order by max(added_at) limit 1;''',
+        [gymid, routenum])
+
+    one = rows.fetchone()
+
+    if one is None or one[1] is None:
+        return None
+    else:
+        return one
+
+
+def add_route(gymid, routenum, routedesc, routegrade):
+    db = lite.connect(COMPETITIONS_DB)
+
+
+    db.in_transaction
+    cursor = db.cursor()
+
+    cursor.execute("INSERT  INTO " + ROUTES_TABLE + " VALUES (?,?,?,?,?,?, datetime('now')) ",
+                   [str(uuid.uuid4()), str(gymid), str(routenum), str(routedesc),str(routegrade), 0])
+
+    logging.info('user id '+str(id))
+
+    db.commit()
+    db.close()
+    logging.info("added route:"+str(routenum))
+
+
+
+
+
+
+def add_test_routes():
+    add_route("gym1", "0", "easy by dsm", "5A")
+    time.sleep(1)
+    add_route("gym2", "0", "easy by dsm", "5A")
+    time.sleep(1)
+    add_route("gym3", "0", "easy by dsm", "5A")
+    time.sleep(1)
+    add_route("gym1", "0", "easy by dsm", "5C")
+    time.sleep(1)
+    add_route("gym2", "0", "easy by dsm", "5C")
+    time.sleep(1)
+    add_route("gym3", "0", "easy by dsm", "5C")
+    time.sleep(1)
+    add_route("gym1", "1", "easy by dsm", "5B")
+    time.sleep(1)
+    add_route("gym2", "1", "easy by dsm", "5B")
+    time.sleep(1)
+    add_route("gym3", "1", "easy by dsm", "5B")
+    time.sleep(1)
+    add_route("gym1", "1", "easy by dsm", "5C")
+    time.sleep(1)
+    add_route("gym2", "1", "easy by dsm", "5C")
+    time.sleep(1)
+    add_route("gym3", "1", "easy by dsm", "5C")
+    time.sleep(1)
+
+
+def add_testing_data():
+    addCompetition("abc", "FSGT 2021/2022", "20220101", "ESC 15")
+    addCompetition("def", "FSGT 2021/2022", "20220207", "Tremblay")
+    addCompetition("ghi", "FSGT 2021/2022", "20220312", "Roc 14")
+
+    addClimber("c1", "abc", "c1@a.com", "Bob Mob", "Nanterre", "M")
+    addClimber("c2", "abc", "c2@a.com", "Mary J", "Ville", "F")
+    addClimber("c3", "abc", "c3@a.com", "Jean Li", "ESC15", "F")
+    addClimber("c4", "abc", "c4@a.com", "Rose Rose", "Ville", "F")
+
+    addClimber("c5", "abc", "c5@a.com", "Rudolf", "Nanterre", "M", 1)
+    addClimber("c6", "abc", "c6@a.com", "Gary", "Ville", "m", 1)
+    addClimber("c7", "abc", "c7@a.com", "Philomena", "ESC15", "F", 1)
+    addClimber("c8", "abc", "c8@a.com", "Beatrice", "Ville", "F", 1)
+
+    addClimber("c9", "abc", "c9@a.com", "Gianni", "Nanterre", "M", 2)
+    addClimber("c10", "abc", "c10@a.com", "Monty", "Ville", "m", 2)
+    addClimber("c11", "abc", "c11@a.com", "Rijka", "ESC15", "F", 2)
+    addClimber("c12", "abc", "c12@a.com", "Salomona", "Ville", "F", 2)
+
+    addClimber("c13", "abc", "c13@a.com", "Donny", "Nanterre", "M", 0)
+    addClimber("c14", "abc", "c14@a.com", "Mark", "Ville", "m", 0)
+    addClimber("c15", "abc", "c15@a.com", "Sonia", "ESC15", "F", 0)
+    addClimber("c16", "abc", "c16@a.com", "Wilma", "Ville", "F", 0)
+
+    setRoutesClimbed("abc", "c1", [2, 3, 4, 5, 7, 12, 17, 19, 24, 21, 24, 25, 26])
+    addRouteClimbed("abc", "c1", 13)
+    addRouteClimbed("abc", "c1", 14)
+    addRouteClimbed("abc", "c1", 15)
+    addRouteClimbed("abc", "c1", 16)
+
+    setRoutesClimbed("abc", "c2", [2, 3, 4, 12, 13, 17, 24, 21, 24, 25, 26])
+    setRoutesClimbed("abc", "c3", [1, 5, 6, 12, 13, 17,24, 25, 13, 15, 24])
+    setRoutesClimbed("abc", "c4", [1, 13, 17, 24, 26, 52, 25, 34, 3, 4, 24])
+    setRoutesClimbed("abc", "c5", [1, 13, 17, 14, 15, 16, 24, 25])
+    setRoutesClimbed("abc", "c6", [1, 2, 3, 5, 7, 13, 14, 15, 15, 24, 25])
+    setRoutesClimbed("abc", "c7", [1, 13, 14, 15, 16, 24, 25])
+    setRoutesClimbed("abc", "c8", [2, 3, 12, 13, 14, 24, 25])
+
+    setRoutesClimbed("abc", "c9", [2, 3, 12, 14, 24])
+    setRoutesClimbed("abc", "c10", [2, 3, 4, 12, 13, 17, 18])
+    setRoutesClimbed("abc", "c11", [2, 3, 4, 5, 12, 14, 24])
+    setRoutesClimbed("abc", "c12", [2, 3, 4, 6, 4, 12])
+
+    setRoutesClimbed("abc", "c13", [2, 3, 7, 8, 12, 15, 24])
+    setRoutesClimbed("abc", "c14", [2, 3, 6, 7, 8, 12, 15, 17])
+    setRoutesClimbed("abc", "c15", [2, 3, 4, 8, 12, 16, 17, 24])
+    setRoutesClimbed("abc", "c16", [2, 3, 5, 12, 16, 17, 24])
+
+    # competition def
+    addClimber("c1", "def", "c1@a.com", "Bob Mob", "ESC15", "M")
+    addClimber("c2", "def", "c2@a.com", "Ryan Pal", "Ville", "M")
+
+    addClimber("c3", "def", "c3@a.com", "Jean Li", "ESC15", "F")
+    addClimber("c4", "def", "c4@a.com", "Rose Rose", "Ville", "F")
+
+    addClimber("c5", "def", "c5@a.com", "Rudolf", "Nanterre", "M", 1)
+    addClimber("c6", "def", "c6@a.com", "Gary", "Ville", "m", 1)
+    addClimber("c7", "def", "c7@a.com", "Philomena", "ESC15", "F", 1)
+    addClimber("c8", "def", "c8@a.com", "Beatrice", "Ville", "F", 1)
+
+    setRoutesClimbed("def", "c1", [1, 12, 24])
+    setRoutesClimbed("def", "c2", [1, 12, 25])
+
+    setRoutesClimbed("def", "c3", [1, 12, 24])
+    setRoutesClimbed("def", "c4", [1 ,12, 25])
+
+    setRoutesClimbed("def", "c5", [1, 12, 24])
+    setRoutesClimbed("def", "c6", [1, 12, 25])
+
+    setRoutesClimbed("def", "c7", [1, 12, 24])
+    setRoutesClimbed("def", "c8", [1 ,12, 25])
+
+    recalculate("abc")
 
 
 #if __name__ == '__main__':
     #library = loadLibraryFromFiles()
 
     #getOrphanedTracks(library)
+
+

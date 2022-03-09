@@ -24,40 +24,65 @@
 
 	{% block secondarycontent %}
 
-	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
 						<h3>{{ subheader_message }} </h3>
+						{% if climber is  none  %}
 
-						{% if climber is not none  %}
-				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+						<form action="/competitionDashboard/{{competitionId}}/register">
+							<label for="name">Name:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
 
-						{% else %}
-<form action="/competitionDashboard/{{competitionId}}/register">
-						Name: <input name="name" size="20" /><br>
-				Club: <input name="club" size="20" /><br>
-				Sex: <input name="sex" size="20" /><br>
+							{% if logged_email is none %}
+							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
+							{% else %}
+							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
+							{% endif %}
+							<input type="radio" id="F" value="F" name="sex">
+							<label for="F">Femme</label>
+							<input type="radio" id="M" value="M" name="sex">
+							<label for="M">Homme</label>
+							<br>
+							<br>
+							<label for="category">Category:</label><br><select name="category" id="category">
+							{% for category in reference_data['categories'] %}
+							{{category}}
+							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
+							{% endfor %}
+						</select><br><br>
+
+							<label for="club">Club:</label><br><select name="club" id="club">
+							<option value="--" size="20" >Choose</option>
+							{% for club in reference_data['clubs'] %}
+
+							<option value="{{reference_data['clubs'][club]}}" size="20" >{{reference_data['clubs'][club]}}</option>
+							{% endfor %}
+							<option value="other" size="20" >Other</option>
+
+
+							</select>
+							<br><br>
+
+							<label for="otherclub">Si autre club non répertorié lequel:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
+
+
 <button >Add</button>
 					</form>
+
+
+						{% else %}
+<a href="/competitionDashboard/{{competitionId}}">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+
+
 
 						{% endif %}
 
 
 					</div>
 
-	<script type="text/javascript">
-    function playPreview(audioId){
-    	var audio = document.getElementById(audioId)
-		audio.play();
-	}
 
-	function stopPreview(audioId){
-    	var audio = document.getElementById(audioId)
-		audio.pause();
-	}
-</script>
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 
@@ -115,13 +140,6 @@
 
 
 {% if climber is not none and climber is not undefined  %}
-
-				Name {{ climber['name'] }}
-					({{ climber['sex'] }} ) from <i>{{climber['club'] }}
-
-				<br>
-
-				{{ climber['routesClimbed'] }}
 
 				{% endif %}
 
