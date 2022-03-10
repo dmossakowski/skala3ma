@@ -242,6 +242,7 @@ def index():
     hellomsg = 'Welcome to Additive Spotify Analyzer'
     _setUserSessionMsg(None)
     library = analyze.loadLibraryFromFiles(_getDataPath())
+    profileimageurlv=None
 
     if session.get('username'):
         genres = analyze.getTopGenreSet(library)
@@ -250,17 +251,17 @@ def index():
         if library is not None:
             profile = library.get('profile')
         if profile is None:
-            profileimageurl=None
+            #profileimageurl=None
             display_name = session.get('username')
         else:
-            profileimageurl = profile['images'][0]['url']
+            profileimageurlv = profile['images'][0]['url']
             display_name = profile['display_name']
 
         l = analyze.getLibrarySize(library)
         lastModifiedDt = analyze.getUpdateDtStr(_getDataPath())
         #_setUserSessionMsg("Library size: "+l)
         return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library,
-                               sizetext=l, lastmodified=lastModifiedDt, profileimageurl=profileimageurl,
+                               sizetext=l, lastmodified=lastModifiedDt, profileimageurl=profileimageurlv,
                                display_name=display_name, **session)
     else:
         return render_template('index.html', subheader_message=hellomsg, genres={}, library={},  **session)
