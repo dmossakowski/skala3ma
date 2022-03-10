@@ -57,30 +57,29 @@ GYM_TABLE = "gym_table"
 emptyResults = {"M":{ "0":[], "1":[], "2":[]}, "F":{"0":[], "1":[], "2":[] }}
 
 
-def addCompetition(id, name, date, gym):
-    if id is None:
-        id = str(uuid.uuid4())
+def addCompetition(compId, name, date, gym):
+    if compId is None:
+        compId = str(uuid.uuid4())
 
     #comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
-    competition = {"id": id, "name": name, "date": date, "gym": gym, "status":"preopen", "climbers": {},
+    competition = {"id": compId, "name": name, "date": date, "gym": gym, "status":"preopen", "climbers": {},
                    "results": copy.deepcopy(emptyResults)}
     # write this competition to db
-    add_competition(id, name, date, gym, competition);
+    add_competition(compId, name, date, gym, competition);
 
-    return id
+    return compId
 
 
 
 
 # add climber to a competition
 def addClimber(climberId, competitionId, email, name, club, sex, category=0):
-
+    logging.info("adding climber "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
 
     if climberId is None:
         climberId = str(uuid.uuid4())
-
 
     try:
         category = int(category)
@@ -94,25 +93,30 @@ def addClimber(climberId, competitionId, email, name, club, sex, category=0):
     else:
         raise ValueError('Only valid values are mfMF')
 
-    competition = get_competition(competitionId)
-    #print(comps)
-    climbers = competition['climbers']
+    try:
+        sql_lock.acquire()
 
-    for climberId in climbers:
-        if climbers[climberId]['email']==email:
-            return climbers[climberId]
+        competition = get_competition(competitionId)
+        climbers = competition['climbers']
+        logging.info(climbers)
 
-    print(competition)
-    climbers [climberId] = {"id":climberId, "email":email, "name":name, "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
+        for cid in climbers:
+            if climbers[cid]['email']==email:
+                return climbers[cid]
 
-    update_competition(competitionId, competition)
+        climbers[climberId] = {"id":climberId, "email":email, "name":name, "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
+        logging.info(competition)
 
+        _update_competition(competitionId, competition)
+    finally:
+        sql_lock.release()
 
     return climbers[climberId]
 
 
 def getCompetitions():
     return get_all_competitions()
+
 
 def getClimber(competitionId, climberId):
     comp = get_competition(competitionId)
@@ -128,33 +132,42 @@ def getCompetition(competitionId):
 def addRouteClimbed(competitionId, climberId, routeNumber):
     #print(comps)
     #comp = comps[competitionId]
-    comp = get_competition(competitionId)
-    climber = comp['climbers'][climberId]
-    if climber is None:
-        return
+    try:
+        sql_lock.acquire()
 
-    routes_climbed = climber['routesClimbed']
-    print (routes_climbed)
-    routes_climbed.append(routeNumber)
-    update_competition(competitionId, comp)
+        comp = get_competition(competitionId)
+        climber = comp['climbers'][climberId]
+        if climber is None:
+            return
+
+        routes_climbed = climber['routesClimbed']
+        #print (routes_climbed)
+        routes_climbed.append(routeNumber)
+        _update_competition(competitionId, comp)
+    finally:
+        sql_lock.release()
     return comp
 
 
 def setRoutesClimbed(competitionId, climberId, routeList):
-    comp = get_competition(competitionId)
+    try:
+        sql_lock.acquire()
 
-    climber = comp['climbers'][climberId]
+        comp = get_competition(competitionId)
 
-    if climber is None:
-        return
-    climber['routesClimbed'] = []
-    for route in routeList:
-        routes_climbed = climber['routesClimbed']
-        print(routes_climbed)
-        routes_climbed.append(route)
-    comp = recalculate(competitionId, comp)
-    update_competition(competitionId, comp)
+        climber = comp['climbers'][climberId]
 
+        if climber is None:
+            return
+        climber['routesClimbed'] = []
+        for route in routeList:
+            routes_climbed = climber['routesClimbed']
+            #print(routes_climbed)
+            routes_climbed.append(route)
+        comp = recalculate(competitionId, comp)
+        _update_competition(competitionId, comp)
+    finally:
+        sql_lock.release()
 
 # calculates points per route per sex
 # first loop counts how many times the route was climbed
@@ -164,9 +177,9 @@ def _getRouteRepeats(competitionId, sex, comp):
     for climber in comp['climbers']:
         if comp['climbers'][climber]['sex'] != sex:
             continue
-        print(climber)
+        #print(climber)
         routesClimbed = comp['climbers'][climber]['routesClimbed']
-        print(routesClimbed)
+        #print(routesClimbed)
         for r in routesClimbed:
             pointsPerRoute[r]=pointsPerRoute[r]+1
 
@@ -187,33 +200,38 @@ def _getRouteRepeats(competitionId, sex, comp):
 
 def recalculate(competitionId, comp=None):
     logging.info('calculating...')
-    if comp is None:
-        comp = get_competition(competitionId)
-    comp['results'] = copy.deepcopy(emptyResults)
-    for climberId in comp['climbers']:
-        comp = _calculatePointsPerClimber(competitionId,climberId, comp)
 
-    #rank climbers
-    for climberId in comp['climbers']:
-        try:
-            climbersex = comp['climbers'][climberId]['sex']
-            climbercat = str(comp['climbers'][climberId]['category'])
+    try:
+        sql_lock.acquire()
+        if comp is None:
+            comp = get_competition(competitionId)
+        comp['results'] = copy.deepcopy(emptyResults)
+        for climberId in comp['climbers']:
+            comp = _calculatePointsPerClimber(competitionId,climberId, comp)
 
-            comp['climbers'][climberId]['rank'] = comp['results'][climbersex][climbercat].index(comp['climbers'][climberId]['score'])+1
-        except ValueError:
-            comp['climbers'][climberId]['rank'] = -1
+        #rank climbers
+        for climberId in comp['climbers']:
+            try:
+                climbersex = comp['climbers'][climberId]['sex']
+                climbercat = str(comp['climbers'][climberId]['category'])
 
-    results = comp['results']
-    for sex in results:
-        for cat in results[sex]:
-            pointsA = results[sex][cat]
-            if len(pointsA) == 0:
-                continue
-            #pointsA.sort()
-            #pointsA = results[sex][cat].sort()
-            #results[sex][cat] = pointsA.sort()
-    if comp is None:
-        comp = update_competition(competitionId, comp)
+                comp['climbers'][climberId]['rank'] = comp['results'][climbersex][climbercat].index(comp['climbers'][climberId]['score'])+1
+            except ValueError:
+                comp['climbers'][climberId]['rank'] = -1
+
+        results = comp['results']
+        for sex in results:
+            for cat in results[sex]:
+                pointsA = results[sex][cat]
+                if len(pointsA) == 0:
+                    continue
+                #pointsA.sort()
+                #pointsA = results[sex][cat].sort()
+                #results[sex][cat] = pointsA.sort()
+        if comp is None:
+            comp = _update_competition(competitionId, comp)
+    finally:
+        sql_lock.release()
 
     return comp
 
@@ -231,7 +249,7 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
     points = 0
     for i, v in enumerate(routesClimbed):
         points += routeRepeats[v]
-        print(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
+        logging.info(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
 
     comp['climbers'][climberId]['score'] = points
     climbersex = comp['climbers'][climberId]['sex']
@@ -244,7 +262,6 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
 
     logging.info("results" + str(climbersex)+str(climbercat)+ " add "+str(points))
     return comp
-
 
 
 lru_cache.DEBUG = True
@@ -318,190 +335,52 @@ def init():
         print('created ' + COMPETITIONS_DB)
 
 
+def add_competition(compId, name, date, gym, competition):
+    if compId is None:
+        compId = str(uuid.uuid4())
 
-
-
-
-
-def getRandomUsername(directory):
-    if not os.path.exists(directory):
-        return False
-
-    list_of_files = os.listdir(directory)
-    if len(list_of_files) == 0:
-        return None
-
-    r = random.randint(0, len(list_of_files)-1)
-    return list_of_files[r]
-
-
-def getPublicPlaylist(playlistId):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    one = cursor.execute('''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' where id =? ;''', [playlistId])
-    one = one.fetchone()
-
-    if one is None or len(one) == 0:
-        return None
-    one = one[0]
-    return json.loads(one)
-
-
-def getPlaylist(username, playlists, playlistId=None):
-    db = lite.connect(COMPETITIONS_DB)
-    cur = db.cursor()
-
-    res = None
-    #
-    if playlistId is None:
-        cur.row_factory = lambda cursor, row: row[0]
-        desired_ids = []
-        for p in playlists:
-            desired_ids.append(p['id'])
-
-        res = cur.execute('SELECT jsondata FROM ' + COMPETITIONS_TABLE +
-                             '  WHERE id IN (%s)' % ("?," * len(desired_ids))[:-1], desired_ids)
-
-        #res = cursor.execute('''SELECT jsondata FROM ''' + PLAYLISTS_TRACKS_TABLE + ''' where owner = ? ;''',
-         #                    [username])
-
-        res = res.fetchall()
-        res2 = res[:0]
-        res3 = []
-    else:
-
-        res = cur.execute('''SELECT jsondata FROM '''+COMPETITIONS_TABLE+''' where owner = ? and id =? ;''',
-                         [username, playlistId])
-        res = res.fetchone()
-
-    playlists = []
-    for playlist in res:
-        playlists.append(json.loads(playlist))
-
-    if playlists is None or len(playlists) == 0:
-        return None
-    #res = res[0]
-    return playlists
-
-
-# Returns a random playlist
-# restriction should be a function that operates on a playlist to figure out if it should be added or not
-# example:
-# def publicPlaylist(playlist):
-#     return playlist['public'] is True and len(playlist['tracks']['items']) > 2
-# getRandomPlaylist(....., publicPlaylist)
-def getRandomPlaylist(directory, dtype, restriction):
-    if not os.path.exists(COMPETITIONS_DB):
-        return None
-
-    #logging.info("analyze.getRandomPlaylist ")
-
-
-    logging.info("public playlists file is "+str(COMPETITIONS_DB))
-
-
-    #if data is None:
-    #    return None
-
-    # get starting time
-    start = datetime.now()
-
-    elapsed_time1 = (datetime.now() - start)
-
-    #r = random.randint(0, len(data) - 1)
-    elapsed_time2 = (datetime.now() - start)
-
-    logging.info ('random playlist '+str(elapsed_time1)+' - '+str(elapsed_time2))
-
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    one = cursor.execute('''SELECT jsondata FROM '''+COMPETITIONS_TABLE+''' where ptype=1 ORDER BY RANDOM() LIMIT 1;''')
-    one = one.fetchone()
-
-    if one is None or len(one) == 0:
-        return None
-    one = one[0]
-    return json.loads(one)
-
-
-
-def addPlaylists(playlistsWithTracks):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    for playlists in playlistsWithTracks:
-        for playlist in playlists:
-            ptype = 0
-            if playlist['public'] is True:
-                ptype = 1
-            cursor.execute("INSERT or REPLACE INTO "+COMPETITIONS_TABLE+" VALUES (?,?,?,?) ",
-                       [str(playlist['id']), str(playlist['owner']['id']), ptype,
-                        json.dumps(playlist)])
-            count = count + 1
-            logging.info('loaded playlist '+str(playlist['id']))
-
-    db.commit()
-    db.close()
-    logging.info("added playlists:"+str(count))
-
-
-
-
-
-@lru_cache(maxsize=16)
-def loadAudioFeatures(path="data/"):
     try:
-        with (open(path+'audio_features.json', "r")) as f:
-            data = json.load(f)
-            return data
-    except ValueError:
-        return []
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        cursor.execute("INSERT  INTO " + COMPETITIONS_TABLE + " VALUES (?, datetime('now'), ?) ",
+                       [compId, json.dumps(competition)])
+
+        logging.info('competition added: '+str(compId))
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
 
 
+#internal method.. not locked!!!
+def _update_competition(compId, competition):
 
-
-
-def add_competition(id, name, date, gym, competition):
+    if compId is None:
+        raise ValueError("cannot update competition with None key");
     db = lite.connect(COMPETITIONS_DB)
-    if id is None:
-        id = str(uuid.uuid4())
-
-    cursor = db.cursor()
-
-    cursor.execute("INSERT  INTO " + COMPETITIONS_TABLE + " VALUES (?, datetime('now'), ?) ",
-                   [id, json.dumps(competition)])
-
-    logging.info('user id '+str(id))
-
-    db.commit()
-    db.close()
-    logging.info("added competition:"+str(name))
-
-
-def update_competition(id, competition):
-    db = lite.connect(COMPETITIONS_DB)
-    if id is None:
-        return None;
 
     cursor = db.cursor()
 
     cursor.execute("update  " + COMPETITIONS_TABLE + " set jsondata=? where id=?  ",
-                   [json.dumps(competition), id])
+                   [json.dumps(competition), compId])
 
-    logging.info('updated competition  id '+str(id))
-
+    logging.info('updated competition: '+str(compId))
     db.commit()
     db.close()
 
 
 
 
-def get_competition(id):
+
+
+def get_competition(compId):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
     one = cursor.execute(
-        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' where id=? LIMIT 1;''',[id])
+        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' where id=? LIMIT 1;''',[compId])
     one = one.fetchone()
 
     if one is None or one[0] is None:
@@ -643,18 +522,17 @@ def get_route(gymid, routenum):
 def add_route(gymid, routenum, routedesc, routegrade):
     db = lite.connect(COMPETITIONS_DB)
 
-
     db.in_transaction
     cursor = db.cursor()
 
-    cursor.execute("INSERT  INTO " + ROUTES_TABLE + " VALUES (?,?,?,?,?,?, datetime('now')) ",
+    cursor.execute("INSERT INTO " + ROUTES_TABLE + " VALUES (?,?,?,?,?,?, datetime('now')) ",
                    [str(uuid.uuid4()), str(gymid), str(routenum), str(routedesc),str(routegrade), 0])
 
-    logging.info('user id '+str(id))
+    logging.info('added route: '+str(routenum))
 
     db.commit()
     db.close()
-    logging.info("added route:"+str(routenum))
+
 
 
 
@@ -663,29 +541,29 @@ def add_route(gymid, routenum, routedesc, routegrade):
 
 def add_test_routes():
     add_route("gym1", "0", "easy by dsm", "5A")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym2", "0", "easy by dsm", "5A")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym3", "0", "easy by dsm", "5A")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym1", "0", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym2", "0", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym3", "0", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym1", "1", "easy by dsm", "5B")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym2", "1", "easy by dsm", "5B")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym3", "1", "easy by dsm", "5B")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym1", "1", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym2", "1", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
     add_route("gym3", "1", "easy by dsm", "5C")
-    time.sleep(1)
+    #time.sleep(1)
 
 
 def add_testing_data():

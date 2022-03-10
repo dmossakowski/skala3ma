@@ -285,6 +285,7 @@ def addCompetitionClimber(competitionId):
     if name is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
 
+
         climber = competitionsEngine.addClimber(None, competitionId, email, name, club, sex, category)
         competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'])
         comp = competitionsEngine.getCompetition(competitionId)
