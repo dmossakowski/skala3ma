@@ -162,6 +162,13 @@ def index():
 
 
 
+@fsgtapp.route('/skala3ma-privacy')
+def privacy():
+    return render_template('skala3maprivacy.html')
+
+
+
+
 @fsgtapp.route('/competitionDashboard')
 #@login_required
 def getCompetitionDashboard():
@@ -262,11 +269,8 @@ def getCompetitionDashboard2():
                             **session)
 
 
-
-
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
 def addCompetitionClimber(competitionId):
-
     name = request.args.get('name')
     email = request.args.get('email')
     sex = request.args.get('sex')
@@ -278,13 +282,11 @@ def addCompetitionClimber(competitionId):
 
     climber=None
 
-
     if name is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
 
         climber = competitionsEngine.addClimber(None, competitionId, email, name, club, sex, category)
         competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'])
-
         comp = competitionsEngine.getCompetition(competitionId)
 
         subheader_message = 'You have been registered! Thanks!'
@@ -292,9 +294,8 @@ def addCompetitionClimber(competitionId):
         comp=None # this is to not show the list of climbers before registration
 
     #competitions = competitionsEngine.getCompetitions()
-    email = session['email']
-    name = session['name']
-
+    email = session.get('email')
+    name = session.get('name')
 
     return render_template('competitionClimber.html',
                            subheader_message=subheader_message,
@@ -305,8 +306,6 @@ def addCompetitionClimber(competitionId):
                            logged_email=email,
                            logged_name=name,
                             **session)
-
-
 
 
 @fsgtapp.route('/competitionDashboard/<competitionId>')
@@ -434,3 +433,17 @@ def getCompetitionClimber(competitionId, climberId):
 
 def user_authenticated(id, username, email, picture):
     competitionsEngine.user_authenticated(id, username, email, picture)
+
+
+
+
+
+@fsgtapp.route('/competitionDashboard/loadData')
+def loadData():
+    competitionsEngine.init()
+    subheader_message='data loaded'
+    return render_template("competitionDashboard.html", climberId=None,
+                           subheader_message=subheader_message,
+                           reference_data=reference_data)
+
+

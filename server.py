@@ -1366,6 +1366,11 @@ def blog():
     return render_template('login.html', **session)
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 if __name__ == '__main__':
     print('Executing main')
     #init()
