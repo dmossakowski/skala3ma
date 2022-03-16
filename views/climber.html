@@ -30,10 +30,13 @@
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
 						<h3>{{ subheader_message }} </h3>
-						{% if climber is  none  %}
+						{% if climber is not none  %}
 
-						<form action="/competitionDashboard/{{competitionId}}/register">
-							<label for="name">Name:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
+						<form action="/climber">
+							<label >Facebook name:</label><br> {{logged_name}}<br><br>
+							<label for="fullname">Full name:</label><br> <input id="fullname" name="fullname" size="40" value="{{climber['fullname']}}"/><br><br>
+
+							<label for="nick">Nick:</label><br> <input id="nick" name="nick" size="40" value="{{climber['nick']}}"/><br><br>
 
 							{% if climber['email'] is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
@@ -42,16 +45,20 @@
 							{% endif %}
 
 
-							<input type="radio" id="F" value="F" name="sex">
+							<input type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
 							<label for="F">Femme</label>
-							<input type="radio" id="M" value="M" name="sex">
+							<input type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
 							<label for="M">Homme</label>
 							<br>
 							<br>
+
 							<label for="category">Category:</label><br><select name="category" id="category">
 							{% for category in reference_data['categories'] %}
-							{{category}}
-							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
+
+							<option value="{{category}}" size="20"
+							{% if (category|string  == climber['category']) %}selected{% endif %}
+
+							>{{reference_data['categories'][category]}}</option>
 							{% endfor %}
 						</select><br><br>
 

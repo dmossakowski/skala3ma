@@ -30,17 +30,16 @@
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
 						<h3>{{ subheader_message }} </h3>
-						{% if climber is  none  %}
+						{% if gymsaa is  none  %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<label for="name">Name:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
 
-							{% if climber['email'] is none %}
+							{% if gyms['email'] is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
 							{% else %}
 							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
 							{% endif %}
-
 
 							<input type="radio" id="F" value="F" name="sex">
 							<label for="F">Femme</label>
@@ -59,9 +58,9 @@
 							<option value="--" size="20" >Choose</option>
 							{% for club in reference_data['clubs'] %}
 
-							{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
+							{% if reference_data['clubs'][club] == '  ' %}selected{% endif %}
 							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
+									{% if reference_data['clubs'][club] == gyms['club'] %}selected{% endif %}
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
 							<option value="other" size="20" >Other</option>
@@ -70,7 +69,6 @@
 							</select>
 							<br><br>
 
-							<label for="otherclub">Si autre club non répertorié lequel:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
 
 
 <button >Sumbit</button>
@@ -78,7 +76,8 @@
 
 
 						{% else %}
-<a href="/competitionDashboard/{{competitionId}}">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+
+<a href="/gyms">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
 
 
 
@@ -92,84 +91,42 @@
 			<div class="row row-bottom-padded-md">
 
 
-				{% if competitions is none  %}
-	<table class="table table-borderless thead-dark table-hover table-dark table-sm border-0" data-toggle="table" >
-         <thead borderless><tr>
-		 <th></th>
-         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Name</th>
-         <th data-field="artist" data-filter-control="input">Description</th>
-         <th data-field="Owner" data-filter-control="select">Owner</th>
-         <th data-filter-control-placeholder>Followers</th>
-		 <th data-field="trackcount" data-filter-control="select">Track count</th>
-
-         </tr>
-         </thead>
-    <tbody borderless>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-         {% for key in library['playlists-tracks'] %}
-
-
-                <tr><td>
-					{% if key['images']|length >0 %}
-
-						{% if key['public']  %}
-							<a href="playlist/{{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
-					 	{% else %}
-							<a href="playlistDashboard?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
-						{% endif %}
-					{% endif %}
-
-					</td>
-					<td>
-						{% if key['public']  %}
-							<a href="playlist/{{key['id']}}"><b>{{key['name']}} </b></a></td> <td><i>{{key['description']}}</i><br>
-						<a href="https://open.spotify.com/playlist/{{key['id']}}" target="_blank">
-								<img src="public/images/spotify-green-icon.png" width="20"></a></a>
-						{% else %}
-							<a href="playlistDashboard?playlistId={{key['id']}}"><b>{{key['name']}}</b></a></td> <td><i><br>{{key['description']}}</i></a>
-						{% endif %}
-
-					</td>
-					<td><i>{{key['owner']['display_name']}} </i></td><td class="text-right"> {{key['followers']['total']}}</td>
-					<td class="text-right"> {{key['tracks']['total']}}</td>
-                    </tr>
-
-
-         {% endfor %}
-         </tbody>
-     </table>
-
-
-{% endif %}
-
-
-
-{% if climber is not none and climber is not undefined  %}
-
-				{% endif %}
 
 
 
 
 
-{% if competition is not none and competition is not undefined  %}
-
+{% if gym is not none and gym is not undefined  %}
 
 <div class="container-fluid">
+
+
+
+
 <table class="table thead-dark table-hover" >
          <thead><tr>
-         <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
-         <th data-field="artist" data-filter-control="input">Sex</th>
-         <th data-field="track" data-filter-control="input">Club</th>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">Line</th>
+         <th data-field="artist" data-filter-control="input">Route num</th>
+         <th data-field="track" data-filter-control="input">Grade</th>
+         <th data-field="artist" data-filter-control="input">Name</th>
+         <th data-field="track" data-filter-control="input">Opened by</th>
+         <th data-field="track" data-filter-control="input">Opened date</th>
+         <th data-field="artist" data-filter-control="input">Notes</th>
+
 
          </tr>
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for climberId in competition['climbers'] %}
+		 {% for route in gym['routes'] %}
 
-		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td> <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+		 <tr><td>{{ route['line'] }} </td>
+			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
+			 <td> {{ route['name'] }}</td>
+
+			 <td> {{ route['openedby'] }}</td>
+			 <td> {{ route['opendate'] }}</td>
+			 <td> {{ route['notes'] }}</td>
 
                     </tr>
              {% endfor %}
@@ -181,18 +138,18 @@
 
 </div>
 
-
+</div>
 
 
 				{%endif %}
 
-{% if competitions is not none  %}
+{% if gyms is not none  %}
 
 
 
 
 
-					{% for competitionId in competitions %}
+					{% for gymid in gyms %}
 
 
 <div class=" col-md-2 ">
@@ -201,13 +158,13 @@
 							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
 							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')">
 
-							<a href="competitionDashboard/{{ competitionId }}">
+							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
 								<div class="prod-title">
-									<h4>{{ competitions[competitionId]['name'] }}</h4>
-									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
+									<h4>{{ gyms[gymid]['name'] }}</h4>
+									<span class="posted_by">{{ gyms[gymid]['routesid'] }}</span>
 									<br>
-									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
+									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
 

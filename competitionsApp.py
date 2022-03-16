@@ -55,25 +55,6 @@ from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
 
-categories = {0:"Séniors 16-49 ans", 1:"Titane 50-69 ans", 2: "Diamant 70 ans et +"}
-
-clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
-                       4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
-                       7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 10:"CPS 10 - Faites le mur" ,
-                       11:"Dahu 91" , 12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
-                       13:"Entente Sportive de Nanterre"  ,14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
-                      17:"Grimpe 13"   ,18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
-                      20:"Groupe Escalade Saint Thibault"  ,
-                      21:"Le Mur 20"  ,
-                      22:"Neuf-a-pic", 23:"Quatre +"  ,24:"ROC 14"  , 25:"RSC Champigny",
-                      26:"RSC Montreuillois"   ,27:"SNECMA Sports Corbeil", 28:"SNECMA Sports Genevilliers"   ,
-                      29:"Union Sportive Saint Arnoult", 30:"US Fontenay"   , 31:"US Ivry" , 32:"US Métro"  ,
-                      33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" ,
-                      37:"Autre club non répertorié"  }
-
-competition_status = {0:"preopen", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
-
-reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status}
 
 load_dotenv()
 
@@ -200,7 +181,7 @@ def getCompetitionDashboard():
                            competitions=competitions,
                            competitionName=None,
                            session=session,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                             **session)
 
 
@@ -232,7 +213,7 @@ def newCompetition():
                            competitions=competitions,
                            competitionName=None,
                            session=session,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                             **session)
 
 
@@ -265,7 +246,7 @@ def getCompetitionDashboard2():
                            subheader_message=subheader_message,
                            competitions=competitions,
                            competitionName=None,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                             **session)
 
 
@@ -287,7 +268,8 @@ def addCompetitionClimber(competitionId):
 
 
         climber = competitionsEngine.addClimber(None, competitionId, email, name, club, sex, category)
-        competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'])
+        competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
+                                                           climber['club'], climber['category'])
         comp = competitionsEngine.getCompetition(competitionId)
 
         subheader_message = 'You have been registered! Thanks!'
@@ -298,15 +280,63 @@ def addCompetitionClimber(competitionId):
     email = session.get('email')
     name = session.get('name')
 
+    if name is None:
+        name = ""
+
     return render_template('competitionClimber.html',
                            subheader_message=subheader_message,
                            competition=comp,
                            competitionId=competitionId,
                            climber=climber,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                            logged_email=email,
                            logged_name=name,
                             **session)
+
+
+
+
+@fsgtapp.route('/climber')
+def update_climber():
+    if session.get('email') is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+
+    climber = competitionsEngine.get_climber_by_email(session.get('email'))
+
+    fullname = request.args.get('fullname')
+    nick = request.args.get('nick')
+    email = request.args.get('email')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+    category = request.args.get('category')
+
+    subheader_message = 'Update your details'
+
+    if fullname is not None and sex is not None and club is not None and email is not None:
+        climber = competitionsEngine.user_self_update(climber, fullname, nick, sex, club, category)
+        subheader_message = 'Your details were saved'
+    else:
+        iemail = session.get('email')
+        comp = None # this is to not show the list of climbers before registration
+
+    email = session.get('email')
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    return render_template('climber.html',
+                           subheader_message=subheader_message,
+                           competitionId=None,
+                           climber=climber,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=name,
+                            **session)
+
+
 
 
 @fsgtapp.route('/competitionDashboard/<competitionId>')
@@ -356,7 +386,7 @@ def getCompetition(competitionId):
     return render_template("competitionDashboard.html", competitionId=competitionId,
                            competition=competition,
                            subheader_message=subheader_message,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                            library=None,
                            **session)
 
@@ -388,7 +418,7 @@ def getCompetitionClimber(competitionId, climberId):
                                    competition=competition,
                                    competitionId=competitionId,
                                    subheader_message="Climber routes saved",
-                                    reference_data=reference_data,
+                                    reference_data=competitionsEngine.reference_data,
                                    **session)
 
 
@@ -426,8 +456,89 @@ def getCompetitionClimber(competitionId, climberId):
     return render_template("competitionDashboard.html", climberId=climberId, climber=climber,
                            subheader_message=subheader_message,
                            competitionId=competitionId,
-                           reference_data=reference_data,
+                           reference_data=competitionsEngine.reference_data,
                            **session)
+
+
+
+
+
+
+@fsgtapp.route('/gyms')
+def gyms():
+    fullname = request.args.get('fullname')
+    nick = request.args.get('nick')
+    email = request.args.get('email')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+    category = request.args.get('category')
+
+    subheader_message = 'Murs'
+
+    gyms = competitionsEngine.get_gyms()
+
+    if fullname is not None and sex is not None and club is not None and email is not None:
+        #climber = competitionsEngine.user_self_update(climber, fullname, nick, sex, club, category)
+        subheader_message = 'Your details were saved'
+    else:
+        iemail = session.get('email')
+        comp = None # this is to not show the list of climbers before registration
+
+    email = session.get('email')
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    return render_template('gyms.html',
+                           subheader_message=subheader_message,
+                           competitionId=None,
+                           gyms=gyms,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=name,
+                            **session)
+
+
+@fsgtapp.route('/gyms/<gymid>')
+def gym_by_id(gymid):
+    fullname = request.args.get('fullname')
+    nick = request.args.get('nick')
+    email = request.args.get('email')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+    category = request.args.get('category')
+
+
+    gym = competitionsEngine.get_gym(gymid)
+
+    subheader_message = '' + str(gym['name'])
+
+    #gyms = competitionsEngine.get_gyms()
+
+    if fullname is not None and sex is not None and club is not None and email is not None:
+        #climber = competitionsEngine.user_self_update(climber, fullname, nick, sex, club, category)
+        subheader_message = 'Your details were saved'
+    else:
+        iemail = session.get('email')
+        comp = None # this is to not show the list of climbers before registration
+
+    email = session.get('email')
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    return render_template('gyms.html',
+                           subheader_message=subheader_message,
+                           gymid=gymid,
+                           gyms=None,
+                           gym=gym,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=name,
+                            **session)
+
 
 
 
@@ -445,6 +556,6 @@ def loadData():
     subheader_message='data loaded'
     return render_template("competitionDashboard.html", climberId=None,
                            subheader_message=subheader_message,
-                           reference_data=reference_data)
+                           reference_data=competitionsEngine.reference_data)
 
 

@@ -191,47 +191,28 @@
 
 				<div class="nav-header">
 
-					<h1 id="fh5co-logo"><a href="/competitionDashboard">skala3ma</a> </h1>
+					<h1 id="fh5co-logo"><a href="/gyms">skala3ma</a> </h1>
 
 					<!-- START #fh5co-menu-wrap -->
 					<nav id="fh5co-menu-wrap" role="navigation">
 
 						<ul class="sf-menu" id="fh5co-primary-menu">
 
-							<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/" target="_blank" title="GitHub"><i class="icon-github"></i></a>
+						<li>
+								<a href="/gyms" class="fh5co-sub-ddown">Gyms</a>
+										</li>
 
-							</li>
-							<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
-
-</li>
-
-
-{% if session is defined and session['name'] is defined %}
-
-<li>{{ session['name'] }}
-
-<img src="{{session['picture']}}">
-
-{% else %}
-<li><a href="facebook/"><img id="facebook"
-            src="https://img.shields.io/badge/Facebook-Connect-brightgreen?style=for-the-badge&labelColor=black&logo=facebook"
-            alt="Facebook"> <br>
-         </a>
-
-         {% endif %}
 						{% if username is defined %}
 
 							<!--li><a href="/progresstest">Progress</a></li-->
+
+
 							<li>
 								<a href="/competitionDashboard" class="fh5co-sub-ddown">Competitions</a>
-								<ul class="fh5co-sub-menu">
+								</li>
 
-									<li><a href="/newCompetition">Add new competition</a></li>
-									<!--li><a href="/audio_features">Audio Features</a></li-->
-
-								</ul>
-							</li>
-
+<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
+</li>
 
 								{% endif %}
 							<!--li><a href="blog.html">Blog</a></li-->
@@ -241,6 +222,20 @@
 
 							{% endif %}
 
+{% if session is defined and session['name'] is defined %}
+
+<li><a href="/climber" class="fh5co-sub-down">{{ session['name'] }}
+
+<img src="{{session['picture']}}" height=27></a></li>
+
+{% else %}
+<li><a href="/facebook/"><img id="facebook"
+            src="https://img.shields.io/badge/Facebook-Connect-brightgreen?style=for-the-badge&labelColor=black&logo=facebook"
+            alt="Facebook"> <br>
+         </a></li>
+
+
+         {% endif %}
 
 						</ul>
 
@@ -305,16 +300,11 @@
 
 
 
-								<li><a href="/logout">Logout</a></li>
+								<li><a href="/logoutfb">Logout</a></li>
 							{% endif %}
 
 								<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a></li>
 
-								<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">GitHub discssion</a></li>
-								<li><a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">GitHub issues</a></li>
-								<li><a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1">Hackernoon article on favorite artists graph</a></li>
-								<li><a href="https://hackernoon.com/spotify-audio-features-time-series-in-additive-spotify-analyzer-lp1q34vh">
-									Hackernoon article on audio features time series</i></a></li>
 
 							</ul>
 

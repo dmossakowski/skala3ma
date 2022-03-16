@@ -319,6 +319,28 @@ def logout():
                            library={}, **session)
 
 
+
+@app.route('/logoutfb')
+def logoutfb():
+    logging.info("doing revoke")
+    session.pop('token', None)
+    session.pop('username', None)
+    session.pop('wants_url', None)
+    session.pop('access_token', None)
+    session['access_token'] = None
+    session['logged_in'] = False
+    session['refresh_token'] = None
+    session['expires_at'] = None
+    session['expires_in'] = None
+    session.clear()
+    _setUserSessionMsg('You have been logged out')
+    spotify.token
+
+    return render_template('competitionDashboard.html',
+                           subheader_message="Logged out ",
+                           library={}, **session)
+
+
 #@app.route('/authorize')
 #def authorize():
 #    token = oauth.twitter.authorize_access_token()
