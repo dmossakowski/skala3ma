@@ -94,20 +94,22 @@ clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Cham
                       33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" ,
                       37:"Autre club non répertorié"  }
 
-competition_status = {0:"preopen", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
+competition_status = {0:"created", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
 
 reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors}
 
 
+
+# called from competitionsApp
 def addCompetition(compId, name, date, gym):
     if compId is None:
         compId = str(uuid.uuid4())
 
     #comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
-    competition = {"id": compId, "name": name, "date": date, "gym": gym, "status":"preopen", "climbers": {},
+    competition = {"id": compId, "name": name, "date": date, "gym": gym, "status": "preopen", "climbers": {},
                    "results": copy.deepcopy(emptyResults)}
     # write this competition to db
-    add_competition(compId, name, date, gym, competition);
+    _add_competition(compId, competition);
 
     return compId
 
@@ -248,6 +250,8 @@ def recalculate(competitionId, comp=None):
         sql_lock.acquire()
         if comp is None:
             comp = get_competition(competitionId)
+            if comp is None:
+                return
         comp['results'] = copy.deepcopy(emptyResults)
         for climberId in comp['climbers']:
             comp = _calculatePointsPerClimber(competitionId,climberId, comp)
@@ -368,7 +372,8 @@ def init():
         print('created ' + COMPETITIONS_DB)
 
 
-def add_competition(compId, name, date, gym, competition):
+
+def _add_competition(compId, competition):
     if compId is None:
         compId = str(uuid.uuid4())
 
@@ -377,7 +382,9 @@ def add_competition(compId, name, date, gym, competition):
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
-        cursor.execute("INSERT  INTO " + COMPETITIONS_TABLE + " VALUES (?, datetime('now'), ?) ",
+        cursor.execute("INSERT INTO " + COMPETITIONS_TABLE +
+                       "(id, jsondata, added_at) VALUES"+
+                        " (?, ?, datetime('now')) ",
                        [compId, json.dumps(competition)])
 
         logging.info('competition added: '+str(compId))
