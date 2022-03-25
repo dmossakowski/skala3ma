@@ -271,10 +271,10 @@ def addCompetitionClimber(competitionId):
         competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
                                                            climber['club'], climber['category'])
         comp = competitionsEngine.getCompetition(competitionId)
-
+        competitionName = comp['name']
         subheader_message = 'You have been registered! Thanks!'
-    else:
-        comp=None # this is to not show the list of climbers before registration
+    #else:
+     ##   comp=None # this is to not show the list of climbers before registration
 
     #competitions = competitionsEngine.getCompetitions()
     email = session.get('email')
@@ -391,6 +391,47 @@ def getCompetition(competitionId):
                            **session)
 
 
+
+@fsgtapp.route('/competitionResults/<competitionId>')
+#@login_required
+def getCompetitionResults(competitionId):
+    #competitionId = request.args.get('competitionId')
+
+
+    #   logging.info(session['id']+' competitionId '+competitionId)
+    # r = request
+    # username = request.args.get('username')
+
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+
+    subheader_message = "Competition results '" + competition['name'] + "' on "+competition['date']
+
+    return render_template("competitionResults.html", competitionId=competitionId,
+                           competition=competition,
+                           subheader_message=subheader_message,
+                           reference_data=competitionsEngine.reference_data,
+                           library=None,
+                           **session)
 
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/climber/<climberId>')

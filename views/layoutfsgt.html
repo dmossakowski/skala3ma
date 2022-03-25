@@ -203,7 +203,25 @@
 										</li>
 <li>
 								<a href="/competitionDashboard" class="fh5co-sub-ddown">Competitions</a>
+								<ul class="fh5co-sub-menu">
+								<li>	<a href="/competitionDashboard" >List </a></li>
+							<li>	<a href="/newCompetition" >Create new </a></li>
+								</ul>
 								</li>
+
+{% if competition is defined %}
+
+<li>
+								<a href="/competitionDashboard/{{ competitionId}}" class="fh5co-sub-ddown">Competition {{ competition['name']}}</a>
+				<ul class="fh5co-sub-menu">
+							<li><a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a> </li>
+						<li><a href="/competitionDashboard/{{ competitionId}}">Climbers</a> </li>
+						<li><a href="/competitionResults/{{ competitionId}}">Results</a></li>
+
+								</ul>
+
+								</li>
+{% endif %}
 
 						{% if username is defined %}
 

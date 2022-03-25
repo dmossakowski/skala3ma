@@ -15,20 +15,9 @@
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-						<a href="/newCompetition">Create new competition</a>
-
 						<br>
 						<h3>{{ subheader_message }} </h3>
 
-						{% if competitionName is not none  %}
-				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
-
-				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
-
-						{% else %}
-
-
-						{% endif %}
 
 
 					</div>
@@ -39,10 +28,12 @@
 
 
 				{% if competitions is none  %}
+
+
 	<table class="table table-borderless thead-dark table-hover table-dark table-sm border-0" data-toggle="table" >
          <thead borderless><tr>
 		 <th></th>
-         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Name</th>
+         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Name aa</th>
          <th data-field="artist" data-filter-control="input">Description</th>
          <th data-field="Owner" data-filter-control="select">Owner</th>
          <th data-filter-control-placeholder>Followers</th>
@@ -140,16 +131,13 @@
 {% if competition is not none and competition is not undefined  %}
 
 
+
 <div class="container-fluid">
-<table class="table thead-dark table-hover"  data-toggle="table">
+<table class="table thead-dark table-hover" >
          <thead><tr>
          <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
-         <th data-field="artist" data-sortable="True">Sex</th>
-         <th data-field="track" data-sortable="True">Club</th>
-         <th data-field="category" data-sortable="True">Category</th>
-         <th data-field="routes" data-filter-control="input">Routes climbed</th>
-		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
-			 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
+         <th data-field="artist" data-filter-control="input">Sex</th>
+         <th data-field="track" data-filter-control="input">Club</th>
 
          </tr>
          </thead>
@@ -157,29 +145,9 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
     				{% for climberId in competition['climbers'] %}
 
-		 {% if (competition['climbers'][climberId]['rank'] == 1) %}
-		 <tr style="background: #CFC">
-		{% elif competition['climbers'][climberId]['rank'] == 2 %}
-			 <tr style="background: #AEA">
-		{% elif competition['climbers'][climberId]['rank'] == 3 %}
-			 <tr style="background: #9C9">
-		{% else  %}
-			 <tr style="background: #EEE">
-		{% endif  %}
+		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td> <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
 
-			 <td><a href="/competitionDashboard/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
-			 <td><i>{{ competition['climbers'][climberId]['routesClimbed']}} </i> -
-					{{ competition['climbers'][climberId]['routesClimbed']|length }} routes </i></td>
-			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
-			 <td>
-				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->
-				 <b>{{ competition['climbers'][climberId]['rank'] }}</b>
-				 <!--/font-->
-
-			 </td>
                     </tr>
              {% endfor %}
 
@@ -187,6 +155,16 @@
          </tbody>
      </table>
 
+
+</div>
+
+
+
+
+
+
+
+<div class="container-fluid">
 
 
 

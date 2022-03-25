@@ -35,7 +35,7 @@
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<label for="name">Name:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
 
-							{% if climber['email'] is none %}
+							{% if climber['email'] is none or logged_email is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
 							{% else %}
 							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
@@ -78,10 +78,7 @@
 
 
 						{% else %}
-<a href="/competitionDashboard/{{competitionId}}">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
-
-
-
+<!-- climber is null here -->
 						{% endif %}
 
 
