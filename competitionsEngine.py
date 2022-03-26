@@ -117,7 +117,7 @@ def addCompetition(compId, name, date, gym):
 
 
 # add climber to a competition
-def addClimber(climberId, competitionId, email, name, club, sex, category=0):
+def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category=0):
     logging.info("adding climber "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
@@ -148,7 +148,8 @@ def addClimber(climberId, competitionId, email, name, club, sex, category=0):
             if climbers[cid]['email']==email:
                 return climbers[cid]
 
-        climbers[climberId] = {"id":climberId, "email":email, "name":name, "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
+        climbers[climberId] = {"id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
+                               "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
         logging.info(competition)
 
         _update_competition(competitionId, competition)

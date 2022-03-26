@@ -33,7 +33,9 @@
 						{% if climber is  none  %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
-							<label for="name">Name:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
+							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
+							<label for="firstname">Prenom:</label><br> <input id="firstname" name="firstname" size="40" value="{{climber['firstname']}}"/><br><br>
+							<label for="lastname">Nom:</label><br> <input id="lastname" name="lastname" size="40" value="{{climber['lastname']}}"/><br><br>
 
 							{% if climber['email'] is none or logged_email is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
@@ -158,6 +160,7 @@
          <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
          <th data-field="artist" data-filter-control="input">Sex</th>
          <th data-field="track" data-filter-control="input">Club</th>
+<th data-field="category" data-filter-control="input">Category</th>
 
          </tr>
          </thead>
@@ -166,7 +169,9 @@
     				{% for climberId in competition['climbers'] %}
 
 		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td> <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+<td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
 
                     </tr>
              {% endfor %}

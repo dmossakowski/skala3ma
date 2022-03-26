@@ -252,7 +252,10 @@ def getCompetitionDashboard2():
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
 def addCompetitionClimber(competitionId):
-    name = request.args.get('name')
+    firstname = request.args.get('firstname')
+
+    lastname = request.args.get('lastname')
+
     email = request.args.get('email')
     sex = request.args.get('sex')
     club = request.args.get('club')
@@ -263,11 +266,11 @@ def addCompetitionClimber(competitionId):
 
     climber=None
 
-    if name is not None and sex is not None and club is not None and email is not None:
+    if firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
+        name = firstname + " " + lastname
 
-
-        climber = competitionsEngine.addClimber(None, competitionId, email, name, club, sex, category)
+        climber = competitionsEngine.addClimber(None, competitionId, email, name, firstname, lastname, club, sex, category)
         competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
                                                            climber['club'], climber['category'])
         comp = competitionsEngine.getCompetition(competitionId)
