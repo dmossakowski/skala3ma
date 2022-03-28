@@ -506,6 +506,15 @@ def getCompetitionClimber(competitionId, climberId):
 
 
 
+@fsgtapp.route('/migrategyms')
+def migrategyms():
+    gyms = competitionsEngine.get_gyms()
+
+    nanterre = gyms["1"]
+    nanterre['logoimg'] = 'logo-ESN-HD-copy-1030x1030.png'
+
+    competitionsEngine.update_gym("1", "667", json.dumps(nanterre))
+    return redirect(url_for('fsgtapp.gyms'))
 
 
 @fsgtapp.route('/gyms')

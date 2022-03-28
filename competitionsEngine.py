@@ -596,10 +596,13 @@ def _update_climber(climberId, email, climber):
 
 
 
+def update_gym(gymid, routesid, jsondata):
+    _update_gym(gymid, routesid, jsondata)
+
 def add_test_gyms():
     gymid = "1"
     routesid = "667"
-    gym = add_gym(gymid, routesid, "Entente Sportive de Nanterre")
+    gym = add_gym(gymid, routesid, "Entente Sportive de Nanterre", "logo-ESN-HD-copy-1030x1030.png")
     gym = add_gym("2", "668", "ESC 14")
 
 
@@ -692,12 +695,17 @@ def _get_routes(routesid):
 
 
 
-def add_gym(gymid, routesid, name):
+def add_gym(gymid, routesid, name, logoimg=None):
     if gymid is None:
         gymid = str(uuid.uuid4())
 
-    gymjson = {'id': gymid, 'routesid': routesid, 'name': name }
+    gymjson = get_gym_json(gymid, routesid, name, logoimg)
     _add_gym(gymid, routesid, json.dumps(gymjson))
+    return gymjson
+
+
+def get_gym_json(gymid, routesid, name, logoimg):
+    gymjson = {'id': gymid, 'routesid': routesid, 'name': name, 'logoimg': logoimg}
     return gymjson
 
 
@@ -712,6 +720,22 @@ def _add_gym(gymid, routesid, jsondata):
                    [str(gymid), str(routesid),  jsondata])
 
     logging.info('added gym: '+str(jsondata))
+
+    db.commit()
+    db.close()
+
+
+
+def _update_gym(gymid, routesid, jsondata):
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+
+    cursor.execute("update " + GYM_TABLE + " set  routesid = ? , jsondata = ? , added_at=datetime('now' ) where id=?",
+                   [ str(routesid),  jsondata, str(gymid)])
+
+    logging.info('updated gym: '+str(jsondata))
 
     db.commit()
     db.close()
