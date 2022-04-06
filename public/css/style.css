@@ -254,7 +254,7 @@ figure {
   border-top: none;
   text-decoration: none;
   zoom: 1;
-  font-size: 16px;
+  font-size: 14px;
   border-bottom: none !important;
   font-weight: bold; }
 .sf-menu a:hover, .sf-menu a:focus {
@@ -354,7 +354,7 @@ figure {
   z-index: 2;
   display: block;
   float: right;
-  margin-top: 15px; }
+  margin-top: 0px; }
 #fh5co-menu-wrap .sf-menu a {
   padding: 1em .75em; }
 
@@ -460,8 +460,8 @@ figure {
 #fh5co-primary-menu .fh5co-sub-menu a {
   letter-spacing: 0;
   padding: 0 15px;
-  font-size: 18px;
-  line-height: 34px;
+  font-size: 12px;
+  line-height: 28px;
   color: #575757 !important;
   text-transform: none;
   background: none; }

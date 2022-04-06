@@ -252,10 +252,11 @@ def getCompetitionDashboard2():
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
 def addCompetitionClimber(competitionId):
+
+    useremail = session.get('email')
+
     firstname = request.args.get('firstname')
-
     lastname = request.args.get('lastname')
-
     email = request.args.get('email')
     sex = request.args.get('sex')
     club = request.args.get('club')
@@ -264,6 +265,7 @@ def addCompetitionClimber(competitionId):
     comp = competitionsEngine.getCompetition(competitionId)
     subheader_message = 'Please register for ' + comp['name'] + ' on ' + comp['date']
 
+    user = competitionsEngine.get_user_by_email(useremail)
     climber=None
 
     if firstname is not None and sex is not None and club is not None and email is not None:
@@ -291,6 +293,7 @@ def addCompetitionClimber(competitionId):
                            competition=comp,
                            competitionId=competitionId,
                            climber=climber,
+                           user = user,
                            reference_data=competitionsEngine.reference_data,
                            logged_email=email,
                            logged_name=name,
@@ -299,15 +302,44 @@ def addCompetitionClimber(competitionId):
 
 
 
-@fsgtapp.route('/climber')
-def update_climber():
+@fsgtapp.route('/user')
+def get_user():
+    if session.get('email') is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No user found",
+                               **session)
+
+    climber = competitionsEngine.get_user_by_email(session.get('email'))
+
+    subheader_message = 'Update your details'
+
+    email = session.get('email')
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    return render_template('climber.html',
+                           subheader_message=subheader_message,
+                           competitionId=None,
+                           climber=climber,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=name,
+                            **session)
+
+
+@fsgtapp.route('/updateuser')
+def update_user():
     if session.get('email') is None:
         return render_template('competitionDashboard.html', sortedA=None,
                                subheader_message="No competition found",
                                **session)
 
-    climber = competitionsEngine.get_climber_by_email(session.get('email'))
+    climber = competitionsEngine.get_user_by_email(session.get('email'))
 
+    firstname = request.args.get('firstname')
+    lastname = request.args.get('lastname')
     fullname = request.args.get('fullname')
     nick = request.args.get('nick')
     email = request.args.get('email')
@@ -317,15 +349,25 @@ def update_climber():
 
     subheader_message = 'Update your details'
 
-    if fullname is not None and sex is not None and club is not None and email is not None:
-        climber = competitionsEngine.user_self_update(climber, fullname, nick, sex, club, category)
-        subheader_message = 'Your details were saved'
-    else:
-        iemail = session.get('email')
-        comp = None # this is to not show the list of climbers before registration
-
     email = session.get('email')
     name = session.get('name')
+
+    if firstname is None or sex is None or club is None or email is None:
+        #subheader_message = "Update"
+
+        return render_template('climber.html',
+                               error_message = "All fields are required",
+                               subheader_message=subheader_message,
+                               competitionId=None,
+                               climber=climber,
+                               reference_data=competitionsEngine.reference_data,
+                               logged_email=email,
+                               logged_name=name,
+                               **session)
+
+    else:
+        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, category)
+        subheader_message = 'Your details were saved'
 
     if name is None:
         name = ""
@@ -398,13 +440,6 @@ def getCompetition(competitionId):
 @fsgtapp.route('/competitionResults/<competitionId>')
 #@login_required
 def getCompetitionResults(competitionId):
-    #competitionId = request.args.get('competitionId')
-
-
-    #   logging.info(session['id']+' competitionId '+competitionId)
-    # r = request
-    # username = request.args.get('username')
-
     competition = None
 
     if competitionId is not None:
@@ -420,20 +455,22 @@ def getCompetitionResults(competitionId):
                                    library={},
                                    **session)
     elif len(competition) == 0:
-
         return render_template('index.html', sortedA=None,
                                    getPlaylistError="Playlist has no tracks or it was not found",
                                    library={},
                                    **session)
 
-
     subheader_message = "Competition results '" + competition['name'] + "' on "+competition['date']
+
+    rankings = competitionsEngine.get_sorted_rankings(competition)
+
+
 
     return render_template("competitionResults.html", competitionId=competitionId,
                            competition=competition,
                            subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data,
-                           library=None,
+                           rankings = rankings,
                            **session)
 
 
@@ -506,12 +543,129 @@ def getCompetitionClimber(competitionId, climberId):
 
 
 
+
+
+@fsgtapp.route('/competitionRoutesEntry/<competitionId>')
+#@login_required
+def competitionRoutesList(competitionId):
+    #competitionId = request.args.get('competitionId')
+
+
+    competition = competitionsEngine.getCompetition(competitionId)
+
+    gymid = competition['gym']
+    #gym = competitionsEngine.get_gym(gymid)
+    routesid = competition.get('routesid')
+
+    subheader_message = competition['name']+"   list "+competition['gym']
+
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
+
+    return render_template("competitionClimberList.html",
+                           subheader_message=subheader_message,
+                           competition=competition,
+                           competitionId=competitionId,
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
+
+
+
+# enter competition climbed routes for a climber and save them
+@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>')
+#@login_required
+def enterRoutesClimbed(competitionId, climberId):
+    #competitionId = request.args.get('competitionId')
+
+    routesUpdated = []
+    for i in range(100):
+        routeChecked = request.args.get("route"+str(i)) != None
+        if routeChecked: routesUpdated.append(i)
+
+
+    #   logging.info(session['id']+' competitionId '+competitionId)
+    # r = request
+    # username = request.args.get('username')
+
+    competition = None
+
+    if climberId is not None:
+        if len(routesUpdated) > 0:
+            competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
+            competition = competitionsEngine.getCompetition(competitionId)
+            return render_template('competitionClimberList.html',
+                                   competition=competition,
+                                   competitionId=competitionId,
+                                   subheader_message="Climber routes saved",
+                                    reference_data=competitionsEngine.reference_data,
+                                   **session)
+
+
+        climber = competitionsEngine.getClimber(competitionId,climberId)
+
+
+    if climber is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No climber found",
+                               **session)
+    elif climber is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="error  ",
+                                   library={},
+                                   **session)
+    elif len(climber) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    competition = competitionsEngine.getCompetition(competitionId)
+
+    gymid = competition['gym']
+    #gym = competitionsEngine.get_gym(gymid)
+    routesid = competition.get('routesid')
+
+    if routesid is None:
+        routesid = '5600717d-2167-4c9b-a72c-8aaf297bf092'
+
+    routes = competitionsEngine._get_routes(routesid)
+    routes = routes['routes']
+    subheader_message = climber['name']+"   from "+climber['club']
+
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
+
+    return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
+                           routes=routes,
+                           subheader_message=subheader_message,
+                           competition=competition,
+                           competitionId=competitionId,
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
+
+
+
 @fsgtapp.route('/migrategyms')
 def migrategyms():
     gyms = competitionsEngine.get_gyms()
 
     nanterre = gyms["1"]
     nanterre['logoimg'] = 'logo-ESN-HD-copy-1030x1030.png'
+    nanterre['homepage'] = 'https://www.esnanterre.com/'
 
     competitionsEngine.update_gym("1", "667", json.dumps(nanterre))
     return redirect(url_for('fsgtapp.gyms'))

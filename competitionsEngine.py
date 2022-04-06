@@ -49,7 +49,7 @@ COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 # ID, date, name, location
 COMPETITIONS_TABLE = "competitions"
 # ID, name, club, m/f, list of climbs
-CLIMBERS_TABLE = "climbers"
+USERS_TABLE = "climbers"
 ROUTES_TABLE = "routes"
 ROUTES_CLIMBED_TABLE = "routes_climbed"
 GYM_TABLE = "gyms"
@@ -101,12 +101,12 @@ reference_data = {"categories":categories, "clubs":clubs, "competition_status": 
 
 
 # called from competitionsApp
-def addCompetition(compId, name, date, gym):
+def addCompetition(compId, name, date, gym, routesid=None):
     if compId is None:
         compId = str(uuid.uuid4())
 
     #comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
-    competition = {"id": compId, "name": name, "date": date, "gym": gym, "status": "preopen", "climbers": {},
+    competition = {"id": compId, "name": name, "date": date, "gym": gym, "routesid": routesid, "status": "preopen", "climbers": {},
                    "results": copy.deepcopy(emptyResults)}
     # write this competition to db
     _add_competition(compId, competition);
@@ -157,6 +157,12 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
         sql_lock.release()
 
     return climbers[climberId]
+
+
+def get_climber_json(climberId, email, name, firstname, lastname, club, sex, category=0):
+    climber_json = {"id": climberId, "email": email, "name": name, "firstname": firstname, "lastname": lastname,
+                           "club": club, "sex": sex, "category": category, "routesClimbed": [], "score": 0, "rank": 0}
+
 
 
 def getCompetitions():
@@ -283,6 +289,42 @@ def recalculate(competitionId, comp=None):
 
     return comp
 
+# returns sorted arrays based on rank
+def get_sorted_rankings(competition):
+    rankings = {}
+    rankings['F'] = []
+    rankings['M'] = []
+    rankings['0F'] = []
+    rankings['1F'] = []
+    rankings['2F'] = []
+    rankings['0M'] = []
+    rankings['1M'] = []
+    rankings['2M'] = []
+
+    # scratch first
+    for climberid in competition.get('climbers'):
+        climber = competition.get('climbers').get(climberid)
+        rank = int(climber['rank'])
+        #rankings[climber['sex']].insert(rank-1, climber)
+
+
+    #sortedM =  sorted(rankings['M'], key=lambda k: rankings['M'][k]['position'])
+
+    # sort by awayPoints, then position; note the lambda uses a tuple
+    a = competition.get('climbers').values()
+    #b = a[0]
+    for itemid in sorted(competition.get('climbers'), key=lambda k: (competition.get('climbers')[k]['sex'] ,competition.get('climbers')[k]['score']),reverse = True):
+        climber = competition.get('climbers').get(itemid)
+        rankings[climber['sex']].append(climber)
+
+    for itemid in sorted(competition.get('climbers'), key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['category'] ,competition.get('climbers')[k]['score']),reverse = True):
+        climber = competition.get('climbers').get(itemid)
+        rankings[str(climber['category'])+str(climber['sex'])].append(climber)
+
+
+    return rankings
+
+
 
 def _calculatePointsPerClimber(competitionId, climberId, comp):
     routesClimbed = comp['climbers'][climberId]['routesClimbed']
@@ -329,7 +371,7 @@ def init():
                        added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null, 
                        jsondata json)''')
 
-        cursor.execute('''CREATE TABLE if not exists ''' + CLIMBERS_TABLE + '''(
+        cursor.execute('''CREATE TABLE if not exists ''' + USERS_TABLE + '''(
                        id text NOT NULL UNIQUE, 
                        email text not null, 
                        jsondata integer not null,  
@@ -447,12 +489,12 @@ def get_all_competitions():
     return comps
 
 
-def get_climber(id):
+def get_user(id):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
     one = cursor.execute(
-        '''SELECT * FROM ''' + CLIMBERS_TABLE + ''' where id=? LIMIT 1;''',[id])
+        '''SELECT * FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
     one = one.fetchone()
 
 
@@ -466,12 +508,15 @@ def get_climber(id):
 
 
 
-def get_climber_by_email(email):
+def get_user_by_email(email):
+
+    if email is None:
+        return None
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
     one = cursor.execute(
-        '''SELECT jsondata FROM ''' + CLIMBERS_TABLE + ''' where email=? LIMIT 1;''', [email])
+        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where email=? LIMIT 1;''', [email])
     one = one.fetchone()
 
     if one is None or one[0] is None:
@@ -484,20 +529,23 @@ def get_climber_by_email(email):
 
 
 
-def user_self_update(climber, fullname, nick, sex, club, category):
+def user_self_update(climber, name, firstname, lastname, nick, sex, club, category):
     try:
         sql_lock.acquire()
-
-        newclimber = {'fullname':fullname, 'nick': nick, 'sex': sex, 'club': club, 'category': category}
+        fullname = ""
+        if firstname is not None and lastname is not None:
+            fullname = firstname+" "+lastname
+        newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
+                      'sex': sex, 'club': club, 'category': category}
         email = climber['email']
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if climber is None:
-            _add_climber(None, email, newclimber)
+            _add_user(None, email, newclimber)
             logging.info('added user id ' + str(email))
         else:
             climber.update(newclimber)
-            _update_climber(climber['id'], email, climber)
+            _update_user(climber['id'], email, climber)
             logging.info('updated user id ' + str(climber))
     finally:
         db.commit()
@@ -511,18 +559,18 @@ def user_self_update(climber, fullname, nick, sex, club, category):
 def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
-        climber = get_climber_by_email(email)
+        user = get_user_by_email(email)
 
-        newclimber = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture, 'role': '', 'isgod': "False"}
+        newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture, 'role': '', 'isgod': "False"}
 
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
-        if climber is None:
-            _add_climber(None, email, newclimber)
+        if user is None:
+            _add_user(None, email, newuser)
             logging.info('added user id ' + str(email))
         else:
-            climber.update(newclimber)
-            _update_climber(climber['id'], email, climber)
+            user.update(newuser)
+            _update_user(user['id'], email, user)
             logging.info('updated user id ' + str(email))
     finally:
         db.commit()
@@ -533,7 +581,7 @@ def user_authenticated_fb(fid, name, email, picture):
 
 
 def user_registered_for_competition(climberId, name, email, sex, club, category):
-    climber = get_climber_by_email(email)
+    user = get_user_by_email(email)
 
     if climberId is None:
         climberId = str(uuid.uuid4())
@@ -549,12 +597,12 @@ def user_registered_for_competition(climberId, name, email, sex, club, category)
         sql_lock.acquire()
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
-        if climber is None:
-            _add_climber(climberId, email, newclimber)
+        if user is None:
+            _add_user(climberId, email, newclimber)
             climber = newclimber
             logging.info('added user id ' + str(email))
         else:
-            _update_climber(climberId, email, climber)
+            _update_user(climberId, email, user)
             logging.info('updated user id ' + str(email))
 
     finally:
@@ -566,13 +614,13 @@ def user_registered_for_competition(climberId, name, email, sex, club, category)
 
 
 
-def _add_climber(climberId, email, climber):
+def _add_user(climberId, email, climber):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     if climberId is None:
         climberId = str(uuid.uuid4())
         climber['id'] = climberId
-    cursor.execute("INSERT  INTO " + CLIMBERS_TABLE +
+    cursor.execute("INSERT  INTO " + USERS_TABLE +
                    "(id, email, jsondata, added_at) " +
                    " values (?, ?, ?, datetime('now')) ",
                    [str(climberId), email, json.dumps(climber)])
@@ -581,13 +629,13 @@ def _add_climber(climberId, email, climber):
     db.close()
 
 
-def _update_climber(climberId, email, climber):
+def _update_user(climberId, email, climber):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     if climberId is None:
         climberId = str(uuid.uuid4())
         climber['id'] = climberId
-    cursor.execute("UPDATE " + CLIMBERS_TABLE + " set jsondata=? where email =? ",
+    cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
                    [json.dumps(climber), str(email)])
     logging.info('added user id ' + str(email))
     db.commit()
@@ -695,17 +743,17 @@ def _get_routes(routesid):
 
 
 
-def add_gym(gymid, routesid, name, logoimg=None):
+def add_gym(gymid, routesid, name, logoimg=None, homepage=None):
     if gymid is None:
         gymid = str(uuid.uuid4())
 
-    gymjson = get_gym_json(gymid, routesid, name, logoimg)
+    gymjson = get_gym_json(gymid, routesid, name, logoimg, homepage)
     _add_gym(gymid, routesid, json.dumps(gymjson))
     return gymjson
 
 
-def get_gym_json(gymid, routesid, name, logoimg):
-    gymjson = {'id': gymid, 'routesid': routesid, 'name': name, 'logoimg': logoimg}
+def get_gym_json(gymid, routesid, name, logoimg, homepage):
+    gymjson = {'id': gymid, 'routesid': routesid, 'name': name, 'logoimg': logoimg, 'homepage': homepage}
     return gymjson
 
 
@@ -748,7 +796,7 @@ def get_route(gymid, routenum):
     cursor = db.cursor()
     count = 0
     rows = cursor.execute(
-        '''SELECT * FROM ''' + CLIMBERS_TABLE +
+        '''SELECT * FROM ''' + USERS_TABLE +
         ''' where gymid=? and routenum=? group by gymid order by max(added_at) limit 1;''',
         [gymid, routenum])
 
@@ -893,6 +941,18 @@ def loadgymsdict():
         {'id': '', 'routesid': '1', 'name': 'Nanterre Sprortiv' },
         {'id': '', 'routesid': '2', 'name': 'ESS 78'}]
     }
+
+
+def generateDummyRoutes(size):
+    routes = {}
+    routesA = []
+    for i in size:
+        routes.append({'id': '', 'gymid': '1', 'routenum': str(i), 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '',
+         'grade': '-', 'name': '', 'openedby': '', 'opendate': '', 'notes': ''})
+
+    routes['routes']=routesA
+    return routes
+
 
 
 def loadroutesdict():

@@ -18,7 +18,7 @@
 
 
 						<br>
-						<h3>{{ subheader_message }} </h3>
+						<h3>Competition climber list <br>{{ subheader_message }} </h3>
 
 
 
@@ -73,66 +73,65 @@
 
 
 
-{% if rankings is not none and rankings is not undefined %}
+{% if competition is not none and competition is not undefined  %}
 
-
-				{% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
-				<h2>
-				{% if key == '2F' %} Classement Diamante Femme {% endif %}
-				{% if key == '1F' %} Classement Titane Femme {% endif %}
-				{% if key == '0F' %} Classement Senior Femme {% endif %}
-				{% if key == '2M' %} Classement Diamante Homme {% endif %}
-				{% if key == '1M' %} Classement Titane Homme {% endif %}
-				{% if key == '0M' %} Classement Senior Homme {% endif %}
-				{% if key == 'M' %} Classement Scratch Homme {% endif %}
-				{% if key == 'F' %} Classement Scratch Femme {% endif %}
-
-</h2>
-
-<table class="table thead-dark table-hover"  data-toggle="table">
+<!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
+<div class="container-fluid">
+<table class="table thead-dark table-hover"  id="entrytable">
          <thead><tr>
-		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
-    	 <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
+         <th data-width="250"  data-filter-control="input">Name</th>
+         <th data-field="artist" data-sortable="True">Sex</th>
          <th data-field="track" data-sortable="True">Club</th>
          <th data-field="category" data-sortable="True">Category</th>
          <th data-field="routes" data-filter-control="input">Routes climbed</th>
 		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
 
          </tr>
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for climber in rankings[key] %}
-
-		 {% if loop.index == 1 %}
-		 <tr style="background: #CFC">
-		{% elif loop.index == 2 %}
-			 <tr style="background: #AEA">
-		{% elif loop.index == 3 %}
-			 <tr style="background: #9C9">
+		 {% for climberId in competition['climbers'] %}
+		<tr
+		 {% if (competition['climbers'][climberId]['rank'] == 1) %}
+		     style="background: #CFC">
+		{% elif competition['climbers'][climberId]['rank'] == 2 %}
+			 style="background: #AEA">
+		{% elif competition['climbers'][climberId]['rank'] == 3 %}
+			 style="background: #9C9">
 		{% else  %}
-			 <tr style="background: #EEE">
+			 style="background: #EEE">
 		{% endif  %}
-			<td>{{loop.index}}</td>
-			 <td>	<b>{{ climber['name'] }}</b></a></td>
 
-			 <td><i>{{climber['club'] }}</i></td>
-			 <td><i>  {{ reference_data['categories'][climber['category']] }}  </i></td>
-			 <td>{{ climber['routesClimbed']|length }} routes </i></td>
-			 <td>{{ climber['score'] }}  </td>
-			        </tr>
-             {% endfor %}
+			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
+			 <td><i>
+				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
+				 {{ competition['climbers'][climberId]['routesClimbed']}}  -
+				 {{ competition['climbers'][climberId]['routesClimbed']|length }} routes </a></td>
+			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
+			 <td>
+				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->
+				 <b>{{ competition['climbers'][climberId]['rank'] }}</b>
+				 <!--/font-->
+
+			 </td>
+		 </tr>
+		 {% endfor %}
 
 
          </tbody>
      </table>
-<br><br>
-			{% endfor %}
-				{% endif %} <!-- if rankings -->
 
 
 
 
+
+
+
+				{%endif %}
 
 {% if competitions is not none  %}
 

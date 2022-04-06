@@ -1,5 +1,6 @@
 
-
+<!-- page to register @fsgtapp.route('/competitionDashboard/<competitionId>/register')
+ -->
 
 {% extends "layoutfsgt.html" %}
 
@@ -44,10 +45,12 @@
 							{% endif %}
 
 
-							<input type="radio" id="F" value="F" name="sex">
+							<input type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
 							<label for="F">Femme</label>
-							<input type="radio" id="M" value="M" name="sex">
+							<input type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
 							<label for="M">Homme</label>
+
+
 							<br>
 							<br>
 							<label for="category">Category:</label><br><select name="category" id="category">

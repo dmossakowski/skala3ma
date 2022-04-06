@@ -23,65 +23,13 @@
 
 
 	{% block secondarycontent %}
-
-	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+	<div  >
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
-						<br><br><br>
-						<h3>{{ subheader_message }} </h3>
-						{% if gymsaa is  none  %}
-
-						<form action="/competitionDashboard/{{competitionId}}/register">
-							<label for="name">aaName:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
-
-							{% if gyms['email'] is none %}
-							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
-							{% else %}
-							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
-							{% endif %}
-
-							<input type="radio" id="F" value="F" name="sex">
-							<label for="F">Femme</label>
-							<input type="radio" id="M" value="M" name="sex">
-							<label for="M">Homme</label>
-							<br>
-							<br>
-							<label for="category">Category:</label><br><select name="category" id="category">
-							{% for category in reference_data['categories'] %}
-							{{category}}
-							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
-							{% endfor %}
-						</select><br><br>
-
-							<label for="club">Club:</label><br><select name="club" id="club">
-							<option value="--" size="20" >Choose</option>
-							{% for club in reference_data['clubs'] %}
-
-							{% if reference_data['clubs'][club] == '  ' %}selected{% endif %}
-							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == gyms['club'] %}selected{% endif %}
-									size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-							<option value="other" size="20" >Other</option>
-
-
-							</select>
-							<br><br>
-
-
-
-							<button >Sumbit</button>
-					</form>
-
-
-						{% else %}
-
-
-
-
-						{% endif %}
-
+						<br>
+						<h3>{{ competition['name'] }} - {{ subheader_message }}
+ </h3>
 
 					</div>
 
@@ -90,17 +38,13 @@
 			<div class="row row-bottom-padded-md">
 
 
-
-
-
-
-
-{% if gym is not none and gym is not undefined  %}
+{% if routes is not none and routes is not undefined  %}
 
 <div class="container-fluid">
 
 
-
+<form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}">
+<h2><input type="submit" value="Save"></h2>
 
 <table class="table thead-dark table-hover" id="my_table_id"
     data-url="data/url.json"
@@ -112,32 +56,34 @@
          <th data-field="artist" data-filter-control="input">Route num</th>
          <th data-field="track" data-filter-control="input" data-editable="true">Grade</th>
          <th data-field="name" data-filter-control="input" data-editable="true">Name</th>
-         <th data-field="openedby" data-filter-control="input">Opened by</th>
-         <th data-field="openeddate" data-filter-control="input">Opened date</th>
-         <th data-field="notes" data-filter-control="input">Notes</th>
+         <th data-field="climbed" data-filter-control="input">Climbed</th>
 
 
          </tr>
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in gym['routes'] %}
-
-		 <tr><td>{{ route['line'] }} </td>
+		 {% for route in routes %}
+		 <tr onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;"><td>{{ route['line'] }} </td>
 			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 
-			 <td> {{ route['openedby'] }}</td>
-			 <td> {{ route['opendate'] }}</td>
-			 <td> {{ route['notes'] }}</td>
+			 <td>
+								<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
+								{% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
 
-                    </tr>
+								>
+
+			 </td>
+
+		 </tr></a>
              {% endfor %}
 
 
          </tbody>
      </table>
 
+</form>
 
 </div>
 
