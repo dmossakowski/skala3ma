@@ -632,10 +632,11 @@ def enterRoutesClimbed(competitionId, climberId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
 
-    if routesid is None:
-        routesid = '5600717d-2167-4c9b-a72c-8aaf297bf092'
+    #if routesid is None:
+    #    routesid = '5600717d-2167-4c9b-a72c-8aaf297bf092'
 
-    routes = competitionsEngine._get_routes(routesid)
+    #routes = competitionsEngine._get_routes(routesid)
+    routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
     subheader_message = climber['name']+"   from "+climber['club']
 
