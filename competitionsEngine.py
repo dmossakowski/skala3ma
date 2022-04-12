@@ -242,7 +242,7 @@ def _getRouteRepeats(competitionId, sex, comp):
         if r == 0 :
             pointsPerRoute[i]=1000
         else:
-            pointsPerRoute[i]=round(1000/r)
+            pointsPerRoute[i]=1000/r
     #logging.info("points per route: ")
     #logging.info(pointsPerRoute)
 
@@ -342,6 +342,7 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
         points += routeRepeats[v]
         #logging.info(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
 
+    points = round(points)
     comp['climbers'][climberId]['score'] = points
     climbersex = comp['climbers'][climberId]['sex']
     climbercat = str(comp['climbers'][climberId]['category'])
