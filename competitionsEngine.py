@@ -242,7 +242,7 @@ def _getRouteRepeats(competitionId, sex, comp):
         if r == 0 :
             pointsPerRoute[i]=1000
         else:
-            pointsPerRoute[i]=1000/r
+            pointsPerRoute[i]=round(1000/r)
     #logging.info("points per route: ")
     #logging.info(pointsPerRoute)
 
