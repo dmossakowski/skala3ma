@@ -34,7 +34,7 @@ from collections import defaultdict
 from matplotlib.figure import Figure
 from sklearn.preprocessing import MinMaxScaler
 
-from functools import lru_cache
+from functools import lru_cache, reduce
 import logging
 from dotenv import load_dotenv
 
@@ -301,6 +301,7 @@ def get_sorted_rankings(competition):
     rankings['0M'] = []
     rankings['1M'] = []
     rankings['2M'] = []
+    #rankings['club'] = []
 
     # scratch first
     for climberid in competition.get('climbers'):
@@ -308,21 +309,59 @@ def get_sorted_rankings(competition):
         rank = int(climber['rank'])
         #rankings[climber['sex']].insert(rank-1, climber)
 
-
-    #sortedM =  sorted(rankings['M'], key=lambda k: rankings['M'][k]['position'])
-
     # sort by awayPoints, then position; note the lambda uses a tuple
     a = competition.get('climbers').values()
+    #clubs = set(competition.get('climbers')[k]['category'])
+
+    clubs = reduce(lambda acc, c: acc.update({ competition['climbers'][c]['club'] :{"M":0, "F":0, "MC":0, "FC":0, "TOTAL":0 }})
+                                        or acc if competition['climbers'][c]['club'] not in acc else acc,
+                   competition.get('climbers'), {})
+
+    #clubs = reduce(lambda acc, c: acc.append(competition['climbers'][c]['club'])
+    #                              or acc if competition['climbers'][c]['club'] not in acc else acc,
+    #               competition.get('climbers'), [])
+
+    #clubs2 = set(clubs)
+
+    print(str(len(clubs)))
+    print(clubs)
     #b = a[0]
-    for itemid in sorted(competition.get('climbers'), key=lambda k: (competition.get('climbers')[k]['sex'] ,competition.get('climbers')[k]['score']),reverse = True):
+    for itemid in sorted(competition.get('climbers'),
+                         key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['score']),
+                         reverse=True):
         climber = competition.get('climbers').get(itemid)
         rankings[climber['sex']].append(climber)
 
-    for itemid in sorted(competition.get('climbers'), key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['category'] ,competition.get('climbers')[k]['score']),reverse = True):
+    for itemid in sorted(competition.get('climbers'),
+                         key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['category'], competition.get('climbers')[k]['score']),
+                         reverse=True):
         climber = competition.get('climbers').get(itemid)
-        rankings[str(climber['category'])+str(climber['sex'])].append(climber)
+        catcode = str(climber['category'])+str(climber['sex'])
+        rankings[catcode].append(climber)
+        sex = climber['sex']
+        classement = len(rankings[catcode])
+
+        if climber['score']==0:
+            continue
+        # add one point for each climber
+        points = clubs[climber['club']][sex]
+        clubs[climber['club']][sex] = points + 1
+
+        if classement<6:
+            points = clubs[climber['club']][sex+"C"]
+            clubs[climber['club']][sex+"C"] = points + 6 - classement
 
 
+    for clubname in clubs:
+        total = clubs[clubname]['M']+clubs[clubname]['F']+clubs[clubname]['MC']+clubs[clubname]['FC']
+        clubs[clubname]['TOTAL'] = total
+
+    sortedclubs = []
+    for club in sorted(clubs, key=lambda x:clubs[x]['TOTAL'],reverse=True):
+        clubs[club]['name']=club
+        sortedclubs.append(clubs[club])
+
+    rankings['club']=sortedclubs
     return rankings
 
 

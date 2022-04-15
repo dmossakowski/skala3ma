@@ -75,6 +75,53 @@
 
 {% if rankings is not none and rankings is not undefined %}
 
+	<!-- first do club rankings -->
+<h2>Classement club</h2>
+<table class="table thead-dark table-hover"  data-toggle="table">
+         <thead><tr>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
+    	 <th data-width="350" data-field="Time Added" data-filter-control="input">Name</th>
+         <th data-field="m" data-sortable="True">Homme</th>
+         <th data-field="f" data-sortable="True">Femme</th>
+		 <th data-field="mc" data-sortable="True">Homme classe</th>
+         <th data-field="fc" data-sortable="True">Femme classe</th>
+
+         <th data-field="total" data-filter-control="input">Total</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for club in rankings['club'] %}
+
+		 {% if loop.index == 1 %}
+		 <tr style="background: #CFC">
+		{% elif loop.index == 2 %}
+			 <tr style="background: #AEA">
+		{% elif loop.index == 3 %}
+			 <tr style="background: #9C9">
+		{% else  %}
+			 <tr style="background: #EEE">
+		{% endif  %}
+			<td>{{loop.index}}</td>
+			 <td>	<b>{{ club['name'] }}</b></a></td>
+
+			 <td><i>{{club['M'] }}</i></td>
+			 <td><i> {{club['F'] }}   </i></td>
+			 <td><i>{{club['MC'] }}</i></td>
+			 <td><i> {{club['FC'] }}   </i></td>
+			 <td><i> {{club['TOTAL'] }}   </i></td>
+
+			        </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+<br><br>
+
+
+
 
 				{% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
 				<h2>
