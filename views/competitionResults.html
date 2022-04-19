@@ -11,16 +11,14 @@
 
 	{% block secondarycontent %}
 
-	<div  style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+	<div  >
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
 
-						<br>
+						<br>Competition resultats
 						<h3>{{ subheader_message }} </h3>
-
-
 
 					</div>
 
@@ -77,16 +75,16 @@
 
 	<!-- first do club rankings -->
 <h2>Classement club</h2>
-<table class="table thead-dark table-hover"  data-toggle="table">
+<table  class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
          <thead><tr>
-		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
-    	 <th data-width="350" data-field="Time Added" data-filter-control="input">Name</th>
-         <th data-field="m" data-sortable="True">Homme</th>
-         <th data-field="f" data-sortable="True">Femme</th>
-		 <th data-field="mc" data-sortable="True">Homme classe</th>
-         <th data-field="fc" data-sortable="True">Femme classe</th>
+		 <th data-field="rank" data-sortable="True">Classement</th>
+    	 <th data-width="350" data-sortable="true" >Prenom Nom</th>
+         <th data-field="m" >Homme</th>
+         <th data-field="f" >Femme</th>
+		 <th data-field="mc" data-sortable="false">Homme classe</th>
+         <th data-field="fc" data-sortable="false">Femme classe</th>
 
-         <th data-field="total" data-filter-control="input">Total</th>
+         <th data-field="total"  data-sortable="false">Points</th>
 
          </tr>
          </thead>
@@ -101,9 +99,9 @@
 		{% elif loop.index == 3 %}
 			 <tr style="background: #9C9">
 		{% else  %}
-			 <tr style="background: #EEE">
+			 <tr >
 		{% endif  %}
-			<td>{{loop.index}}</td>
+			<td>{{ club['rank']}}</td>
 			 <td>	<b>{{ club['name'] }}</b></a></td>
 
 			 <td><i>{{club['M'] }}</i></td>
@@ -138,11 +136,11 @@
 
 <table class="table thead-dark table-hover"  data-toggle="table">
          <thead><tr>
-		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
-    	 <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">Classement</th>
+    	 <th data-width="250" data-field="Time Added" data-filter-control="input">Prenom Nom</th>
          <th data-field="track" data-sortable="True">Club</th>
-         <th data-field="category" data-sortable="True">Category</th>
-         <th data-field="routes" data-filter-control="input">Routes climbed</th>
+         <th data-field="category" data-sortable="false">Catégorie</th>
+         <th data-field="routes" data-sortable="false">Voies</th>
 		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
 
          </tr>
@@ -158,14 +156,14 @@
 		{% elif loop.index == 3 %}
 			 <tr style="background: #9C9">
 		{% else  %}
-			 <tr style="background: #EEE">
+			 <tr >
 		{% endif  %}
 			<td>{{loop.index}}</td>
 			 <td>	<b>{{ climber['name'] }}</b></a></td>
 
 			 <td><i>{{climber['club'] }}</i></td>
 			 <td><i>  {{ reference_data['categories'][climber['category']] }}  </i></td>
-			 <td>{{ climber['routesClimbed']|length }} routes </i></td>
+			 <td>{{ climber['routesClimbed']|length }}  </i></td>
 			 <td>{{ climber['score'] }}  </td>
 			        </tr>
              {% endfor %}

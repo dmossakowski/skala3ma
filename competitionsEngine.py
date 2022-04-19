@@ -23,6 +23,7 @@ from threading import RLock
 import csv
 
 
+
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -172,6 +173,20 @@ def getCompetitions():
 def getClimber(competitionId, climberId):
     comp = get_competition(competitionId)
     return comp['climbers'][climberId]
+
+
+def getFlatCompetition(competitionId):
+    print("retreiving competition" + str(competitionId))
+    competition = get_competition(competitionId)
+
+    for climberid in competition['climbers']:
+        data = competition['climbers'][climberid]
+        for i in range(100):
+            if (i in competition['climbers'][climberid]['routesClimbed']):
+                data['r' + str(i)] = 1
+            else:
+                data['r' + str(i)] = 0
+    return competition
 
 
 def getCompetition(competitionId):
@@ -357,9 +372,26 @@ def get_sorted_rankings(competition):
         clubs[clubname]['TOTAL'] = total
 
     sortedclubs = []
-    for club in sorted(clubs, key=lambda x:clubs[x]['TOTAL'],reverse=True):
-        clubs[club]['name']=club
+    prevTotal = -1
+    #prevClub
+    rank = 0
+    for club in sorted(clubs, key=lambda x:(clubs[x]['TOTAL'], clubs[x]['F']+clubs[x]['M'], clubs[x]['F']),reverse=True):
+        if club in ['other','Autre club non répertorié']:
+            continue
+        clubs[club]['name'] = club
+        if prevTotal != clubs[club]['TOTAL']:
+            rank = rank + 1
+            prevTotal = clubs[club]['TOTAL']
+        else:
+            if clubs[club]['M'] == clubs[prevClub]['M']:
+                if clubs[club]['F'] < clubs[prevClub]['F']:
+                    rank = rank + 1
+            else:
+                rank = rank + 1
+
+        clubs[club]['rank'] = rank
         sortedclubs.append(clubs[club])
+        prevClub = club
 
     rankings['club']=sortedclubs
     return rankings
@@ -721,7 +753,7 @@ def get_gyms():
 def get_routes(routesid):
     if routesid is None:
         # generate routes
-        return loadroutesdict()
+        return loadroutesdict1()
     else:
         return _get_routes(routesid)
 
@@ -1001,6 +1033,13 @@ def generateDummyRoutes(size):
     routes['routes']=routesA
     return routes
 
+
+def loadroutesdict1():
+    routes = []
+    for i in range (1, 100):
+        routes.append({'id': '', 'routenum': i, 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '', 'name': 'Route '+str(i), 'openedby': '', 'opendate': '', 'notes': 'dummy routes'}
+        )
+    return {'routes': routes}
 
 
 def loadroutesdict():

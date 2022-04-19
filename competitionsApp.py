@@ -2,6 +2,7 @@
 
 import json
 import os
+import io
 import glob
 import random
 from datetime import datetime, date, time, timedelta
@@ -19,6 +20,7 @@ import sqlite3 as lite
 import uuid
 import competitionsEngine
 import traceback
+import csv
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -35,6 +37,9 @@ import logging
 from dotenv import load_dotenv
 
 from flask import Blueprint
+from io import BytesIO
+
+from flask import send_file
 
 
 # Third party libraries
@@ -460,7 +465,7 @@ def getCompetitionResults(competitionId):
                                    library={},
                                    **session)
 
-    subheader_message = "Competition results '" + competition['name'] + "' on "+competition['date']
+    subheader_message =   competition['name'] + "  -    "+competition['date']
 
     rankings = competitionsEngine.get_sorted_rankings(competition)
 
@@ -542,6 +547,64 @@ def getCompetitionClimber(competitionId, climberId):
 
 
 
+
+@fsgtapp.route('/competitionResults/download/<competitionId>')
+def downloadCompetitionCsv(competitionId):
+
+    competition = competitionsEngine.getCompetition(competitionId)
+
+    out = {}
+
+    def flatten(x, name=''):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + '_')
+        elif type(x) is list:
+            i = 0
+            for a in x:
+                flatten(a, name + str(i) + '_')
+                i += 1
+        else:
+            out[name[:-1]] = x
+
+    flatten(competition['climbers'])
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    data_file = open('jsonoutput.csv', 'w', newline='')
+    csv_writer = csv.writer(data_file)
+
+    count = 0
+    for climberid in competition['climbers']:
+        data = competition['climbers'][climberid]
+        for i in range(100):
+            if (i in competition['climbers'][climberid]['routesClimbed']):
+                data['r' + str(i)] = 1
+            else:
+                data['r' + str(i)] = 0
+
+
+        if count == 0:
+            header = data.keys()
+            csv_writer.writerow(header)
+            writer.writerow(header)
+            count += 1
+        out = {}
+        routesClimbed = flatten(data['routesClimbed'])
+
+
+        csv_writer.writerow(data.values())
+        writer.writerow(data.values())
+
+    data_file.close()
+
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition":
+                     "attachment; filename=competitionresults.csv"})
 
 
 
