@@ -11,13 +11,19 @@
 
 	{% block secondarycontent %}
 
-	<div  >
+
+	<div style="background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+
+
+			<!--style="background-image: linear-gradient(to bottom right, rgba(240,248,255,0.5), rgba(235,245,255,0.8));" -->
+ <!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
+						<br>Competition resultats | <a href="{{competition['id']}}/download">Download </a>
 
-						<br>Competition resultats
 						<h3>{{ subheader_message }} </h3>
 
 					</div>
@@ -27,55 +33,11 @@
 			<div class="row row-bottom-padded-md">
 
 
-
-{% if climber is not none and climber is not undefined  %}
-<div class="container">
-	<div class="row">
-				Name {{ climber['name'] }}
-	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
-
-
-
-				{{ climber['routesClimbed'] }}
-
-</div>
-		<div class="row">
-			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
-<table style="width:100%"><tr>
-
-					{% for i in range(100) %}
-<td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %} ></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button>Submit</button>
-				</form>
-
-</div>
-	</div>
-				{% endif %}
-
-
-
-
 {% if rankings is not none and rankings is not undefined %}
 
 	<!-- first do club rankings -->
 <h2>Classement club</h2>
-<table  class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
+<table class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
          <thead><tr>
 		 <th data-field="rank" data-sortable="True">Classement</th>
     	 <th data-width="350" data-sortable="true" >Prenom Nom</th>

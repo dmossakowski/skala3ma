@@ -277,12 +277,16 @@ def addCompetitionClimber(competitionId):
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
-        climber = competitionsEngine.addClimber(None, competitionId, email, name, firstname, lastname, club, sex, category)
-        competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
-                                                           climber['club'], climber['category'])
-        comp = competitionsEngine.getCompetition(competitionId)
-        competitionName = comp['name']
-        subheader_message = 'You have been registered! Thanks!'
+        try:
+            climber = competitionsEngine.addClimber(None, competitionId, email, name, firstname, lastname, club, sex, category)
+            competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
+                                                               climber['club'], climber['category'])
+            comp = competitionsEngine.getCompetition(competitionId)
+            competitionName = comp['name']
+            subheader_message = 'You have been registered! Thanks!'
+        except ValueError:
+            subheader_message = email+' is already registered!'
+
     #else:
      ##   comp=None # this is to not show the list of climbers before registration
 
@@ -548,7 +552,7 @@ def getCompetitionClimber(competitionId, climberId):
 
 
 
-@fsgtapp.route('/competitionResults/download/<competitionId>')
+@fsgtapp.route('/competitionResults/<competitionId>/download')
 def downloadCompetitionCsv(competitionId):
 
     competition = competitionsEngine.getCompetition(competitionId)

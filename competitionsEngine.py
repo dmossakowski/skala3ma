@@ -147,7 +147,8 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         for cid in climbers:
             if climbers[cid]['email']==email:
-                return climbers[cid]
+                #return climbers[cid]
+                raise ValueError('User with email '+email+' already registered')
 
         climbers[climberId] = {"id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
                                "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
@@ -683,7 +684,7 @@ def user_registered_for_competition(climberId, name, email, sex, club, category)
         db.close()
         sql_lock.release()
         logging.info("done with user:"+str(name))
-        return climber
+        #return climber
 
 
 
@@ -1037,8 +1038,7 @@ def generateDummyRoutes(size):
 def loadroutesdict1():
     routes = []
     for i in range (1, 100):
-        routes.append({'id': '', 'routenum': i, 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '', 'name': 'Route '+str(i), 'openedby': '', 'opendate': '', 'notes': 'dummy routes'}
-        )
+        routes.append({'id': '', 'routenum': i, 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '', 'name': 'Route '+str(i), 'openedby': '', 'opendate': '', 'notes': 'dummy routes'})
     return {'routes': routes}
 
 
