@@ -68,10 +68,9 @@
 			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 
-			 <td>
-								<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
+			 <td>				<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
+									   onclick="event.stopPropagation();"
 								{% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
-
 								>
 
 			 </td>
