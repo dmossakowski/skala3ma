@@ -460,8 +460,8 @@ def refreshToken():
 def facebook():
     # Facebook Oauth Config
     print('client id and secret')
-    print(FACEBOOK_CLIENT_ID)
-    print(FACEBOOK_CLIENT_SECRET)
+    #print(FACEBOOK_CLIENT_ID)
+    #print(FACEBOOK_CLIENT_SECRET)
     oauth.register(
         name='facebook',
         client_id=FACEBOOK_CLIENT_ID,
@@ -473,7 +473,6 @@ def facebook():
         api_base_url='https://graph.facebook.com/',
         client_kwargs={'scope': 'email'},
     )
-
 
     redirect_uri = url_for('facebook_auth', _external=True)
     return oauth.facebook.authorize_redirect(redirect_uri)
@@ -506,6 +505,63 @@ def facebook_auth():
 
     competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
     return redirect('/competitionDashboard')
+
+
+
+
+
+
+@app.route('/google/')
+def googleauth():
+    # Google Oauth Config
+    # Get client_id and client_secret from environment variables
+    # For developement purpose you can directly put it
+    # here inside double quotes
+    #GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    #GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+    CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+
+    oauth.register(
+        name='google',
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        server_metadata_url=CONF_URL,
+        client_kwargs={
+            'scope': 'openid email profile'
+        }
+    )
+
+    redirect_uri = url_for('googleauth_reply', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route('/google/auth/')
+def googleauth_reply():
+    error = request.args.get('error')
+    if error is not None:
+        if error == 'access_denied':
+            print('access was denied')
+        else:
+            print('other auth error:')
+            print(str(error))
+        return redirect('/competitionDashboard')
+
+    logging.info(str(request))
+    # check first if auth was succesful
+
+    token = oauth.google.authorize_access_token()
+    profile = oauth.google.parse_id_token(token)
+    print(" Google User ", profile)
+
+    session['username']=profile['email']
+    session['name']=profile['name']
+    session['email']=profile['email']
+    session['picture']=profile['picture']
+
+    competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
+    return redirect('/competitionDashboard')
+
 
 
 

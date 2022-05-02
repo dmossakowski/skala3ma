@@ -97,6 +97,7 @@ clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Cham
 
 competition_status = {0:"created", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
 
+user_roles = ["none", "judge", "competitor", "admin"]
 reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors}
 
 
@@ -635,15 +636,16 @@ def user_authenticated_fb(fid, name, email, picture):
         sql_lock.acquire()
         user = get_user_by_email(email)
 
-        newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture, 'role': '', 'isgod': "False"}
 
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if user is None:
+            newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture, 'role': '', 'isgod': "False"}
             _add_user(None, email, newuser)
             logging.info('added user id ' + str(email))
         else:
-            user.update(newuser)
+            u = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture}
+            user.update(u)
             _update_user(user['id'], email, user)
             logging.info('updated user id ' + str(email))
     finally:
@@ -651,6 +653,30 @@ def user_authenticated_fb(fid, name, email, picture):
         db.close()
         sql_lock.release()
         logging.info("done with user:"+str(email))
+
+
+def user_authenticated_google(name, email, picture):
+    try:
+        sql_lock.acquire()
+        user = get_user_by_email(email)
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        if user is None:
+            newuser = {'gname': name, 'email': email, 'gpictureurl': picture, 'role': '', 'isgod': "False"}
+            _add_user(None, email, newuser)
+            logging.info('added google user id ' + str(email))
+        else:
+            u = {'gname': name, 'email': email, 'gpictureurl': picture}
+            user.update(u)
+            _update_user(user['id'], email, user)
+            logging.info('updated google user id ' + str(email))
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(email))
+
 
 
 
@@ -711,7 +737,7 @@ def _update_user(climberId, email, climber):
         climber['id'] = climberId
     cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
                    [json.dumps(climber), str(email)])
-    logging.info('added user id ' + str(email))
+    logging.info('updated user id ' + str(email))
     db.commit()
     db.close()
 

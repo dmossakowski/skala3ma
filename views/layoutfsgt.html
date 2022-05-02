@@ -40,6 +40,8 @@
 	<meta name="twitter:image" content="" />
 	<meta name="twitter:url" content="" />
 	<meta name="twitter:card" content="" />
+		<meta name="google-signin-client_id" content="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com">
+
 
 	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 	<link rel="shortcut icon" href="/public/images/favicon.png?v5"/>
@@ -47,7 +49,7 @@
 
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'/>
-	
+
 	<!-- Animate.css -->
 	<link rel="stylesheet" href="/public/css/animate.css"/>
 	<!-- Icomoon Icon Fonts-->
@@ -83,7 +85,7 @@
 	<![endif]-->
 	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-
+	<script src="https://apis.google.com/js/platform.js" async defer></script>
 <script>
 //https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
@@ -193,7 +195,7 @@
 	<div id="fh5co-wrapper">
 		<div id="fh5co-page">
 
-		<header id="fh5co-header-section" class="sticky-banner">
+		<header id="fh5co-header-section" class="sticky-banneraa" style="width: 100%; background: #EEE">
 			<div class="container">
 
 				<div class="nav-header">
@@ -218,28 +220,14 @@
 
 {% if competition is defined %}
 
-<li>
-								<a href="/competitionDashboard/{{ competitionId}}" class="fh5co-sub-ddown">Competition {{ competition['name']}}</a>
-				<ul class="fh5co-sub-menu">
-							<li><a href="/competitionDashboard/{{ competitionId}}/register">Registration</a> </li>
-						<li><a href="/competitionDashboard/{{ competitionId}}">Grimpeurs.e</a> </li>
-					<li><a href="/competitionRoutesEntry/{{ competitionId}}">Voies</a></li>
-
-					<li><a href="/competitionResults/{{ competitionId}}">Resultats</a></li>
-
-								</ul>
-
-								</li>
 {% endif %}
 
 						{% if username is defined %}
 
 							<!--li><a href="/progresstest">Progress</a></li-->
-
-
-
-<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
-</li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
+<!--li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
+</li-->
 
 								{% endif %}
 							<!--li><a href="blog.html">Blog</a></li-->
@@ -253,13 +241,22 @@
 
 <li><a href="/user" class="fh5co-sub-down">{{ session['name'] }}
 
-<img src="{{session['picture']}}" height=27></a></li>
+<img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a></li>
 
 {% else %}
-<li><a href="/facebook/"><img id="facebook"
-            src="https://img.shields.io/badge/Facebook-Connect-brightgreen?style=for-the-badge&labelColor=black&logo=facebook"
-            alt="Facebook"> <br>
-         </a></li>
+
+
+
+	<li><a href="/facebook/"><img id="facebooklogin	"
+            src="/public/images/facebooklogin.png" height="25"
+            alt="Facebook">
+         </a>
+	<li><a href="/google"><img id="googlelogin"
+            src="/public/images/googlelogin.jpeg" height="23"
+            alt="Facebook"></a>
+
+
+</li>
 
 
          {% endif %}
@@ -281,10 +278,17 @@
 			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
 		<!-- end:header-top -->
 
+
+
 				 {% block topcontent %} {% endblock %}
 
 
-				 {% block secondarycontent %} {% endblock %}
+				 {% block secondarycontent %}
+
+
+
+
+			{% endblock %}
 
 
 		<!-- aside id="fh5co-hero" class="js-fullheight">
@@ -345,6 +349,8 @@ data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"
 								<p class="fh5co-social-icons">
 									<a href="https://github.com/dmossakowski/additive-spotify-analyzer"><i class="icon-github"></i></a>
 									<a href="https://www.facebook.com/AdditiveSpotifyAnalyzer"><i class="icon-facebook2"></i></a>
+									<a href="https://www.facebook.com/AdditiveSpotifyAnalyzer"><i class="icon-google"></i></a>
+
 									<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1"><i class="icon-dribbble2"></i></a>
 
 

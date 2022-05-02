@@ -233,10 +233,10 @@ figure {
 
 /* Superfish Override Menu */
 .sf-menu {
-  margin: 7px 0 0 0 !important; }
+  margin: 1px 0 0 0 !important; }
 
 .sf-menu {
-  float: right;
+  float: center;
   width: 400; }
 
 .sf-menu ul {
@@ -281,6 +281,82 @@ figure {
 .sf-menu ul li {
   background: transparent; }
 
+
+
+/* Superfish Override Menu */
+.sf-menu2 {
+  margin: 1px 0 0 0 !important;
+
+  }
+
+.sf-menu2 {
+  float: center;
+  width: 100%;
+  background: rgba(245, 245, 245, 0.7);
+  }
+
+.sf-menu2 ul {
+  box-shadow: none;
+  border: transparent;
+  min-width: 10em;
+  *width: 10em; }
+
+.sf-menu2 a {
+  color: rgba(0, 0, 0, 0.7);
+  padding: 0.40em 1em !important;
+  font-weight: normal;
+  border-left: none;
+  border-top: none;
+  border-top: none;
+  text-decoration: none;
+  zoom: 1;
+  font-size: 12px;
+  border-bottom: none !important;
+  font-weight: bold;
+  }
+
+.sf-menu2 a:hover, .sf-menu2 a:focus {
+  color: #44C662 !important; }
+
+.sf-menu2 li.active a:hover, .sf-menu2 li.active a:focus {
+  color: #44C662; }
+
+.sf-menu2 li, .sf-menu2 ul li, .sf-menu2 ul ul li, .sf-menu2 li:hover, .sf-menu2 li.sfHover {
+    background: none;
+
+   }
+
+.sf-menu2 ul li, .sf-menu2 ul ul li {
+    line-height: 10;
+    background : #FFFFFF;
+    padding: 0px 1 0 0 !important;
+
+}
+
+.sf-menu2 ul li a, .sf-menu2 ul ul li a {
+  text-transform: none;
+  padding: 0em 0em !important;
+  letter-spacing: 1px;
+  font-size: 12px !important;
+
+
+
+  }
+
+.sf-menu2 li:hover a, .sf-menu2 li.sfHover a, .sf-menu2 ul li:hover a, .sf-menu2 ul li.sfHover a, .sf-menu2 li.active a {
+  color: #44C662;
+  }
+
+/* style for link hover inside sub menu */
+.sf-menu2 ul li:hover, .sf-menu2 ul li.sfHover {
+  background: transparent;
+  }
+
+
+
+
+
+
 .sf-arrows .sf-with-ul {
   padding-right: 2.5em;
   *padding-right: 1em; }
@@ -319,7 +395,9 @@ figure {
 .nav-header {
   position: relative;
   float: left;
-  width: 100%; }
+  width: 100%;
+  margin: 0 auto;
+  }
 
 #fh5co-logo {
   position: relative;
@@ -403,8 +481,8 @@ figure {
   color: rgba(0, 0, 0, 0.5); }
 
 #fh5co-primary-menu .fh5co-sub-menu {
-  padding: 10px 7px 10px;
-  background: #fff;
+  padding: 1px 7px 1px;
+  background: rgba(255, 255, 255, 1);;
   left: 0;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;

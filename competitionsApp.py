@@ -268,7 +268,7 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
 
     comp = competitionsEngine.getCompetition(competitionId)
-    subheader_message = 'Please register for ' + comp['name'] + ' on ' + comp['date']
+    subheader_message = 'Register for ' + comp['name'] + ' on ' + comp['date']
 
     user = competitionsEngine.get_user_by_email(useremail)
     climber=None
