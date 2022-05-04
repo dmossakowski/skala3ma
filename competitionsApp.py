@@ -21,6 +21,7 @@ import uuid
 import competitionsEngine
 import traceback
 import csv
+from functools import wraps
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -121,6 +122,38 @@ fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 
 
+def login_required(fn):
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None and session.get('expires_at') is not None:
+            now = int(datetime.now().timestamp())
+            #expiresAt = session['expires_at']
+            expiresAtLocaltime = session['expires_at_localtime']
+
+            if expiresAtLocaltime < now:
+                session["wants_url"] = request.url
+                return redirect(url_for("fsgtlogin"))
+            else:
+                return fn(*args, **kwargs)
+        else:
+            session["wants_url"] = request.url
+            return redirect(url_for("fsgtapp.fsgtlogin"))
+    return decorated_function
+
+
+
+def admin_required(fn):
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None and session.get('name') == 'David Mossakowski':
+            now = int(datetime.now().timestamp())
+            #expiresAt = session['expires_at']
+            expiresAtLocaltime = session['expires_at_localtime']
+            return fn(*args, **kwargs)
+        else:
+            session["wants_url"] = request.url
+            return redirect(url_for("fsgtapp.fsgtlogin"))
+    return decorated_function
 
 
 
@@ -145,6 +178,79 @@ def index():
 
 
 
+
+@fsgtapp.route('/competitionAdmin')
+def fsgtadmin():
+    edittype = request.args.get('edittype')
+    id = request.args.get('id')
+    action = request.args.get('action')
+    jsondata = request.args.get('jsondata')
+    jsonobject = None
+
+
+
+    if jsondata is not None and len(jsondata) > 2:
+        jsonobject = json.loads(jsondata)
+
+    if edittype == 'user':
+        if jsonobject is not None and action == 'update':
+            jsonobject = {"success": "user updated"}
+
+        if id is not None and action == 'find':
+            jsonobject = competitionsEngine.get_user_by_email(id)
+
+
+    elif edittype == 'competition':
+        if jsonobject is not None  and action == 'update':
+            #jsonobject = {"success": "competition updated"}
+            competitionsEngine.update_competition(jsonobject['id'],jsonobject)
+        if jsonobject is not None  and action == 'delete':
+            #jsonobject = {"success": "competition updated"}
+            competitionsEngine.delete_competition(jsonobject['id'])
+        if id is not None and action == 'find':
+            jsonobject = competitionsEngine.getCompetition(id)
+    elif edittype == 'gym':
+        if jsonobject is not None  and action == 'update':
+            #jsonobject = {"success": "competition updated"}
+            competitionsEngine.update_gym(jsonobject['id'],jsonobject)
+
+        if id is not None and action == 'find':
+            jsonobject = competitionsEngine.get_gym(id)
+
+    elif edittype == 'routes':
+        if jsonobject is not None  and action == 'update':
+            #jsonobject = {"success": "competition updated"}
+            competitionsEngine.upsert_routes(id, jsonobject)
+
+        if id is not None and action == 'find':
+            jsonobject = competitionsEngine.get_routes(id)
+
+    else :
+        jsonobject = {"error": "choose edit type" }
+
+    return render_template('competitionAdmin.html',
+                           jsondata=json.dumps(jsonobject),
+                           id=id)
+
+
+
+@fsgtapp.route('/fsgtadmin/<edittype>')
+def fsgtadminedit(edittype):
+    j = request.args.get('jsondata')
+
+    if edittype is 'user' and j['email'] is not None:
+        competitionsEngine.upsert_user(j)
+
+
+    return render_template('competitionAdmin.html')
+
+
+
+
+
+@fsgtapp.route('/fsgtlogin')
+def fsgtlogin():
+    return render_template('competitionLogin.html')
 
 
 
@@ -171,13 +277,6 @@ def getCompetitionDashboard():
     comp = {}
     competitionId=None
 
-
-    if name is not None and date is not None and gym is not None:
-
-        competitionId = competitionsEngine.addCompetition(None, name, date, gym)
-        comp = getCompetition(competitionId)
-        return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
-
     subheader_message='Welcome '
     competitions= competitionsEngine.getCompetitions()
 
@@ -192,8 +291,8 @@ def getCompetitionDashboard():
 
 
 
-@fsgtapp.route('/newCompetition')
-#@login_required
+@fsgtapp.route('/newCompetition', methods=['GET'])
+@login_required
 def newCompetition():
 
     username = session.get('username')
@@ -223,10 +322,47 @@ def newCompetition():
 
 
 
+@fsgtapp.route('/newCompetition', methods=['POST'])
+@login_required
+@admin_required
+def create_new_competition():
+
+    username = session.get('username')
+    #if username:
+    #    return 'logged in '+str(username)
+    print(username)
+
+    #username = request.args.get('username')
+    name = request.form.get('name')
+    date = request.form.get('date')
+    gym = request.form.get('gym')
+    comp = {}
+    competitionId=None
+
+
+    if name is not None and date is not None and gym is not None:
+
+        competitionId = competitionsEngine.addCompetition(None, name, date, gym)
+        comp = getCompetition(competitionId)
+        return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+
+    subheader_message='Welcome '
+    competitions= competitionsEngine.getCompetitions()
+
+    return render_template('competitionDashboard.html',
+                           subheader_message=subheader_message,
+                           competitions=competitions,
+                           competitionName=None,
+                           session=session,
+                           reference_data=competitionsEngine.reference_data,
+                            **session)
 
 
 
-@fsgtapp.route('/competitionDashboard2')
+
+
+
+#@fsgtapp.route('/competitionDashboard2')
 #@login_required
 def getCompetitionDashboard2():
 
@@ -256,6 +392,7 @@ def getCompetitionDashboard2():
 
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
+@login_required
 def addCompetitionClimber(competitionId):
 
     useremail = session.get('email')
@@ -483,7 +620,7 @@ def getCompetitionResults(competitionId):
                            **session)
 
 
-@fsgtapp.route('/competitionDashboard/<competitionId>/climber/<climberId>')
+#@fsgtapp.route('/competitionDashboard/<competitionId>/climber/<climberId>')
 #@login_required
 def getCompetitionClimber(competitionId, climberId):
     #competitionId = request.args.get('competitionId')
@@ -613,7 +750,7 @@ def downloadCompetitionCsv(competitionId):
 
 
 @fsgtapp.route('/competitionRoutesEntry/<competitionId>')
-#@login_required
+@login_required
 def competitionRoutesList(competitionId):
     #competitionId = request.args.get('competitionId')
 
@@ -646,20 +783,53 @@ def competitionRoutesList(competitionId):
 
 
 # enter competition climbed routes for a climber and save them
-@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>')
-#@login_required
-def enterRoutesClimbed(competitionId, climberId):
-    #competitionId = request.args.get('competitionId')
+@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
+@login_required
+def routes_climbed(competitionId, climberId):
 
+    if climberId is not None:
+        climber = competitionsEngine.getClimber(competitionId,climberId)
+
+    if climber is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No climber found",
+                               **session)
+    elif climber is LookupError:
+        return render_template('competitionDashboard.html', sortedA=None,
+                                   getPlaylistError="error  ",
+                                   library={},
+                                   **session)
+    elif len(climber) == 0:
+        return render_template('competitionDashboard.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    competition = competitionsEngine.getCompetition(competitionId)
+    routesid = competition.get('routesid')
+    routes = competitionsEngine.get_routes(routesid)
+    routes = routes['routes']
+    subheader_message = climber['name']+" - "+climber['club']
+
+    return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
+                           routes=routes,
+                           subheader_message=subheader_message,
+                           competition=competition,
+                           competitionId=competitionId,
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
+
+
+@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
+@login_required
+@admin_required
+def update_routes_climbed(competitionId, climberId):
+    # generate array of marked routes from HTTP request
     routesUpdated = []
     for i in range(100):
-        routeChecked = request.args.get("route"+str(i)) != None
-        if routeChecked: routesUpdated.append(i)
-
-
-    #   logging.info(session['id']+' competitionId '+competitionId)
-    # r = request
-    # username = request.args.get('username')
+        routeChecked = request.form.get("route"+str(i)) != None
+        if routeChecked:
+            routesUpdated.append(i)
 
     competition = None
 
@@ -670,52 +840,32 @@ def enterRoutesClimbed(competitionId, climberId):
             return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,
-                                   subheader_message="Climber routes saved",
+                                   subheader_message="Routes saved",
                                     reference_data=competitionsEngine.reference_data,
                                    **session)
 
-
         climber = competitionsEngine.getClimber(competitionId,climberId)
-
 
     if climber is None:
         return render_template('competitionDashboard.html', sortedA=None,
                                subheader_message="No climber found",
                                **session)
     elif climber is LookupError:
-        return render_template('index.html', sortedA=None,
+        return render_template('competitionDashboard.html', sortedA=None,
                                    getPlaylistError="error  ",
                                    library={},
                                    **session)
     elif len(climber) == 0:
-        return render_template('index.html', sortedA=None,
+        return render_template('competitionDashboard.html', sortedA=None,
                                    getPlaylistError="Playlist has no tracks or it was not found",
                                    library={},
                                    **session)
 
     competition = competitionsEngine.getCompetition(competitionId)
-
-    gymid = competition['gym']
-    #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
-
-    #if routesid is None:
-    #    routesid = '5600717d-2167-4c9b-a72c-8aaf297bf092'
-
-    #routes = competitionsEngine._get_routes(routesid)
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
-    subheader_message = climber['name']+"   from "+climber['club']
-
-    # library= {}
-    # library['tracks'] = tracks
-    # playlist = json.dumps(playlist)
-    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message)
-    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message,
-    #                       library=None,
-    #                       **session))
+    subheader_message = climber['name']+" - "+climber['club']
 
     return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
                            routes=routes,

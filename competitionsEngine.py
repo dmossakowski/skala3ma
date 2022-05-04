@@ -238,6 +238,10 @@ def setRoutesClimbed(competitionId, climberId, routeList):
         sql_lock.release()
 
 
+def update_competition(competitionId, competition):
+    _update_competition(competitionId, competition)
+
+
 # calculates points per route per sex
 # first loop counts how many times the route was climbed
 # second loop iterates over this same list but then does 1000/times the route was climbed
@@ -529,6 +533,20 @@ def _update_competition(compId, competition):
     db.close()
 
 
+def delete_competition(compId):
+
+    if compId is None:
+        raise ValueError("cannot delete competition with None key");
+    db = lite.connect(COMPETITIONS_DB)
+
+    cursor = db.cursor()
+
+    cursor.execute("delete from " + COMPETITIONS_TABLE + " where id=?  ",
+                   [compId])
+
+    db.commit()
+    db.close()
+
 
 
 
@@ -604,6 +622,7 @@ def get_user_by_email(email):
 
 
 
+
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, category):
     try:
         sql_lock.acquire()
@@ -628,6 +647,36 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         sql_lock.release()
         logging.info("done with user:"+str(email))
         return climber
+
+
+def get_user_json():
+    return {'fullname': None, 'nick': None, 'firstname': None, 'lastname': None,
+                  'sex': None, 'club': None, 'category': None}
+
+
+
+def upsert_user(user):
+    try:
+        sql_lock.acquire()
+        existing_user = None
+        email = user.get('email')
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        if email is not None:
+            existing_user = get_user_by_email(email)
+            if existing_user is None:
+                _add_user(None, email, user)
+                logging.info('added user id ' + str(email))
+            else:
+                existing_user.update(user)
+                _update_user(user['id'], email, existing_user)
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(email))
+        return existing_user
 
 
 
@@ -663,7 +712,7 @@ def user_authenticated_google(name, email, picture):
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if user is None:
-            newuser = {'gname': name, 'email': email, 'gpictureurl': picture, 'role': '', 'isgod': "False"}
+            newuser = {'gname': name, 'email': email, 'gpictureurl': picture, 'role': ['climber'], 'isgod': "False"}
             _add_user(None, email, newuser)
             logging.info('added google user id ' + str(email))
         else:
@@ -678,6 +727,38 @@ def user_authenticated_google(name, email, picture):
         logging.info("done with user:"+str(email))
 
 
+# returns base empty permissions dictionary
+# who can create new competition? gym admins?
+
+def get_permissions(climber):
+    if climber is None: return _generate_permissions()
+
+    if climber.get('permissions') is None:
+        climber['permissions'] = _generate_permissions()
+
+    if climber.get('email') is 'dmossakowski@gmail.com':
+        climber['permissions']['godmode'] = True
+        climber['permissions']['general'] = ['crud_competition', 'crud_gym']
+
+    return climber
+
+
+def _generate_permissions():
+    return {
+        "godmode": False,
+        "general": [], # crud_competition crud_gym
+        "users":[''],
+        "competitions":['abc','def'], # everyone has ability to modify these test competitions
+        "gyms":[] # contains gym ids
+            }
+
+
+def can_create_competition(climber):
+    return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+
+
+def can_edit_competition(climber, competition):
+    return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 def user_registered_for_competition(climberId, name, email, sex, club, category):
@@ -924,6 +1005,28 @@ def _get_route_dict(routeid, gymid, routenum, line, color, grade, name, openedby
 
 
 
+# replaces or adds routes depending if routesid is found
+def upsert_routes(routesid, routes):
+    try:
+        if routesid is None or routes is None:
+            return None
+        sql_lock.acquire()
+        existing_routes = get_routes(routesid)
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        if existing_routes is None:
+            routes['id'] = routesid
+            _add_routes(routesid, routes)
+            logging.info('routes added ' + str(routesid))
+        else:
+            routes['id'] = routesid
+            _update_routes(routesid, routes)
+            logging.info('routes updated ' + str(routesid))
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with routes :"+str(routesid))
 
 
 def add_nanterre_routes():
@@ -948,9 +1051,26 @@ def _add_routes(routeid, jsondata):
 
     cursor.execute("INSERT INTO " + ROUTES_TABLE + " (id, jsondata, added_at ) "
                                                    "values ( ?, ?, datetime('now'))",
-                   [str(routeid),  jsondata])
+                   [str(routeid),  json.dumps(jsondata)])
 
     logging.info('added route: '+str(jsondata))
+    db.commit()
+    db.close()
+
+
+
+
+
+def _update_routes(routeid, jsondata):
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+
+    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) "
+                                                   [jsondata, str(routeid)])
+
+    logging.info('updated route: '+str(jsondata))
     db.commit()
     db.close()
 

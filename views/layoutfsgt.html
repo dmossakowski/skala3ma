@@ -214,7 +214,7 @@
 								<a href="/competitionDashboard" class="fh5co-sub-ddown">Competitions</a>
 								<ul class="fh5co-sub-menu">
 								<li>	<a href="/competitionDashboard" >List </a></li>
-							<li>	<a href="/newCompetition" >Cree nouveaoux </a></li>
+							<li>	<a href="/newCompetition" >Cree nouveaou </a></li>
 								</ul>
 								</li>
 
@@ -239,9 +239,22 @@
 
 {% if session is defined and session['name'] is defined %}
 
-<li><a href="/user" class="fh5co-sub-down">{{ session['name'] }}
+<li><a href="/user">{{ session['name'] }}
 
-<img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a></li>
+<img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a>
+
+	<ul class="fh5co-sub-menu">
+		<li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
+
+	{% if session['name'] == 'David Mossakowski' %}
+		<li><a href="/competitionAdmin" class="fh5co-sub-down">Admin</a></li>
+
+		{% endif %}
+
+		</ul>
+
+</li>
+
 
 {% else %}
 
@@ -316,9 +329,9 @@
 			<div id="footer">
 				<div class="container">
 					<div class="row row-bottom-padded-md">
-						<div class="col-lg-5">
+						<div class="col-md-5">
 							<h3 class="section-title">About skala3ma</h3>
-							<p>Manage gym routes and create competitions..
+							<p>Manage competitions and gym routes.
 							</p>
 						</div>
 
@@ -332,7 +345,7 @@
 								<li><a href="/logoutfb">Logout</a></li>
 							{% endif %}
 
-								<li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer">Facebook page</a></li>
+								<li><a href="https://www.facebook.com/skala3ma">Facebook page</a></li>
 
 							</ul>
 
@@ -348,8 +361,8 @@ data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"
 							<div class="col-md-12">
 								<p class="fh5co-social-icons">
 									<a href="https://github.com/dmossakowski/additive-spotify-analyzer"><i class="icon-github"></i></a>
-									<a href="https://www.facebook.com/AdditiveSpotifyAnalyzer"><i class="icon-facebook2"></i></a>
-									<a href="https://www.facebook.com/AdditiveSpotifyAnalyzer"><i class="icon-google"></i></a>
+									<a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i></a>
+									<a href="https://www.facebook.com/skala3ma"><i class="icon-google"></i></a>
 
 									<a href="https://hackernoon.com/visualizing-the-data-spotify-data-for-favorite-artists-over-time-3p9r35h1"><i class="icon-dribbble2"></i></a>
 

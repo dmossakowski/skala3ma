@@ -310,6 +310,7 @@ def logout():
     session['refresh_token'] = None
     session['expires_at'] = None
     session['expires_in'] = None
+    session['expires_at_localtime'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
     spotify.token
@@ -332,9 +333,11 @@ def logoutfb():
     session['refresh_token'] = None
     session['expires_at'] = None
     session['expires_in'] = None
+    session['expires_at_localtime'] = None
+
     session.clear()
     _setUserSessionMsg('You have been logged out')
-    spotify.token
+    #spotify.token
 
     return render_template('competitionDashboard.html',
                            subheader_message="Logged out ",
@@ -501,7 +504,8 @@ def facebook_auth():
     session['name']=profile['name']
     session['email']=profile['email']
     session['picture']=profile['picture']['data']['url']
-
+    session['expires_at'] = token['expires_at']
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in'])-1000)
 
     competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
     return redirect('/competitionDashboard')
@@ -558,6 +562,8 @@ def googleauth_reply():
     session['name']=profile['name']
     session['email']=profile['email']
     session['picture']=profile['picture']
+    session['expires_at'] = token['expires_at']
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in'])-1000)
 
     competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
     return redirect('/competitionDashboard')

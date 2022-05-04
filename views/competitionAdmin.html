@@ -1,0 +1,85 @@
+
+<!-- page to register @fsgtapp.route('/competitionDashboard/<competitionId>/register')
+ -->
+
+{% extends "layoutfsgt.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+	{% include "fsgt-competition-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>ADMIN   {{ subheader_message }} </h3>
+
+
+						<form action="/competitionAdmin">
+							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
+
+							<label for="edittype">Category:</label><select name="edittype" id="edittype">
+							<option value="choose" size="20" ></option>
+
+							<option value="user" size="20" >user</option>
+							<option value="competition" size="20" >competition</option>
+							<option value="gym" size="20" >gym</option>
+							<option value="routes" size="20" >routes</option>
+
+							</select>&nbsp;&nbsp;&nbsp;&nbsp;
+							<label for="id">Id:</label>
+							<input id="id" name="id" size="40" value="{{ id }}"/>
+							<button name="action" value="find">Find</button>
+<button name="action" value="delete">Delete</button>
+
+							<br><br>
+
+
+							<label for="jsondata">data:</label><br>
+
+							<textarea id="jsondata" name="jsondata" rows="15" cols="120">{{ jsondata }}</textarea>
+
+
+<button name="action" value="update">Update</button>
+					</form>
+
+
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}
