@@ -587,15 +587,15 @@ def get_user(id):
     cursor = db.cursor()
     count = 0
     one = cursor.execute(
-        '''SELECT * FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
+        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
     one = one.fetchone()
 
 
-    if one is None or one[1] is None:
+    if one is None or one[0] is None:
         return None
 
-    if one[1] is not None:
-        return one
+    if one[0] is not None:
+        return json.loads(one[0])
     else:
         return None
 
@@ -684,12 +684,11 @@ def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
         user = get_user_by_email(email)
-
-
+        _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if user is None:
-            newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture, 'role': '', 'isgod': "False"}
+            newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture }
             _add_user(None, email, newuser)
             logging.info('added user id ' + str(email))
         else:
@@ -708,11 +707,11 @@ def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
         user = get_user_by_email(email)
-
+        _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if user is None:
-            newuser = {'gname': name, 'email': email, 'gpictureurl': picture, 'role': ['climber'], 'isgod': "False"}
+            newuser = {'gname': name, 'email': email, 'gpictureurl': picture }
             _add_user(None, email, newuser)
             logging.info('added google user id ' + str(email))
         else:
@@ -725,6 +724,16 @@ def user_authenticated_google(name, email, picture):
         db.close()
         sql_lock.release()
         logging.info("done with user:"+str(email))
+
+
+def _common_user_validation(user):
+    if user is None:
+        return
+
+    permissions = user.get('permissions')
+    if permissions is None:
+        permissions = _generate_permissions()
+        user['permissions'] = permissions
 
 
 # returns base empty permissions dictionary
@@ -740,7 +749,13 @@ def get_permissions(climber):
         climber['permissions']['godmode'] = True
         climber['permissions']['general'] = ['crud_competition', 'crud_gym']
 
-    return climber
+    return climber['permissions']
+
+
+def has_permission_for_competition(competitionId, user):
+    permissions = get_permissions(user)
+    huh = competitionId in permissions['competitions']
+    return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
 
 
 def _generate_permissions():
@@ -751,6 +766,27 @@ def _generate_permissions():
         "competitions":['abc','def'], # everyone has ability to modify these test competitions
         "gyms":[] # contains gym ids
             }
+
+def add_user_permission_create_competition(user):
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        permissions = user.get('permissions')
+        if permissions is None:
+            permissions = _generate_permissions()
+            user['permissions'] = permissions
+
+        permissions['general'].append('create_competition')
+        _update_user(user['id'], user['email'], user)
+        logging.info('updated user id ' + str(user['email']))
+
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(user['email']))
+        return user
 
 
 def can_create_competition(climber):
@@ -823,17 +859,15 @@ def _update_user(climberId, email, climber):
     db.close()
 
 
-
-
 def update_gym(gymid, routesid, jsondata):
     _update_gym(gymid, routesid, jsondata)
+
 
 def add_test_gyms():
     gymid = "1"
     routesid = "667"
     gym = add_gym(gymid, routesid, "Entente Sportive de Nanterre", "logo-ESN-HD-copy-1030x1030.png")
     gym = add_gym("2", "668", "ESC 14")
-
 
 
 def get_gym(gymid):
@@ -847,7 +881,6 @@ def get_gym(gymid):
         return gym
 
 
-
 def get_gyms():
     gyms = None
     try:
@@ -857,6 +890,7 @@ def get_gyms():
         sql_lock.release()
         logging.info("retrieved all gyms  ")
         return gyms
+
 
 def get_routes(routesid):
     if routesid is None:
@@ -888,7 +922,6 @@ def _get_gyms():
     return gyms
 
 
-
 def _get_gym(gymid):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -910,7 +943,6 @@ def _get_gym(gymid):
     return gym
 
 
-
 def _get_routes(routesid):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -927,8 +959,6 @@ def _get_routes(routesid):
         return json.loads(one[0])
     else:
         return None
-
-
 
 
 def add_gym(gymid, routesid, name, logoimg=None, homepage=None):
@@ -961,7 +991,6 @@ def _add_gym(gymid, routesid, jsondata):
     db.close()
 
 
-
 def _update_gym(gymid, routesid, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
@@ -975,7 +1004,6 @@ def _update_gym(gymid, routesid, jsondata):
 
     db.commit()
     db.close()
-
 
 
 # select * from routes group by gymid order by max(added_at);
@@ -996,13 +1024,9 @@ def get_route(gymid, routenum):
         return one
 
 
-
-
-
 def _get_route_dict(routeid, gymid, routenum, line, color, grade, name, openedby, opendate, notes):
    return  {'id': routeid, 'gymid': gymid, 'routenum':routenum, 'line': line, 'colorfr': color, 'color1': colors[color], 'color2': '',
      'grade': grade, 'name': name, 'openedby': openedby, 'opendate': opendate, 'notes': notes},
-
 
 
 # replaces or adds routes depending if routesid is found
@@ -1042,7 +1066,6 @@ def add_nanterre_routes():
     return routes
 
 
-
 def _add_routes(routeid, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
@@ -1058,17 +1081,14 @@ def _add_routes(routeid, jsondata):
     db.close()
 
 
-
-
-
 def _update_routes(routeid, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
     db.in_transaction
     cursor = db.cursor()
 
-    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) "
-                                                   [jsondata, str(routeid)])
+    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) ",
+                                                   [json.dumps(jsondata), str(routeid)])
 
     logging.info('updated route: '+str(jsondata))
     db.commit()

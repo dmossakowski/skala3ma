@@ -110,7 +110,7 @@ figure {
 
 #fh5co-hero {
   min-height: 700px;
-  background: #fff url(../images/loader.gif) no-repeat center center;
+  /*background: #fff url(../images/loader.gif) no-repeat center center;*/
   position: relative; }
 #fh5co-hero .overlay {
   position: absolute;
@@ -285,14 +285,14 @@ figure {
 
 /* Superfish Override Menu */
 .sf-menu2 {
-  margin: 1px 0 0 0 !important;
+  margin: 0px 0 0 0 !important;
 
   }
 
 .sf-menu2 {
   float: center;
   width: 100%;
-  background: rgba(245, 245, 245, 0.7);
+  background-image: linear-gradient(to left, rgba(229 235 242 / 60%) 50%, rgba(255,255,255,0) 100%);
   }
 
 .sf-menu2 ul {
@@ -302,7 +302,7 @@ figure {
   *width: 10em; }
 
 .sf-menu2 a {
-  color: rgba(0, 0, 0, 0.7);
+  color: rgba(51, 51, 51, 0.7);
   padding: 0.40em 1em !important;
   font-weight: normal;
   border-left: none;
@@ -390,7 +390,8 @@ figure {
   left: 0;
   width: 100%;
   z-index: 1022;
-  background: #fff; }
+  background: none;
+  }
 
 .nav-header {
   position: relative;
@@ -1272,7 +1273,8 @@ div.cs-select span {
 
 @media screen and (max-width: 768px) {
   #fh5co-menu-wrap {
-    display: none; } }
+    /* display: none; */
+    } }
 
 #offcanvas-menu {
   position: fixed;

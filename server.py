@@ -505,14 +505,13 @@ def facebook_auth():
     session['email']=profile['email']
     session['picture']=profile['picture']['data']['url']
     session['expires_at'] = token['expires_at']
-    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in'])-1000)
-
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    session['authsource'] = 'facebook'
     competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
-    return redirect('/competitionDashboard')
-
-
-
-
+    if session.get('wants_url') is not None:
+        return redirect(session['wants_url'])
+    else:
+        return redirect('/competitionDashboard')
 
 
 @app.route('/google/')
@@ -563,10 +562,14 @@ def googleauth_reply():
     session['email']=profile['email']
     session['picture']=profile['picture']
     session['expires_at'] = token['expires_at']
-    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in'])-1000)
-
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    session['authsource'] = 'google'
     competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
-    return redirect('/competitionDashboard')
+
+    if session.get('wants_url') is not None:
+        return redirect(session['wants_url'])
+    else:
+        return redirect('/competitionDashboard')
 
 
 

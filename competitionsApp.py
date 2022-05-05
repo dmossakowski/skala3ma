@@ -132,7 +132,12 @@ def login_required(fn):
 
             if expiresAtLocaltime < now:
                 session["wants_url"] = request.url
-                return redirect(url_for("fsgtlogin"))
+                if session['authsource'] == 'facebook':
+                    return redirect(url_for("facebook"))
+                if session['authsource'] == 'google':
+                    return redirect(url_for("googleauth"))
+
+                #return redirect(url_for("fsgtapp.fsgtlogin"))
             else:
                 return fn(*args, **kwargs)
         else:
@@ -155,6 +160,20 @@ def admin_required(fn):
             return redirect(url_for("fsgtapp.fsgtlogin"))
     return decorated_function
 
+
+def competition_authentication_required(fn):
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None and (session.get('name') == 'David Mossakowski'
+            or competitionsEngine.can_create_competition()):
+            now = int(datetime.now().timestamp())
+            #expiresAt = session['expires_at']
+            expiresAtLocaltime = session['expires_at_localtime']
+            return fn(*args, **kwargs)
+        else:
+            session["wants_url"] = request.url
+            return redirect(url_for("fsgtapp.fsgtlogin"))
+    return decorated_function
 
 
 @fsgtapp.route("/aa")
@@ -194,7 +213,7 @@ def fsgtadmin():
 
     if edittype == 'user':
         if jsonobject is not None and action == 'update':
-            jsonobject = {"success": "user updated"}
+            competitionsEngine.upsert_user(jsonobject)
 
         if id is not None and action == 'find':
             jsonobject = competitionsEngine.get_user_by_email(id)
@@ -238,7 +257,7 @@ def fsgtadmin():
 def fsgtadminedit(edittype):
     j = request.args.get('jsondata')
 
-    if edittype is 'user' and j['email'] is not None:
+    if edittype == 'user' and j['email'] is not None:
         competitionsEngine.upsert_user(j)
 
 
@@ -834,6 +853,10 @@ def update_routes_climbed(competitionId, climberId):
     competition = None
 
     if climberId is not None:
+        user = competitionsEngine.get_user_by_email(session['email'])
+        if not competitionsEngine.has_permission_for_competition(competitionId, user):
+            return render_template('competitionLogin.html')
+
         if len(routesUpdated) > 0:
             competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
             competition = competitionsEngine.getCompetition(competitionId)
