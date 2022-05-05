@@ -238,6 +238,9 @@ spotify = oauth.register(
 
 @app.route('/')
 def index():
+    if 'skala3ma.com' in request.url_root or 'localhost' in request.url_root:
+        return redirect("/competitionDashboard")
+
     session['hellomsg'] = 'Welcome to Spotify Analyzer'
     hellomsg = 'Welcome to Additive Spotify Analyzer'
     _setUserSessionMsg(None)
