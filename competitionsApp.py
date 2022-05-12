@@ -296,7 +296,7 @@ def getCompetitionDashboard():
     comp = {}
     competitionId=None
 
-    subheader_message='Welcome '
+    subheader_message='Competitions'
     competitions= competitionsEngine.getCompetitions()
 
     return render_template('competitionDashboard.html',
