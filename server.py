@@ -121,6 +121,23 @@ def init():
         os.mkdir(DATA_DIRECTORY + "/db")
         print('Created db directory')
 
+    app_language = 'en_US'
+    locale.setlocale(locale.LC_ALL, app_language)
+
+    language_list = glob.glob("language/*.json")
+    for lang in language_list:
+
+        #filename = lang.split('\\')
+        #lang_code = filename[1].split('.')[0]
+        lang_code = lang[9:-5]  # skip language/ and .json
+
+        with open(lang, 'r', encoding='utf8') as file:
+            languages[lang_code] = json.loads(file.read())
+
+    competitionsEngine.reference_data['languages'] = languages
+    langpack = competitionsEngine.reference_data['languages']['en_US']
+    competitionsEngine.reference_data['current_language'] = langpack
+
     analyze.init()
     competitionsEngine.init()
 
@@ -1452,28 +1469,6 @@ def privacy():
 if __name__ == '__main__':
     print('Executing main')
     #init()
-    app_language = 'en_US'
-    locale.setlocale(locale.LC_ALL, app_language)
-
-    #languages = {}
-    stats = {}
-    currencies = {}
-    date_format = "%d %b %Y %H:%M:%S %Z"
-    last_updated_time = ""
-
-    language_list = glob.glob("language/*.json")
-    for lang in language_list:
-
-        #filename = lang.split('\\')
-        #lang_code = filename[1].split('.')[0]
-        lang_code = lang[9:-5]  # skip language/ and .json
-
-        with open(lang, 'r', encoding='utf8') as file:
-            languages[lang_code] = json.loads(file.read())
-
-    competitionsEngine.reference_data['languages'] = languages
-    langpack = competitionsEngine.reference_data['languages']['en_US']
-    competitionsEngine.reference_data['current_language'] = langpack
 
 
     #fetch_data()
