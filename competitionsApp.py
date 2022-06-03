@@ -99,7 +99,7 @@ fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 @fsgtapp.before_request
 def x(*args, **kwargs):
-    if not session['language']:
+    if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
         session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
 
@@ -260,7 +260,8 @@ def fsgtadminedit(edittype):
         competitionsEngine.upsert_user(j)
 
 
-    return render_template('competitionAdmin.html')
+    return render_template('competitionAdmin.html',
+                           reference_data=competitionsEngine.reference_data)
 
 
 
@@ -268,7 +269,10 @@ def fsgtadminedit(edittype):
 
 @fsgtapp.route('/fsgtlogin')
 def fsgtlogin():
-    return render_template('competitionLogin.html')
+    return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data
+
+                           )
 
 
 
