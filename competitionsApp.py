@@ -1,39 +1,16 @@
-
-
 import json
 import os
 import io
 import glob
 import random
 from datetime import datetime, date, time, timedelta
-import numpy as np
-import pandas as pd
-import numpy.random
-from collections import Counter
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import plotly
-import plotly.graph_objects as go
-import plotly.express as px
-import tracemalloc
-import sqlite3 as lite
-import uuid
 import competitionsEngine
-import traceback
 import csv
 from functools import wraps
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
-    stream_with_context, copy_current_request_context
+    stream_with_context, copy_current_request_context, g
 
-from sklearn.cluster import KMeans
-
-from collections import defaultdict
-
-from matplotlib.figure import Figure
-from sklearn.preprocessing import MinMaxScaler
-
-from functools import lru_cache
 import logging
 from dotenv import load_dotenv
 
@@ -55,12 +32,12 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-fsgtapp = Blueprint('fsgtapp', __name__)
+#fsgtapp = Blueprint('fsgtapp', __name__)
 
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
-
+languages = {}
 
 load_dotenv()
 
@@ -79,6 +56,9 @@ DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
+
+fsgtapp = Blueprint('fsgtapp', __name__)
+
 fsgtapp.debug = True
 fsgtapp.secret_key = 'development'
 oauth = OAuth(fsgtapp)
@@ -107,7 +87,9 @@ import requests
 
 
 # Flask app setup
-fsgtapp = Blueprint('fsgtapp', __name__)
+
+
+
 
 
 fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
@@ -115,9 +97,26 @@ fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 # User session management setup
 # https://flask-login.readthedocs.io/en/latest
 
+@fsgtapp.before_request
+def x(*args, **kwargs):
+    if not session['language']:
+        #kk = competitionsEngine.supported_languages.keys()
+        session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+
+        ##return redirect('/en' + request.full_path)
 
 
+@fsgtapp.route('/language/<language>')
+def set_language(language=None):
+    session['language'] = language
 
+    #competitionsEngine.reference_data['current_language'] = session['language']
+
+    langpack = competitionsEngine.reference_data['languages'][language]
+    competitionsEngine.reference_data['current_language'] = langpack
+
+    return redirect('/competitionDashboard')
+    #return redirect(url_for('getCompetitionDashboard'))
 
 
 
@@ -278,10 +277,8 @@ def privacy():
     return render_template('skala3maprivacy.html')
 
 
-
-
 @fsgtapp.route('/competitionDashboard')
-#@login_required
+@login_required
 def getCompetitionDashboard():
 
     username = session.get('username')
@@ -296,7 +293,10 @@ def getCompetitionDashboard():
     comp = {}
     competitionId=None
 
-    subheader_message='Competitions'
+    subheader_message = request.accept_languages
+
+    langs = competitionsEngine.reference_data['languages']
+
     competitions= competitionsEngine.getCompetitions()
 
     return render_template('competitionDashboard.html',
@@ -305,9 +305,9 @@ def getCompetitionDashboard():
                            competitionName=None,
                            session=session,
                            reference_data=competitionsEngine.reference_data,
-                            **session)
-
-
+                           langpack=languages['en_US'],
+                            **session
+                           )
 
 
 @fsgtapp.route('/newCompetition', methods=['GET'])
@@ -411,7 +411,7 @@ def getCompetitionDashboard2():
 
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
-@login_required
+#@login_required
 def addCompetitionClimber(competitionId):
 
     useremail = session.get('email')
@@ -427,7 +427,7 @@ def addCompetitionClimber(competitionId):
     subheader_message = 'Register for ' + comp['name'] + ' on ' + comp['date']
 
     user = competitionsEngine.get_user_by_email(useremail)
-    climber=None
+    climber = None
 
     if firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)

@@ -98,7 +98,11 @@ clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Cham
 competition_status = {0:"created", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
 
 user_roles = ["none", "judge", "competitor", "admin"]
-reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors}
+
+supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
+
+reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
+                  "supported_languages":supported_languages}
 
 
 

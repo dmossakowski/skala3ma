@@ -39,12 +39,12 @@
 
 						{% else %}
 <form action="/newCompetition" method="post">
-						<label for="name">Name:</label>:<br> <input name="name" size="40" /><br><br>
-				<label for="date">Date:</label>: <br><input name="date" size="30" /><br><br>
+						<label for="name">Nom:</label><br> <input name="name" size="40" /><br><br>
+				<label for="date">Date:</label> <br><input name="date" size="30" /><br><br>
 
 
 	<label for="club">Mur:</label><br><select name="gym" id="gym">
-							<option value="--" size="20" >Choose</option>
+							<option value="--" size="20" >--</option>
 							{% for club in reference_data['clubs'] %}
 
 							<option value="{{reference_data['clubs'][club]}}" size="20" >{{reference_data['clubs'][club]}}</option>
@@ -57,7 +57,7 @@
 
 
 
-<button >Add</button>
+<button >Cree</button>
 					</form>
 
 						{% endif %}

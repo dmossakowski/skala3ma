@@ -35,7 +35,7 @@
 {% if climber is not none and climber is not undefined  %}
 <div class="container">
 	<div class="row">
-				Name {{ climber['name'] }}
+				{{ reference_data['current_language'].name}} {{ climber['name'] }}
 	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
 
 
@@ -81,13 +81,13 @@
 <div class="container-fluid">
 <table class="table thead-dark table-hover"  id="entrytable">
          <thead><tr>
-         <th data-width="250"  data-filter-control="input">Name</th>
-         <th data-field="artist" data-sortable="True">M/F</th>
-         <th data-field="track" data-sortable="True">Club</th>
-         <th data-field="category" data-sortable="True">Category</th>
-         <th data-field="routes" data-filter-control="input">Routes climbed</th>
-		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
-		 <th data-field="rank" data-filter-control="input" data-sortable="True">Rank</th>
+         <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-sortable="True">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
+         <th data-field="category" data-sortable="True">{{ reference_data['current_language'].category }}</th>
+         <th data-field="routes" data-filter-control="input">{{ reference_data['current_language'].routes_climbed }}</th>
+		 <th data-field="points" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].points }}</th>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].rank }}</th>
 
          </tr>
          </thead>
@@ -111,8 +111,8 @@
 			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
 			 <td><i>
 				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
-				 {{ competition['climbers'][climberId]['routesClimbed']}}  -
-				 {{ competition['climbers'][climberId]['routesClimbed']|length }} routes </a></td>
+				 {{ competition['climbers'][climberId]['routesClimbed']}}  --
+				 {{ competition['climbers'][climberId]['routesClimbed']|length }}  </a></td>
 			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
 			 <td>
 				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->

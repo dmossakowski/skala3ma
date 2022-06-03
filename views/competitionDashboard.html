@@ -18,70 +18,21 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section animate-box">
 						<br>
-						<h3>{{ subheader_message }}</h3>
+				<h3>{{ reference_data['current_language'].competitions }}</h3>
+
 					</div>
 
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 
-				{% if competitions is none  %}
 
-	<table class="table table-borderless thead-dark table-hover table-dark table-sm border-0" data-toggle="table" >
-         <thead borderless><tr>
-		 <th></th>
-         <th data-width="250" data-field="TimeAdded" data-filter-control="input">Name</th>
-         <th data-field="artist" data-filter-control="input">Description</th>
-         <th data-field="Owner" data-filter-control="select">Owner</th>
-         <th data-filter-control-placeholder>Followers</th>
-		 <th data-field="trackcount" data-filter-control="select">Track count</th>
-
-         </tr>
-         </thead>
-    <tbody borderless>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-         {% for key in library['playlists-tracks'] %}
-
-
-                <tr><td>
-					{% if key['images']|length >0 %}
-
-						{% if key['public']  %}
-							<a href="playlist/{{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
-					 	{% else %}
-							<a href="playlistDashboard?playlistId={{key['id']}}"><img src="{{ key['images'][0]['url'] }}"  width="100"></a>
-						{% endif %}
-					{% endif %}
-
-					</td>
-					<td>
-						{% if key['public']  %}
-							<a href="playlist/{{key['id']}}"><b>{{key['name']}} </b></a></td> <td><i>{{key['description']}}</i><br>
-						<a href="https://open.spotify.com/playlist/{{key['id']}}" target="_blank">
-								<img src="public/images/spotify-green-icon.png" width="20"></a></a>
-						{% else %}
-							<a href="playlistDashboard?playlistId={{key['id']}}"><b>{{key['name']}}</b></a></td> <td><i><br>{{key['description']}}</i></a>
-						{% endif %}
-
-					</td>
-					<td><i>{{key['owner']['display_name']}} </i></td><td class="text-right"> {{key['followers']['total']}}</td>
-					<td class="text-right"> {{key['tracks']['total']}}</td>
-                    </tr>
-
-
-         {% endfor %}
-         </tbody>
-     </table>
-
-			</div>
-		</div>
-{% endif %}
 
 
 
 {% if climber is not none and climber is not undefined  %}
 <div class="container">
 	<div class="row">
-				Name {{ climber['name'] }}
+		{{ reference_data['current_language'].name }} {{ climber['name'] }}
 	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
 
 
@@ -113,7 +64,7 @@
 					{%endfor%}
 </tr>
 			</table>
-				<button>Submit</button>
+				<button>{{ reference_data['current_language'].submit }}</button>
 				</form>
 
 </div>
@@ -131,10 +82,10 @@
 <div class="container-fluid">
 <table class="table thead-dark table-hover" >
          <thead><tr>
-         <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
-         <th data-field="artist" data-filter-control="input">M/F</th>
-         <th data-field="track" data-filter-control="input">Club</th>
-<th data-field="category" data-filter-control="input">Category</th>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
 
          </tr>
          </thead>

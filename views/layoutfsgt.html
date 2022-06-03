@@ -50,6 +50,8 @@
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'/>
 
+			<link rel="stylesheet" href="/public/css/languages.min.css"/>
+
 	<!-- Animate.css -->
 	<link rel="stylesheet" href="/public/css/animate.css"/>
 	<!-- Icomoon Icon Fonts-->
@@ -212,13 +214,13 @@
 						<ul class="sf-menu" id="fh5co-primary-menu">
 
 						<li>
-								<a href="/gyms" class="fh5co-sub-ddown">Murs</a>
+								<a href="/gyms" class="fh5co-sub-ddown">{{ reference_data['current_language'].gyms }}</a>
 										</li>
 <li>
-								<a href="/competitionDashboard" class="fh5co-sub-ddown">Competitions</a>
+								<a href="/competitionDashboard" class="fh5co-sub-ddown">{{ reference_data['current_language'].competitions }}</a>
 								<ul class="fh5co-sub-menu">
-								<li>	<a href="/competitionDashboard" >List </a></li>
-							<li>	<a href="/newCompetition" >Cree nouveaou </a></li>
+								<li>	<a href="/competitionDashboard" >{{ reference_data['current_language'].list }} </a></li>
+							<li>	<a href="/newCompetition" >{{ reference_data['current_language'].create_new }}</a></li>
 								</ul>
 								</li>
 
@@ -278,8 +280,6 @@
 
          {% endif %}
 
-						</ul>
-
 				</nav>
 
 				</div>
@@ -334,13 +334,17 @@
 				<div class="container">
 					<div class="row row-bottom-padded-md">
 						<div class="col-md-5">
-							<h3 class="section-title">About skala3ma</h3>
-							<p>Manage competitions and gym routes.
+							<h3 class="section-title">{{ reference_data['current_language'].about }} skala3ma</h3>
+							<p>{{ reference_data['current_language'].short_app_description }}
 							</p>
 						</div>
 
 
 						<div class="col-md-5">
+
+
+
+
 							<h3 class="section-title">Links</h3>
 							<ul>
 
@@ -355,6 +359,11 @@
 
 						</div>
 						<div  class="col-md-2">
+							<!-- http://usrz.github.io/bootstrap-languages/ -->
+							<h3 class="section-title">Languages</h3>
+							<a href="/language/en_US"><span class="lang-lg lang-lbl" lang="en"></span></a> &nbsp;&nbsp;&nbsp;
+							<a href="/language/fr_FR"><span class="lang-lg lang-lbl" lang="fr"></span></a>&nbsp;&nbsp;&nbsp;
+							<a href="/language/pl_PL"><span class="lang-lg lang-lbl" lang="pl"></span></a>
 
 <!--div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with"
 data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div-->

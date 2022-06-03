@@ -39,17 +39,17 @@
 {% if rankings is not none and rankings is not undefined %}
 
 	<!-- first do club rankings -->
-<h2>Classement club</h2>
+<h2>{{ reference_data['current_language'].ranking_club }}</h2>
 <table class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
          <thead><tr>
-		 <th data-field="rank" data-sortable="True">Classement</th>
-    	 <th data-width="350" data-sortable="true" >Prenom Nom</th>
-         <th data-field="m" >Homme</th>
-         <th data-field="f" >Femme</th>
-		 <th data-field="mc" data-sortable="false">Homme classe</th>
-         <th data-field="fc" data-sortable="false">Femme classe</th>
+		 <th data-field="rank" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
+    	 <th data-width="350" data-sortable="true" >{{ reference_data['current_language'].full_name }}</th>
+         <th data-field="m" >{{ reference_data['current_language'].men }}</th>
+         <th data-field="f" >{{ reference_data['current_language'].women }}</th>
+		 <th data-field="mc" data-sortable="false">{{ reference_data['current_language'].ranked_men }}</th>
+         <th data-field="fc" data-sortable="false">{{ reference_data['current_language'].ranked_women }}</th>
 
-         <th data-field="total"  data-sortable="false">Points</th>
+         <th data-field="total"  data-sortable="false">{{ reference_data['current_language'].points }}</th>
 
          </tr>
          </thead>
@@ -88,25 +88,25 @@
 
 				{% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
 				<h2>
-				{% if key == '2F' %} Classement Diamante Femme {% endif %}
-				{% if key == '1F' %} Classement Titane Femme {% endif %}
-				{% if key == '0F' %} Classement Senior Femme {% endif %}
-				{% if key == '2M' %} Classement Diamante Homme {% endif %}
-				{% if key == '1M' %} Classement Titane Homme {% endif %}
-				{% if key == '0M' %} Classement Senior Homme {% endif %}
-				{% if key == 'M' %} Classement Scratch Homme {% endif %}
-				{% if key == 'F' %} Classement Scratch Femme {% endif %}
+				{% if key == '2F' %} {{ reference_data['current_language'].ranking_diament_women}} {% endif %}
+				{% if key == '1F' %} {{ reference_data['current_language'].ranking_titane_women}} {% endif %}
+				{% if key == '0F' %} {{ reference_data['current_language'].ranking_senior_women}} {% endif %}
+				{% if key == '2M' %} {{ reference_data['current_language'].ranking_diament_men}} {% endif %}
+				{% if key == '1M' %} {{ reference_data['current_language'].ranking_titane_men}} {% endif %}
+				{% if key == '0M' %} {{ reference_data['current_language'].ranking_senior_men}} {% endif %}
+				{% if key == 'M' %} {{ reference_data['current_language'].ranking_scratch_men}} {% endif %}
+				{% if key == 'F' %} {{ reference_data['current_language'].ranking_scratch_women}}  {% endif %}
 
 </h2>
 
 <table class="table thead-dark table-hover"  data-toggle="table">
          <thead><tr>
-		 <th data-field="rank" data-filter-control="input" data-sortable="True">Classement</th>
-    	 <th data-width="250" data-field="Time Added" data-filter-control="input">Prenom Nom</th>
-         <th data-field="track" data-sortable="True">Club</th>
-         <th data-field="category" data-sortable="false">Catégorie</th>
-         <th data-field="routes" data-sortable="false">Voies</th>
-		 <th data-field="points" data-filter-control="input" data-sortable="True">Points</th>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
+    	 <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].full_name }}</th>
+         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
+         <th data-field="category" data-sortable="false">{{ reference_data['current_language'].category }}</th>
+         <th data-field="routes" data-sortable="false">{{ reference_data['current_language'].routes }}</th>
+		 <th data-field="points" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].points }}</th>
 
          </tr>
          </thead>

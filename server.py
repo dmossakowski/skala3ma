@@ -6,14 +6,13 @@ from functools import wraps
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
-#from flask_oauthlib.client import OAuth, OAuthException
+
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
 import requests
 import json
-import pandas as pd
-from matplotlib.backends.backend_template import FigureCanvas
+
 
 import analyze
 import graph as saagraph
@@ -25,7 +24,10 @@ import threading
 import random
 import logging
 from competitionsApp import fsgtapp
+from competitionsApp import languages
 import competitionsEngine
+import locale
+import glob
 
 from flask_login import (
     LoginManager,
@@ -35,7 +37,6 @@ from flask_login import (
     logout_user,
 )
 
-import sqlite3 as lite
 
 
 load_dotenv()
@@ -61,7 +62,8 @@ FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
 app = Flask(__name__, static_folder='public', template_folder='views')
-app.register_blueprint(fsgtapp)
+app.register_blueprint(fsgtapp) #url_prefix='/<lang_code>')
+#url_defaults={'lang': None},
 
 app.debug = True
 app.secret_key = 'development'
@@ -85,14 +87,6 @@ login_manager.init_app(app)
 
 #logging.basicConfig(filename=DATA_DIRECTORY+'/std.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',
  #                   encoding='utf-8', level=logging.DEBUG)
-
-
-
-
-
-
-
-
 
 
 
@@ -171,8 +165,8 @@ class ExportingThread(threading.Thread):
             _retrieveSpotifyData()
 
 
-
 exporting_threads = {}
+
 
 def login_required(fn):
     @wraps(fn)
@@ -191,8 +185,6 @@ def login_required(fn):
             session["wants_url"] = request.url
             return redirect(url_for("login"))
     return decorated_function
-
-
 
 
 def fetch_token():
@@ -231,9 +223,6 @@ spotify = oauth.register(
     #'scope': 'playlist-read-private  user-library-read  user-top-read'
     }
 )
-
-
-
 
 
 @app.route('/')
@@ -321,7 +310,6 @@ def logout():
     return render_template('login.html',
                            subheader_message="Logged out ",
                            library={}, **session)
-
 
 
 @app.route('/logoutfb')
@@ -1464,6 +1452,31 @@ def privacy():
 if __name__ == '__main__':
     print('Executing main')
     #init()
+    app_language = 'en_US'
+    locale.setlocale(locale.LC_ALL, app_language)
+
+    #languages = {}
+    stats = {}
+    currencies = {}
+    date_format = "%d %b %Y %H:%M:%S %Z"
+    last_updated_time = ""
+
+    language_list = glob.glob("language/*.json")
+    for lang in language_list:
+
+        #filename = lang.split('\\')
+        #lang_code = filename[1].split('.')[0]
+        lang_code = lang[9:-5]  # skip language/ and .json
+
+        with open(lang, 'r', encoding='utf8') as file:
+            languages[lang_code] = json.loads(file.read())
+
+    competitionsEngine.reference_data['languages'] = languages
+    langpack = competitionsEngine.reference_data['languages']['en_US']
+    competitionsEngine.reference_data['current_language'] = langpack
+
+
+    #fetch_data()
     app.run(host='localhost', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
 
