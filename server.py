@@ -121,8 +121,8 @@ def init():
         os.mkdir(DATA_DIRECTORY + "/db")
         print('Created db directory')
 
-    app_language = 'en_US'
-    locale.setlocale(locale.LC_ALL, app_language)
+    #app_language = 'en_US'
+    #locale.setlocale(locale.LC_ALL, app_language)
 
     language_list = glob.glob("language/*.json")
     for lang in language_list:
