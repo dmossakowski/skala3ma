@@ -124,6 +124,10 @@ def init():
     #app_language = 'en_US'
     #locale.setlocale(locale.LC_ALL, app_language)
 
+    #accepted_languages = request.accept_languages
+    #print("accepted_languages="+str(accepted_languages))
+    #session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+
     language_list = glob.glob("language/*.json")
     for lang in language_list:
 
@@ -135,7 +139,7 @@ def init():
             languages[lang_code] = json.loads(file.read())
 
     competitionsEngine.reference_data['languages'] = languages
-    langpack = competitionsEngine.reference_data['languages']['en_US']
+    langpack = competitionsEngine.reference_data['languages']['fr_FR']
     competitionsEngine.reference_data['current_language'] = langpack
 
     analyze.init()
@@ -245,7 +249,7 @@ spotify = oauth.register(
 @app.route('/')
 def index():
     if 'skala3ma.com' in request.url_root or 'localhost' in request.url_root:
-        return redirect("/competitionDashboard")
+        return redirect("/main")
 
     session['hellomsg'] = 'Welcome to Spotify Analyzer'
     hellomsg = 'Welcome to Additive Spotify Analyzer'
@@ -347,10 +351,7 @@ def logoutfb():
     _setUserSessionMsg('You have been logged out')
     #spotify.token
 
-    return render_template('competitionDashboard.html',
-                           subheader_message="Logged out ",
-                           library={}, **session)
-
+    return redirect("/main")
 
 #@app.route('/authorize')
 #def authorize():

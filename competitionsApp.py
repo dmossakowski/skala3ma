@@ -102,7 +102,7 @@ def x(*args, **kwargs):
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
         session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-
+        print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
         ##return redirect('/en' + request.full_path)
 
 
@@ -115,10 +115,8 @@ def set_language(language=None):
     langpack = competitionsEngine.reference_data['languages'][language]
     competitionsEngine.reference_data['current_language'] = langpack
 
-    return redirect('/competitionDashboard')
+    return redirect('/')
     #return redirect(url_for('getCompetitionDashboard'))
-
-
 
 
 def login_required(fn):
@@ -248,6 +246,7 @@ def fsgtadmin():
 
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
+                           reference_data=competitionsEngine.reference_data,
                            id=id)
 
 
@@ -281,6 +280,23 @@ def privacy():
     return render_template('skala3maprivacy.html')
 
 
+
+@fsgtapp.route('/main')
+def main():
+    langs = competitionsEngine.reference_data['languages']
+
+    competitions= competitionsEngine.getCompetitions()
+
+    return render_template('skala3ma.html',
+                           competitions=competitions,
+                           competitionName=None,
+                           session=session,
+                           reference_data=competitionsEngine.reference_data,
+                           langpack=languages['en_US'],
+                            **session
+                           )
+
+
 @fsgtapp.route('/competitionDashboard')
 @login_required
 def getCompetitionDashboard():
@@ -312,6 +328,7 @@ def getCompetitionDashboard():
                            langpack=languages['en_US'],
                             **session
                            )
+
 
 
 @fsgtapp.route('/newCompetition', methods=['GET'])
@@ -553,7 +570,7 @@ def update_user():
 
 
 
-@fsgtapp.route('/competitionDashboard/<competitionId>')
+@fsgtapp.route('/competitionDetails/<competitionId>')
 #@login_required
 def getCompetition(competitionId):
     #competitionId = request.args.get('competitionId')
@@ -585,7 +602,7 @@ def getCompetition(competitionId):
                                    **session)
 
 
-    subheader_message = "Competition '" + competition['name'] + "' on "+competition['date']
+    subheader_message = "CompetitionDetails '" + competition['name'] + "' on "+competition['date']
 
     # library= {}
     # library['tracks'] = tracks
@@ -597,7 +614,7 @@ def getCompetition(competitionId):
     #                       library=None,
     #                       **session))
 
-    return render_template("competitionDashboard.html", competitionId=competitionId,
+    return render_template("competitionDetails.html", competitionId=competitionId,
                            competition=competition,
                            subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data,
@@ -925,7 +942,6 @@ def gyms():
     club = request.args.get('club')
     category = request.args.get('category')
 
-    subheader_message = 'Murs'
 
     gyms = competitionsEngine.get_gyms()
 
@@ -943,7 +959,6 @@ def gyms():
         name = ""
 
     return render_template('gyms.html',
-                           subheader_message=subheader_message,
                            competitionId=None,
                            gyms=gyms,
                            reference_data=competitionsEngine.reference_data,

@@ -29,60 +29,12 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br><br><br>
-						<h3>{{ subheader_message }} </h3>
-						{% if gymsaa is  none  %}
 
-						<form action="/competitionDashboard/{{competitionId}}/register">
-							<label for="name">aaName:</label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br>
-
-							{% if gyms['email'] is none %}
-							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
-							{% else %}
-							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
-							{% endif %}
-
-							<input type="radio" id="F" value="F" name="sex">
-							<label for="F">Femme</label>
-							<input type="radio" id="M" value="M" name="sex">
-							<label for="M">Homme</label>
-							<br>
-							<br>
-							<label for="category">Category:</label><br><select name="category" id="category">
-							{% for category in reference_data['categories'] %}
-							{{category}}
-							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
-							{% endfor %}
-						</select><br><br>
-
-							<label for="club">Club:</label><br><select name="club" id="club">
-							<option value="--" size="20" >Choose</option>
-							{% for club in reference_data['clubs'] %}
-
-							{% if reference_data['clubs'][club] == '  ' %}selected{% endif %}
-							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == gyms['club'] %}selected{% endif %}
-									size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-							<option value="other" size="20" >Other</option>
-
-
-							</select>
-							<br><br>
-
-
-
-							<button >Sumbit</button>
-					</form>
-
-
+{% if gym is not none and gym is not undefined  %}
+						<h3>{{ gym['name'] }}</h3>
 						{% else %}
-
-
-
-
-						{% endif %}
-
-
+						<h3>{{ reference_data['current_language'].gyms }} </h3>
+				{% endif %}
 					</div>
 
 
@@ -108,13 +60,13 @@
     data-editable-emptytext="Default empty text."
     data-editable-url="/my/editable/update/path">
          <thead><tr>
-         <th data-width="250" data-field="line" data-filter-control="input">Line</th>
-         <th data-field="artist" data-filter-control="input">Route num</th>
-         <th data-field="track" data-filter-control="input" data-editable="true">Grade</th>
-         <th data-field="name" data-filter-control="input" data-editable="true">Name</th>
-         <th data-field="openedby" data-filter-control="input">Opened by</th>
-         <th data-field="openeddate" data-filter-control="input">Opened date</th>
-         <th data-field="notes" data-filter-control="input">Notes</th>
+         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].route_num }}</th>
+         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
+         <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
+         <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
+         <th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th>
+         <th data-field="notes" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
 
 
          </tr>

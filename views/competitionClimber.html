@@ -32,7 +32,7 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
-						<h3>{{ subheader_message }} </h3>
+						<h3>{{ reference_data['current_language'].register }} - {{ competition['name']}} - {{ competition['date']}}</h3>
 						{% if climber is  none  %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">

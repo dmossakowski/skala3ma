@@ -10,13 +10,17 @@
   "create_new": "Dodaj",
   "about": "O",
   "short_app_description": "Róbta co chceta... ",
+    "app_welcome": "SKALA3MA - Oficjalna apka zawodów FSGT",
+
   "register": "Zarejestruj się",
   "climbers": "Spinacze",
   "routes": "Drogi",
   "resultats": "Rezultaty",
+  "competition_results": "Wyniki zawodów",
+  "download": "Zapisz wyniki",
   "ranking_women": "Rankingi",
   "ranking_men": "Ranking homme",
-  "ranking_clubs": "Ranking Club",
+  "ranking_clubs": "Ranking Klubów",
   "ranking_diament_women": "Ranking Diament Kobiet",
   "ranking_diament_men": "Ranking Diament Męższczyzn",
   "ranking_titan_women": "Ranking Tytan Kobiet",
@@ -37,6 +41,11 @@
   "route_num": "Numer drogi",
   "grade": "Ocena",
   "climbed": "Wspięte",
+  "route_name": "Nazwa",
+  "route_opened_by": "Otwarta przez",
+  "route_opened_date": "Data otwarcia",
+  "notes": "Notki",
+
 
   "save": "Zapisz",
 

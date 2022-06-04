@@ -1,0 +1,94 @@
+
+
+
+{% extends "layoutfsgt.html" %}
+
+{% block topcontent %}
+
+
+
+		<aside id="fh5co-hero" class="js-fullheight">
+			<div class="flexslider js-fullheight">
+				<ul class="slides">
+			   	<li style="background-image: url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);">
+			   		<div class="overlay"></div>
+			   		<div class="container-fluid">
+			   			<div class="row">
+				   			<div class="col  text-center js-fullheight slider-text">
+
+								<div class="col"><br><br>
+										<img src="public/images/fsgt-logo-me.png" style="width: 350px; margin-left:50px" ><br>
+
+									</div>
+
+			   				<div class="col-md slider-text-inner container-fluid">
+								<h2 class="heading-title">{{ reference_data['current_language'].app_welcome}}
+								</h2>
+
+							</div>
+
+
+							</div>
+						</div>
+
+
+
+			   	</li>
+			  	</ul>
+		  	</div>
+		</aside>
+
+
+			<!--div class="container"-->
+				<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(public/images/pexels-arthouse-studio-6310418.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>
+
+
+
+
+	<div style="text-align: left;">
+
+		Manage competitions and gyms.
+		The source code for this app is on <a href="https://github.com/dmossakowski/additive-spotify-analyzer">GitHub</a>.
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">Join the discussion there</a> or
+
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">add an issue</a><br><br>
+
+		Features:<li>Add a new competition</li>
+
+		<li>Public registration link</li>
+		<li>Easy scaled route entry </li>
+		<li>Instant scoring</li>
+		<li>Multi-language</Li>
+		<li>Google and Facebook logins</li>
+
+
+
+
+<div id="fblikebutton"  class="fb-like" data-href="https://www.facebook.com/AdditiveSpotifyAnalyzer" data-width="" data-layout="button" data-action="like" data-size="small" data-share="true"></div>
+
+
+
+	</div><br><br>
+
+
+
+						{% if plot is defined and plot %}
+    <div class="chart" id="bargraph">
+    <script>
+        var graphs = {{plot | safe}};
+        Plotly.plot('bargraph',graphs,{});
+    </script>
+    </div>
+						{% endif %}
+</div>
+				</div>
+{% endblock %}
+
+	{% block secondarycontent %}
+
+
+{% endblock %}

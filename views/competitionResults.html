@@ -24,7 +24,8 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
-						<br>Competition resultats | <a href="{{competition['id']}}/download">Download </a>
+						<br>{{ reference_data['current_language'].competition_results }} |
+						<a href="{{competition['id']}}/download">{{ reference_data['current_language'].download }} </a>
 
 						<h3>{{ subheader_message }} </h3>
 
@@ -39,7 +40,7 @@
 {% if rankings is not none and rankings is not undefined %}
 
 	<!-- first do club rankings -->
-<h2>{{ reference_data['current_language'].ranking_club }}</h2>
+<h2>{{ reference_data['current_language'].ranking_clubs }}</h2>
 <table class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
          <thead><tr>
 		 <th data-field="rank" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
