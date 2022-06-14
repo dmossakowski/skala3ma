@@ -479,10 +479,10 @@ def init():
                        added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
 
         db.commit()
-        add_testing_data()
+        #add_testing_data()
 
-        print('loading routes from  ' + COMPETITIONS_DB)
-        routes = add_nanterre_routes()
+        #print('loading routes from  ' + COMPETITIONS_DB)
+        #routes = add_nanterre_routes()
 
 
         user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
@@ -794,6 +794,9 @@ def add_user_permission_create_competition(user):
 
 
 def can_create_competition(climber):
+    permissions = climber.get('permissions')
+    if 'create_competition' in permissions['general']:
+       return True
     return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
@@ -1010,22 +1013,6 @@ def _update_gym(gymid, routesid, jsondata):
     db.close()
 
 
-# select * from routes group by gymid order by max(added_at);
-def get_route(gymid, routenum):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT * FROM ''' + USERS_TABLE +
-        ''' where gymid=? and routenum=? group by gymid order by max(added_at) limit 1;''',
-        [gymid, routenum])
-
-    one = rows.fetchone()
-
-    if one is None or one[1] is None:
-        return None
-    else:
-        return one
 
 
 def _get_route_dict(routeid, gymid, routenum, line, color, grade, name, openedby, opendate, notes):
@@ -1057,6 +1044,37 @@ def upsert_routes(routesid, routes):
         logging.info("done with routes :"+str(routesid))
 
 
+
+def _add_routes(routesid, jsondata):
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+
+    cursor.execute("INSERT INTO " + ROUTES_TABLE + " (id, jsondata, added_at ) "
+                                                   "values ( ?, ?, datetime('now'))",
+                   [str(routesid),  json.dumps(jsondata)])
+
+    logging.info('added route: '+str(jsondata))
+    db.commit()
+    db.close()
+
+
+def _update_routes(routesid, jsondata):
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+
+    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) ",
+                                                   [json.dumps(jsondata), str(routesid)])
+
+    logging.info('updated route: '+str(jsondata))
+    db.commit()
+    db.close()
+
+
+
 def add_nanterre_routes():
     routes = loadroutesdict()
     for route in routes['routes']:
@@ -1068,37 +1086,6 @@ def add_nanterre_routes():
     _add_routes(routesId, json.dumps(routes));
     add_gym("1", routes.get('id'), "Entente Sportive de Nanterre")
     return routes
-
-
-def _add_routes(routeid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("INSERT INTO " + ROUTES_TABLE + " (id, jsondata, added_at ) "
-                                                   "values ( ?, ?, datetime('now'))",
-                   [str(routeid),  json.dumps(jsondata)])
-
-    logging.info('added route: '+str(jsondata))
-    db.commit()
-    db.close()
-
-
-def _update_routes(routeid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) ",
-                                                   [json.dumps(jsondata), str(routeid)])
-
-    logging.info('updated route: '+str(jsondata))
-    db.commit()
-    db.close()
-
-
 
 
 

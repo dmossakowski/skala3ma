@@ -1,0 +1,238 @@
+
+
+
+{% extends "layoutfsgt.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div >
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br><br><br>
+
+{% if gym is not none and gym is not undefined  %}
+						<h3>{{ gym['name'] }}</h3>
+						{% else %}
+						<h3>{{ reference_data['current_language'].gyms }} </h3>
+				{% endif %}
+					</div>
+
+
+		<div class="container">
+
+
+
+
+
+
+
+
+{% if gym is not none and gym is not undefined  %}
+
+<div class="row">
+
+<script>
+
+	//me.addRow = function(btn){
+     // btn ? btn.parentNode.parentNode.insertAdjacentHTML('afterend', row1): table.insertAdjacentHTML('beforeend',row1);
+      //setIds();
+    //}
+
+
+	function addRowAtId(id) {
+	const d = new Date();
+	let time = d.getTime();
+
+  var row = document.getElementById(id);
+	row.id=time;
+  var cell1 = row.insertCell(0);
+  var cell2 = row.insertCell(1);
+  var cell3 = row.insertCell(2);
+  var cell4 = row.insertCell(3);
+  var cell5 = row.insertCell(4);
+  var cell6 = row.insertCell(5);
+  var cell7 = row.insertCell(6);
+  var cell8 = row.insertCell(7);
+  cell1.innerHTML = '<input type="text" value="" name="routeline" id="routeline1"/>';
+  cell2.innerHTML = '<input type="text" value="" name="routegrade" id="routegrade1"/>';
+  cell3.innerHTML =  i+'new cell'+time
+  cell8.innerHTML = ' <a  onclick="addRowAtId('+time+')" >add</a><a  onclick="deleteRow('+(time)+')" >del</a>';
+
+	var rowHtml = `
+	testing one
+	testing two
+	`;
+  var rowHTML = row.outerHTML;
+  var rowParent = row.parentNode;
+
+  var row = row.parentNode.insertAdjacentHTML('afterend', row);
+
+
+}
+
+	function addRow(rowindex) {
+	const d = new Date();
+	let time = d.getTime();
+	var rowid = 0;
+	var table = document.getElementById("routestable");
+
+	for (var i = 0, row; row = table.rows[i]; i++) {
+		var rowidtemp = row.id
+		if (rowidtemp==rowindex){
+			rowid = i;
+			break;
+			}
+	}
+
+  var row = table.insertRow(rowid);
+  row.id=time;
+  var cell1 = row.insertCell(0);
+  var cell2 = row.insertCell(1);
+  var cell3 = row.insertCell(2);
+  var cell4 = row.insertCell(3);
+  var cell5 = row.insertCell(4);
+  var cell6 = row.insertCell(5);
+  var cell7 = row.insertCell(6);
+  var cell8 = row.insertCell(7);
+  cell1.innerHTML = '<input type="text" value="" name="routeline" id="routeline1"/>';
+  cell2.innerHTML = '<input type="text" value="" name="routegrade" id="routegrade1"/>';
+  cell3.innerHTML =  i+'new cell'+time
+  cell8.innerHTML = ' <a  onclick="addRow('+rowindex+')" >add</a><a  onclick="deleteRow('+(time)+')" >del</a>';
+}
+
+function deleteRow(id) {
+  //document.getElementById("routestable").deleteRow(i);
+  document.getElementById(id).remove();
+
+}
+</script>
+
+
+	<form action="/gyms/1/edit" enctype="multipart/form-data"  method="POST">
+		<input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
+
+<table class="table thead-dark table-hover" id="routestable"
+    data-url="data/url.json"
+    data-id-field="id"
+    data-editable-emptytext="Default empty text."
+    data-editable-url="/my/editable/update/path">
+         <thead><tr>
+         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
+         <th data-field="color1" data-filter-control="input">{{ reference_data['current_language'].color }}</th>
+			 <th data-field="color2" data-filter-control="input">{{ reference_data['current_language'].color }}</th>
+
+         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
+         <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
+         <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
+         <th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th>
+         <th data-field="notes" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for route in gym['routes'] %}
+
+		 <tr id="{{loop.index}}"><td>{{loop.index}} -- <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
+			 <td  aabgcolor="{{ route['color1'] }}">
+				 <input name="color1" type ="color" value="{{ route['color1'] }}">
+
+				 </td>
+			  <td name="color2" aabgcolor="{{ route['color2'] }}">
+				  <input name="color2" type ="color" value="{{ route['color2'] }}"></td>
+
+			 <td><i><input type="text" value="{{route['grade'] }}" name="routegrade" id="routegrade1" size="5"/></i></td>
+			 <td> <input type="text" value="{{ route['name'] }}" name="routename" id="routenum1"/></td>
+
+			 <td> <input type="text" value="{{ route['openedby'] }}" name="openedby" id="openedby"/></td>
+			 <td> <input type="text" value="{{ route['opendate'] }}" name="opendate" id="opendate" size="10"/></td>
+			 <td> <input type="text" value="{{ route['notes'] }}" name="notes" id="notes"/></td>
+
+			 <td><a  onclick="addRow({{loop.index}})" >+</a> &nbsp;<a  onclick="deleteRow({{loop.index}})" >-</a></td>
+                    </tr>
+             {% endfor %}
+
+         </tbody>
+     </table>
+
+		</form>
+
+</div>
+
+
+
+
+				{%endif %}
+
+{% if gyms is not none  %}
+
+
+
+
+
+					{% for gymid in gyms %}
+
+
+					<div class=" col-md-2 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
+							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
+						>
+							<a href="gyms/{{ gymid }}">
+							<div class="blog-text">
+								<div class="prod-title">
+									{% if gyms[gymid]['logoimg'] is not none %}
+									<img src="public/images/gyms/{{ gyms[gymid]['logoimg'] }}">
+									{% else %}
+
+									<h4>{{ gyms[gymid]['name'] }}</h4>
+									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
+									{% endif %}
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+
+
+{% endif %}
+
+
+
+
+			</div>
+		</div>
+
+	</div>
+{% endblock %}

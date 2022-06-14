@@ -175,7 +175,6 @@ def competition_authentication_required(fn):
 
 @fsgtapp.route("/aa")
 def index():
-
     if session.get('username'):
         return '<a class="button" href="/login">logged in </a>'+session.get('username')
 
@@ -264,15 +263,11 @@ def fsgtadminedit(edittype):
 
 
 
-
-
 @fsgtapp.route('/fsgtlogin')
 def fsgtlogin():
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data
-
                            )
-
 
 
 @fsgtapp.route('/skala3ma-privacy')
@@ -364,13 +359,11 @@ def newCompetition():
 
 @fsgtapp.route('/newCompetition', methods=['POST'])
 @login_required
-@admin_required
 def create_new_competition():
-
     username = session.get('username')
     #if username:
     #    return 'logged in '+str(username)
-    print(username)
+    #print(username)
 
     #username = request.args.get('username')
     name = request.form.get('name')
@@ -379,9 +372,11 @@ def create_new_competition():
     comp = {}
     competitionId=None
 
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if not competitionsEngine.can_create_competition(user):
+        return redirect(url_for('fsgtapp.fsgtlogin', competitionId=competitionId))
 
     if name is not None and date is not None and gym is not None:
-
         competitionId = competitionsEngine.addCompetition(None, name, date, gym)
         comp = getCompetition(competitionId)
         return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
@@ -396,10 +391,6 @@ def create_new_competition():
                            session=session,
                            reference_data=competitionsEngine.reference_data,
                             **session)
-
-
-
-
 
 
 #@fsgtapp.route('/competitionDashboard2')
@@ -436,7 +427,6 @@ def getCompetitionDashboard2():
 def addCompetitionClimber(competitionId):
 
     useremail = session.get('email')
-
     firstname = request.args.get('firstname')
     lastname = request.args.get('lastname')
     email = request.args.get('email')
@@ -978,6 +968,7 @@ def gym_by_id(gymid):
 
 
     gym = competitionsEngine.get_gym(gymid)
+    routes = competitionsEngine.get_routes(gym['routesid'])
 
     subheader_message = '' + str(gym['name'])
 
@@ -1007,7 +998,77 @@ def gym_by_id(gymid):
                             **session)
 
 
+@fsgtapp.route('/gyms/<gymid>/<routesid>')
+def gym_by_id_route(gymid, routesid):
 
+    gym = competitionsEngine.get_gym(gymid)
+    routes = competitionsEngine.get_routes(routesid)
+
+    return render_template('gyms.html',
+                           gymid=gymid,
+                           gyms=None,
+                           gym=gym,
+                           routes=routes,
+                           reference_data=competitionsEngine.reference_data,
+                            **session)
+
+
+
+@fsgtapp.route('/gyms/<gymid>/data')
+def gym_data(gymid):
+    fullname = request.args.get('fullname')
+    nick = request.args.get('nick')
+    email = request.args.get('email')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+    category = request.args.get('category')
+
+    gym = competitionsEngine.get_gym(gymid)
+
+
+
+    gym['rows']=gym['routes']
+
+
+    return json.dumps(gym)
+
+
+
+@fsgtapp.route('/gyms/<gymid>/edit', methods=['GET'])
+def gym_edit(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+
+    return render_template('gymedit.html',
+                           gymid=gymid,
+                           gyms=None,
+                           gym=gym,
+                           reference_data=competitionsEngine.reference_data,
+                           )
+
+
+@fsgtapp.route('/gyms/<gymid>/edit', methods=['POST'])
+def gym_save(gymid):
+
+    formdata = request.form.to_dict(flat=False)
+
+    args1 = request.args
+    body = request.data
+    bodyj = request.json
+
+    gym = competitionsEngine.get_gym(gymid)
+
+    return render_template('gymedit.html',
+                           gymid=gymid,
+                           gyms=None,
+                           gym=gym,
+                           reference_data=competitionsEngine.reference_data,
+                           )
+
+
+@fsgtapp.route('/gyms/<gymid>/edittest')
+def edit_test(gymid):
+    return render_template('tabletest.html',
+                           reference_data=competitionsEngine.reference_data)
 
 
 def user_authenticated(id, username, email, picture):

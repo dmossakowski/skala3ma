@@ -37,8 +37,8 @@
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
-							<label for="firstname">Prenom:</label><br> <input id="firstname" name="firstname" size="40" value="{{climber['firstname']}}"/><br><br>
-							<label for="lastname">Nom:</label><br> <input id="lastname" name="lastname" size="40" value="{{climber['lastname']}}"/><br><br>
+							<label for="firstname">Prenom:</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}"/><br><br>
+							<label for="lastname">Nom:</label><br> <input id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br><br>
 
 							{% if climber['email'] is none or logged_email is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
@@ -47,9 +47,9 @@
 							{% endif %}
 
 
-							<input type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
+							<input type="radio" id="F" value="F" name="sex" {% if user['sex']=='F'%}checked{%endif%}>
 							<label for="F">Femme</label>
-							<input type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
+							<input type="radio" id="M" value="M" name="sex" {% if user['sex']=='M'%}checked{%endif%}>
 							<label for="M">Homme</label>
 
 
@@ -66,9 +66,9 @@
 							<option value="--" size="20" >Choose</option>
 							{% for club in reference_data['clubs'] %}
 
-							{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
+							{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
 							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
+									{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
 							<option value="other" size="20" >Other</option>
