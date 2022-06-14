@@ -280,12 +280,14 @@ def privacy():
 def main():
     langs = competitionsEngine.reference_data['languages']
 
+    user = competitionsEngine.get_user_by_email(session.get('email'))
     competitions= competitionsEngine.getCompetitions()
 
     return render_template('skala3ma.html',
                            competitions=competitions,
                            competitionName=None,
                            session=session,
+                           user=user,
                            reference_data=competitionsEngine.reference_data,
                            langpack=languages['en_US'],
                             **session
@@ -308,6 +310,7 @@ def getCompetitionDashboard():
     comp = {}
     competitionId=None
 
+    user = competitionsEngine.get_user_by_email(session['email'])
     subheader_message = request.accept_languages
 
     langs = competitionsEngine.reference_data['languages']
@@ -319,6 +322,7 @@ def getCompetitionDashboard():
                            competitions=competitions,
                            competitionName=None,
                            session=session,
+                           user=user,
                            reference_data=competitionsEngine.reference_data,
                            langpack=languages['en_US'],
                             **session
