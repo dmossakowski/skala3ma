@@ -30,7 +30,7 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
-						<h3>{{ subheader_message }} </h3>
+						<h3>{{ reference_data['current_language'].create_new }} </h3>
 
 						{% if competitionName is not none  %}
 				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
@@ -39,11 +39,11 @@
 
 						{% else %}
 <form action="/newCompetition" method="post">
-						<label for="name">Nom:</label><br> <input name="name" size="40" /><br><br>
-				<label for="date">Date:</label> <br><input name="date" size="30" type="date"/><br><br>
+						<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
+				<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
 
 
-	<label for="club">Mur:</label><br><select name="gym" id="gym">
+	<label for="club">{{ reference_data['current_language'].gym }}:</label><br><select name="gym" id="gym">
 							<option value="--" size="20" >--</option>
 							{% for club in reference_data['clubs'] %}
 
@@ -57,7 +57,7 @@
 
 
 
-<button >Cree</button>
+<button >{{ reference_data['current_language'].submit }}</button>
 					</form>
 
 						{% endif %}
@@ -122,45 +122,6 @@
 
 
 
-{% if competitions is not none  %}
-
-
-
-
-
-					{% for competitionId in competitions %}
-
-
-<div class=" col-md-2 ">
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
-							>
-
-							<a href="competitionDashboard/{{ competitionId }}">
-							<div class="blog-text">
-								<div class="prod-title">
-									<h4>{{ competitions[competitionId]['name'] }}</h4>
-									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
-									<br>
-									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
-
-
-
-								</div>
-							</div>
-								</a>
-						</div>
-					</div>
-
-					 {% endfor %}
-
-
-
-
-
-{% endif %}
 
 
 			</div>

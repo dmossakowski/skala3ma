@@ -1,5 +1,6 @@
 {
   "name": "Imie",
+  "nazwa": "Nazwa",
   "submit": "Dawaj",
   "club": "Klub",
   "category": "Kategoria",
@@ -62,5 +63,8 @@
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",
   "country": "Länder",
-  "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"}
+  "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"},
+  "date": "Dzień",
+  "gym": "ścianka"
+
 }

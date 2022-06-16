@@ -1,13 +1,15 @@
 {
   "name": "Nom",
+  "nazwa" : "Nom",
+  "name2": "Appelation",
   "submit": "Soumettre",
   "club": "Club",
   "category": "Categorie",
   "malefemale": "F/H",
-  "competitions": "Competitions",
+  "competitions": "Compétitions",
   "gyms": "Murs",
   "list": "Liste des compétitions",
-  "create_new": "Créer une nouvelle compétition",
+  "create_new": "Nouvelle compétition",
   "about": "A propos",
   "short_app_description": "Gérer les competitions et les murs",
   "app_welcome": "SKALA3MA - Application officielle des compétitions autrement de la FSGT",
@@ -64,5 +66,8 @@
   "new_visitor": "Nouveau visiteur",
   "new_user": "Nouvel utilisateur",
   "country": "Pays",
-  "country_list": {"germany": "Allemagne", "united_kingdom": "Grande Bretagne", "russia": "Russie", "spain": "Espagne", "india": "Inde", "france": "France"}
+  "country_list": {"germany": "Allemagne", "united_kingdom": "Grande Bretagne", "russia": "Russie", "spain": "Espagne", "india": "Inde", "france": "France"},
+  "date": "Date",
+  "gym": "Mur"
+
 }

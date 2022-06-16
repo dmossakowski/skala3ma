@@ -1,5 +1,6 @@
 {
   "name": "Name",
+  "nazwa": "Name",
   "submit": "Submit",
   "club": "Club",
   "category": "Category",
@@ -61,5 +62,8 @@
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",
   "country": "Länder",
-  "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"}
+  "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"},
+  "date": "Date",
+  "gym": "Gym"
+
 }

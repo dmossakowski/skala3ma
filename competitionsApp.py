@@ -337,7 +337,7 @@ def newCompetition():
     username = session.get('username')
     #if username:
     #    return 'logged in '+str(username)
-    print(username)
+    #print(username)
 
     #username = request.args.get('username')
     name = request.args.get('name')
@@ -348,12 +348,9 @@ def newCompetition():
 
 
 
-    subheader_message='Create new competition '
-    competitions= competitionsEngine.getCompetitions()
+    #competitions= competitionsEngine.getCompetitions()
 
     return render_template('newCompetition.html',
-                           subheader_message=subheader_message,
-                           competitions=competitions,
                            competitionName=None,
                            session=session,
                            reference_data=competitionsEngine.reference_data,
