@@ -1,17 +1,17 @@
 {
   "name": "Nom",
   "nazwa" : "Nom",
-  "name2": "Appelation",
+  "name2": "????",
   "submit": "Soumettre",
   "club": "Club",
-  "category": "Categorie",
+  "category": "Catégorie",
   "malefemale": "F/H",
   "competitions": "Compétitions",
   "gyms": "Murs",
   "list": "Liste des compétitions",
   "create_new": "Nouvelle compétition",
-  "about": "A propos",
-  "short_app_description": "Gérer les competitions et les murs",
+  "about": "À propos",
+  "short_app_description": "Gérer les compétitions et les murs",
   "app_welcome": "SKALA3MA - Application officielle des compétitions autrement de la FSGT",
 
   "register": "S'inscrire",
@@ -19,7 +19,7 @@
   "routes": "Voies",
   "resultats": "Résultats",
   "competition_results": "Résultats de la compétition",
-  "download": "Enregistre",
+  "download": "Télécharger",
   "ranking_women": "Classement femme",
   "ranking_men": "Classement homme",
   "ranking_clubs": "Classement Club",
@@ -32,9 +32,9 @@
   "ranking_scratch_women": "Classement Scratch Femme",
   "ranking_scratch_men": "Classement Scratch Homme",
   "ranking": "Classement",
-  "full_name": "Prénom nom",
+  "full_name": "Nom",
   "points": "Points",
-    "women": "Femme",
+  "women": "Femme",
   "men": "Homme",
 
   "line": "Ligne",
@@ -57,7 +57,7 @@
 
 
   "last_updated": "Dernière mise à jour",
-  "dashboard_title": "Moin tableau",
+  "dashboard_title": "???Moin tableau???",
   "message": "Message",
   "view": "Vues",
   "share": "Partager",
@@ -69,13 +69,13 @@
   "country_list": {"germany": "Allemagne", "united_kingdom": "Grande Bretagne", "russia": "Russie", "spain": "Espagne", "india": "Inde", "france": "France"},
   "date": "Date",
   "gym": "Mur",
-  "competition_status": "Etat de la competition",
-  "competition_status_0": "Cree",
-  "competition_status_1": "Ouvert",
-  "competition_status_2": "Progre",
-  "competition_status_3": "Scoring",
-  "competition_status_4": "Ferme",
-  "not_available": "Pas available"
+  "competition_status": "État de la compétition",
+  "competition_status_0": "Créée",
+  "competition_status_1": "Ouverte",
+  "competition_status_2": "En cours",
+  "competition_status_3": "Décompte en cours",
+  "competition_status_4": "Fermée",
+  "not_available": "indisponibles"
 
 
 }
