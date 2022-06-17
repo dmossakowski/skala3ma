@@ -858,10 +858,19 @@ def can_update_routes(user, competition):
 def can_register(user, competition):
 
     if competition is None:
-        return False
+        return '5055 - competition is null'
+
+    if user is not None:
+        climbers = competition['climbers']
+        for cid in climbers:
+            if climbers[cid]['email']==user['email']:
+                return '5056 - User with email '+user['email']+' already registered'
 
     # if anonymous registration and competition is in the correct state then allow
-    return competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]
+    if competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
+        return ""
+    else:
+        return '5057 - Competition status does not allow new registrations'
 
 
 def user_registered_for_competition(climberId, name, email, sex, club, category):

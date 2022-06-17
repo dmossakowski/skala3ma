@@ -35,7 +35,7 @@
 						<h3>{{ reference_data['current_language'].register }} - {{ competition['name']}} - {{ competition['date']}}</h3>
 						<font color="red">{{error_code}}</font>
 
-						{% if climber is  none  %}
+						{% if climber is  none and not error_code|length %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->

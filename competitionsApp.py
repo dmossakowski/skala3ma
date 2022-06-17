@@ -422,16 +422,12 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
 
     comp = competitionsEngine.getCompetition(competitionId)
-
-
     user = competitionsEngine.get_user_by_email(useremail)
 
-    error_code=""
-    if not competitionsEngine.can_register(user, comp):
-        error_code = "5011 Competition does not accept new registrations"
+    error_code=competitionsEngine.can_register(user, comp)
     climber = None
 
-    if firstname is not None and sex is not None and club is not None and email is not None:
+    if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
@@ -447,8 +443,7 @@ def addCompetitionClimber(competitionId):
         except ValueError:
             error_code = email+' is already registered!'
 
-    #else:
-     ##   comp=None # this is to not show the list of climbers before registration
+    ##   comp=None # this is to not show the list of climbers before registration
 
     #competitions = competitionsEngine.getCompetitions()
     email = session.get('email')
