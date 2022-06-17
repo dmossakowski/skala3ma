@@ -309,7 +309,7 @@ figure {
   border-top: none;
   border-top: none;
   text-decoration: none;
-  zoom: 1;
+  //zoom: 1;
   font-size: 12px;
   border-bottom: none !important;
   font-weight: bold;
@@ -322,14 +322,20 @@ figure {
   color: #44C662; }
 
 .sf-menu2 li, .sf-menu2 ul li, .sf-menu2 ul ul li, .sf-menu2 li:hover, .sf-menu2 li.sfHover {
-    background: none;
+    font-weight: bold;
+    font-size: 12px;
+    color: rgba(51, 51, 51, 0.7);
+
+
+
 
    }
 
 .sf-menu2 ul li, .sf-menu2 ul ul li {
-    line-height: 10;
+    //line-height: 10;
     background : #FFFFFF;
     padding: 0px 1 0 0 !important;
+
 
 }
 

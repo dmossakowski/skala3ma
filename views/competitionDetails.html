@@ -17,6 +17,8 @@
 					<div class="text-center heading-section animate-box">
 						<br>
 				<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
+
 
 					</div>
 
@@ -30,6 +32,7 @@
 
 
 <div class="container-fluid">
+
 <table class="table thead-dark table-hover" >
          <thead><tr>
          <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>

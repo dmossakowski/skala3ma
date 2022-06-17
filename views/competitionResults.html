@@ -24,11 +24,23 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
+
+			{% if rankings is not none and rankings is not undefined %}
+
 						<br>{{ reference_data['current_language'].competition_results }} |
 						<a href="{{competition['id']}}/download">{{ reference_data['current_language'].download }} </a>
 
-						<h3>{{ subheader_message }} </h3>
+							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
 
+			{% else %}
+<br><br>
+							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+						<br><br>
+						<h3> <br>{{ reference_data['current_language'].competition_results }} <br>
+						<br>{{ reference_data['current_language'].not_available }}</h3>
+						{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}
+
+			{% endif %}
 
 					</div>
 
@@ -139,6 +151,8 @@
      </table>
 <br><br>
 			{% endfor %}
+
+
 				{% endif %} <!-- if rankings -->
 
 

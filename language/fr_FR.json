@@ -68,6 +68,14 @@
   "country": "Pays",
   "country_list": {"germany": "Allemagne", "united_kingdom": "Grande Bretagne", "russia": "Russie", "spain": "Espagne", "india": "Inde", "france": "France"},
   "date": "Date",
-  "gym": "Mur"
+  "gym": "Mur",
+  "competition_status": "Etat de la competition",
+  "competition_status_0": "Cree",
+  "competition_status_1": "Ouvert",
+  "competition_status_2": "Progre",
+  "competition_status_3": "Scoring",
+  "competition_status_4": "Ferme",
+  "not_available": "Pas available"
+
 
 }

@@ -95,7 +95,20 @@ clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Cham
                       33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" ,
                       37:"Autre club non répertorié"  }
 
-competition_status = {0:"created", 1:"open", 2:"inprogress", 3:"scoring", 4:"closed"}
+# created - only visible to admin or someone who has the right to see it
+# open - visible and registration is possible
+# inprogress - visible, can still register and can enter routes climbed
+# scoring - cannot register, can enter routes, calculate and see results
+# closed - cannot change routes and no need to recalculate
+competition_status_created = 0
+competition_status_open = 1
+competition_status_inprogress = 2
+competition_status_scoring = 3
+competition_status_closed = 4
+competition_status_future = 5
+
+competition_status = {"created":competition_status_created, "open":1, "inprogress":2, "scoring":3, "closed":4}
+
 
 user_roles = ["none", "judge", "competitor", "admin"]
 
@@ -317,6 +330,9 @@ def recalculate(competitionId, comp=None):
 
 # returns sorted arrays based on rank
 def get_sorted_rankings(competition):
+    if competition['status'] not in [competition_status_closed,
+                                     competition_status_scoring]:
+        return None
     rankings = {}
     rankings['F'] = []
     rankings['M'] = []
@@ -566,7 +582,24 @@ def get_competition(compId):
     if one is None or one[0] is None:
         return None
     else:
-        return json.loads(one[0])
+        competition = json.loads(one[0])
+        competition = _validate_or_upgrade_competition(competition)
+        return competition
+
+
+# this method is for migrating competitions to new format when available
+def _validate_or_upgrade_competition(competition):
+
+    needs_updating = False
+    if competition.get('status') is None or competition.get('status') not in competition_status.values():
+        needs_updating = True
+        competition['status'] = competition_status['created']
+
+    if needs_updating:
+        update_competition(competition['id'], competition)
+
+    return competition
+
 
 
 def get_all_competitions():
@@ -802,6 +835,33 @@ def can_create_competition(climber):
 
 def can_edit_competition(climber, competition):
     return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+
+
+# can update routes if:
+# user has update_routes general permission
+# competition is in scoring or inprogress status
+# user has permission for the given competition
+def can_update_routes(user, competition):
+    permissions = user.get('permissions')
+    #if user['email in'] in ['dmossakowski@gmail.com']
+
+    if 'update_routes' in permissions['general'] \
+            and competition['status'] in [competition_status_scoring, competition_status_inprogress]\
+            and competition['id'] in permissions['competitions']:
+        return True
+
+    return False;
+
+
+# checks if competition is in the right state
+# does not check if a user is already registered
+def can_register(user, competition):
+
+    if competition is None:
+        return False
+
+    # if anonymous registration and competition is in the correct state then allow
+    return competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]
 
 
 def user_registered_for_competition(climberId, name, email, sex, club, category):

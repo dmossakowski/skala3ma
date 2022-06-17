@@ -64,6 +64,13 @@
   "country": "Länder",
   "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"},
   "date": "Date",
-  "gym": "Gym"
+  "gym": "Gym",
+  "competition_status": "Competition status",
+  "competition_status_0": "Created",
+  "competition_status_1": "Open",
+  "competition_status_2": "In Progress",
+  "competition_status_3": "Scoring",
+  "competition_status_4": "Closed",
+  "not_available": "Not available"
 
 }

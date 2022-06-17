@@ -394,34 +394,6 @@ def create_new_competition():
                             **session)
 
 
-#@fsgtapp.route('/competitionDashboard2')
-#@login_required
-def getCompetitionDashboard2():
-
-    username = request.args.get('username')
-    name = request.args.get('name')
-    date = request.args.get('date')
-    gym = request.args.get('gym')
-    comp = {}
-    competitionId=None
-
-
-    if name is not None and date is not None and gym is not None:
-
-        competitionId = competitionsEngine.addCompetition(None, name, date, gym)
-        comp = competitionsEngine.getCompetition(competitionId)
-        return redirect(url_for('getCompetition', competitionId=competitionId))
-
-    subheader_message='Create new competition '
-    competitions= competitionsEngine.getCompetitions()
-
-    return render_template('competitionDashboard.html',
-                           subheader_message=subheader_message,
-                           competitions=competitions,
-                           competitionName=None,
-                           reference_data=competitionsEngine.reference_data,
-                            **session)
-
 
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
 #@login_required
@@ -436,9 +408,13 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
 
     comp = competitionsEngine.getCompetition(competitionId)
-    subheader_message = 'Register for ' + comp['name'] + ' on ' + comp['date']
+
 
     user = competitionsEngine.get_user_by_email(useremail)
+
+    error_code=""
+    if not competitionsEngine.can_register(user, comp):
+        error_code = "5011 Competition does not accept new registrations"
     climber = None
 
     if firstname is not None and sex is not None and club is not None and email is not None:
@@ -451,9 +427,11 @@ def addCompetitionClimber(competitionId):
                                                                climber['club'], climber['category'])
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
-            subheader_message = 'You have been registered! Thanks!'
+            #subheader_message = 'You have been registered! Thanks!'
+            return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+
         except ValueError:
-            subheader_message = email+' is already registered!'
+            error_code = email+' is already registered!'
 
     #else:
      ##   comp=None # this is to not show the list of climbers before registration
@@ -466,7 +444,7 @@ def addCompetitionClimber(competitionId):
         name = ""
 
     return render_template('competitionClimber.html',
-                           subheader_message=subheader_message,
+                           error_code=error_code,
                            competition=comp,
                            competitionId=competitionId,
                            climber=climber,
@@ -637,7 +615,6 @@ def getCompetitionResults(competitionId):
                                    library={},
                                    **session)
 
-    subheader_message =   competition['name'] + "  -    "+competition['date']
 
     rankings = competitionsEngine.get_sorted_rankings(competition)
 
@@ -645,7 +622,6 @@ def getCompetitionResults(competitionId):
 
     return render_template("competitionResults.html", competitionId=competitionId,
                            competition=competition,
-                           subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data,
                            rankings = rankings,
                            **session)
@@ -785,8 +761,12 @@ def downloadCompetitionCsv(competitionId):
 def competitionRoutesList(competitionId):
     #competitionId = request.args.get('competitionId')
 
+    user = competitionsEngine.get_user_by_email(session['email'])
 
     competition = competitionsEngine.getCompetition(competitionId)
+
+    #if not competitionsEngine.can_update_routes(user,competition):
+    #    return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
 
     gymid = competition['gym']
     #gym = competitionsEngine.get_gym(gymid)
@@ -806,6 +786,7 @@ def competitionRoutesList(competitionId):
 
     return render_template("competitionClimberList.html",
                            subheader_message=subheader_message,
+                           user=user,
                            competition=competition,
                            competitionId=competitionId,
                            reference_data=competitionsEngine.reference_data,
