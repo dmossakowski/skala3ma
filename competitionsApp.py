@@ -779,14 +779,14 @@ def competitionRoutesList(competitionId):
 
     competition = competitionsEngine.getCompetition(competitionId)
 
-    #if not competitionsEngine.can_update_routes(user,competition):
-    #    return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+    error_code = ""
+    if not competitionsEngine.can_update_routes(user,competition):
+        error_code = "5314 - updating routes is not permitted"
 
     gymid = competition['gym']
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
 
-    subheader_message = competition['name']+"   list "+competition['gym']
 
     # library= {}
     # library['tracks'] = tracks
@@ -799,7 +799,7 @@ def competitionRoutesList(competitionId):
     #                       **session))
 
     return render_template("competitionClimberList.html",
-                           subheader_message=subheader_message,
+                           error_code=error_code,
                            user=user,
                            competition=competition,
                            competitionId=competitionId,
@@ -831,13 +831,20 @@ def routes_climbed(competitionId, climberId):
                                    library={},
                                    **session)
 
+    user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competitionId)
+
+    if not competitionsEngine.can_update_routes(user,competition):
+        return redirect(url_for('fsgtapp.competitionRoutesList', competitionId=competitionId))
+
+
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
     subheader_message = climber['name']+" - "+climber['club']
 
-    return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
+    return render_template("competitionRoutesEntry.html", climberId=climberId,
+                           climber=climber,
                            routes=routes,
                            subheader_message=subheader_message,
                            competition=competition,
