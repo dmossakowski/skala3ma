@@ -194,15 +194,29 @@ def index():
 
 
 
-@fsgtapp.route('/competitionAdmin')
-def fsgtadmin():
+@fsgtapp.route('/competitionAdmin', methods=['GET'])
+def fsgtadminget():
     edittype = request.args.get('edittype')
     id = request.args.get('id')
     action = request.args.get('action')
     jsondata = request.args.get('jsondata')
     jsonobject = None
 
+    return render_template('competitionAdmin.html',
+                           jsondata=json.dumps(jsonobject),
+                           reference_data=competitionsEngine.reference_data,
+                           id=id)
 
+
+@fsgtapp.route('/competitionAdmin', methods=['POST'])
+def fsgtadmin():
+
+    edittype = request.form.get('edittype')
+    id = request.form.get('id')
+    action = request.form.get('action')
+    jsondata = request.form.get('jsondata')
+    comp = {}
+    jsonobject = None
 
     if jsondata is not None and len(jsondata) > 2:
         jsonobject = json.loads(jsondata)
