@@ -1090,6 +1090,7 @@ def gym_by_id(gymid):
 
 
     gym = competitionsEngine.get_gym(gymid)
+
     routes = competitionsEngine.get_routes(gym['routesid'])
 
     subheader_message = '' + str(gym['name'])
@@ -1169,6 +1170,7 @@ def gym_edit(gymid):
 
 
 @fsgtapp.route('/gyms/<gymid>/edit', methods=['POST'])
+@login_required
 def gym_save(gymid):
 
     formdata = request.form.to_dict(flat=False)
@@ -1177,7 +1179,35 @@ def gym_save(gymid):
     body = request.data
     bodyj = request.json
 
+    routeline = formdata['routeline']
+    color1 = formdata['color1']
+    color2 = formdata['color2']
+    routegrade = formdata['routegrade']
+    routename = formdata['routename']
+    openedby = formdata['openedby']
+    opendate = formdata['opendate']
+    notes = formdata['notes']
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+
     gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return redirect(url_for("fsgtapp.fsgtlogin"))
+
+    routes = []
+    for i, routeline1 in enumerate(routeline):
+        print (i)
+        oneline = competitionsEngine._get_route_dict(gym['routes'][i]['id'],gym['id'],i,routeline[i],color1[i],color2[i],routegrade[i],
+                                           routename[i],openedby[i],opendate[i],notes[i])
+        routes.append(oneline)
+
+    #gym['routes'] = routes
+
+    competitionsEngine.update_gym(gym['id'],gym['routesid'],gym)
+
+    competitionsEngine._update_routes(gym['routesid'],routes)
+
+    gym = competitionsEngine.get_gym(gym['id'])
 
     return render_template('gymedit.html',
                            gymid=gymid,

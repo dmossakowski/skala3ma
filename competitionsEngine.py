@@ -932,6 +932,14 @@ def can_register(user, competition):
         return '5057 - Competition status does not allow new registrations'
 
 
+def can_edit_gym(climber, gym):
+    permissions = climber.get('permissions')
+    if gym['id'] in permissions['gym']:
+        return True
+    return False
+    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+
+
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
@@ -1080,7 +1088,7 @@ def _get_gym(gymid):
 
     db.close()
     routes = _get_routes(gym['routesid'])
-    gym['routes'] = routes['routes']
+    gym['routes'] = routes
 
     return gym
 
@@ -1140,7 +1148,7 @@ def _update_gym(gymid, routesid, jsondata):
     cursor = db.cursor()
 
     cursor.execute("update " + GYM_TABLE + " set  routesid = ? , jsondata = ? , added_at=datetime('now' ) where id=?",
-                   [ str(routesid),  jsondata, str(gymid)])
+                   [ str(routesid), json.dumps(jsondata), str(gymid)])
 
     logging.info('updated gym: '+str(jsondata))
 
@@ -1150,9 +1158,11 @@ def _update_gym(gymid, routesid, jsondata):
 
 
 
-def _get_route_dict(routeid, gymid, routenum, line, color, grade, name, openedby, opendate, notes):
-   return  {'id': routeid, 'gymid': gymid, 'routenum':routenum, 'line': line, 'colorfr': color, 'color1': colors[color], 'color2': '',
-     'grade': grade, 'name': name, 'openedby': openedby, 'opendate': opendate, 'notes': notes},
+def _get_route_dict(routeid, gymid, routenum, line, color1, color2, grade, name, openedby, opendate, notes):
+    oneline = {}
+    oneline =  {'id': routeid, 'gymid': gymid, 'routenum':routenum, 'line': line, 'colorfr': color1, 'color1': color1, 'color2': color2,
+     'grade': grade, 'name': name, 'openedby': openedby, 'opendate': opendate, 'notes': notes}
+    return oneline
 
 
 # replaces or adds routes depending if routesid is found
@@ -1201,7 +1211,7 @@ def _update_routes(routesid, jsondata):
     db.in_transaction
     cursor = db.cursor()
 
-    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ? ) ",
+    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ?  ",
                                                    [json.dumps(jsondata), str(routesid)])
 
     logging.info('updated route: '+str(jsondata))
