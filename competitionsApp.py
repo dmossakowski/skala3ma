@@ -194,7 +194,8 @@ def index():
 
 
 
-@fsgtapp.route('/competitionAdmin', methods=['GET'])
+@fsgtapp.route('/competitionRawAdmin', methods=['GET'])
+@login_required
 def fsgtadminget():
     edittype = request.args.get('edittype')
     id = request.args.get('id')
@@ -202,15 +203,15 @@ def fsgtadminget():
     jsondata = request.args.get('jsondata')
     jsonobject = None
 
-    return render_template('competitionAdmin.html',
+    return render_template('competitionRawAdmin.html',
                            jsondata=json.dumps(jsonobject),
                            reference_data=competitionsEngine.reference_data,
                            id=id)
 
 
-@fsgtapp.route('/competitionAdmin', methods=['POST'])
+@fsgtapp.route('/competitionRawAdmin', methods=['POST'])
+@login_required
 def fsgtadmin():
-
     edittype = request.form.get('edittype')
     id = request.form.get('id')
     action = request.form.get('action')
@@ -228,6 +229,8 @@ def fsgtadmin():
         if id is not None and action == 'find':
             jsonobject = competitionsEngine.get_user_by_email(id)
 
+        if id is not None and action == 'findall':
+            jsonobject = competitionsEngine.get_all_user_emails()
 
     elif edittype == 'competition':
         if jsonobject is not None  and action == 'update':
@@ -238,6 +241,9 @@ def fsgtadmin():
             competitionsEngine.delete_competition(jsonobject['id'])
         if id is not None and action == 'find':
             jsonobject = competitionsEngine.getCompetition(id)
+        if id is not None and action == 'findall':
+            jsonobject = competitionsEngine.get_all_competition_ids()
+
     elif edittype == 'gym':
         if jsonobject is not None  and action == 'update':
             #jsonobject = {"success": "competition updated"}
@@ -257,10 +263,93 @@ def fsgtadmin():
     else :
         jsonobject = {"error": "choose edit type" }
 
-    return render_template('competitionAdmin.html',
+    return render_template('competitionRawAdmin.html',
                            jsondata=json.dumps(jsonobject),
                            reference_data=competitionsEngine.reference_data,
                            id=id)
+
+
+
+
+
+@fsgtapp.route('/competition_admin/<competition_id>', methods=['GET'])
+@login_required
+def competition_admin_get(competition_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+    competition = competitionsEngine.getCompetition(competition_id)
+
+    user_list = competitionsEngine.get_all_user_emails()
+    if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
+        session["wants_url"] = request.url
+        return redirect(url_for('fsgtapp.getCompetition', competitionId=competition['id']))
+
+    return render_template('competitionAdmin.html',
+                           user=user,
+                           competition=competition,
+                           user_list=user_list,
+                           competitionId=competition_id,
+                           reference_data=competitionsEngine.reference_data,
+                           id=id)
+
+
+@fsgtapp.route('/competition_admin/<competition_id>', methods=['POST'])
+@login_required
+def competition_admin_post(competition_id):
+    remove_climber = request.form.get('remove_climber')
+    update_status = request.form.get('update_status')
+    permission_user = request.form.get('permission_user')
+
+    edittype = request.form.get('edittype')
+    permissioned_user = request.form.get('permissioned_user')
+
+    id = request.form.get('id')
+    action = request.form.get('action')
+    competition_status = request.form.get('competition_status')
+
+    jsondata = request.form.get('jsondata')
+    comp = {}
+    jsonobject = None
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+    competition = competitionsEngine.getCompetition(competition_id)
+
+    if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
+        session["wants_url"] = request.url
+        return redirect(url_for("fsgtapp.fsgtlogin"))
+
+    # add this competition to another user's permissions
+    # remove this competition from another users permissions
+    # change the state of a competition
+    # remove climber from a competition
+
+    if permission_user is not None:
+        user2 = competitionsEngine.get_user_by_email(permissioned_user)
+        competitionsEngine.modify_user_permissions_to_competition(user, competition_id)
+
+    if update_status is not None:
+        competition['status'] = int(competition_status)
+        competitionsEngine.update_competition(competition_id, competition)
+
+    if remove_climber is not None:
+        competition['climbers'].pop(remove_climber)
+        competitionsEngine.update_competition(competition['id'], competition)
+
+    user_list = competitionsEngine.get_all_user_emails()
+
+    return render_template('competitionAdmin.html',
+                           jsondata=json.dumps(jsonobject),
+                           user=user,
+                           competition=competition,
+                           user_list=user_list,
+                           competitionId=competition_id,
+
+                           reference_data=competitionsEngine.reference_data,
+                           id=id)
+
+
+
+
+
 
 
 
@@ -272,7 +361,7 @@ def fsgtadminedit(edittype):
         competitionsEngine.upsert_user(j)
 
 
-    return render_template('competitionAdmin.html',
+    return render_template('competitionRawAdmin.html',
                            reference_data=competitionsEngine.reference_data)
 
 
@@ -371,7 +460,6 @@ def newCompetition():
                             **session)
 
 
-
 @fsgtapp.route('/newCompetition', methods=['POST'])
 @login_required
 def create_new_competition():
@@ -388,11 +476,49 @@ def create_new_competition():
     competitionId=None
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
-    if not competitionsEngine.can_create_competition(user):
+    if user is None or not competitionsEngine.can_create_competition(user):
         return redirect(url_for('fsgtapp.fsgtlogin', competitionId=competitionId))
 
     if name is not None and date is not None and gym is not None:
         competitionId = competitionsEngine.addCompetition(None, name, date, gym)
+        competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
+        comp = getCompetition(competitionId)
+        return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+
+    subheader_message='Welcome '
+    competitions= competitionsEngine.getCompetitions()
+
+    return render_template('competitionDashboard.html',
+                           subheader_message=subheader_message,
+                           competitions=competitions,
+                           competitionName=None,
+                           session=session,
+                           reference_data=competitionsEngine.reference_data,
+                            **session)
+
+
+@fsgtapp.route('/addCompetitionPermission', methods=['GET'])
+@login_required
+def add_competition_permission():
+    username = session.get('username')
+    #if username:
+    #    return 'logged in '+str(username)
+    #print(username)
+
+    #username = request.args.get('username')
+    name = request.form.get('name')
+    date = request.form.get('date')
+    gym = request.form.get('gym')
+    comp = {}
+    competitionId=None
+
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is None or not competitionsEngine.can_create_competition(user):
+        return redirect(url_for('fsgtapp.fsgtlogin', competitionId=competitionId))
+
+    if name is not None and date is not None and gym is not None:
+        competitionId = competitionsEngine.addCompetition(None, name, date, gym)
+        competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
         return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
 
@@ -409,10 +535,10 @@ def create_new_competition():
 
 
 
+
 @fsgtapp.route('/competitionDashboard/<competitionId>/register')
 #@login_required
 def addCompetitionClimber(competitionId):
-
     useremail = session.get('email')
     firstname = request.args.get('firstname')
     lastname = request.args.get('lastname')
@@ -433,7 +559,7 @@ def addCompetitionClimber(competitionId):
 
         try:
             climber = competitionsEngine.addClimber(None, competitionId, email, name, firstname, lastname, club, sex, category)
-            competitionsEngine.user_registered_for_competition(climber['id'], name, email, climber['sex'],
+            competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
                                                                climber['club'], climber['category'])
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
@@ -462,8 +588,6 @@ def addCompetitionClimber(competitionId):
                            logged_email=email,
                            logged_name=name,
                             **session)
-
-
 
 
 @fsgtapp.route('/user')
@@ -850,7 +974,6 @@ def routes_climbed(competitionId, climberId):
 
 @fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
 @login_required
-@admin_required
 def update_routes_climbed(competitionId, climberId):
     # generate array of marked routes from HTTP request
     routesUpdated = []
@@ -894,6 +1017,7 @@ def update_routes_climbed(competitionId, climberId):
                                    **session)
 
     competition = competitionsEngine.getCompetition(competitionId)
+
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']

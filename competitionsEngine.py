@@ -658,6 +658,31 @@ def get_user_by_email(email):
         return None
 
 
+def get_all_user_emails():
+
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT email FROM ''' + USERS_TABLE + ''' ;''')
+    emails = []
+    if rows is not None and rows.arraysize > 0:
+        for row in rows.fetchall():
+            emails.append(row[0])
+    return emails
+
+
+def get_all_competition_ids():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT id FROM ''' + COMPETITIONS_TABLE + ''' ;''')
+    ids = []
+    if rows is not None and rows.arraysize > 0:
+        for row in rows.fetchall():
+            ids.append(row[0])
+    return ids
 
 
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, category):
@@ -686,9 +711,6 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         return climber
 
 
-def get_user_json():
-    return {'fullname': None, 'nick': None, 'firstname': None, 'lastname': None,
-                  'sex': None, 'club': None, 'category': None}
 
 
 
@@ -727,7 +749,8 @@ def user_authenticated_fb(fid, name, email, picture):
         if user is None:
             newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture }
             _add_user(None, email, newuser)
-            logging.info('added user id ' + str(email))
+            _common_user_validation(newuser)
+            logging.info('added fb user id ' + str(email))
         else:
             u = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture}
             user.update(u)
@@ -749,6 +772,7 @@ def user_authenticated_google(name, email, picture):
         cursor = db.cursor()
         if user is None:
             newuser = {'gname': name, 'email': email, 'gpictureurl': picture }
+            _common_user_validation(newuser)
             _add_user(None, email, newuser)
             logging.info('added google user id ' + str(email))
         else:
@@ -769,30 +793,25 @@ def _common_user_validation(user):
 
     permissions = user.get('permissions')
     if permissions is None:
-        permissions = _generate_permissions()
+        permissions = get_permissions(user)
         user['permissions'] = permissions
 
 
 # returns base empty permissions dictionary
 # who can create new competition? gym admins?
+def get_permissions(user):
+    if user is None:
+        return _generate_permissions()
 
-def get_permissions(climber):
-    if climber is None: return _generate_permissions()
+    if user.get('permissions') is None:
+        user['permissions'] = _generate_permissions()
 
-    if climber.get('permissions') is None:
-        climber['permissions'] = _generate_permissions()
+    if user.get('email') == 'dmossakowski@gmail.com':
+        user['permissions']['godmode'] = True
+        user['permissions']['general'] = ['create_competition', 'edit_competition', 'update_routes']
+        user['permissions']['competitions'] = ['abc','def','ghi']
 
-    if climber.get('email') is 'dmossakowski@gmail.com':
-        climber['permissions']['godmode'] = True
-        climber['permissions']['general'] = ['crud_competition', 'crud_gym']
-
-    return climber['permissions']
-
-
-def has_permission_for_competition(competitionId, user):
-    permissions = get_permissions(user)
-    huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
+    return user['permissions']
 
 
 def _generate_permissions():
@@ -803,6 +822,14 @@ def _generate_permissions():
         "competitions":['abc','def'], # everyone has ability to modify these test competitions
         "gyms":[] # contains gym ids
             }
+
+
+def has_permission_for_competition(competitionId, user):
+    permissions = get_permissions(user)
+    huh = competitionId in permissions['competitions']
+    return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
+
+
 
 def add_user_permission_create_competition(user):
     try:
@@ -826,15 +853,48 @@ def add_user_permission_create_competition(user):
         return user
 
 
+# modify permission to edit specific competition to a user
+def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        permissions = user.get('permissions')
+        if permissions is None:
+            permissions = _generate_permissions()
+            user['permissions'] = permissions
+
+        if action == "ADD":
+            permissions['competitions'].append(competition_id)
+        elif action == "REMOVE":
+            permissions['competitions'].remove(competition_id)
+        else:
+            raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
+        _update_user(user['id'], user['email'], user)
+        logging.info('updated user id ' + str(user['email']))
+
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("done with user:"+str(user['email']))
+        return user
+
+
 def can_create_competition(climber):
     permissions = climber.get('permissions')
     if 'create_competition' in permissions['general']:
-       return True
-    return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+        return True
+    return False
+    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 def can_edit_competition(climber, competition):
-    return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+    permissions = climber.get('permissions')
+    if 'edit_competition' in permissions['general']:
+        return True
+    return False
+    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 # can update routes if:
@@ -853,8 +913,7 @@ def can_update_routes(user, competition):
     return False;
 
 
-# checks if competition is in the right state
-# does not check if a user is already registered
+# checks if user can register for a competition
 def can_register(user, competition):
 
     if competition is None:
@@ -873,7 +932,10 @@ def can_register(user, competition):
         return '5057 - Competition status does not allow new registrations'
 
 
-def user_registered_for_competition(climberId, name, email, sex, club, category):
+# this overwrites details from competition registration to the main user entry
+# these details will be used for next competition registration
+# these details are deemed the most recent and correct
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
     user = get_user_by_email(email)
 
     if climberId is None:
@@ -882,6 +944,8 @@ def user_registered_for_competition(climberId, name, email, sex, club, category)
     newclimber = {}
     newclimber['id'] = climberId
     newclimber['name'] = name
+    newclimber['firstname'] = firstname
+    newclimber['lastname'] = lastname
     newclimber['sex'] = sex
     newclimber['club'] = club
     newclimber['category'] = category
@@ -891,10 +955,12 @@ def user_registered_for_competition(climberId, name, email, sex, club, category)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if user is None:
+            _common_user_validation(newclimber)
             _add_user(climberId, email, newclimber)
             climber = newclimber
             logging.info('added user id ' + str(email))
         else:
+            user.update(newclimber)
             _update_user(climberId, email, user)
             logging.info('updated user id ' + str(email))
 

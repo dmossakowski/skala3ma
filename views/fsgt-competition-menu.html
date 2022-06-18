@@ -42,7 +42,7 @@
 
 {% if competition is defined and competition is not none %}
 
-							<li><a href="">{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}</a></li>
+							<li><a href="/competition_admin/{{competitionId}}">{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}</a></li>
 							{% endif %}
 						</ul>
 
