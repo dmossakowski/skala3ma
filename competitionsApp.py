@@ -1198,7 +1198,7 @@ def gym_save(gymid):
     routes = []
     for i, routeline1 in enumerate(routeline):
         print (i)
-        oneline = competitionsEngine._get_route_dict(gym['routes'][i]['id'],gym['id'],i,routeline[i],color1[i],color2[i],routegrade[i],
+        oneline = competitionsEngine._get_route_dict(lineid[i],gym['id'],i,routeline[i],color1[i],color2[i],routegrade[i],
                                            routename[i],openedby[i],opendate[i],notes[i])
         routes.append(oneline)
 

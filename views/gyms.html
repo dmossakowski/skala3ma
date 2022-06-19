@@ -103,7 +103,7 @@ $(document).ready(function () {
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes %}
 
-		 <tr><td>{{ route['line'] }} </td>
+		 <tr><td>{{loop.index}} &nbsp; {{ route['line'] }} </td>
 			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 

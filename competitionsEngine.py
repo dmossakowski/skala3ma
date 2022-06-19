@@ -1193,7 +1193,6 @@ def upsert_routes(routesid, routes):
         logging.info("done with routes :"+str(routesid))
 
 
-
 def _add_routes(routesid, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
