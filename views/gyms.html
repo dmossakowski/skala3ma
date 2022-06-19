@@ -101,7 +101,7 @@ $(document).ready(function () {
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in gym['routes'] %}
+		 {% for route in routes %}
 
 		 <tr><td>{{ route['line'] }} </td>
 			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>

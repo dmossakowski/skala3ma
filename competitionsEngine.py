@@ -810,6 +810,7 @@ def get_permissions(user):
         user['permissions']['godmode'] = True
         user['permissions']['general'] = ['create_competition', 'edit_competition', 'update_routes']
         user['permissions']['competitions'] = ['abc','def','ghi']
+        user['permissions']['gyms'] = ['1']
 
     return user['permissions']
 
@@ -934,7 +935,7 @@ def can_register(user, competition):
 
 def can_edit_gym(climber, gym):
     permissions = climber.get('permissions')
-    if gym['id'] in permissions['gym']:
+    if gym['id'] in permissions['gyms']:
         return True
     return False
     #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
@@ -1065,9 +1066,9 @@ def _get_gyms():
             gyms[gym['id']] = gym
 
     db.close()
-    for gymid in gyms:
-        routes = _get_routes(gyms[gymid]['routesid'])
-        gyms[gymid]['routes'] = routes
+    #for gymid in gyms:
+    #    routes = _get_routes(gyms[gymid]['routesid'])
+    #    gyms[gymid]['routes'] = routes
 
     return gyms
 
@@ -1087,8 +1088,8 @@ def _get_gym(gymid):
             #gyms[gym['id']] = gym
 
     db.close()
-    routes = _get_routes(gym['routesid'])
-    gym['routes'] = routes
+    #routes = _get_routes(gym['routesid'])
+    #gym['routes'] = routes
 
     return gym
 
@@ -1174,6 +1175,9 @@ def upsert_routes(routesid, routes):
         existing_routes = get_routes(routesid)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
+
+        logging.info("routes are a "+ str(type(routes)))
+
         if existing_routes is None:
             routes['id'] = routesid
             _add_routes(routesid, routes)

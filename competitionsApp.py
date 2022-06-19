@@ -1115,6 +1115,7 @@ def gym_by_id(gymid):
                            gymid=gymid,
                            gyms=None,
                            gym=gym,
+                           routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            logged_email=email,
                            logged_name=name,
@@ -1147,24 +1148,23 @@ def gym_data(gymid):
     category = request.args.get('category')
 
     gym = competitionsEngine.get_gym(gymid)
-
-
-
-    gym['rows']=gym['routes']
-
+    routes = competitionsEngine.get_routes(gym['routesid'])
+    gym['rows']=routes
 
     return json.dumps(gym)
-
 
 
 @fsgtapp.route('/gyms/<gymid>/edit', methods=['GET'])
 def gym_edit(gymid):
     gym = competitionsEngine.get_gym(gymid)
 
+    routes = competitionsEngine.get_routes(gym['routesid'])
+
     return render_template('gymedit.html',
                            gymid=gymid,
                            gyms=None,
                            gym=gym,
+                           routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            )
 
@@ -1179,6 +1179,7 @@ def gym_save(gymid):
     body = request.data
     bodyj = request.json
 
+    lineid = formdata['lineid']
     routeline = formdata['routeline']
     color1 = formdata['color1']
     color2 = formdata['color2']
@@ -1201,18 +1202,21 @@ def gym_save(gymid):
                                            routename[i],openedby[i],opendate[i],notes[i])
         routes.append(oneline)
 
-    #gym['routes'] = routes
+    gym['routes'] = []
 
     competitionsEngine.update_gym(gym['id'],gym['routesid'],gym)
 
     competitionsEngine._update_routes(gym['routesid'],routes)
 
     gym = competitionsEngine.get_gym(gym['id'])
+    gym['routes'] = []
+    routes = competitionsEngine.get_routes(gym['routesid'])
 
     return render_template('gymedit.html',
                            gymid=gymid,
                            gyms=None,
                            gym=gym,
+                           routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            )
 

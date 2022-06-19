@@ -151,9 +151,12 @@ function deleteRow(id) {
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in gym['routes'] %}
+		 {% for route in routes %}
 
-		 <tr id="{{loop.index}}"><td>{{loop.index}} -- <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
+		 <tr id="{{loop.index}}">
+
+			 <td><input type="hidden" name="lineid" value="{{ route['id']}}">
+				 {{loop.index}} &nbsp; <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
 			 <td  aabgcolor="{{ route['color1'] }}">
 				 <input name="color1" type ="color" value="{{ route['color1'] }}">
 
