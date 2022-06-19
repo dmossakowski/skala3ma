@@ -1179,11 +1179,11 @@ def upsert_routes(routesid, routes):
         logging.info("routes are a "+ str(type(routes)))
 
         if existing_routes is None:
-            routes['id'] = routesid
+            #routes['id'] = routesid
             _add_routes(routesid, routes)
             logging.info('routes added ' + str(routesid))
         else:
-            routes['id'] = routesid
+            #routes['id'] = routesid
             _update_routes(routesid, routes)
             logging.info('routes updated ' + str(routesid))
     finally:
