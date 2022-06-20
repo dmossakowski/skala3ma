@@ -38,7 +38,9 @@ $(document).ready(function () {
 						<br><br><br>
 
 {% if gym is not none and gym is not undefined  %}
-						<h3>{{ gym['name'] }}</h3>
+						<h3>	<img src="/public/images/gyms/{{gym['logoimg'] }}" width="100">
+			{{ gym['name'] }}</h3>
+
 						{% else %}
 						<h3>{{ reference_data['current_language'].gyms }} </h3>
 				{% endif %}
@@ -53,32 +55,17 @@ $(document).ready(function () {
 
 {% if gym is not none and gym is not undefined  %}
 
+
 <div class="container-fluid">
 
 
 	<select onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
-		{% for route in gym['routes'] %}
-
-			<option name="id" value="{{route['id']}}"  >{{route['id']}}</option>
+		{% for route in gym['allroutes'] %}
+			<option name="id" value="{{gym['routesid']}}"  >{{gym['routesid']}}</option>
 		{% endfor %}
 
 	</select>
 
-	<table id="gymtable1"
-    data-url="/gyms/1/edit"
-    data-id-field="id"
-    data-editable-emptytext="Default empty text."
-		     data-show-columns="true"
-
-    data-editable-url="/gyms/1/edit">
-    <thead>
-      <tr>
-        <th class="col-md-1" data-field="id" data-sortable="true" data-align="center">#</th>
-        <th class="col-md-4" data-field="name" data-editable="true">Name</th>
-        <th class="col-md-7" data-field="notes" data-editable="true" data-editable-emptytext="Custom empty text.">Description</th>
-      </tr>
-    </thead>
-  </table>
 
 <br><br>
 
@@ -101,10 +88,12 @@ $(document).ready(function () {
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in routes %}
+		 {% for route in routes['routes'] %}
 
-		 <tr><td>{{loop.index}} &nbsp; {{ route['line'] }} </td>
-			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
+		 <tr><td>{{ route['line'] }} </td>
+			 <td  bgcolor="{{ route['color1'] }}" align="center">  <b>{{ route['routenum'] }} &nbsp;&nbsp;&nbsp;&nbsp;
+				 <font style="font-size:16px;  color:{{ route['color1'] }}"> &#9830; &#8711; &#9830;</font></b></td>
+			 <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 
 			 <td> {{ route['openedby'] }}</td>

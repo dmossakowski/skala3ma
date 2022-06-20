@@ -1048,7 +1048,12 @@ def get_routes(routesid):
         # generate routes
         return loadroutesdict1()
     else:
-        return _get_routes(routesid)
+        routes = _get_routes(routesid)
+        if type(routes) == list:
+            routesdict = {"id":routesid, "routes":routes}
+            _update_routes(routesid, routesdict)
+            routes = routesdict
+        return routes
 
 
 def _get_gyms():
@@ -1157,8 +1162,6 @@ def _update_gym(gymid, routesid, jsondata):
     db.close()
 
 
-
-
 def _get_route_dict(routeid, gymid, routenum, line, color1, color2, grade, name, openedby, opendate, notes):
     oneline = {}
     oneline =  {'id': routeid, 'gymid': gymid, 'routenum':routenum, 'line': line, 'colorfr': color1, 'color1': color1, 'color2': color2,
@@ -1179,11 +1182,9 @@ def upsert_routes(routesid, routes):
         logging.info("routes are a "+ str(type(routes)))
 
         if existing_routes is None:
-            #routes['id'] = routesid
             _add_routes(routesid, routes)
             logging.info('routes added ' + str(routesid))
         else:
-            #routes['id'] = routesid
             _update_routes(routesid, routes)
             logging.info('routes updated ' + str(routesid))
     finally:

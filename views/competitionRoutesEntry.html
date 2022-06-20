@@ -64,7 +64,7 @@
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in routes %}
+		 {% for route in routes['routes'] %}
 		 <tr onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;"><td>{{ route['line'] }} </td>
 			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>

@@ -151,7 +151,7 @@ function deleteRow(id) {
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in routes %}
+		 {% for route in routes['routes'] %}
 
 		 <tr id="{{loop.index}}">
 
