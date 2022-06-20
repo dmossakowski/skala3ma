@@ -75,7 +75,12 @@
   "competition_status_2": "En cours",
   "competition_status_3": "Décompte en cours",
   "competition_status_4": "Fermée",
-  "not_available": "indisponibles"
+  "not_available": "indisponibles",
+
+  "firstname": "Prenom",
+  "lastname": "Nom",
+  "other_club_not_listed": "Si autre club non répertorié lequel",
+  "choose": "Choisizes"
 
 
 }

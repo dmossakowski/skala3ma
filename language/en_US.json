@@ -71,6 +71,11 @@
   "competition_status_2": "In Progress",
   "competition_status_3": "Scoring",
   "competition_status_4": "Closed",
-  "not_available": "Not available"
+  "not_available": "Not available",
+  "firstname": "First ame",
+  "lastname": "Last name",
+  "other_club_not_listed": "If other club, enter here",
+  "choose": "Choose"
+
 
 }

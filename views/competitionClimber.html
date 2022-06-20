@@ -39,8 +39,8 @@
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
-							<label for="firstname">Prenom:</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}"/><br><br>
-							<label for="lastname">Nom:</label><br> <input id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br><br>
+							<label for="firstname">{{ reference_data['current_language'].firstname}}</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}"/><br><br>
+							<label for="lastname">{{ reference_data['current_language'].lastname}}</label><br> <input id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br><br>
 
 							{% if climber['email'] is none or logged_email is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
@@ -50,22 +50,22 @@
 
 
 							<input type="radio" id="F" value="F" name="sex" {% if user['sex']=='F'%}checked{%endif%}>
-							<label for="F">Femme</label>
+							<label for="F">{{ reference_data['current_language'].women}}</label>
 							<input type="radio" id="M" value="M" name="sex" {% if user['sex']=='M'%}checked{%endif%}>
-							<label for="M">Homme</label>
+							<label for="M">{{ reference_data['current_language'].men}}</label>
 
 
 							<br>
 							<br>
-							<label for="category">Category:</label><br><select name="category" id="category">
+							<label for="category">{{ reference_data['current_language'].category}}:</label><br><select name="category" id="category">
 							{% for category in reference_data['categories'] %}
 							{{category}}
 							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
 							{% endfor %}
 						</select><br><br>
 
-							<label for="club">Club:</label><br><select name="club" id="club">
-							<option value="--" size="20" >Choose</option>
+							<label for="club">{{ reference_data['current_language'].club}}:</label><br><select name="club" id="club">
+							<option value="--" size="20" >{{ reference_data['current_language'].choose}}</option>
 							{% for club in reference_data['clubs'] %}
 
 							{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
@@ -73,16 +73,16 @@
 									{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
-							<option value="other" size="20" >Other</option>
+							<option value="other" size="20" >{{ reference_data['current_language'].other}}</option>
 
 
 							</select>
 							<br><br>
 
-							<label for="otherclub">Si autre club non répertorié lequel:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
+							<label for="otherclub">{{ reference_data['current_language'].other_club_not_listed}}:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
 
 
-<button >Sumbit</button>
+<button >{{ reference_data['current_language'].submit}}</button>
 					</form>
 
 

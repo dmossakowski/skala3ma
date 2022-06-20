@@ -72,7 +72,13 @@
   "competition_status_2": "W trakcie",
   "competition_status_3": "Punktowane",
   "competition_status_4": "Zamknięte",
-  "not_available": "Nie dostępne"
+  "not_available": "Nie dostępne",
+  "firstname": "Imię",
+  "lastname": "Nazwisko",
+  "other_club_not_listed": "Sprecyzuj jeśli inny",
+  "choose": "Wybierz"
+
+
 
 
 }

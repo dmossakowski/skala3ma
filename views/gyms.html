@@ -60,8 +60,10 @@ $(document).ready(function () {
 
 
 	<select onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
-		{% for route in gym['allroutes'] %}
-			<option name="id" value="{{gym['routesid']}}"  >{{gym['routesid']}}</option>
+				<option name="id" value="{{routes['id']}}"  >{{routes['id']}}</option>
+
+		{% for route in routes %}
+			<option name="id" value="{{route['id']}}"  >{{route['id']}}</option>
 		{% endfor %}
 
 	</select>
