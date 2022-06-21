@@ -560,7 +560,7 @@ def addCompetitionClimber(competitionId):
     climber = None
 
     if user is not None and form_user is not None and (
-            form_user.get('fname') is not None and form_user.get('gname') is not None):
+            form_user.get('fname') is not None or form_user.get('gname') is not None):
         error_code = "User with this email is known and they should login and register themselves"
 
     if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
