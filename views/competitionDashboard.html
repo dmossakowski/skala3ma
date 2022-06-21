@@ -141,12 +141,16 @@
 							<a href="competitionDetails/{{ competitionId }}">
 							<div class="blog-text">
 								<div class="prod-title">
-									<h4>{{ competitions[competitionId]['name'] }}</h4>
+									<h4>{{ competitions[competitionId]['name'] }}<br>
+										{{ competitions[competitionId]['date'] }}</h4>
+
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
 									<br>
-									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
-									<br>
-									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}</span>
+									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
+										{% if user['id'] in competitions[competitionId]['climbers'] %}<br><br>
+										<span class="posted_by"><i class="icon-thumbs-up"></i>
+ {{ reference_data['current_language'].registered }}</span>
+										{% endif %}
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
 

@@ -75,7 +75,8 @@
   "firstname": "First ame",
   "lastname": "Last name",
   "other_club_not_listed": "If other club, enter here",
-  "choose": "Choose"
+  "choose": "Choose",
+  "registered": "Registered"
 
 
 }
