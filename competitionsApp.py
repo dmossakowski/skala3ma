@@ -3,6 +3,7 @@ import os
 import io
 import glob
 import random
+import uuid
 from datetime import datetime, date, time, timedelta
 import competitionsEngine
 import csv
@@ -550,6 +551,9 @@ def addCompetitionClimber(competitionId):
 
     comp = competitionsEngine.getCompetition(competitionId)
     user = competitionsEngine.get_user_by_email(useremail)
+    climber_id = str(uuid.uuid4())
+    if user is not None:
+        climber_id = user['id']
     form_user = competitionsEngine.get_user_by_email(email)
 
     error_code=competitionsEngine.can_register(user, comp)
@@ -566,7 +570,7 @@ def addCompetitionClimber(competitionId):
         try:
             if club not in competitionsEngine.clubs.values():
                 club = otherclub
-            climber = competitionsEngine.addClimber(None, competitionId, email, name, firstname, lastname, club, sex, category)
+            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
             competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
                                                                climber['club'], climber['category'])
             comp = competitionsEngine.getCompetition(competitionId)

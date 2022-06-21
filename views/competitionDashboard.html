@@ -133,7 +133,7 @@
 					{% for competitionId in competitions %}
 
 
-<div class=" col-md-2 ">
+<div class=" col-lg-3 ">
 
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
 							>
@@ -147,7 +147,7 @@
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
 									<br>
 									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
-										{% if user['id'] in competitions[competitionId]['climbers'] %}<br><br>
+										{% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
 										<span class="posted_by"><i class="icon-thumbs-up"></i>
  {{ reference_data['current_language'].registered }}</span>
 										{% endif %}
