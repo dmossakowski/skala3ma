@@ -559,7 +559,7 @@ def addCompetitionClimber(competitionId):
     error_code=competitionsEngine.can_register(user, comp)
     climber = None
 
-    if user is not None and form_user is not None and (
+    if user is None and form_user is not None and (
             form_user.get('fname') is not None or form_user.get('gname') is not None):
         error_code = "User with this email is known and they should login and register themselves"
 
