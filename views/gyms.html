@@ -93,8 +93,9 @@ $(document).ready(function () {
 		 {% for route in routes['routes'] %}
 
 		 <tr><td>{{ route['line'] }} </td>
-			 <td  bgcolor="{{ route['color1'] }}" align="center">  <b>{{ route['routenum'] }} &nbsp;&nbsp;&nbsp;&nbsp;
-				 <font style="font-size:16px;  color:{{ route['color1'] }}"> &#9830; &#8711; &#9830;</font></b></td>
+			 <td  bgcolorqqq="{{ route['color1'] }}" align="center" style="background-image: repeating-linear-gradient(to bottom, {{ route['color1'] }} , {{ route['color2'] }} 100% );">
+				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</font>
+				</b></td>
 			 <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 
