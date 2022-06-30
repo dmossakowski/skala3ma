@@ -2,7 +2,7 @@
   "name": "Nom",
   "nazwa" : "Nom",
   "name2": "????",
-  "submit": "Soumettre",
+  "submit": "Enregistrer",
   "club": "Club",
   "category": "Catégorie",
   "malefemale": "F/H",
@@ -46,7 +46,7 @@
   "route_opened_date": "Date d'ouverture",
   "notes": "Remarques",
 
-  "save": "Sauvegarde",
+  "save": "Enregistrer",
 
   "routes_climbed": "Voies grimpées",
   "rank": "Classement",
