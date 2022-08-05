@@ -97,7 +97,7 @@ import requests
 
 fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
-UPLOAD_FOLDER = './uploads'
+UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 #fsgtapp.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -276,7 +276,7 @@ def fsgtadmin():
             jsonobject = competitionsEngine.get_routes(id)
 
         if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_routes()
+            jsonobject = competitionsEngine.get_all_routes_ids()
 
 
     else :

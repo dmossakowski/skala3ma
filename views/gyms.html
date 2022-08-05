@@ -39,15 +39,16 @@ $(document).ready(function () {
 
 			{% if gym is not none and gym is not undefined  %}
 
-						<h2>
+
 							<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" align="left">
 
 
-						&nbsp; {{ gym['name'] }} <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab"><i class="icon-home"></i></a>
+						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
 							<a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
-							<br><br></h2>
-						&nbsp; {{ gym['address'] }} <i class="icon-location"></i>
+							<br>
+						{{ gym['address'] }} <i class="icon-location"></i><br>
+						<a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
 
 						{% else %}
 						<h3>{{ reference_data['current_language'].gyms }} </h3>
@@ -102,7 +103,7 @@ onclick='location.href="/gyms/add"'>Add</button>
 		 {% for route in routes['routes'] %}
 
 		 <tr><td>{{ route['line'] }} </td>
-			 <td  bgcolorqqq="{{ route['color1'] }}" align="center"
+			 <td  align="center"
 				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
 				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
 				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>

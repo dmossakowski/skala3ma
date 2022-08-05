@@ -622,14 +622,15 @@ def get_all_routes_ids():
     cursor = db.cursor()
     count = 0
     rows = cursor.execute(
-        '''SELECT id FROM ''' + ROUTES_TABLE + '''  ;''')
+        '''SELECT id, gym_id FROM ''' + ROUTES_TABLE + '''  ;''')
 
     routes = []
     if rows is not None and rows.arraysize > 0:
         for row in rows.fetchall():
             #comp = row[0]
-            routes = json.loads(row[0])
-            routes.append(routes)
+            #routes = json.loads(row[0])
+
+            routes.append({'id':row[0],'gym_id':row[1]})
             #gyms[gym['id']] = gym
 
     db.close()

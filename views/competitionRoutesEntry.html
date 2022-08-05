@@ -67,7 +67,12 @@
 		 {% for route in routes['routes'] %}
 		 <tr onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;">
 			 <td>{{ route['line'] }} </td>
-			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
+			 <td  align="center"
+				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
+				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
+				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
+				</b></td>
+			 <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
 
 			 <td>				<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"

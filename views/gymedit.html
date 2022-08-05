@@ -26,8 +26,8 @@
 
 	<div >
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
-						<br><br>
+					<div class=" text-center heading-section animate-box">
+						<br>
 {% if gym is not none and gym is not undefined  %}
 						<h3>{{ gym['name'] }}</h3>
 						{% else %}
@@ -121,7 +121,7 @@ function deleteRow(id) {
 <div class="row">
 
 	<form action="/gyms/{{gym['id']}}/update" method="POST" enctype="multipart/form-data">
-<br>
+
 
 			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
 			<input name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br><br>
