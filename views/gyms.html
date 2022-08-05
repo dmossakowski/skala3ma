@@ -34,15 +34,31 @@ $(document).ready(function () {
 	<div >
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 						<br><br><br>
 
-{% if gym is not none and gym is not undefined  %}
-						<h3>	<img src="/public/images/gyms/{{gym['logoimg'] }}" width="100">
-			{{ gym['name'] }}</h3>
+			{% if gym is not none and gym is not undefined  %}
+
+						<h2>
+							<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" align="left">
+
+
+						&nbsp; {{ gym['name'] }} <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab"><i class="icon-home"></i></a>
+						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
+							<a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
+							<br><br></h2>
+						&nbsp; {{ gym['address'] }} <i class="icon-location"></i>
 
 						{% else %}
 						<h3>{{ reference_data['current_language'].gyms }} </h3>
+
+						{% if user is defined and user is not none and 'create_gym' in user['permissions']['general'] %}
+							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
+
+onclick='location.href="/gyms/add"'>Add</button>
+
+						{% endif %}
+
 				{% endif %}
 					</div>
 
@@ -59,15 +75,6 @@ $(document).ready(function () {
 <div class="container-fluid">
 
 
-	<select onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
-				<option name="id" value="{{routes['id']}}"  >{{routes['id']}}</option>
-
-		{% for route in routes %}
-			<option name="id" value="{{route['id']}}"  >{{route['id']}}</option>
-		{% endfor %}
-
-	</select>
-
 
 <br><br>
 
@@ -77,7 +84,9 @@ $(document).ready(function () {
     data-editable-emptytext="Default empty text."
     data-editable-url="/my/editable/update/path">
          <thead><tr>
-         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
+         <th data-width="250" data-field="line" data-filter-control="input">
+			 <!--a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a-->
+			 {{ reference_data['current_language'].line }}</th>
          <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].route_num }}</th>
          <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
          <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
@@ -93,18 +102,18 @@ $(document).ready(function () {
 		 {% for route in routes['routes'] %}
 
 		 <tr><td>{{ route['line'] }} </td>
-			 <td  bgcolorqqq="{{ route['color1'] }}" align="center" style="background-image: repeating-linear-gradient(to bottom, {{ route['color1'] }} , {{ route['color2'] }} 100% );">
-				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</font>
+			 <td  bgcolorqqq="{{ route['color1'] }}" align="center"
+				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
+				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
+				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
 				</b></td>
 			 <td><i>{{route['grade'] }}</i></td>
 			 <td> {{ route['name'] }}</td>
-
 			 <td> {{ route['openedby'] }}</td>
 			 <td> {{ route['opendate'] }}</td>
 			 <td> {{ route['notes'] }}</td>
-
-                    </tr>
-             {% endfor %}
+		 </tr>
+		 {% endfor %}
 
          </tbody>
      </table>
@@ -135,17 +144,13 @@ $(document).ready(function () {
 							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
 								<div class="prod-title">
-									{% if gyms[gymid]['logoimg'] is not none %}
-									<img src="public/images/gyms/{{ gyms[gymid]['logoimg'] }}">
-									{% else %}
 
-									<h4>{{ gyms[gymid]['name'] }}</h4>
+									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}">
+
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
-									{% endif %}
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
-
-
+									<br><br>
+									<h4>{{ gyms[gymid]['name'] }}</h4>
 
 								</div>
 							</div>

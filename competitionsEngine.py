@@ -22,18 +22,14 @@ import copy
 from threading import RLock
 import csv
 
+import requests
 
+import skala_db
+import skala_journey
 
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
-
-from sklearn.cluster import KMeans
-
-from collections import defaultdict
-
-from matplotlib.figure import Figure
-from sklearn.preprocessing import MinMaxScaler
 
 from functools import lru_cache, reduce
 import logging
@@ -81,11 +77,11 @@ colors = { 'Vert':'#2E8B57',
 
 categories = {0:"Séniors 16-49 ans", 1:"Titane 50-69 ans", 2: "Diamant 70 ans et +"}
 
-clubs = {               0:"APACHE" , 1:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
+clubs = {               0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
                        7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 10:"CPS 10 - Faites le mur" ,
                        11:"Dahu 91" , 12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
-                       13:"Entente Sportive de Nanterre"  ,14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
+                       1:"Entente Sportive de Nanterre"  ,14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
                       17:"Grimpe 13"   ,18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
                       20:"Groupe Escalade Saint Thibault"  ,
                       21:"Le Mur 20"  ,
@@ -115,24 +111,23 @@ user_roles = ["none", "judge", "competitor", "admin"]
 supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
 
 reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
-                  "supported_languages":supported_languages}
-
+                  "supported_languages":supported_languages, "route_finish_status": skala_journey.route_finish_status}
 
 
 # called from competitionsApp
-def addCompetition(compId, name, date, gym, routesid=None):
+def addCompetition(compId, name, date, routesid):
     if compId is None:
-        compId = str(uuid.uuid4())
+        compId = str(uuid.uuid4().hex)
 
-    #comps[id] = { "name":name, "date" :date, "gym":gym, "climbers":{}}
-    competition = {"id": compId, "name": name, "date": date, "gym": gym, "routesid": routesid, "status": "preopen", "climbers": {},
+    gym = skala_db.get_gym_by_routes_id(routesid)
+
+    competition = {"id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
+                   "routesid": routesid, "status": "preopen", "climbers": {},
                    "results": copy.deepcopy(emptyResults)}
     # write this competition to db
-    _add_competition(compId, competition);
+    skala_db._add_competition(compId, competition);
 
     return compId
-
-
 
 
 # add climber to a competition
@@ -142,7 +137,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
         raise ValueError('Email cannot be None')
 
     if climberId is None:
-        climberId = str(uuid.uuid4())
+        climberId = str(uuid.uuid4().hex)
 
     try:
         category = int(category)
@@ -364,8 +359,8 @@ def get_sorted_rankings(competition):
 
     #clubs2 = set(clubs)
 
-    print(str(len(clubs)))
-    print(clubs)
+    #print(str(len(clubs)))
+    #print(clubs)
     #b = a[0]
     for itemid in sorted(competition.get('climbers'),
                          key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['score']),
@@ -459,81 +454,20 @@ lru_cache.DEBUG = True
 def init():
     logging.info('initializing competition engine...')
 
-    if os.path.exists(DATA_DIRECTORY) and not os.path.exists(COMPETITIONS_DB):
-        db = lite.connect(COMPETITIONS_DB)
-
-        # ptype 0-public
-        cursor = db.cursor()
-
-        cursor.execute('''CREATE TABLE if not exists ''' + COMPETITIONS_TABLE + '''(
-                       id text NOT NULL UNIQUE, 
-                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null, 
-                       jsondata json)''')
-
-        cursor.execute('''CREATE TABLE if not exists ''' + USERS_TABLE + '''(
-                       id text NOT NULL UNIQUE, 
-                       email text not null, 
-                       jsondata integer not null,  
-                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
-
-        cursor.execute('''CREATE TABLE if not exists ''' + GYM_TABLE + '''(
-                               id text NOT NULL UNIQUE, 
-                               routesid text not null, 
-                               jsondata json not null, 
-                               added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
-
-        cursor.execute('''CREATE TABLE if not exists ''' + ROUTES_TABLE + '''(
-                       id text NOT NULL UNIQUE, 
-                       jsondata json,
-                       added_at DEFAULT CURRENT_TIMESTAMP not null)''')
-
-        cursor.execute('''CREATE TABLE if not exists ''' + ROUTES_CLIMBED_TABLE + '''(
-                       id text NOT NULL UNIQUE, 
-                       competitionId text not null, 
-                       climberId text not null, 
-                       routes json not null, 
-                       added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
-
-        db.commit()
-        #add_testing_data()
-
-        #print('loading routes from  ' + COMPETITIONS_DB)
-        #routes = add_nanterre_routes()
-
-
-        user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
+    skala_db.init()
+    user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
                            "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-        user_authenticated_fb("c1", "Bob Mob2", "bob@mob.com",
+    user_authenticated_fb("c1", "Bob Mob2", "bob@mob.com",
                            "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-        user_authenticated_fb("c2", "Mary J", "mary@j.com",
+    user_authenticated_fb("c2", "Mary J", "mary@j.com",
                            "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
 
-        print('created ' + COMPETITIONS_DB)
+    skala_journey.init()
+    print('created ' + COMPETITIONS_DB)
 
-
-
-def _add_competition(compId, competition):
-    if compId is None:
-        compId = str(uuid.uuid4())
-
-    try:
-        sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-
-        cursor.execute("INSERT INTO " + COMPETITIONS_TABLE +
-                       "(id, jsondata, added_at) VALUES"+
-                        " (?, ?, datetime('now')) ",
-                       [compId, json.dumps(competition)])
-
-        logging.info('competition added: '+str(compId))
-    finally:
-        db.commit()
-        db.close()
-        sql_lock.release()
 
 
 #internal method.. not locked!!!
@@ -554,7 +488,6 @@ def _update_competition(compId, competition):
 
 
 def delete_competition(compId):
-
     if compId is None:
         raise ValueError("cannot delete competition with None key");
     db = lite.connect(COMPETITIONS_DB)
@@ -566,9 +499,6 @@ def delete_competition(compId):
 
     db.commit()
     db.close()
-
-
-
 
 
 def get_competition(compId):
@@ -601,88 +531,24 @@ def _validate_or_upgrade_competition(competition):
     return competition
 
 
-
 def get_all_competitions():
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' ;''')
-
-    comps = {}
-    if rows is not None and rows.arraysize > 0:
-        for row in rows.fetchall():
-            comp = row[0]
-            comp = json.loads(row[0])
-            comps[comp['id']] = comp
-
-    return comps
+    return skala_db.get_all_competitions()
 
 
 def get_user(id):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    one = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
-    one = one.fetchone()
-
-
-    if one is None or one[0] is None:
-        return None
-
-    if one[0] is not None:
-        return json.loads(one[0])
-    else:
-        return None
-
+    return skala_db.get_user(id)
 
 
 def get_user_by_email(email):
-
-    if email is None:
-        return None
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    one = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where email=? LIMIT 1;''', [email])
-    one = one.fetchone()
-
-    if one is None or one[0] is None:
-        return None
-
-    if one[0] is not None:
-        return json.loads(one[0])
-    else:
-        return None
+    return skala_db.get_user_by_email(email)
 
 
 def get_all_user_emails():
-
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT email FROM ''' + USERS_TABLE + ''' ;''')
-    emails = []
-    if rows is not None and rows.arraysize > 0:
-        for row in rows.fetchall():
-            emails.append(row[0])
-    return emails
+    return skala_db.get_all_user_emails()
 
 
 def get_all_competition_ids():
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT id FROM ''' + COMPETITIONS_TABLE + ''' ;''')
-    ids = []
-    if rows is not None and rows.arraysize > 0:
-        for row in rows.fetchall():
-            ids.append(row[0])
-    return ids
+    return skala_db.get_all_competition_ids()
 
 
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, category):
@@ -697,11 +563,11 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if climber is None:
-            _add_user(None, email, newclimber)
+            skala_db._add_user(None, email, newclimber)
             logging.info('added user id ' + str(email))
         else:
             climber.update(newclimber)
-            _update_user(climber['id'], email, climber)
+            skala_db._update_user(climber['id'], email, climber)
             logging.info('updated user id ' + str(climber))
     finally:
         db.commit()
@@ -709,9 +575,6 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         sql_lock.release()
         logging.info("done with user:"+str(email))
         return climber
-
-
-
 
 
 def upsert_user(user):
@@ -725,18 +588,17 @@ def upsert_user(user):
         if email is not None:
             existing_user = get_user_by_email(email)
             if existing_user is None:
-                _add_user(None, email, user)
+                skala_db._add_user(None, email, user)
                 logging.info('added user id ' + str(email))
             else:
                 existing_user.update(user)
-                _update_user(user['id'], email, existing_user)
+                skala_db._update_user(user['id'], email, existing_user)
     finally:
         db.commit()
         db.close()
         sql_lock.release()
-        logging.info("done with user:"+str(email))
+        logging.info("upsert_user done with user:"+str(email))
         return existing_user
-
 
 
 def user_authenticated_fb(fid, name, email, picture):
@@ -748,13 +610,13 @@ def user_authenticated_fb(fid, name, email, picture):
         cursor = db.cursor()
         if user is None:
             newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture }
-            _add_user(None, email, newuser)
+            skala_db._add_user(None, email, newuser)
             _common_user_validation(newuser)
             logging.info('added fb user id ' + str(email))
         else:
             u = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture}
             user.update(u)
-            _update_user(user['id'], email, user)
+            skala_db._update_user(user['id'], email, user)
             logging.info('updated user id ' + str(email))
     finally:
         db.commit()
@@ -773,12 +635,12 @@ def user_authenticated_google(name, email, picture):
         if user is None:
             newuser = {'gname': name, 'email': email, 'gpictureurl': picture }
             _common_user_validation(newuser)
-            _add_user(None, email, newuser)
+            skala_db._add_user(None, email, newuser)
             logging.info('added google user id ' + str(email))
         else:
             u = {'gname': name, 'email': email, 'gpictureurl': picture}
             user.update(u)
-            _update_user(user['id'], email, user)
+            skala_db._update_user(user['id'], email, user)
             logging.info('updated google user id ' + str(email))
     finally:
         db.commit()
@@ -828,30 +690,14 @@ def _generate_permissions():
 def has_permission_for_competition(competitionId, user):
     permissions = get_permissions(user)
     huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
-
+    return competitionId in permissions['competitions'] or session['name'] in ['David Mossakowski']
 
 
 def add_user_permission_create_competition(user):
-    try:
-        sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-        permissions = user.get('permissions')
-        if permissions is None:
-            permissions = _generate_permissions()
-            user['permissions'] = permissions
+    skala_db.add_user_permission(user,'create_competition')
 
-        permissions['general'].append('create_competition')
-        _update_user(user['id'], user['email'], user)
-        logging.info('updated user id ' + str(user['email']))
-
-    finally:
-        db.commit()
-        db.close()
-        sql_lock.release()
-        logging.info("done with user:"+str(user['email']))
-        return user
+def add_user_permission_create_gym(user):
+    skala_db.add_user_permission(user,'create_gym')
 
 
 # modify permission to edit specific competition to a user
@@ -865,13 +711,13 @@ def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
             permissions = _generate_permissions()
             user['permissions'] = permissions
 
-        if action == "ADD":
+        if action == "ADD" and competition_id not in permissions['competitions']:
             permissions['competitions'].append(competition_id)
         elif action == "REMOVE":
             permissions['competitions'].remove(competition_id)
         else:
             raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
-        _update_user(user['id'], user['email'], user)
+        skala_db._update_user(user['id'], user['email'], user)
         logging.info('updated user id ' + str(user['email']))
 
     finally:
@@ -911,7 +757,7 @@ def can_update_routes(user, competition):
             and competition['id'] in permissions['competitions']:
         return True
 
-    return False;
+    return False
 
 
 # checks if user can register for a competition
@@ -933,9 +779,17 @@ def can_register(user, competition):
         return '5057 - Competition status does not allow new registrations'
 
 
-def can_edit_gym(climber, gym):
-    permissions = climber.get('permissions')
-    if gym['id'] in permissions['gyms']:
+def can_edit_gym(user, gym):
+    permissions = user.get('permissions')
+    if gym['id'] in permissions['gyms'] or session['name'] in ['David Mossakowski']:
+        return True
+    return False
+    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+
+
+def can_create_gym(user):
+    permissions = user.get('permissions')
+    if 'create_gym' in permissions['general'] or session['name'] in ['David Mossakowski']:
         return True
     return False
     #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
@@ -948,7 +802,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
     user = get_user_by_email(email)
 
     if climberId is None:
-        climberId = str(uuid.uuid4())
+        climberId = str(uuid.uuid4().hex)
 
     newclimber = {}
     newclimber['id'] = climberId
@@ -965,12 +819,12 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
         cursor = db.cursor()
         if user is None:
             _common_user_validation(newclimber)
-            _add_user(climberId, email, newclimber)
+            skala_db._add_user(climberId, email, newclimber)
             climber = newclimber
             logging.info('added user id ' + str(email))
         else:
             user.update(newclimber)
-            _update_user(climberId, email, user)
+            skala_db._update_user(climberId, email, user)
             logging.info('updated user id ' + str(email))
 
     finally:
@@ -981,54 +835,29 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
         #return climber
 
 
-
-def _add_user(climberId, email, climber):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    if climberId is None:
-        climberId = str(uuid.uuid4())
-        climber['id'] = climberId
-    cursor.execute("INSERT  INTO " + USERS_TABLE +
-                   "(id, email, jsondata, added_at) " +
-                   " values (?, ?, ?, datetime('now')) ",
-                   [str(climberId), email, json.dumps(climber)])
-    logging.info('added user id ' + str(email))
-    db.commit()
-    db.close()
+def update_gym_routes(gymid, routesid, jsondata):
+    skala_db._update_gym_routes(gymid, routesid, jsondata)
 
 
-def _update_user(climberId, email, climber):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    if climberId is None:
-        climberId = str(uuid.uuid4())
-        climber['id'] = climberId
-    cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
-                   [json.dumps(climber), str(email)])
-    logging.info('updated user id ' + str(email))
-    db.commit()
-    db.close()
+def update_gym(gymid, jsondata):
+    skala_db._update_gym(gymid, jsondata)
 
 
-def update_gym(gymid, routesid, jsondata):
-    _update_gym(gymid, routesid, jsondata)
+def update_routes(routesid, jsondata):
+    skala_db._update_routes(routesid, jsondata)
 
 
-def add_test_gyms():
-    gymid = "1"
-    routesid = "667"
-    gym = add_gym(gymid, routesid, "Entente Sportive de Nanterre", "logo-ESN-HD-copy-1030x1030.png")
-    gym = add_gym("2", "668", "ESC 14")
+
 
 
 def get_gym(gymid):
     gym = None
     try:
         sql_lock.acquire()
-        gym = _get_gym(gymid)
+        gym = skala_db._get_gym(gymid)
     finally:
         sql_lock.release()
-        logging.info("retrieved all gyms  ")
+        logging.info("retrieved gym by id  "+str(gymid))
         return gym
 
 
@@ -1036,7 +865,7 @@ def get_gyms():
     gyms = None
     try:
         sql_lock.acquire()
-        gyms = _get_gyms()
+        gyms = skala_db._get_gyms()
     finally:
         sql_lock.release()
         logging.info("retrieved all gyms  ")
@@ -1046,131 +875,63 @@ def get_gyms():
 def get_routes(routesid):
     if routesid is None:
         # generate routes
-        return loadroutesdict1()
+        return generate_dummy_routes(100)
     else:
-        routes = _get_routes(routesid)
+        routes = skala_db._get_routes(routesid)
         if type(routes) == list:
             routesdict = {"id":routesid, "routes":routes}
-            _update_routes(routesid, routesdict)
+            skala_db._update_routes(routesid, routesdict)
             routes = routesdict
         return routes
 
 
-def _get_gyms():
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + GYM_TABLE + ''' ;''')
-
-    gyms = {}
-    if rows is not None and rows.arraysize > 0:
-        for row in rows.fetchall():
-            #comp = row[0]
-            gym = json.loads(row[0])
-            gyms[gym['id']] = gym
-
-    db.close()
-    #for gymid in gyms:
-    #    routes = _get_routes(gyms[gymid]['routesid'])
-    #    gyms[gymid]['routes'] = routes
-
-    return gyms
+def get_routes_by_gym_id(gym_id):
+    return skala_db.get_routes_by_gym_id(gym_id)
 
 
-def _get_gym(gymid):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + GYM_TABLE + ''' where id=? ;''',[gymid])
-
-    gym = {}
-    if rows is not None and rows.arraysize > 0:
-        for row in rows.fetchall():
-            #comp = row[0]
-            gym = json.loads(row[0])
-            #gyms[gym['id']] = gym
-
-    db.close()
-    #routes = _get_routes(gym['routesid'])
-    #gym['routes'] = routes
-
-    return gym
+def get_all_routes_ids():
+    return skala_db.get_all_routes_ids()
 
 
-def _get_routes(routesid):
-    db = lite.connect(COMPETITIONS_DB)
-    cursor = db.cursor()
-    count = 0
-    one = cursor.execute(
-        '''SELECT jsondata FROM ''' + ROUTES_TABLE + ''' where id=? LIMIT 1;''', [routesid])
-    one = one.fetchone()
-    db.close()
-
-    if one is None or one[0] is None:
-        return None
-
-    if one[0] is not None:
-        return json.loads(one[0])
-    else:
-        return None
-
-
-def add_gym(gymid, routesid, name, logoimg=None, homepage=None):
+def add_gym(user, gymid, routesid, name, logo_img_id=None, homepage=None, address=None, organization=None, routesA=None):
     if gymid is None:
-        gymid = str(uuid.uuid4())
+        gymid = str(uuid.uuid4().hex)
 
-    gymjson = get_gym_json(gymid, routesid, name, logoimg, homepage)
-    _add_gym(gymid, routesid, json.dumps(gymjson))
+    gymjson = get_gym_json(gymid, routesid, name, user['email'], logo_img_id, homepage, address, organization, routesA)
+
+    skala_db._add_gym(gymid, routesid, gymjson)
+
+    gym_permissions = user['permissions']['gyms']
+    gym_permissions.append(gymid)
+    skala_db.upsert_user(user)
+
     return gymjson
 
 
-def get_gym_json(gymid, routesid, name, logoimg, homepage):
-    gymjson = {'id': gymid, 'routesid': routesid, 'name': name, 'logoimg': logoimg, 'homepage': homepage}
+def delete_gym(gym_id):
+    skala_db._delete_gym(gym_id)
+
+
+
+#routesid is the default routes to display
+#routes array has ids of all routes belonging to this gym
+def get_gym_json(gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
+    gymjson = {'id': gymid, 'routesid': routesid, 'name': name,
+               'logo_img_id': logo_img_id, 'homepage': homepage, 'address': address, 'organization': organization,
+               'added_by': added_by, 'routes': routesA}
     return gymjson
 
 
-def _add_gym(gymid, routesid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("INSERT INTO " + GYM_TABLE + " (id, routesid, jsondata, added_at ) "
-                                                   "values ( ?, ?, ?, datetime('now'))",
-                   [str(gymid), str(routesid),  jsondata])
-
-    logging.info('added gym: '+str(jsondata))
-
-    db.commit()
-    db.close()
-
-
-def _update_gym(gymid, routesid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("update " + GYM_TABLE + " set  routesid = ? , jsondata = ? , added_at=datetime('now' ) where id=?",
-                   [ str(routesid), json.dumps(jsondata), str(gymid)])
-
-    logging.info('updated gym: '+str(jsondata))
-
-    db.commit()
-    db.close()
-
-
-def _get_route_dict(routeid, gymid, routenum, line, color1, color2, grade, name, openedby, opendate, notes):
+def _get_route_dict(routeid, routenum, line, color1, color_modifier, grade, name, openedby, opendate, notes):
     oneline = {}
-    oneline =  {'id': routeid, 'gymid': gymid, 'routenum':routenum, 'line': line, 'colorfr': color1, 'color1': color1, 'color2': color2,
-     'grade': grade, 'name': name, 'openedby': openedby, 'opendate': opendate, 'notes': notes}
+    oneline = {'id': routeid, 'routenum':routenum, 'line': line, 'colorfr': color1, 'color1': color1,
+                'color_modifier': color_modifier, 'grade': grade, 'name': name, 'openedby': openedby,
+                'opendate': opendate, 'notes': notes}
     return oneline
 
 
 # replaces or adds routes depending if routesid is found
-def upsert_routes(routesid, routes):
+def upsert_routes(routesid, gym_id, routes):
     try:
         if routesid is None or routes is None:
             return None
@@ -1182,10 +943,10 @@ def upsert_routes(routesid, routes):
         logging.info("routes are a "+ str(type(routes)))
 
         if existing_routes is None:
-            _add_routes(routesid, routes)
+            skala_db._add_routes(routesid, gym_id, routes)
             logging.info('routes added ' + str(routesid))
         else:
-            _update_routes(routesid, routes)
+            skala_db._update_routes(routesid, routes)
             logging.info('routes updated ' + str(routesid))
     finally:
         db.commit()
@@ -1194,47 +955,11 @@ def upsert_routes(routesid, routes):
         logging.info("done with routes :"+str(routesid))
 
 
-def _add_routes(routesid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("INSERT INTO " + ROUTES_TABLE + " (id, jsondata, added_at ) "
-                                                   "values ( ?, ?, datetime('now'))",
-                   [str(routesid),  json.dumps(jsondata)])
-
-    logging.info('added route: '+str(jsondata))
-    db.commit()
-    db.close()
-
-
-def _update_routes(routesid, jsondata):
-    db = lite.connect(COMPETITIONS_DB)
-
-    db.in_transaction
-    cursor = db.cursor()
-
-    cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ?  ",
-                                                   [json.dumps(jsondata), str(routesid)])
-
-    logging.info('updated route: '+str(jsondata))
-    db.commit()
-    db.close()
 
 
 
-def add_nanterre_routes():
-    routes = loadroutesdict()
-    for route in routes['routes']:
-        if route.get('id') is None or route.get('id') == '':
-            route['id'] = str(uuid.uuid4())
-        routes[route['id']]=route
-    routesId = str(uuid.uuid4())
-    routes['id'] = routesId
-    _add_routes(routesId, json.dumps(routes));
-    add_gym("1", routes.get('id'), "Entente Sportive de Nanterre")
-    return routes
+
+
 
 
 
@@ -1330,22 +1055,22 @@ def loadgymsdict():
     }
 
 
-def generateDummyRoutes(size):
-    routes = {}
+def generate_dummy_routes(size):
+    routes_id = str(uuid.uuid4().hex)
+    routes = {"id":routes_id }
     routesA = []
-    for i in size:
-        routes.append({'id': '', 'gymid': '1', 'routenum': str(i), 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '',
-         'grade': '-', 'name': '', 'openedby': '', 'opendate': '', 'notes': ''})
+    for i in range(1, size):
+        route_id = str(uuid.uuid4().hex)
+        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '-', '', '', '', '')
+        routesA.append(route)
 
-    routes['routes']=routesA
+    routes['routes'] = routesA
+    routes['name'] = "Dummy routes"
     return routes
 
 
-def loadroutesdict1():
-    routes = []
-    for i in range (1, 100):
-        routes.append({'id': '', 'routenum': i, 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '', 'name': 'Route '+str(i), 'openedby': '', 'opendate': '', 'notes': 'dummy routes'})
-    return {'routes': routes}
+def get_img(img_id):
+    return skala_db.get_image(img_id)
 
 
 def loadroutesdict():

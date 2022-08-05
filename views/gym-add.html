@@ -30,45 +30,38 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
-						<h3>{{ reference_data['current_language'].create_new }} </h3>
+						<h3>{{ reference_data['current_language'].add_new }} </h3>
 
-						{% if competitionName is not none  %}
-				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
+		<form action="/gyms/add" method="post" enctype="multipart/form-data">
 
-				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
+			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
+			<input name="gymName" size="40" id="gymName" type="text"/><br><br>
 
-						{% else %}
-<form action="/newCompetition" method="post">
-						<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
-				<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
+				<label for="numberOfRoutes">Number of routes:</label>
+			<br><input name="numberOfRoutes" id="numberOfRoutes" size="20" type="text"/><br><br>
 
-
-	<!--label for="club">{{ reference_data['current_language'].gym }}:</label><br><select name="gym" id="club">
-							<option value="--" size="20" >--</option>
-							{% for club in reference_data['clubs'] %}
-
-							<option value="{{reference_data['clubs'][club]}}" size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-
-							</select>
-							<br><br-->
-
-	<label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
-	<br><select name="routes" id="routes">
-							<option value="" size="20" ></option>
-							{% for club in clubs %}
-
-							<option value="{{club['routesid']}}" size="20" >{{club['gymname']}} - {{club['routesname']}} </option>
-							{% endfor %}
-
-							</select>
+	<label for="address">Address:</label><br>
+	<input name="address" id="address" type="address" size="80"/>
 							<br><br>
+	<label for="file1">Logo:</label><br>
+			<input type="file" name="file1" id="file1"><br>
+
+<label for="url">Link:</label><br>
+	<input name="url" id="url" type="url" size="80"/>
+							<br><br>
+
+
+	<label for="organization">Organization:</label><br>
+	<input name="organization" id="organization" type="organization" size="80"/>
+							<br><br>
+
+
+
 
 
 <button >{{ reference_data['current_language'].submit }}</button>
 					</form>
 
-						{% endif %}
 
 
 					</div>

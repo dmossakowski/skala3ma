@@ -25,11 +25,9 @@
 	{% block secondarycontent %}
 
 	<div >
-
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
-						<br><br><br>
-
+						<br><br>
 {% if gym is not none and gym is not undefined  %}
 						<h3>{{ gym['name'] }}</h3>
 						{% else %}
@@ -40,16 +38,8 @@
 
 		<div class="container">
 
-
-
-
-
-
-
-
 {% if gym is not none and gym is not undefined  %}
 
-<div class="row">
 
 <script>
 
@@ -128,57 +118,79 @@ function deleteRow(id) {
 </script>
 
 
-	<form action="/gyms/1/edit" enctype="multipart/form-data"  method="POST">
-		<input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
+<div class="row">
 
-<table class="table thead-dark table-hover" id="routestable"
-    data-url="data/url.json"
-    data-id-field="id"
-    data-editable-emptytext="Default empty text."
-    data-editable-url="/my/editable/update/path">
-         <thead><tr>
-         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
-         <th data-field="color1" data-filter-control="input">{{ reference_data['current_language'].color }}</th>
-			 <th data-field="color2" data-filter-control="input">{{ reference_data['current_language'].color }}</th>
+	<form action="/gyms/{{gym['id']}}/update" method="POST" enctype="multipart/form-data">
+<br>
 
-         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
-         <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
-         <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
-         <th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th>
-         <th data-field="notes" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
+			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
+			<input name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br><br>
 
-         </tr>
-         </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for route in routes['routes'] %}
 
-		 <tr id="{{loop.index}}">
+	<label for="address">Address:</label><br>
+	<input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
+							<br><br>
 
-			 <td><input type="hidden" name="lineid" value="{{ route['id']}}">
-				 {{loop.index}} &nbsp; <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
-			 <td  aabgcolor="{{ route['color1'] }}">
-				 <input name="color1" type ="color" value="{{ route['color1'] }}">
 
-				 </td>
-			  <td name="color2" aabgcolor="{{ route['color2'] }}">
-				  <input name="color2" type ="color" value="{{ route['color2'] }}"></td>
+	<label for="file1">Logo:</label><br>
+		<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="100">
+			<input type="file" name="file1" id="file1"><br>
 
-			 <td><i><input type="text" value="{{route['grade'] }}" name="routegrade" id="routegrade1" size="5"/></i></td>
-			 <td> <input type="text" value="{{ route['name'] }}" name="routename" id="routenum1"/></td>
+<label for="url">Link:</label><br>
+	<input name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
+							<br><br>
 
-			 <td> <input type="text" value="{{ route['openedby'] }}" name="openedby" id="openedby"/></td>
-			 <td> <input type="text" value="{{ route['opendate'] }}" name="opendate" id="opendate" size="10"/></td>
-			 <td> <input type="text" value="{{ route['notes'] }}" name="notes" id="notes"/></td>
 
-			 <td><a  onclick="addRow({{loop.index}})" >+</a> &nbsp;<a  onclick="deleteRow({{loop.index}})" >-</a></td>
-                    </tr>
-             {% endfor %}
+	<label for="organization">Organization:</label><br>
+	<input name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
+							<br><br>
 
-         </tbody>
-     </table>
 
-		</form>
+		<label for="default_routes">{{ reference_data['current_language'].routes }}</label><br>
+	<select name="default_routes" id="default_routes">
+
+		{% for route in all_routes %}
+			<option name="id" value="{{all_routes[route]['id']}}"  >{{all_routes[route]['id']}} - {{all_routes[route]['name']}} </option>
+		{% endfor %}
+
+
+	</select>
+<br><br>
+
+			<button name=save value="Save" class="btn btn-info btn-md">Save</button>
+			<button name=delete value="Delete" class="btn btn-danger btn-md">Delete</button>
+	</form>
+
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Modal Header</h4>
+      </div>
+      <div class="modal-body">
+        <p>Some text in the modal.</p>
+		  	<form action="/gyms/{{gym['id']}}/edit" enctype="multipart/form-data"  method="POST">
+				<input type="text" name="afterrow" id="afterrow" value=""/>
+			</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+<br><br>
+
 
 </div>
 

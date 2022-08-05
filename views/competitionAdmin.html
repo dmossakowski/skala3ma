@@ -104,6 +104,57 @@
 </form>
 
 
+
+
+<table class="table thead-dark table-hover"  id="entrytable">
+         <thead><tr>
+         <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-sortable="True">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
+         <th data-field="category" data-sortable="True">{{ reference_data['current_language'].category }}</th>
+         <th data-field="routes" data-filter-control="input">{{ reference_data['current_language'].routes_climbed }}</th>
+		 <th data-field="points" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].points }}</th>
+		 <th data-field="rank" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].rank }}</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for climberId in competition['climbers'] %}
+		<tr
+		 {% if (competition['climbers'][climberId]['rank'] == 1) %}
+		     style="background: #CFC">
+		{% elif competition['climbers'][climberId]['rank'] == 2 %}
+			 style="background: #AEA">
+		{% elif competition['climbers'][climberId]['rank'] == 3 %}
+			 style="background: #9C9">
+		{% else  %}
+			 style="background: #EEE">
+		{% endif  %}
+
+			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
+			 <td><i>
+				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
+				 {{ competition['climbers'][climberId]['routesClimbed']}}  --
+				 {{ competition['climbers'][climberId]['routesClimbed']|length }}  </a></td>
+			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
+			 <td>
+				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->
+				 <b>{{ competition['climbers'][climberId]['rank'] }}</b>
+				 <!--/font-->
+
+			 </td>
+		 </tr>
+		 {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
 				{%endif %}
 
 			</div>

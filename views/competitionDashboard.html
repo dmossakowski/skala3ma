@@ -20,6 +20,14 @@
 						<br>
 				<h3>{{ reference_data['current_language'].competitions }}</h3>
 
+						{% if user is defined and user is not none and 'create_competition' in user['permissions']['general'] %}
+							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
+
+onclick='location.href="/newCompetition"'>Add</button>
+
+						{% endif %}
+
+
 					</div>
 
 		<div class="container">

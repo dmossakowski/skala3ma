@@ -1,0 +1,117 @@
+
+
+
+{% extends "layoutfsgt.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+	<div name='bbb'>
+
+		{% include "fsgt-competition-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="text-center heading-section animate-box">
+						<br>
+				<h3>Your climbing journey {{journey['date']}} {{journey['id']}}</h3>
+						 {{ reference_data['current_language'].start }}
+					</div>
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+<form action="/journey/{{journey['id']}}/add" method="POST">
+
+<div class="container-fluid">
+
+	<label for="route_finish_status">{{ reference_data['current_language'].route}}:</label>
+	<select name="route_finish_status" id="route_finish_status">
+		<option value="choose" size="20" ></option>
+
+		{% for status in reference_data['route_finish_status'] %}
+		<option value="{{reference_data['route_finish_status'][status]}}" size="20" >{{reference_data['route_finish_status'][status]}}</option>
+		{% endfor %}
+	</select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+	<label for="route">{{ reference_data['current_language'].route }}:</label>
+		<select name="route" id="route">
+			<option value="--" size="20" >--</option>
+			{% for route in routes['routes'] %}
+			<option value="{{route['id']}}" size="20" style="background-color: #FFE;">
+				{{ reference_data['current_language'].line }}: {{route['line']}}
+				{{ reference_data['current_language'].name }}: {{route['name']}}
+				{{ reference_data['current_language'].grade }}: {{route['grade']}}</option>
+			{% endfor %}
+		</select>
+
+
+<label for="notes">{{ reference_data['current_language'].notes }}:</label> <input id='notes' name="notes" size="30" type="text"/>
+
+
+	<button name="update_status" value="update_status">{{ reference_data['current_language']['add']}}</button>
+
+
+
+<br><br>
+
+
+
+
+
+
+
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].status }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
+			 <th>Actions</th>
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+    				{% for route in journey['routes'] %}
+
+		 <tr><td>{{ route['route_id'] }}</td>
+					<td> {{ route['status'] }}</td>
+<td><i>{{ route['note'] }}</i></td>
+			 <td>
+				 <a href="/journey/{{journey['id']}}/{{route['id']}}/remove">{{ reference_data['current_language'].remove }}remove</a>
+				<button name="remove" value="{{ loop.index }}">{{ reference_data['current_language'].remove }}</button>
+
+			 </td>
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+</div>
+
+
+</form>
+
+{% if journey is not none and journey is not undefined  %}
+
+
+				{% else %}
+
+
+				No journyes yet. Add your first!
+
+
+				{% endif %}
+			</div>
+
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}

@@ -76,7 +76,18 @@
   "lastname": "Last name",
   "other_club_not_listed": "If other club, enter here",
   "choose": "Choose",
-  "registered": "Registered"
+  "registered": "Registered",
+  "newsession": "New outing",
+  "journey": "Journey",
+  "create": "Create",
+  "add": "Add",
+  "where": "Where",
+  "open": "Open",
+  "view": "View",
+  "route": "Route",
+  "other": "Other",
+  "show_all": "Show all",
+  "add_gym": "Add a gym"
 
 
 }
