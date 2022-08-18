@@ -1,7 +1,7 @@
 
 
 
-{% extends "layoutfsgt.html" %}
+{% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
 
@@ -146,11 +146,13 @@ function deleteRow(id) {
 							<br><br>
 
 
-		<label for="default_routes">{{ reference_data['current_language'].routes }}</label><br>
+		<label for="default_routes">{{ reference_data['current_language'].routes }}</label> {{gym['routesid']}}
+		<br>
 	<select name="default_routes" id="default_routes">
 
 		{% for route in all_routes %}
-			<option name="id" value="{{all_routes[route]['id']}}"  >{{all_routes[route]['id']}} - {{all_routes[route]['name']}} </option>
+			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
+
 		{% endfor %}
 
 

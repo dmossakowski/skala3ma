@@ -1,7 +1,7 @@
 
 
 
-{% extends "layoutfsgt.html" %}
+{% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
 
@@ -11,7 +11,7 @@
 	{% block secondarycontent %}
 
 
-	<div >{% include "fsgt-competition-menu.html" %}
+	<div >{% include "skala3ma-menu.html" %}
 
 
 		{% if session is defined and session['name'] is defined %}
@@ -22,6 +22,7 @@
 <br><br>
 
 		<h3>You don't have a permission to do that</h3>
+	{{ error_code }}
 <br><br>
 <br><br>
 

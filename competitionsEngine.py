@@ -101,9 +101,10 @@ competition_status_open = 1
 competition_status_inprogress = 2
 competition_status_scoring = 3
 competition_status_closed = 4
+competition_status_archived = 5
 competition_status_future = 5
 
-competition_status = {"created":competition_status_created, "open":1, "inprogress":2, "scoring":3, "closed":4}
+competition_status = {"created":competition_status_created, "open":1, "inprogress":2, "scoring":3, "closed":4, "archived":5}
 
 
 user_roles = ["none", "judge", "competitor", "admin"]
@@ -535,6 +536,18 @@ def get_all_competitions():
     return skala_db.get_all_competitions()
 
 
+def get_active_competitions():
+    competitions = skala_db.get_all_competitions()
+    #for key, competition in competitions.items:
+     #   if competition.get('status')  in [competition_status_archived]:
+      #       competitions.
+
+    active_competitions = {key: competition for key,
+                competition in competitions.items() if competition.get('status')  in [competition_status_archived]}
+
+    return active_competitions
+
+
 def get_user(id):
     return skala_db.get_user(id)
 
@@ -696,8 +709,15 @@ def has_permission_for_competition(competitionId, user):
 def add_user_permission_create_competition(user):
     skala_db.add_user_permission(user,'create_competition')
 
+
 def add_user_permission_create_gym(user):
     skala_db.add_user_permission(user,'create_gym')
+
+
+def has_permission_for_gym(gym_id, user):
+    permissions = get_permissions(user)
+    huh = gym_id in permissions['gyms']
+    return gym_id in permissions['gyms'] or session['name'] in ['David Mossakowski'] or permissions['godmode'] == 'true'
 
 
 # modify permission to edit specific competition to a user
@@ -872,6 +892,8 @@ def get_gyms():
         return gyms
 
 
+
+
 def get_routes(routesid):
     if routesid is None:
         # generate routes
@@ -909,8 +931,15 @@ def add_gym(user, gymid, routesid, name, logo_img_id=None, homepage=None, addres
 
 
 def delete_gym(gym_id):
-    skala_db._delete_gym(gym_id)
-
+    if gym_id is None:
+        return
+    try:
+        sql_lock.acquire()
+        skala_db._delete_gym(gym_id)
+        skala_db._delete_routes_by_gymid(gym_id)
+    finally:
+        sql_lock.release()
+        logging.info("deleted gym and routes for "+gym_id)
 
 
 #routesid is the default routes to display

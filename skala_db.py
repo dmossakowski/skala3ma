@@ -202,7 +202,7 @@ def get_all_competitions():
     cursor = db.cursor()
     count = 0
     rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' ;''')
+        '''SELECT jsondata FROM ''' + COMPETITIONS_TABLE + ''' order by added_at desc ;''')
 
     comps = {}
     if rows is not None and rows.arraysize > 0:
@@ -637,7 +637,6 @@ def get_all_routes_ids():
     return routes
 
 
-
 def _get_routes(routesid):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -671,6 +670,22 @@ def _add_gym(gymid, routesid, gym):
     db.close()
 
 
+def _delete_routes_by_gymid(gymid):
+    if gymid is None:
+        return
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+    cursor.execute("delete from " + ROUTES_TABLE + " where gym_id=?",
+                   [str(gymid)])
+
+    logging.info('deleted routes for gym: '+str(gymid))
+
+    db.commit()
+    db.close()
+
+
 def _delete_gym(gymid):
     if gymid is None:
         return
@@ -685,7 +700,6 @@ def _delete_gym(gymid):
 
     db.commit()
     db.close()
-
 
 
 def _update_gym_routes(gymid, routesid, jsondata):

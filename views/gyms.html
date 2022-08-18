@@ -1,7 +1,7 @@
 
 
 
-{% extends "layoutfsgt.html" %}
+{% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
 
@@ -30,8 +30,43 @@ $(document).ready(function () {
 });
 </script>
 
+	{% if gym is not none and gym is not undefined  %}
 
-	<div >
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-body">
+         	<form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
+				<h4 id="openedby"></h4>
+				<h4 id="remarks"></h4>
+			</form>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    <script type="text/javascript">
+
+        function routeDetail(openedby, openeddate, remarks) {
+        	console.log("details.."+openedby+" "+remarks);
+        	var openedbyStr = "Opened by <b>" + openedby +"</b> ("+openeddate+")";
+            var remarksStr = " " + remarks;
+            $("#openedby").html(openedbyStr);
+            $("#remarks").html(remarksStr);
+        }
+
+    </script>
+{%endif%}
+
+	<div>
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
@@ -39,9 +74,7 @@ $(document).ready(function () {
 
 			{% if gym is not none and gym is not undefined  %}
 
-
-							<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" align="left">
-
+						<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" align="left">
 
 						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -54,9 +87,8 @@ $(document).ready(function () {
 						<h3>{{ reference_data['current_language'].gyms }} </h3>
 
 						{% if user is defined and user is not none and 'create_gym' in user['permissions']['general'] %}
-							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
-
-onclick='location.href="/gyms/add"'>Add</button>
+							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
+									onclick='location.href="/gyms/add"'>Add</button>
 
 						{% endif %}
 
@@ -75,6 +107,7 @@ onclick='location.href="/gyms/add"'>Add</button>
 
 <div class="container-fluid">
 
+	<!-- Trigger the modal with a button -->
 
 
 <br><br>
@@ -88,31 +121,29 @@ onclick='location.href="/gyms/add"'>Add</button>
          <th data-width="250" data-field="line" data-filter-control="input">
 			 <!--a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a-->
 			 {{ reference_data['current_language'].line }}</th>
-         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].route_num }}</th>
+         <th data-field="artist" data-filter-control="input">#</th>
          <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
          <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
          <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
-         <th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th>
-         <th data-field="notes" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
-
-
+         <!--th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th-->
          </tr>
          </thead>
     <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 
-		 <tr><td>{{ route['line'] }} </td>
+		 <tr onclick="routeDetail('{{ route['openedby'] }}','{{ route['opendate'] }}',' {{ route['notes'] }}'); $('#showmodal').modal('show'); return false;"
+		 data-toggle="modal" data-target="#myModal"  data-remarks="sit down"
+		 ><td>{{ route['line'] }} </td>
 			 <td  align="center"
 				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
 				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
 				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
 				</b></td>
-			 <td><i>{{route['grade'] }}</i></td>
+			 <td><i>{{route['grade'] }}</i><br></td>
 			 <td> {{ route['name'] }}</td>
 			 <td> {{ route['openedby'] }}</td>
-			 <td> {{ route['opendate'] }}</td>
-			 <td> {{ route['notes'] }}</td>
+			 <!--td> {{ route['opendate'] }}</td-->
 		 </tr>
 		 {% endfor %}
 

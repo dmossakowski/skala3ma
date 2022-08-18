@@ -1,7 +1,7 @@
 
 
 
-{% extends "layoutfsgt.html" %}
+{% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
 
@@ -13,12 +13,24 @@
 
 	<div name='bbb'>
 
-		{% include "fsgt-competition-menu.html" %}
+		{% include "skala3ma-menu.html" %}
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section animate-box">
 						<br>
-				<h3>{{ reference_data['current_language'].competitions }}</h3>
+						<div>
+				<h3>{{ reference_data['current_language'].competitions }}
+					<select class="custom-select"
+            style="width:100px; border-radius: 5px; font-size: 22px	" onchange="document.location.href='/competitions/year/'+this.value+''">
+						name="competition_year">
+						<!--option name="all" {% if year=="Latest" %} selected {% endif %}>Latest</option-->
+	<option name="2021" value="2022" {% if year=="2022" %} selected {%endif %}>2022</option>
+	<option name="2022" value="2021" {% if year=="2021" %} selected {%endif %}>2021</option>
+
+</select>
+</h3>
+
+						</div><div>
 
 						{% if user is defined and user is not none and 'create_competition' in user['permissions']['general'] %}
 							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
@@ -135,7 +147,9 @@ onclick='location.href="/newCompetition"'>Add</button>
 {% if competitions is not none  %}
 
 
+<br>
 
+</div>
 
 
 					{% for competitionId in competitions %}
@@ -146,7 +160,7 @@ onclick='location.href="/newCompetition"'>Add</button>
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
 							>
 
-							<a href="competitionDetails/{{ competitionId }}">
+							<a href="/competitionDetails/{{ competitionId }}">
 							<div class="blog-text">
 								<div class="prod-title">
 									<h4>{{ competitions[competitionId]['name'] }}<br>

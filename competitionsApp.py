@@ -69,9 +69,6 @@ oauth = OAuth(fsgtapp)
 genres = {"test": "1"}
 authenticated = False
 
-comps = {}
-climbers = {}
-
 # Third party libraries
 from flask import Flask, redirect, request, url_for
 
@@ -520,6 +517,13 @@ def main():
 @fsgtapp.route('/competitionDashboard')
 @login_required
 def getCompetitionDashboard():
+    year = datetime.now().year
+    return competitions_by_year(str(year))
+
+
+@fsgtapp.route('/competitions/year/<year>')
+@login_required
+def competitions_by_year(year):
 
     username = session.get('username')
     #if username:
@@ -532,25 +536,41 @@ def getCompetitionDashboard():
     gym = request.args.get('gym')
     comp = {}
     competitionId=None
+    if not year.isdigit():
+        year = datetime.now().year
 
     user = competitionsEngine.get_user_by_email(session['email'])
     subheader_message = request.accept_languages
-
     langs = competitionsEngine.reference_data['languages']
+    competitions = competitionsEngine.getCompetitions()
+    #test_list = [datetime(year, 1, 1), datetime(year, 12, 31)]
+    date_strt, date_end = datetime(int(year), 1, 1), datetime(int(year), 12, 31)
 
-    competitions= competitionsEngine.getCompetitions()
+    input_format = "%Y-%m-%d"
+    competitions2 = {}
+    for competition_id in competitions:
+        competition = competitions.get(competition_id)
+        competition_date = competition.get('date')
+        try:
+            parsered_date = datetime.strptime(competition_date, input_format)
+            if parsered_date >= date_strt and parsered_date <= date_end:
+                res = True
+                competitions2[competition['id']] = competition
+
+        except ValueError:
+            print("This is the incorrect date string format.")
 
     return render_template('competitionDashboard.html',
                            subheader_message=subheader_message,
-                           competitions=competitions,
+                           competitions=competitions2,
                            competitionName=None,
                            session=session,
                            user=user,
+                           year=year,
                            reference_data=competitionsEngine.reference_data,
                            langpack=languages['en_US'],
                             **session
                            )
-
 
 
 @fsgtapp.route('/newCompetition', methods=['GET'])
@@ -1183,6 +1203,8 @@ def gyms():
                             **session)
 
 
+
+
 @fsgtapp.route('/gyms/<gymid>')
 def gym_by_id(gymid):
     fullname = request.args.get('fullname')
@@ -1442,8 +1464,6 @@ def user_authenticated(id, username, email, picture):
     competitionsEngine.user_authenticated(id, username, email, picture)
 
 
-
-
 @fsgtapp.route('/gyms/add', methods=['GET'])
 @login_required
 def gyms_add_form():
@@ -1508,14 +1528,22 @@ def gyms_add():
                             **session)
 
 
-
-
 @fsgtapp.route('/gyms/<gym_id>/update', methods=['POST'])
 @login_required
 def gyms_update(gym_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
     formdata = request.form.to_dict(flat=False)
+
+    gym = competitionsEngine.get_gym(gym_id)
+
+    if not competitionsEngine.has_permission_for_gym(gym_id, user):
+        return render_template('competitionNoPermission.html',
+                               error_code="7788 - no permission to edit gym",
+                               competitionId=None,
+                               gyms=gyms,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
 
     body = request.data
     bodyj = request.json
@@ -1537,10 +1565,9 @@ def gyms_update(gym_id):
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-    routesid = formdata['default_routes'][0]
-    #route_ids = formdata['routes']
-
-    gym = competitionsEngine.get_gym(gym_id)
+    routesidlist = formdata.get('default_routes')
+    if routesidlist is not None:
+        routesid = formdata['default_routes'][0]
 
     if delete is not None and gym['logo_img_id'] is not None and len(gym['logo_img_id']) > 8:
         competitionsEngine.delete_gym(gym_id)
@@ -1552,9 +1579,7 @@ def gyms_update(gym_id):
 
     #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)
-
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
-
     competitionsEngine.update_gym(gym_id, gym)
 
     return redirect(url_for('fsgtapp.gym_by_id', gymid=gym_id))
