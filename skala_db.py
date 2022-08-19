@@ -247,10 +247,11 @@ def get_user_by_email(email):
     if one is None or one[0] is None:
         return None
 
-    if one[0] is not None:
-        return json.loads(one[0])
-    else:
-        return None
+    user = json.loads(one[0])
+    if user.get('email') is None:
+        user['email'] = email
+
+    return user
 
 
 def get_all_user_emails():
@@ -259,7 +260,7 @@ def get_all_user_emails():
     cursor = db.cursor()
     count = 0
     rows = cursor.execute(
-        '''SELECT email FROM ''' + USERS_TABLE + ''' ;''')
+        '''SELECT email FROM ''' + USERS_TABLE + ''' order by email ;''')
     emails = []
     if rows is not None and rows.arraysize > 0:
         for row in rows.fetchall():
@@ -402,6 +403,10 @@ def has_permission_for_competition(competitionId, user):
     return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
 
 
+def has_permission_for_gym(gym_id, user):
+    permissions = get_permissions(user)
+    huh = gym_id in permissions['gyms']
+    return gym_id in permissions['gyms'] or session['name'] == 'David Mossakowski'
 
 
 def add_user_permission(user, permission):
@@ -430,6 +435,15 @@ def add_user_permission(user, permission):
 
 # modify permission to edit specific competition to a user
 def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
+    return _modify_user_permissions(user, competition_id, 'competitions', action)
+
+
+def modify_user_permissions_to_gym(user, gym_id, action="ADD"):
+    return _modify_user_permissions(user, gym_id, 'gyms', action)
+
+
+# modify permission to edit specific competition to a user
+def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
     try:
         sql_lock.acquire()
         db = lite.connect(COMPETITIONS_DB)
@@ -440,13 +454,14 @@ def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
             user['permissions'] = permissions
 
         if action == "ADD":
-            permissions['competitions'].append(competition_id)
+            permissions[permission_type].append(item_id)
         elif action == "REMOVE":
-            permissions['competitions'].remove(competition_id)
+            permissions[permission_type].remove(item_id)
         else:
             raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
         _update_user(user['id'], user['email'], user)
-        logging.info('updated user id ' + str(user['email']))
+        logging.info('updated user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
+                     ' action='+str(action))
 
     finally:
         db.commit()
@@ -454,8 +469,6 @@ def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
         sql_lock.release()
         logging.info("done with user:"+str(user['email']))
         return user
-
-
 
 
 

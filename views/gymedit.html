@@ -157,7 +157,26 @@ function deleteRow(id) {
 
 
 	</select>
+
+		<br><br>
+	<label for="permissioned_user">{{ reference_data['current_language'].permissioned_user}}Permission user:</label>
+		<br>
+	<select name="permissioned_user" id="permissioned_user">
+							<option value="choose" size="20" ></option>
+
+		{% for email in user_list %}
+
+							<option value="{{email}}" size="20" >{{email}}</option>
+	{% endfor %}
+
+							</select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
 <br><br>
+
+
+
 
 			<button name=save value="Save" class="btn btn-info btn-md">Save</button>
 			<button name=delete value="Delete" class="btn btn-danger btn-md">Delete</button>

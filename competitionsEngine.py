@@ -716,36 +716,25 @@ def add_user_permission_create_gym(user):
 
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
-    huh = gym_id in permissions['gyms']
+    #huh = gym_id in permissions['gyms']
     return gym_id in permissions['gyms'] or session['name'] in ['David Mossakowski'] or permissions['godmode'] == 'true'
 
 
 # modify permission to edit specific competition to a user
 def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
-    try:
-        sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-        permissions = user.get('permissions')
-        if permissions is None:
-            permissions = _generate_permissions()
-            user['permissions'] = permissions
+    return skala_db.modify_user_permissions_to_competition(user, competition_id, action)
 
-        if action == "ADD" and competition_id not in permissions['competitions']:
-            permissions['competitions'].append(competition_id)
-        elif action == "REMOVE":
-            permissions['competitions'].remove(competition_id)
-        else:
-            raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
-        skala_db._update_user(user['id'], user['email'], user)
-        logging.info('updated user id ' + str(user['email']))
 
-    finally:
-        db.commit()
-        db.close()
-        sql_lock.release()
-        logging.info("done with user:"+str(user['email']))
-        return user
+def remove_user_permissions_to_competition(user, competition_id):
+    return skala_db.modify_user_permissions_to_competition(user, competition_id, "REMOVE")
+
+
+def add_user_permissions_to_gym(user, gym_id):
+    return skala_db.modify_user_permissions_to_gym(user, gym_id, "ADD")
+
+
+def remove_user_permissions_to_gym(user, gym_id):
+    return skala_db.modify_user_permissions_to_gym(user, gym_id, "REMOVE")
 
 
 def can_create_competition(climber):
@@ -791,6 +780,9 @@ def can_register(user, competition):
         for cid in climbers:
             if climbers[cid]['email']==user['email']:
                 return '5056 - User with email '+user['email']+' already registered'
+
+    if len(competition['climbers']) > 150:
+        return '5057 - Maximum registrations reached'
 
     # if anonymous registration and competition is in the correct state then allow
     if competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]:

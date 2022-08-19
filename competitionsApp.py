@@ -515,14 +515,12 @@ def main():
 
 
 @fsgtapp.route('/competitionDashboard')
-@login_required
 def getCompetitionDashboard():
     year = datetime.now().year
     return competitions_by_year(str(year))
 
 
 @fsgtapp.route('/competitions/year/<year>')
-@login_required
 def competitions_by_year(year):
 
     username = session.get('username')
@@ -539,7 +537,7 @@ def competitions_by_year(year):
     if not year.isdigit():
         year = datetime.now().year
 
-    user = competitionsEngine.get_user_by_email(session['email'])
+    user = competitionsEngine.get_user_by_email(session.get('email'))
     subheader_message = request.accept_languages
     langs = competitionsEngine.reference_data['languages']
     competitions = competitionsEngine.getCompetitions()
@@ -674,9 +672,11 @@ def addCompetitionClimber(competitionId):
     error_code=competitionsEngine.can_register(user, comp)
     climber = None
 
+
     if user is None and form_user is not None and (
             form_user.get('fname') is not None or form_user.get('gname') is not None):
         error_code = "User with this email is known and they should login and register themselves"
+
 
     if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
@@ -1292,12 +1292,14 @@ def gym_edit(gymid):
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     routes = all_routes.get(gym['routesid'])
     user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_list = competitionsEngine.get_all_user_emails()
     return render_template('gymedit.html',
                            gymid=gymid,
                            gyms=None,
                            gym=gym,
                            routes=routes,
                            all_routes=all_routes,
+                           user_list=user_list,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
                            )
@@ -1324,6 +1326,7 @@ def gym_save(gymid):
     opendate = formdata['opendate']
     notes = formdata['notes']
     routesname = formdata['name'][0]
+    permissioned_user = formdata['permissioned_user'][0]
 
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -1537,6 +1540,7 @@ def gyms_update(gym_id):
 
     gym = competitionsEngine.get_gym(gym_id)
 
+
     if not competitionsEngine.has_permission_for_gym(gym_id, user):
         return render_template('competitionNoPermission.html',
                                error_code="7788 - no permission to edit gym",
@@ -1565,17 +1569,25 @@ def gyms_update(gym_id):
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
+    permissioned_user = request.form.get('permissioned_user')
+
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
 
     if delete is not None and gym['logo_img_id'] is not None and len(gym['logo_img_id']) > 8:
         competitionsEngine.delete_gym(gym_id)
+        competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
         os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
         return redirect(url_for('fsgtapp.gyms'))
 
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']
+
+    if len(permissioned_user)>2:
+        newuser = competitionsEngine.get_user_by_email(permissioned_user)
+        if newuser is not None:
+            competitionsEngine.add_user_permissions_to_gym(newuser, gym_id)
 
     #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)
