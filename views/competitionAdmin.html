@@ -16,16 +16,14 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section animate-box">
 						<br>
-				<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
-						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
-
-
+				<h3>{{competition['name'] }} - {{ competition['date']}} <br>
+				{{competition['gym']}}</h3>
+				 	 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
 					</div>
 
 		<div class="container">
 			<div class="row row-bottom-padded-md">
-
-
+				
 
 {% if competition is not none and competition is not undefined  %}
 
@@ -33,6 +31,20 @@
 <form action="/competition_admin/{{competition['id']}}" method="POST">
 
 <div class="container-fluid">
+
+	<label for="competition_name">{{ reference_data['current_language'].nazwa }}:</label>
+	<input name="competition_name" size="40" value="{{competition['name']}}" id="competition_name"/>
+	<input name="competition_date" size="30" type="date" id="competition_date" value="{{competition['date']}}"/>
+
+	<select name="competition_routes" id="default_routes">
+		{% for route in all_routes %}
+			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == competition['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
+		{% endfor %}
+	</select>
+	<button name="competition_update_button" value="competition_update_button">{{ reference_data['current_language'].save}}</button>
+
+	<br><br>
+
 
 	<label for="competition_status">{{ reference_data['current_language'].competition_status}}:</label>
 	<select name="competition_status" id="competition_status">

@@ -243,7 +243,7 @@ def fsgtadmin():
     elif edittype == 'competition':
         if jsonobject is not None  and action == 'update':
             #jsonobject = {"success": "competition updated"}
-            competitionsEngine.update_competition(jsonobject['id'],jsonobject)
+            competitionsEngine._update_competition(jsonobject['id'],jsonobject)
         if id is not None  and action == 'delete':
             #jsonobject = {"success": "competition updated"}
             competitionsEngine.delete_competition(id)
@@ -296,11 +296,14 @@ def competition_admin_get(competition_id):
         session["wants_url"] = request.url
         return redirect(url_for('fsgtapp.getCompetition', competitionId=competition['id']))
 
+    all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
+
     return render_template('competitionAdmin.html',
                            user=user,
                            competition=competition,
                            user_list=user_list,
                            competitionId=competition_id,
+                           all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
                            id=id)
 
@@ -311,6 +314,8 @@ def competition_admin_post(competition_id):
     remove_climber = request.form.get('remove_climber')
     update_status = request.form.get('update_status')
     permission_user = request.form.get('permission_user')
+
+    competition_update_button = request.form.get('competition_update_button')
 
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -347,7 +352,14 @@ def competition_admin_post(competition_id):
         competition['climbers'].pop(remove_climber)
         competitionsEngine.update_competition(competition['id'], competition)
 
+    if competition_update_button is not None:
+        competition_name = request.form.get('competition_name')
+        competition_date = request.form.get('competition_date')
+        competition_routes = request.form.get('competition_routes')
+        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes)
+
     user_list = competitionsEngine.get_all_user_emails()
+    all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
 
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
@@ -355,6 +367,7 @@ def competition_admin_post(competition_id):
                            competition=competition,
                            user_list=user_list,
                            competitionId=competition_id,
+                           all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
                            id=id)
 
@@ -672,11 +685,9 @@ def addCompetitionClimber(competitionId):
     error_code=competitionsEngine.can_register(user, comp)
     climber = None
 
-
     if user is None and form_user is not None and (
             form_user.get('fname') is not None or form_user.get('gname') is not None):
         error_code = "User with this email is known and they should login and register themselves"
-
 
     if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
@@ -843,6 +854,8 @@ def getCompetition(competitionId):
     #                       subheader_message=subheader_message,
     #                       library=None,
     #                       **session))
+
+
 
     return render_template("competitionDetails.html", competitionId=competitionId,
                            competition=competition,

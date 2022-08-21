@@ -131,6 +131,13 @@ def addCompetition(compId, name, date, routesid):
     return compId
 
 
+def update_competition_details(competition, name, date, routesid):
+    competition['name']=name
+    competition['date'] = date
+    competition['routesid'] = routesid
+    skala_db._update_competition(competition['id'], competition)
+
+
 # add climber to a competition
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category=0):
     logging.info("adding climber "+str(climberId))
@@ -525,6 +532,9 @@ def _validate_or_upgrade_competition(competition):
     if competition.get('status') is None or competition.get('status') not in competition_status.values():
         needs_updating = True
         competition['status'] = competition_status['created']
+
+    #if competition.get('gym_id') is None:
+     #   raise ValueError('gym_id is missing for competition '+str(competition['id']))
 
     if needs_updating:
         update_competition(competition['id'], competition)
