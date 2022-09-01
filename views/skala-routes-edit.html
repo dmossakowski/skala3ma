@@ -24,20 +24,32 @@
 
 	{% block secondarycontent %}
 
-	<div >
+	<div class="row">
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+					<div class="col-md text-center heading-section animate-box">
 						<br><br>
-{% if gym is not none and gym is not undefined  %}
+				{% if gym is not none and gym is not undefined  %}
 						<h3>{{ gym['name'] }}</h3>
+
+	 	<label for="default_routes">{{ reference_data['current_language'].routes }}</label>
+	<select name="default_routes" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value+'/edit'">
+
+
+		{% for route in all_routes %}
+			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}} - {{all_routes[route]['id']}} </option>
+
+		{% endfor %}
+
+
+	</select>
+
 						{% else %}
 						<h3>{{ reference_data['current_language'].gyms }} </h3>
 				{% endif %}
 					</div>
 
 
-		<div class="container">
-
+	</div>
 {% if gym is not none and gym is not undefined  %}
 
 
@@ -95,6 +107,7 @@
 	}
 
   var row = table.insertRow(rowid);
+  row.className = "bg-warning";
   row.id=time;
   var cell1 = row.insertCell(0);
   var cell2 = row.insertCell(1);
@@ -113,7 +126,7 @@
   cell6.innerHTML = '<input type="date" value="" name="opendate" id="opendate" size="10"/>';
   cell7.innerHTML = '<input type="text" value="" name="notes" id="notes"/>';
 
-  cell8.innerHTML = ' <a  onclick="addRow('+rowindex+')" >+</a> <a  onclick="deleteRow('+(time)+')" >-</a>';
+  cell8.innerHTML = ' <a href="#"  onclick="addRow('+rowindex+'); return false;" ><b>+</b></a> &nbsp; <a href="#"  onclick="deleteRow('+(time)+'); return false;" ><b>-</b></a>';
 }
 
 
@@ -124,8 +137,6 @@ function deleteRow(id) {
 }
 </script>
 
-
-<div class="row">
 
 
 
@@ -157,18 +168,15 @@ function deleteRow(id) {
 </div>
 
 
+<div class="container  text-left heading-section animate-box">
 
-<br><br>
+
 	<form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
 
-	 	<label for="default_routes">{{ reference_data['current_language'].routes }}</label>
-	<select name="default_routes" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value+'/edit'">
-
-		{% for route in all_routes %}
-			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['id']}} </option>
-		{% endfor %}
-
-	</select>
+	 	<!--label for="default_routes">{{ reference_data['current_language'].routes }} id:</label>
+		{{ routes['id']}} -->
+		<div class="row">
+		<div class="col-sm-8">
 		<label for="name">{{ reference_data['current_language'].name }}</label>
 		<input type="text" id="name" name="name" value="{{routes['name']}}">
 
@@ -183,14 +191,20 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
 >Add new route</button-->
 
 
-		<button name=copy value="copy" class="btn btn-info btn-md">Save copy</button>
 
 
 
+</div><div class="col-sm-4 text-right">
+		<input type="submit" class="btn btn-primary btn-md" name=save value="{{ reference_data['current_language'].save}}">
 
-		<input type="submit" class="btn btn-info btn-md" name=save value="{{ reference_data['current_language'].save}}"></h2>
+		&nbsp;&nbsp;&nbsp;<button name=copy value="copy" class="btn btn-warning btn-md">Make copy</button>
 
-<table class="table thead-dark table-hover" id="routestable"
+		</h2>
+			<br><br>
+
+			</div>
+			</div>
+<table class="table thead-dark  table-sm" id="routestable"
     data-url="data/url.json"
     data-id-field="id"
     data-editable-emptytext="Default empty text."
@@ -211,7 +225,7 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 
-		 <tr id="{{loop.index}}">
+		 <tr id="{{loop.index}}" class="bg-normal">
 			 <td><input type="hidden" name="routeid" value="{{ route['id']}}">
 				 {{loop.index}} <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
 			 <td>
@@ -227,7 +241,8 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
 			 <td> <input type="text" value="{{ route['openedby'] }}" name="openedby" id="openedby"/></td>
 			 <td> <input type="date" value="{{ route['opendate'] }}" name="opendate" id="opendate" size="10"/></td>
 			 <td> <input type="text" value="{{ route['notes'] }}" name="notes" id="notes"/></td>
-			 <td><a  onclick="addRow({{loop.index}})" >+</a> &nbsp;<a  onclick="deleteRow({{loop.index}})" >-</a></td>
+			 <td><a href="#" onclick="addRow({{loop.index}}); return false;" >+</a> &nbsp;
+				 <a href="#"  onclick="deleteRow({{loop.index}}); return false;" >-</a></td>
 		 </tr>
 		 {% endfor %}
 

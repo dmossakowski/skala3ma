@@ -549,6 +549,12 @@ def googleauth():
     return oauth.google.authorize_redirect(redirect_uri)
 
 
+
+@app.route('/google/authaaa/')
+def googleauth_replyqq():
+    error = request.args.get('error')
+
+
 @app.route('/google/auth/')
 def googleauth_reply():
     error = request.args.get('error')

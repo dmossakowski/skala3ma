@@ -383,7 +383,7 @@ def fsgtadminedit(edittype):
                            reference_data=competitionsEngine.reference_data)
 
 
-@fsgtapp.route('/fsgtlogin')
+@fsgtapp.route('/loginchoice')
 def fsgtlogin():
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data
@@ -1455,7 +1455,8 @@ def gym_routes_save(gymid, routesid):
 
     competitionsEngine.update_routes(routesid, routes_dict)
 
-    routes = competitionsEngine.get_routes(routesid)
+    # pickup the default routes to be rendered
+    routes = competitionsEngine.get_routes(gym.get('routesid'))
 
     return render_template('gyms.html',
                            gymid=gymid,
