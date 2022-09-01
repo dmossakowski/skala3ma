@@ -769,7 +769,7 @@ def _update_routes(routesid, jsondata):
     cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ?  ",
                                                    [json.dumps(jsondata), str(routesid)])
 
-    logging.info('updated route: '+str(jsondata))
+    logging.info('updated route: '+str(routesid))
     db.commit()
     db.close()
 

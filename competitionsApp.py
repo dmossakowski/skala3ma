@@ -1433,7 +1433,6 @@ def gym_routes_save(gymid, routesid):
 
     routes = []
     for i, routeline1 in enumerate(routeline):
-        print (i)
         if routeid[i] == '0':
             routeid[i]=str(uuid.uuid4().hex)
         oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i],
