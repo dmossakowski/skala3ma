@@ -869,9 +869,6 @@ def update_routes(routesid, jsondata):
     skala_db._update_routes(routesid, jsondata)
 
 
-
-
-
 def get_gym(gymid):
     gym = None
     try:

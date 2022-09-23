@@ -86,6 +86,8 @@ def add_journey_session_entry(journey_id, route_id, status, note):
 def remove_journey_session(journey_id, entry_id):
     journey = get_journey_session(journey_id)
 
+    if journey is None:
+        return None
     for route_index, route in enumerate(journey['routes']):
         if route['id'] == entry_id:
             journey['routes'].pop(int(route_index))

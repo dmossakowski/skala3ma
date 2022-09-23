@@ -24,6 +24,7 @@ import threading
 import random
 import logging
 from competitionsApp import fsgtapp
+from skala_api import skala_api_app
 from competitionsApp import languages
 import competitionsEngine
 import locale
@@ -62,8 +63,8 @@ FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
 app = Flask(__name__, static_folder='public', template_folder='views')
-app.register_blueprint(fsgtapp) #url_prefix='/<lang_code>')
-#url_defaults={'lang': None},
+app.register_blueprint(fsgtapp)
+app.register_blueprint(skala_api_app)
 
 app.debug = True
 app.secret_key = 'development'
