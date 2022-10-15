@@ -1,7 +1,6 @@
 {
   "name": "Nom",
   "nazwa" : "Nom",
-  "name2": "????",
   "submit": "Enregistrer",
   "club": "Club",
   "category": "Catégorie",
@@ -57,7 +56,7 @@
 
 
   "last_updated": "Dernière mise à jour",
-  "dashboard_title": "???Moin tableau???",
+  "dashboard_title": "Mon tableau de bord",
   "message": "Message",
   "view": "Vues",
   "share": "Partager",
@@ -83,7 +82,7 @@
   "choose": "Choisir",
   "registered": "Enregistrée",
   "newsession": "Séance",
-  "journey": "Journey",
+  "journey": "Parcours",
   "create": "Créer",
   "add": "Ajouter",
   "where": "Où",
@@ -92,6 +91,15 @@
   "route": "Voie",
   "other": "Autre",
   "show_all": "Toutes les salles",
-  "add_gym": "Nouvelle salle"
+  "add_gym": "Nouvelle salle",
+  "addadminuser": "Ajouter un administrateur",
+  "addscoreruser": "Ajouter un gestionnaire de compétition",
+
+
+  "error5314": "La mise à jour des voies n'est pas autorisée",
+  "error5315": "Pas de permission pour éditer le mur",
+  "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
+  "error5321": "Un utilisateur avec cet email est déjà inscrit"
+
 
 }
