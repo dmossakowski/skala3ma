@@ -8,6 +8,7 @@ cycler==0.10.0
 Flask==1.1.1
 Flask-OAuthlib==0.9.5
 Flask-Login==0.4.1
+Flask-Cors==3.0.10
 gevent==21.1.1
 greenlet==0.4.17
 gunicorn==20.0.4
