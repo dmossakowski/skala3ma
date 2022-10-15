@@ -29,6 +29,9 @@ from competitionsApp import languages
 import competitionsEngine
 import locale
 import glob
+from flask import Flask
+from flask_cors import CORS
+
 
 from flask_login import (
     LoginManager,
@@ -69,6 +72,7 @@ app.register_blueprint(skala_api_app)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
+CORS(app)
 
 genres = {"test": "1"}
 authenticated = False
@@ -158,7 +162,8 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
                             format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
                             # datefmt='%m-%d %H:%M',
                             filename=log_file,
-                            filemode=filemode_val)
+                            filemode=filemode_val
+                            )
     # define a Handler which writes INFO messages or higher to the sys.stderr
 
     console = logging.StreamHandler()

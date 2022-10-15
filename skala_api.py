@@ -876,6 +876,16 @@ def gyms():
     return gyms
 
 
+@skala_api_app.route('/gyms')
+def gyms_list():
+    gyms = competitionsEngine.get_gyms()
+
+    newgyms = []
+    for gymid in gyms:
+        newgyms.append(gyms.get(gymid))
+
+    return json.dumps(newgyms)
+
 
 
 @skala_api_app.route('/gym/<gymid>')

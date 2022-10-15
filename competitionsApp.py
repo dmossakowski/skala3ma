@@ -313,7 +313,8 @@ def competition_admin_get(competition_id):
 def competition_admin_post(competition_id):
     remove_climber = request.form.get('remove_climber')
     update_status = request.form.get('update_status')
-    permission_user = request.form.get('permission_user')
+    permission_admin_user = request.form.get('permission_admin_user')
+    permission_scorer_user = request.form.get('permission_scorer_user')
 
     competition_update_button = request.form.get('competition_update_button')
 
@@ -340,9 +341,17 @@ def competition_admin_post(competition_id):
     # change the state of a competition
     # remove climber from a competition
 
-    if permission_user is not None:
+    if permission_admin_user is not None:
         user2 = competitionsEngine.get_user_by_email(permissioned_user)
-        competitionsEngine.modify_user_permissions_to_competition(user, competition_id)
+        competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
+        competitionsEngine.add_user_permission_edit_competition(user2)
+
+
+    if permission_scorer_user is not None:
+        user2 = competitionsEngine.get_user_by_email(permissioned_user)
+        competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
+        competitionsEngine.add_user_permission_update_routes(user2)
+
 
     if update_status is not None:
         competition['status'] = int(competition_status)
@@ -687,7 +696,7 @@ def addCompetitionClimber(competitionId):
 
     if user is None and form_user is not None and (
             form_user.get('fname') is not None or form_user.get('gname') is not None):
-        error_code = "User with this email is known and they should login and register themselves"
+        error_code = "error5316"
 
     if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
@@ -705,7 +714,7 @@ def addCompetitionClimber(competitionId):
             return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
 
         except ValueError:
-            error_code = email+' is already registered!'
+            error_code = "error5321"
 
     ##   comp=None # this is to not show the list of climbers before registration
 
@@ -1041,7 +1050,7 @@ def competitionRoutesList(competitionId):
 
     error_code = ""
     if not competitionsEngine.can_update_routes(user,competition):
-        error_code = "5314 - updating routes is not permitted"
+        error_code = "error5314"
 
     gymid = competition['gym']
     #gym = competitionsEngine.get_gym(gymid)
@@ -1556,7 +1565,7 @@ def gyms_update(gym_id):
 
     if not competitionsEngine.has_permission_for_gym(gym_id, user):
         return render_template('competitionNoPermission.html',
-                               error_code="7788 - no permission to edit gym",
+                               error_code="error5315",
                                competitionId=None,
                                gyms=gyms,
                                reference_data=competitionsEngine.reference_data,

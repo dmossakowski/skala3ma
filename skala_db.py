@@ -454,14 +454,19 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
             user['permissions'] = permissions
 
         if action == "ADD":
-            permissions[permission_type].append(item_id)
+            if item_id not in permissions[permission_type]:
+                permissions[permission_type].append(item_id)
+                _update_user(user['id'], user['email'], user)
+                logging.info('added user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
+                     ' action='+str(action))
         elif action == "REMOVE":
             permissions[permission_type].remove(item_id)
+            _update_user(user['id'], user['email'], user)
+            logging.info('removed user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
+                     ' action='+str(action))
         else:
             raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
-        _update_user(user['id'], user['email'], user)
-        logging.info('updated user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
-                     ' action='+str(action))
+        
 
     finally:
         db.commit()

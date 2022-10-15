@@ -22,7 +22,7 @@
 
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+					<div class="row text-center heading-section animate-box">
 
 
 			{% if rankings is not none and rankings is not undefined %}
@@ -39,15 +39,11 @@
 						<h3> <br>{{ reference_data['current_language'].competition_results }} <br>
 						<br>{{ reference_data['current_language'].not_available }}</h3>
 						{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}
-
 			{% endif %}
-
 					</div>
-
 
 		<div class="container">
 			<div class="row row-bottom-padded-md">
-
 
 {% if rankings is not none and rankings is not undefined %}
 

@@ -58,7 +58,7 @@
   "message": "Nachrichten",
   "view": "Views",
   "share": "Aktien",
-  "user": "Benutzer",
+  "user": "Uzytkownik",
   "general_stat": "Allgemeine Statistiken",
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",
@@ -77,8 +77,16 @@
   "lastname": "Nazwisko",
   "other_club_not_listed": "Sprecyzuj jeśli inny",
   "choose": "Wybierz",
-  "registered": "Zapisany/a"
+  "registered": "Zapisany/a",
 
+  "addadminuser": "Dodaj admininstratora",
+  "addscoreruser": "Dodaj sędziego",
+
+
+  "error5314": "Ten uzytkownik nie moze zmieniać dróg",
+  "error5315": "Ten uzytkownik nie moze zmieniać skałe",
+  "error5316": "Ten uzytkownik jest znany i powinien sie wpisac sam i zapisac sam",
+  "error5321": "Ten adres jest juz zarejestrowany"
 
 
 

@@ -723,6 +723,12 @@ def add_user_permission_create_competition(user):
 def add_user_permission_create_gym(user):
     skala_db.add_user_permission(user,'create_gym')
 
+def add_user_permission_update_routes(user):
+    skala_db.add_user_permission(user,'update_routes')
+
+def add_user_permission_edit_competition(user):
+    skala_db.add_user_permission(user,'edit_competition')
+
 
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
@@ -757,7 +763,8 @@ def can_create_competition(climber):
 
 def can_edit_competition(climber, competition):
     permissions = climber.get('permissions')
-    if 'edit_competition' in permissions['general']:
+    if 'edit_competition' in permissions['general'] \
+        and competition['id'] in permissions['competitions']:
         return True
     return False
     #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
@@ -789,7 +796,7 @@ def can_register(user, competition):
         climbers = competition['climbers']
         for cid in climbers:
             if climbers[cid]['email']==user['email']:
-                return '5056 - User with email '+user['email']+' already registered'
+                return 'error5321'
 
     if len(competition['climbers']) > 150:
         return '5057 - Maximum registrations reached'

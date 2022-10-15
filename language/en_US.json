@@ -87,7 +87,16 @@
   "route": "Route",
   "other": "Other",
   "show_all": "Show all",
-  "add_gym": "Add a gym"
+  "add_gym": "Add a gym",
+  "addadminuser": "Add admin",
+  "addscoreruser": "Add scorer",
+
+
+  "error5314": "Updating routes is not permitted for this user",
+  "error5315": "No permission to edit gym",
+  "error5316": "User with this email is known and they should login and register themselves",
+  "error5321": "This email address is already registered"
+
 
 
 }

@@ -62,7 +62,7 @@
 
 
 <br><br>
-	<label for="permissioned_user">{{ reference_data['current_language'].permissioned_user}}Permission user:</label>
+	<label for="permissioned_user">{{ reference_data['current_language'].user}}:</label>
 	<select name="permissioned_user" id="permissioned_user">
 							<option value="" size="20" ></option>
 
@@ -74,9 +74,15 @@
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;
 
 
-	<button name="permission_user" value="permission_user">{{ reference_data['current_language'].save}}</button>
+	<button name="permission_admin_user" value="permission_admin_user">{{ reference_data['current_language'].addadminuser}}</button>
+
+	&nbsp;&nbsp;
+	<button name="permission_scorer_user" value="permission_scorer_user">{{ reference_data['current_language'].addscoreruser}}</button>
 
 <br><br>
+
+
+
 
 <table class="table thead-dark table-hover" >
          <thead><tr>

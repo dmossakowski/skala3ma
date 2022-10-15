@@ -7,14 +7,13 @@ set -eu
 export PYTHONUNBUFFERED=true
 
 # Install Python 3 virtual env
-VIRTUALENV=.data/venv
+#VIRTUALENV=.data/venv
+VIRTUALENV=.mainenv
 
-if ! command -v virtualenv; then
-  pip install virtualenv
-fi
 
 if [ ! -d $VIRTUALENV ]; then
-  virtualenv -p python3 $VIRTUALENV
+  #virtualenv -p python3 $VIRTUALENV
+  source $VIRTUALENV/bin/activate
 fi
 
 # Install the requirements
@@ -22,3 +21,10 @@ $VIRTUALENV/bin/pip install -r requirements.txt
 
 # Run a glorious Python 3 server
 $VIRTUALENV/bin/python3 server.py
+
+
+# create localhost certificats:
+# openssl req -new -x509 -days 365 -nodes -out cert.pem -keyout key.pem
+
+# allow chrome to open self signed https localhost:
+# chrome://flags/#allow-insecure-localhost
