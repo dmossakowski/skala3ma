@@ -55,7 +55,7 @@
 							<br>
 							<br>
 
-							<label for="category">Category:</label><br><select name="category" id="category">
+							<label for="category">{{reference_data['current_language'].category}}:</label><br><select name="category" id="category">
 							{% for category in reference_data['categories'] %}
 
 							<option value="{{category}}" size="20"
@@ -66,7 +66,7 @@
 						</select><br><br>
 
 							<label for="club">Club:</label><br><select name="club" id="club">
-							<option value="--" size="20" >Choose</option>
+							<option value="--" size="20" >{{reference_data['current_language'].choose}}</option>
 							{% for club in reference_data['clubs'] %}
 
 							{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
