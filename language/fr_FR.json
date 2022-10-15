@@ -77,23 +77,21 @@
   "competition_status_4": "Fermée",
   "not_available": "indisponibles",
 
-  "firstname": "Prenom",
+  "firstname": "Prénom",
   "lastname": "Nom",
-  "other_club_not_listed": "Si autre club non répertorié lequel",
-  "choose": "Choisizes",
-  "registered": "Enregistree",
-  "newsession": "Seance",
+  "other_club_not_listed": "Si autre club non répertorié, lequel",
+  "choose": "Choisir",
+  "registered": "Enregistrée",
+  "newsession": "Séance",
   "journey": "Journey",
-  "create": "Create",
-  "add": "Ajoute",
-  "where": "Ou",
-  "open": "Ouvre",
-  "view": "View",
-  "route": "Route",
+  "create": "Créer",
+  "add": "Ajouter",
+  "where": "Où",
+  "open": "Ouvrir",
+  "view": "Voir",
+  "route": "Voie",
   "other": "Autre",
-  "show_all": "Toute les salle",
-  "add_gym": "Nouveou salle"
-
-
+  "show_all": "Toutes les salles",
+  "add_gym": "Nouvelle salle"
 
 }
