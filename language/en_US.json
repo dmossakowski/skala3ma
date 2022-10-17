@@ -12,6 +12,12 @@
   "about": "About",
   "short_app_description": "Manage competitions and gym routes. ",
   "app_welcome": "SKALA3MA - Official app for FSGT competitions",
+  "update_details": "Update your details",
+  "details_saved": "Your details were saved",
+  "all_fields_required": "All fields are required",
+  "no_competition_found": "No competition found",
+  "routes_saved": "Climber routes saved",
+  "no_climber_found": "No climber found",
 
   "register": "Register",
   "climbers": "Climbers",
@@ -52,6 +58,9 @@
   "rank": "Rank",
 
 
+  "ranked_women": "Women ranking",
+  "ranked_men": "Men ranking",
+
   "last_updated": "Zuletzt aktualisiert am",
   "dashboard_title": "Mein Dashboard",
   "message": "Nachrichten",
@@ -74,6 +83,9 @@
   "not_available": "Not available",
   "firstname": "First ame",
   "lastname": "Last name",
+  "nickname": "Nickname ",
+  "email": "Email ",
+
   "other_club_not_listed": "If other club, enter here",
   "choose": "Choose",
   "registered": "Registered",

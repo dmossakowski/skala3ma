@@ -34,24 +34,24 @@
 						{% if climber is not none  %}
 
 						<form action="/updateuser">
-							<label >Logged in as:</label><br> {{logged_name}}<br><br>
+							<label >{{reference_data['current_language'].logged_in_as}}:</label><br> {{logged_name}}<br><br>
 							<!--label for="fullname">Full name:</label><br> <input id="fullname" name="fullname" size="40" value="{{climber['fullname']}}"/><br><br-->
-							<label for="firstname">Prenom:</label><br> <input id="firstname" name="firstname" size="40" value="{{climber['firstname']}}"/><br><br>
-							<label for="lastname">Nom:</label><br> <input id="lastname" name="lastname" size="40" value="{{climber['lastname']}}"/><br><br>
+							<label for="firstname">{{reference_data['current_language'].firstname}}:</label><br> <input id="firstname" name="firstname" size="40" value="{{climber['firstname']}}"/><br><br>
+							<label for="lastname">{{reference_data['current_language'].lastname}}:</label><br> <input id="lastname" name="lastname" size="40" value="{{climber['lastname']}}"/><br><br>
 
-							<label for="nick">Nick:</label><br> <input id="nick" name="nick" size="40" value="{{climber['nick']}}"/><br><br>
+							<label for="nick">{{reference_data['current_language'].nickname}}:</label><br> <input id="nick" name="nick" size="40" value="{{climber['nick']}}"/><br><br>
 
 							{% if climber['email'] is none %}
 							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
 							{% else %}
-							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
+							<label for="email">{{reference_data['current_language'].email}}:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
 							{% endif %}
 
 
 							<input type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
-							<label for="F">Femme</label>
+							<label for="F">{{reference_data['current_language'].woman}}</label>
 							<input type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
-							<label for="M">Homme</label>
+							<label for="M">{{reference_data['current_language'].man}}</label>
 							<br>
 							<br>
 
@@ -65,7 +65,7 @@
 							{% endfor %}
 						</select><br><br>
 
-							<label for="club">Club:</label><br><select name="club" id="club">
+							<label for="club">{{reference_data['current_language'].club}}:</label><br><select name="club" id="club">
 							<option value="--" size="20" >{{reference_data['current_language'].choose}}</option>
 							{% for club in reference_data['clubs'] %}
 
@@ -74,7 +74,7 @@
 									{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
-							<option value="other" size="20" >Other</option>
+							<option value="other" size="20" >{{reference_data['current_language'].other}}</option>
 
 
 							</select>
@@ -83,7 +83,7 @@
 							<label for="otherclub">Si autre club non répertorié lequel:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
 
 
-<button >Sumbit</button>
+<button >{{reference_data['current_language'].submit}}</button>
 					</form>
 <br>
 

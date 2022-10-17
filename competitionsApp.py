@@ -653,7 +653,7 @@ def new_competition_post():
 
     if name is not None and date is not None and routesid is not None:
         competitionId = competitionsEngine.addCompetition(None, name, date, routesid)
-        competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
+        competitionsEngine.modify_user_permissions_to_competition(user, competitionId, request.args.get('add'))
         comp = getCompetition(competitionId)
         return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
 
