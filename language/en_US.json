@@ -90,6 +90,7 @@
   "add_gym": "Add a gym",
   "addadminuser": "Add admin",
   "addscoreruser": "Add scorer",
+  "youareregistered": "Thank you. You have been registered for the competition.",
 
 
   "error5314": "Updating routes is not permitted for this user",

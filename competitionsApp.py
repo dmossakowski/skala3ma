@@ -336,6 +336,9 @@ def competition_admin_post(competition_id):
         session["wants_url"] = request.url
         return redirect(url_for("fsgtapp.fsgtlogin"))
 
+
+    
+    
     # add this competition to another user's permissions
     # remove this competition from another users permissions
     # change the state of a competition
@@ -365,10 +368,18 @@ def competition_admin_post(competition_id):
         competition_name = request.form.get('competition_name')
         competition_date = request.form.get('competition_date')
         competition_routes = request.form.get('competition_routes')
+        # update gym name in the competition if Gym Name is changed somewhere else
+        gym = competitionsEngine.get_gym(competition['gym_id'])
+        if gym is not None:
+            if gym['name'] != competition['gym']:
+                competition['gym']=gym['name']
+
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes)
 
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
+            
+
 
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
@@ -711,7 +722,15 @@ def addCompetitionClimber(competitionId):
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'
-            return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+            #return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+            return render_template("competitionClimberRegistered.html", 
+                    competitionId=competitionId,
+                    competition=comp,
+                    reference_data=competitionsEngine.reference_data,
+                    library=None,
+                    **session)
+
+
 
         except ValueError:
             error_code = "error5321"
