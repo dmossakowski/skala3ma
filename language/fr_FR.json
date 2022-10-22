@@ -2,8 +2,8 @@
   "name": "Nom",
   "nazwa" : "Nom",
   "submit": "Enregistrer",
-  "club": "Club",
-  "category": "Catégorie",
+  "club": "Club ",
+  "category": "Catégorie ",
   "malefemale": "F/H",
   "competitions": "Compétitions",
   "gyms": "Murs",
@@ -12,6 +12,13 @@
   "about": "À propos",
   "short_app_description": "Gérer les compétitions et les murs",
   "app_welcome": "SKALA3MA - Application officielle des compétitions autrement de la FSGT",
+  "update_details": "Renseignez vos informations",
+  "details_saved": "Vos informations sont sauvegardées",
+  "all_fields_required": "Tous les champs sont requis",
+  "no_competition_found": "Aucune compétition trouvée",
+  "routes_saved": "Voies sauvegardées",
+  "no_climber_found": "Aucun grimpeur",
+
 
   "register": "S'inscrire",
   "climbers": "Grimpeur.se.s",
@@ -35,6 +42,8 @@
   "points": "Points",
   "women": "Femme",
   "men": "Homme",
+  "woman": "Femme",
+  "man": "Homme",
 
   "line": "Ligne",
   "route_num": "Num de voie",
@@ -54,6 +63,7 @@
   "ranked_women": "Classement Femme",
   "ranked_men": "Classement Homme",
 
+  "make_copy": "Dupliquer",
 
   "last_updated": "Dernière mise à jour",
   "dashboard_title": "Mon tableau de bord",
@@ -76,9 +86,11 @@
   "competition_status_4": "Fermée",
   "not_available": "indisponibles",
 
-  "firstname": "Prénom",
-  "lastname": "Nom",
-  "other_club_not_listed": "Si autre club non répertorié, lequel",
+  "firstname": "Prénom ",
+  "lastname": "Nom ",
+  "nickname": "Pseudo ",
+  "email": "Email ",
+  "other_club_not_listed": "Si autre club non répertorié, lequel ",
   "choose": "Choisir",
   "registered": "Enregistrée",
   "newsession": "Séance",
@@ -96,6 +108,7 @@
   "addscoreruser": "Ajouter un gestionnaire de compétition",
   "youareregistered": "Merci. On se voit à le competition.",
 
+  "logged_in_as" : "Connecté en tant que ",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

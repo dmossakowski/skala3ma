@@ -545,7 +545,7 @@ def update_user():
     club = request.args.get('club')
     category = request.args.get('category')
 
-    subheader_message = 'Update your details'
+    subheader_message = request.args.get('update_details')
 
     email = session.get('email')
     name = session.get('name')
@@ -554,7 +554,7 @@ def update_user():
         #subheader_message = "Update"
 
         return render_template('climber.html',
-                               error_message = "All fields are required",
+                               error_message = request.args.get('all_fields_required'),
                                subheader_message=subheader_message,
                                competitionId=None,
                                climber=climber,
@@ -565,7 +565,7 @@ def update_user():
 
     else:
         climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, category)
-        subheader_message = 'Your details were saved'
+        subheader_message = request.args.get('details_saved')
 
     if name is None:
         name = ""
@@ -595,7 +595,7 @@ def get_competition_results(competitionId):
 
     if competition is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No competition found",
+                               subheader_message=request.args.get('no_competition_found'),
                                **session)
     elif competition is LookupError:
         return render_template('index.html', sortedA=None,
@@ -636,7 +636,7 @@ def getCompetitionClimber(competitionId, climberId):
             return render_template('competitionDashboard.html', sortedA=None,
                                    competition=competition,
                                    competitionId=competitionId,
-                                   subheader_message="Climber routes saved",
+                                   subheader_message=request.args.get('routes_saved'),
                                     reference_data=competitionsEngine.reference_data,
                                    **session)
 
@@ -646,7 +646,7 @@ def getCompetitionClimber(competitionId, climberId):
 
     if climber is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No climber found",
+                               subheader_message=request.args.get('no_climber_found'),
                                **session)
     elif climber is LookupError:
         return render_template('index.html', sortedA=None,
@@ -744,7 +744,7 @@ def routes_climbed(competitionId, climberId):
 
     if climber is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No climber found",
+                               subheader_message=request.args.get('no_climber_found'),
                                **session)
     elif climber is LookupError:
         return render_template('competitionDashboard.html', sortedA=None,
@@ -802,7 +802,7 @@ def update_routes_climbed(competitionId, climberId):
             return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,
-                                   subheader_message="Routes saved",
+                                   subheader_message=request.args.get('routes_saved'),
                                     reference_data=competitionsEngine.reference_data,
                                    **session)
 
@@ -810,7 +810,7 @@ def update_routes_climbed(competitionId, climberId):
 
     if climber is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No climber found",
+                               subheader_message=request.args.get('no_climber_found'),
                                **session)
     elif climber is LookupError:
         return render_template('competitionDashboard.html', sortedA=None,
