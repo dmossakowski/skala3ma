@@ -1,0 +1,80 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+	<div name='bbb'>
+
+		{% include "skala3ma-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="text-center heading-section animate-box">
+						<br>
+						<h3>{{ reference_data['current_language'].youareregistered }}</h3>
+
+				{{competition['name'] }} - {{ competition['date']}}<br>
+						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
+						 <br><br>
+				
+					</div>
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+{% if competition is not none and competition is not undefined  %}
+
+
+
+
+
+<div class="container-fluid">
+	
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+    				{% for climberId in competition['climbers'] %}
+
+		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
+
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+</div>
+
+
+
+
+				{%endif %}
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}
