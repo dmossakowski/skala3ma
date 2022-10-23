@@ -11,7 +11,13 @@
   "create_new": "Dodaj",
   "about": "O",
   "short_app_description": "Róbta co chceta... ",
-    "app_welcome": "SKALA3MA - Oficjalna apka zawodów FSGT",
+  "app_welcome": "SKALA3MA - Oficjalna apka zawodów FSGT",
+  "update_details": "Update your details",
+  "details_saved": "Your details were saved",
+  "all_fields_required": "All fields are required",
+  "no_competition_found": "No competition found",
+  "routes_saved": "Climber routes saved",
+  "no_climber_found": "No climber found",
 
   "register": "Zarejestruj się",
   "climbers": "Spinacze",
@@ -39,6 +45,9 @@
   "ranked_men": "Męższczyzn",
 
   "line": "Linia",
+  "color": "Color", 
+  "solid": "solid",
+  "marble": "marble",
   "route_num": "Numer drogi",
   "grade": "Ocena",
   "climbed": "Wspięte",
@@ -46,12 +55,16 @@
   "route_opened_by": "Otwarta przez",
   "route_opened_date": "Data otwarcia",
   "notes": "Notki",
-
-
   "save": "Zapisz",
 
   "routes_climbed": "Spięte drogi",
   "rank": "Rank",
+
+
+  "ranked_women": "Women ranking",
+  "ranked_men": "Men ranking",
+
+  "make_copy": "Make copy",
 
   "last_updated": "Zuletzt aktualisiert am",
   "dashboard_title": "Mein Dashboard",
@@ -75,13 +88,28 @@
   "not_available": "Nie dostępne",
   "firstname": "Imię",
   "lastname": "Nazwisko",
+  "nickname": "Nickname ",
+  "email": "Email ",
+
   "other_club_not_listed": "Sprecyzuj jeśli inny",
   "choose": "Wybierz",
   "registered": "Zapisany/a",
-
+  "newsession": "New outing",
+  "journey": "Journey",
+  "create": "Create",
+  "add": "Add",
+  "where": "Where",
+  "open": "Open",
+  "view": "View",
+  "route": "Route",
+  "other": "Other",
+  "show_all": "Show all",
+  "add_gym": "Add a gym", 
   "addadminuser": "Dodaj admininstratora",
   "addscoreruser": "Dodaj sędziego",
   "youareregistered": "Dzięki. Rejestracja się udała.",
+  "remove": "Remove",
+  "action": "Action",
 
 
 
