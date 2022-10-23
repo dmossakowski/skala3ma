@@ -46,6 +46,9 @@
   "man": "Homme",
 
   "line": "Ligne",
+  "color": "Couleur",
+  "solid": "pleine",
+  "marble": "marbrée",
   "route_num": "Num de voie",
   "grade": "Cotation",
   "climbed": "enchaînée",
@@ -106,7 +109,9 @@
   "add_gym": "Nouvelle salle",
   "addadminuser": "Ajouter un administrateur",
   "addscoreruser": "Ajouter un gestionnaire de compétition",
-  "youareregistered": "Merci. On se voit à le competition.",
+  "youareregistered": "Merci. On se voit à la compétition.",
+  "remove": "Supprimer",
+  "action": "Action",
 
   "logged_in_as" : "Connecté en tant que ",
 

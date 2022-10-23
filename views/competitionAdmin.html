@@ -91,7 +91,7 @@
          <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].email }}</th>
-			 <th>Actions</th>
+			 <th>{{reference_data['current_language'].action}}</th>
          </tr>
          </thead>
     <tbody>
@@ -104,7 +104,7 @@
 			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
  <td><i>{{competition['climbers'][climberId]['email'] }}</i></td>
 			 <td>
-				<button name="remove_climber" value="{{ competition['climbers'][climberId]['id'] }}">Remove</button>
+				<button name="remove_climber" value="{{ competition['climbers'][climberId]['id'] }}">{{ reference_data['current_language'].remove}}</button>
 
 			 </td>
 

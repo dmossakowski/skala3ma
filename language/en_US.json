@@ -45,6 +45,9 @@
   "ranked_men": "Men ranked",
 
   "line": "Line",
+  "color": "Color", 
+  "solid": "solid",
+  "marble": "marble",
   "route_num": "Route num",
   "grade": "Grade",
   "climbed": "Climbed",
@@ -105,7 +108,8 @@
   "addadminuser": "Add admin",
   "addscoreruser": "Add scorer",
   "youareregistered": "Thank you. You have been registered for the competition.",
-
+  "remove": "Remove",
+  "action": "Action",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",

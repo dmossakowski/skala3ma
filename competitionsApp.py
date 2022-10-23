@@ -766,7 +766,7 @@ def get_user():
 
     climber = competitionsEngine.get_user_by_email(session.get('email'))
 
-    subheader_message = 'Update your details'
+    subheader_message = request.args.get('update_details')
 
     email = session.get('email')
     name = session.get('name')
@@ -802,7 +802,7 @@ def update_user():
     club = request.args.get('club')
     category = request.args.get('category')
 
-    subheader_message = 'Update your details'
+    subheader_message = request.args.get('update_details')
 
     email = session.get('email')
     name = session.get('name')

@@ -231,8 +231,8 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
 			 <td>
 				 <input name="color1" type ="color" value="{{ route['color1'] }}">
 				 <select type="select" name="color_modifier">
-					 <option name="solid" {% if route['color_modifier'] == 'solid' %}selected{% endif %} > solid</option>
-					 <option name="marble" {% if route['color_modifier'] == 'marble' %}selected{% endif %} > marble</option>
+					 <option name="solid" {% if route['color_modifier'] == 'solid' %}selected{% endif %} > {{reference_data['current_language'].solid}}</option>
+					 <option name="marble" {% if route['color_modifier'] == 'marble' %}selected{% endif %} > {{reference_data['current_language'].marble}}</option>
 				 </select>
 			 </td>
 
