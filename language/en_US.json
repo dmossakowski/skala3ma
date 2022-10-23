@@ -41,6 +41,8 @@
   "points": "Points",
   "women": "Women",
   "men": "Men",
+  "woman": "Woman",
+  "man": "Man",
   "ranked_women": "Women ranked",
   "ranked_men": "Men ranked",
 
@@ -110,6 +112,7 @@
   "youareregistered": "Thank you. You have been registered for the competition.",
   "remove": "Remove",
   "action": "Action",
+  "logged_in_as": "Logged in as",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",

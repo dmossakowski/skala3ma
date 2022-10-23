@@ -41,6 +41,8 @@
   "points": "Punkty",
   "women": "Kobiety",
   "men": "Męższczyzni",
+  "woman": "Kobieta",
+  "man": "Męższczyzna",
   "ranked_women": "Kobiet",
   "ranked_men": "Męższczyzn",
 
@@ -110,7 +112,7 @@
   "youareregistered": "Dzięki. Rejestracja się udała.",
   "remove": "Wymaż",
   "action": "Akcja",
-
+  "logged_in_as": "Zalogowany jako",
 
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
