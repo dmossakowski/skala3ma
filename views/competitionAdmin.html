@@ -52,7 +52,7 @@
 
 		{% for competition_status in reference_data['competition_status'] %}
 
-							<option value="{{reference_data['competition_status'][competition_status]}}" size="20" >{{ reference_data['current_language']['competition_status_'~competition['status']] }}</option>
+							<option value="{{reference_data['competition_status'][competition_status]}}" size="20" >{{ reference_data['current_language']['competition_status_'~competition_status] }}</option>
 	{% endfor %}
 
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;
