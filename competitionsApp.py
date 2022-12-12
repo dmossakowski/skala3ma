@@ -155,7 +155,8 @@ def login_required(fn):
 def admin_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if session != None and session.get('name') == 'David Mossakowski':
+        if session != None and (session.get('name') == 'David Mossakowski' or 
+            session.get('name') == 'Sebastiao Correia'):
             now = int(datetime.now().timestamp())
             #expiresAt = session['expires_at']
             expiresAtLocaltime = session['expires_at_localtime']
@@ -204,6 +205,7 @@ def index():
 
 @fsgtapp.route('/competitionRawAdmin', methods=['GET'])
 @login_required
+@admin_required
 def fsgtadminget():
     edittype = request.args.get('edittype')
     id = request.args.get('id')
@@ -219,7 +221,9 @@ def fsgtadminget():
 
 @fsgtapp.route('/competitionRawAdmin', methods=['POST'])
 @login_required
+@admin_required
 def fsgtadmin():
+    
     edittype = request.form.get('edittype')
     id = request.form.get('id')
     action = request.form.get('action')
