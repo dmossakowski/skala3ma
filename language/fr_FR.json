@@ -130,7 +130,9 @@
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
-  "error5321": "Un utilisateur avec cet email est déjà inscrit"
+  "error5321": "Un utilisateur avec cet email est déjà inscrit",
+  "error5322": "Current competition status does not allow new registrations",
+  "error5323": "Maximum registrations reached"
 
 
 }

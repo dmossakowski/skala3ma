@@ -131,7 +131,9 @@
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
-  "error5321": "Ten adres jest juz zarejestrowany"
+  "error5321": "Ten adres jest juz zarejestrowany",
+  "error5322": "Rejestracja na te zawody jest niemożliwa",
+  "error5323": "Osiągnięto maksymalną liczbę zawodników"
 
 
 

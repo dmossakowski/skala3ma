@@ -790,7 +790,7 @@ def can_update_routes(user, competition):
 def can_register(user, competition):
 
     if competition is None:
-        return '5055 - competition is null'
+        raise ValueError('competition cannot be None')
 
     if user is not None:
         climbers = competition['climbers']
@@ -798,14 +798,14 @@ def can_register(user, competition):
             if climbers[cid]['email']==user['email']:
                 return 'error5321'
 
-    if len(competition['climbers']) > 150:
-        return '5057 - Maximum registrations reached'
+    if len(competition['climbers']) >= 80:
+        return 'error5323'
 
     # if anonymous registration and competition is in the correct state then allow
     if competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
         return ""
     else:
-        return '5057 - Competition status does not allow new registrations'
+        return 'error5322'
 
 
 def can_edit_gym(user, gym):
