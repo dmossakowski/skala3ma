@@ -29,7 +29,8 @@
   "Easy_scaled_route_entry" :"Entrée des voies grimpées facilitée" ,
   "Instant_scoring": "Calcul instantanné des scores",
   "Multi_language": "Multi-langue",
-  "Google_and_Facebook_logins":"Login Google and Facebook",
+  "Google_and_Facebook_logins":"Login Google et Facebook",
+
 
 
   "register": "S'inscrire",
@@ -131,8 +132,8 @@
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
   "error5321": "Un utilisateur avec cet email est déjà inscrit",
-  "error5322": "Current competition status does not allow new registrations",
-  "error5323": "Maximum registrations reached"
+  "error5322": "L'état de la compétition ne permet pas de nouvelles inscriptions",
+  "error5323": "Nombre maximal d'inscriptions atteint"
 
 
 }
