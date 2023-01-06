@@ -75,7 +75,7 @@ colors = { 'Vert':'#2E8B57',
 'Saumon':'#FFE4C4'}
 
 
-categories = {0:"Séniors 16-49 ans", 1:"Titane 50-69 ans", 2: "Diamant 70 ans et +"}
+categories = {0:"Séniors 16-49 ans", 1:"Titane 50-64 ans", 2: "Diamant 65 ans et +"}
 
 clubs = {               0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
