@@ -164,7 +164,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         competition = get_competition(competitionId)
         climbers = competition['climbers']
-        logging.info(climbers)
+        #logging.info(climbers)
 
         for cid in climbers:
             if climbers[cid]['email']==email:
@@ -173,7 +173,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         climbers[climberId] = {"id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
                                "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
-        logging.info(competition)
+        #logging.info(competition)
 
         _update_competition(competitionId, competition)
     finally:
@@ -798,7 +798,7 @@ def can_register(user, competition):
             if climbers[cid]['email']==user['email']:
                 return 'error5321'
 
-    if len(competition['climbers']) >= 80:
+    if len(competition['climbers']) >= 200:
         return 'error5323'
 
     # if anonymous registration and competition is in the correct state then allow

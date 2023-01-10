@@ -124,9 +124,12 @@
   "addadminuser": "Add admin",
   "addscoreruser": "Add scorer",
   "youareregistered": "Thank you. You have been registered for the competition.",
+  "youareonwaitinglist": "Thank you. Maximum participants have already registered and you have been put on the waiting list",
   "remove": "Remove",
   "action": "Action",
   "logged_in_as": "Logged in as",
+  "status": "Status",
+  "waitlist": "Waitlist",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",

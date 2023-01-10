@@ -85,11 +85,13 @@
 
 <table class="table thead-dark table-hover" >
          <thead><tr>
+			<th></th>
          <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
          <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
          <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].email }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].status }}</th>
 			 <th>{{reference_data['current_language'].action}}</th>
          </tr>
          </thead>
@@ -97,11 +99,18 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
     				{% for climberId in competition['climbers'] %}
 
-		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+		 <tr><td>{{ loop.index }} </td>
+			<td>{{ competition['climbers'][climberId]['name'] }}</td>
+			<td> {{ competition['climbers'][climberId]['sex'] }}</td>
 			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
 			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
  <td><i>{{competition['climbers'][climberId]['email'] }}</i></td>
+ {%if (loop.index <= 80) %}
+			 <td><i>{{reference_data['current_language'].registered}}</i></td>
+			 {%  else %}
+			 <td><i>{{reference_data['current_language'].waitlist}}</i></td>
+			 {% endif %}
+    
 			 <td>
 				<button name="remove_climber" value="{{ competition['climbers'][climberId]['id'] }}">{{ reference_data['current_language'].remove}}</button>
 

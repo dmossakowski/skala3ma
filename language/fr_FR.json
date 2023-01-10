@@ -123,10 +123,13 @@
   "addadminuser": "Ajouter un administrateur",
   "addscoreruser": "Ajouter un gestionnaire de compétition",
   "youareregistered": "Merci. On se voit à la compétition.",
+  "youareonwaitinglist": "Thank you. Maximum participants have already registered. You have been put on the waiting list",
   "remove": "Supprimer",
   "action": "Action",
 
   "logged_in_as" : "Connecté en tant que ",
+  "status": "L'etat",
+  "waitlist": "Attendre",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

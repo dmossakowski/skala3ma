@@ -123,10 +123,12 @@
   "addadminuser": "Dodaj admininstratora",
   "addscoreruser": "Dodaj sędziego",
   "youareregistered": "Dzięki. Rejestracja się udała.",
+  "youareonwaitinglist": "Dzięki. Maksymalna liczba zawodnikow przekroczona. Jesteś w poczekalni.",
   "remove": "Wymaż",
   "action": "Akcja",
   "logged_in_as": "Zalogowany jako",
-
+  "status": "Stan",
+  "waitlist": "Poczekalnia",
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
