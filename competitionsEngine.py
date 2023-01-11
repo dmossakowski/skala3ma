@@ -116,14 +116,18 @@ reference_data = {"categories":categories, "clubs":clubs, "competition_status": 
 
 
 # called from competitionsApp
-def addCompetition(compId, name, date, routesid):
+def addCompetition(compId, name, date, routesid, max_participants):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
     gym = skala_db.get_gym_by_routes_id(routesid)
 
+    if max_participants is None:
+        max_participants=80
+
     competition = {"id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
                    "routesid": routesid, "status": "preopen", "climbers": {},
+                   "max_participants": max_participants,
                    "results": copy.deepcopy(emptyResults)}
     # write this competition to db
     skala_db._add_competition(compId, competition);
@@ -535,6 +539,10 @@ def _validate_or_upgrade_competition(competition):
 
     #if competition.get('gym_id') is None:
      #   raise ValueError('gym_id is missing for competition '+str(competition['id']))
+
+    if competition.get('max_participants') is None:
+        competition['max_participants'] = 80
+        needs_updating = True
 
     if needs_updating:
         update_competition(competition['id'], competition)

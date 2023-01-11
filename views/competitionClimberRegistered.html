@@ -17,7 +17,7 @@
 					<div class="text-center heading-section animate-box">
 						<br><br><br>
 
-						{%if competition['climbers']|length <= 80 %}
+						{%if competition['climbers']|length <= competition['max_participants']|int %}
 		
 						<h3>{{ reference_data['current_language'].youareregistered }}</h3>
 

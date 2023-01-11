@@ -129,6 +129,8 @@
   "logged_in_as": "Zalogowany jako",
   "status": "Stan",
   "waitlist": "Poczekalnia",
+  "max_participants": "Liczba zawodników",
+
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",

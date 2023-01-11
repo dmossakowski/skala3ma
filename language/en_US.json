@@ -130,6 +130,7 @@
   "logged_in_as": "Logged in as",
   "status": "Status",
   "waitlist": "Waitlist",
+  "max_participants": "Number of participants",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",

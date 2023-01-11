@@ -105,7 +105,7 @@
 			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
 			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
  <td><i>{{competition['climbers'][climberId]['email'] }}</i></td>
- {%if (loop.index <= 80) %}
+ 		{%if (loop.index <= competition['max_participants']|int) %}
 			 <td><i>{{reference_data['current_language'].registered}}</i></td>
 			 {%  else %}
 			 <td><i>{{reference_data['current_language'].waitlist}}</i></td>
