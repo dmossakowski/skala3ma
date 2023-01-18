@@ -1,0 +1,100 @@
+
+
+{% extends "skala3ma-layout.html" %}
+
+
+	{% block secondarycontent %}
+
+<title>
+	load data from json file
+	into a bootstrap table
+</title>
+
+<!-- Include Bootstrap for styling -->
+</head>
+<body>
+<div class="container">
+	<h1 class="text text-success text-center ">
+	GeeksforGeeks
+	</h1>
+	<h6 class="text text-success text-center">
+	A computer science portal for geeks
+	</h6>
+	<table class="table-striped border-success" data-editable-emptytext="Default empty text."
+    data-editable-url="/my/editable/update/path">
+		<thead>
+		<tr>
+			<th data-field="line" >
+			<span class="text-success">
+				Line
+			</span>
+                <th data-field="routenum">
+			<span class="text-success">
+				Route num
+			</span>
+
+			</th>
+            	<th data-field="color1">
+			<span class="text-success">
+				Color 1
+			</span>
+   	        <th data-field="color2">
+			<span class="text-success">
+				Color 2
+			</span>
+   	    <th data-field="grade">
+			<span class="text-success">
+				Grade
+			</span>
+
+			<th data-field="name">
+			<span class="text-success">
+				Employee Name
+			</span>
+			</th>
+			<th data-field="notes">
+			<span class="text-success">
+				Joining Date
+			</span>
+			</th>
+		</tr>
+		</thead>
+	</table>
+</div>
+
+<!-- Include jQuery and other required
+files for Bootstrap -->
+<script src=
+"https://code.jquery.com/jquery-3.3.1.min.js">
+</script>
+<script src=
+"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
+</script>
+<script src=
+"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
+</script>
+
+<!-- Include the JavaScript file
+for Bootstrap table -->
+<script src=
+"https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js">
+</script>
+<script type="text/javascript">
+	$(document).ready(function () {
+
+	// Use the given data to create
+	// the table and display it
+	$('table').bootstrapTable({
+		url: '/api1/gym/1/routes'
+	});
+	$('table').editable({
+		url: '/api1/gym/1/routes'
+	});
+	});
+
+
+</script>
+
+
+
+{% endblock %}

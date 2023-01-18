@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<title>skala3ma</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+	<meta name="description" content="skala3ma" />
+	<meta name="keywords" content="python, spotify, scikit, flask, gevent, Jinja2, matplotlib, pandas, plotly" />
+
+		<!-- bootstrap lib: https://mdbootstrap.com/docs/standard/getting-started/faq/ -->
+	<!-- Bootstrap CSS -->
+		<!--
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"/>
+-->
+  <!-- 
+	//////////////////////////////////////////////////////
+
+	https://demos.freehtml5.co/homestate/premium/agent.html#
+
+	FREE HTML5 TEMPLATE 
+	DESIGNED & DEVELOPED by FREEHTML5.CO
+		
+	Website: 		http://freehtml5.co/
+	Email: 			info@freehtml5.co
+	Twitter: 		http://twitter.com/fh5co
+	Facebook: 		https://www.facebook.com/fh5co
+
+	//////////////////////////////////////////////////////
+	 -->
+
+  	<!-- Facebook and Twitter integration -->
+	<meta property="og:title" content=""/>
+	<meta property="og:image" content=""/>
+	<meta property="og:url" content=""/>
+	<meta property="og:site_name" content="skala3ma"/>
+	<meta property="og:description" content=""/>
+	<meta name="twitter:title" content="" />
+	<meta name="twitter:image" content="" />
+	<meta name="twitter:url" content="" />
+	<meta name="twitter:card" content="" />
+		<meta name="google-signin-client_id" content="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com">
+
+
+	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+	<link rel="shortcut icon" href="/public/images/favicon.png?v5"/>
+		<link rel="icon" href="/public/images/favicon.png?v5"/>
+
+
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'/>
+
+			<link rel="stylesheet" href="/public/css/languages.min.css"/>
+
+	<!-- Animate.css -->
+	<link rel="stylesheet" href="/public/css/animate.css"/>
+	<!-- Icomoon Icon Fonts-->
+	<link rel="stylesheet" href="/public/css/icomoon.css"/>
+	<!-- Bootstrap  -->
+	<link rel="stylesheet" href="/public/css/bootstrap.css">
+	<!-- Superfish -->
+	<link rel="stylesheet" href="/public/css/superfish.css"/>
+	<!-- Flexslider  -->
+	<link rel="stylesheet" href="/public/css/flexslider.css"/>
+	<!-- Magnific Popup -->
+	<link rel="stylesheet" href="/public/css/magnific-popup.css"/>
+	<!-- Date Picker -->
+	<link rel="stylesheet" href="/public/css/bootstrap-datepicker.min.css"/>
+	<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.css"/>
+	<link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
+
+	<link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
+
+
+
+	<!-- CS Select -->
+	<link rel="stylesheet" href="/public/css/cs-select.css">
+	<link rel="stylesheet" href="/public/css/cs-skin-border.css">
+	
+	<link rel="stylesheet" href="/public/css/style.css">
+
+
+	<!-- Modernizr JS -->
+	<script src="/public/js/modernizr-2.6.2.min.js"></script>
+	<!-- FOR IE9 below -->
+	<!--[if lt IE 9]>
+	<script src="/public/js/respond.min.js"></script>
+	<![endif]-->
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+	<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script>
+//https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
+
+
+
+
+
+	function retrieveData() {
+		var targetContainer = document.getElementById('progressMessages');
+    	targetContainer.innerHTML = "<h3>Loading...</h3>";
+
+		var eventSource = new EventSource("/progress");
+		var lastUpdate = ' ';
+		eventSource.onmessage = function(e) {
+			var targetContainer = document.getElementById('progressMessages');
+    		targetContainer.innerHTML = "<h3>"+e.data+"</h3>";
+    		//targetContainer.innerHTML = e.data;
+    		lastUpdate = e.data;
+
+    		console.log('progress '+e.data+' '+e.msg)
+    		console.log(e)
+
+
+			if(e.data.includes('All data loaded')){
+				console.log(' closing source ')
+				eventSource.close()
+			}
+		};
+
+
+		var targetContainer = document.getElementById('progressMessages');
+    		//targetContainer.innerHTML = "<pre>"+e.data+"</pre>";
+    		//targetContainer.innerHTML = " ";
+		var updateButtonContainer = document.getElementById('updateButton');
+		updateButtonContainer.innerHTML = ""
+
+
+ }
+
+	//280503233781760
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '368679864760074',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v10.0'
+    });
+
+    FB.AppEvents.logPageView();
+
+    FB.getLoginStatus(function(response) {
+    	statusChangeCallback(response);
+	});
+
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+
+	function checkLoginState() {
+  		FB.getLoginStatus(function(response) {
+    		statusChangeCallback(response);
+  		});
+	}
+
+	function statusChangeCallback(response)
+	{
+		console.log('layout.html statusChangeCallback');
+		console.log(response)
+		if (response.status=="connected")
+		{
+			//console.log(' is connected boy')
+
+		}else{
+			//console.log(' iz no connect boy')
+			//document.getElementById("fbbutton").style.visibility="visible";
+		}
+	}
+
+	</script>
+
+
+	</head>
+
+	<body>
+
+	<div id="fh5co-wrapper">
+		<div id="fh5co-page">
+
+		<header id="fh5co-header-section" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/main-back.jpg);  background-size: cover;" >
+
+			<!-- class="sticky-bannera"  style="width: 100%"
+			linear-gradient(to left, rgba(255, 0, 0,0.5) 50%, rgba(235,245,255,0) 100%) -->
+
+			<div class="container">
+
+				<div class="nav-header">
+
+					<h1 id="fh5co-logo"><a href="/main"><img src="/public/images/favicon.png" height="30"> skala3ma</a> </h1>
+
+					<!-- START #fh5co-menu-wrap -->
+					<nav id="fh5co-menu-wrap" role="navigation">
+
+						<ul class="sf-menu" id="fh5co-primary-menu">
+
+							<!--li>
+								<a href="/journey" class="fh5co-sub-ddown">{{ reference_data['current_language'].journey }}</a>
+										</li-->
+
+						<li>
+								<a href="/gyms" class="fh5co-sub-ddown">{{ reference_data['current_language'].gyms }}</a>
+
+
+
+										</li>
+
+							<li>
+								<a href="/competitionDashboard" class="fh5co-sub-ddown">{{ reference_data['current_language'].competitions }}</a>
+								<!--li>	<a href="/competitionDashboard" >{{ reference_data['current_language'].list }} </a></li-->
+
+
+
+							</li>
+
+
+
+						{% if username is defined %}
+
+							<!--li><a href="/progresstest">Progress</a></li-->
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
+<!--li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
+</li-->
+
+								{% endif %}
+							<!--li><a href="blog.html">Blog</a></li-->
+							<!--li class="active"><a href="blog.html">Blog</a></li-->
+							<!--li><a href="contact.html">Contact</a></li-->
+							{% if username is not defined %}
+
+							{% endif %}
+
+{% if session is defined and session['name'] is defined %}
+
+<li><a href="/user">{{ session['name'] }}
+
+<img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a>
+
+	<ul class="fh5co-sub-menu">
+		<li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
+
+	{% if session['name'] == 'David Mossakowski' %}
+		<li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
+
+		{% endif %}
+
+		{% if session['name'] == 'Sebastiao Correia' %}
+		<li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
+
+		{% endif %}
+
+
+		</ul>
+
+</li>
+
+
+{% else %}
+
+<li><a href="/loginchoice">Login
+         </a>
+
+
+	<!--li><a href="/facebook/"><img id="facebooklogin	"
+            src="/public/images/facebooklogin.png" height="25"
+            alt="Facebook">
+         </a>
+	<li><a href="/google"><img id="googlelogin"
+            src="/public/images/googlelogin.jpeg" height="23"
+            alt="Facebook"></a-->
+
+
+</li>
+						</ul>
+
+         {% endif %}
+
+				</nav>
+
+				</div>
+
+			</div>
+
+
+
+  			</header>
+
+
+						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
+			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
+		<!-- end:header-top -->
+
+
+
+				 {% block topcontent %} {% endblock %}
+
+
+				 {% block secondarycontent %}
+
+
+
+
+			{% endblock %}
+
+
+		<!-- aside id="fh5co-hero" class="js-fullheight">
+			<div class="flexslider js-fullheight">
+				<ul class="slides">
+			   	<li style="background-image: url(public/images/timeseries1.png);">
+			   		<div class="overlay"></div>
+			   		<div class="container-fluid">
+			   			<div class="row">
+				   			<div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
+			   				<div class="slider-text-inner">
+			   				CONTENT
+
+		   					</div>
+			   			</div>
+				   		</div>
+			   		</div>
+			   	</li>
+			  	</ul>
+		  	</div>
+		</aside>
+		-->
+
+		<footer>
+			<div id="footer">
+				<div class="container">
+					<div class="row row-bottom-padded-md">
+						<div class="col-md-5">
+							<h3 class="section-title"> <img src="/public/images/favicon.png" height="30">  {{ reference_data['current_language'].about }} skala3ma</h3>
+							<p>{{ reference_data['current_language'].short_app_description }}
+							</p>
+						</div>
+
+
+						<div class="col-md-5">
+
+
+
+
+							<h3 class="section-title">Links</h3>
+							<ul>
+
+							{% if username is defined %}
+								<a href="/skala3ma-privacy">Privacy notice</a>
+								<li><a href="/logoutfb">Logout</a></li>
+							{% endif %}
+
+								<li><a href="https://www.facebook.com/skala3ma">Facebook page</a></li>
+
+							</ul>
+
+						</div>
+						<div  class="col-md-2">
+							<!-- http://usrz.github.io/bootstrap-languages/ -->
+							<h3 class="section-title">Languages</h3>
+							<a href="/language/fr_FR"><span class="lang-lg lang-lbl" lang="fr"></span></a>&nbsp;&nbsp;&nbsp;
+							<a href="/language/en_US"><span class="lang-lg lang-lbl" lang="en"></span></a> &nbsp;&nbsp;&nbsp;
+							<a href="/language/pl_PL"><span class="lang-lg lang-lbl" lang="pl"></span></a>
+
+<!--div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with"
+data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div-->
+<br><br>
+						</div>
+
+						<div class="row">
+							<div class="col-md-12">
+								<p class="fh5co-social-icons">
+									<a href="https://github.com/dmossakowski/additive-spotify-analyzer"><i class="icon-github"></i></a>
+									<a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i></a>
+									<a href="https://www.facebook.com/skala3ma"><i class="icon-google"></i></a>
+									<!--a href="#"><i class="icon-dribbble2"></i></a>
+									<a href="#"><i class="icon-youtube"></i></a-->
+								</p>
+								<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
+									Demo Images: <a href="https://pexels.com/" target="_blank">Pexels</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</footer>
+
+	
+
+	</div>
+	<!-- END fh5co-page -->
+
+	</div>
+	<!-- END fh5co-wrapper -->
+
+	<!-- jQuery -->
+
+
+	<!--script src="/public/js/jquery.min.js"></script-->
+	<script src=
+"https://code.jquery.com/jquery-3.3.1.min.js">
+  </script>
+	<!-- jQuery Easing -->
+	<!--script src="/public/js/jquery.easing.1.3.js"></script-->
+	<!-- Bootstrap -->
+	<script src="/public/js/bootstrap.min.js"></script>
+	<!-- Waypoints -->
+	<script src="/public/js/jquery.waypoints.min.js"></script>
+	<script src="/public/js/sticky.js"></script>
+	<!-- Superfish -->
+	<script src="/public/js/hoverIntent.js"></script>
+	<script src="/public/js/superfish.js"></script>
+	<!-- Flexslider -->
+	<script src="/public/js/jquery.flexslider-min.js"></script>
+	<!-- Date Picker -->
+	<script src="/public/js/bootstrap-datepicker.min.js"></script>
+	<script src="/public/js/bootstrap-table.min.js"></script>
+		<script src="/public/js/bootstrap-table-filter-control.min.js"></script>
+	<!-- CS Select -->
+	<script src="/public/js/classie.js"></script>
+	<script src="/public/js/selectFx.js"></script>
+
+	
+	<!-- Main JS -->
+	<script src="/public/js/main.js"></script>
+
+
+	</body>
+</html>
+

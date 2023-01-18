@@ -1,0 +1,130 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div>
+
+		{% include "skala3ma-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+						<br>
+						<h3>Competition climber list <br>
+								{{competition['name'] }} - {{ competition['date']}}</h3>
+
+						<font color="red">	{{ reference_data['current_language'][error_code] }} </font>
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+{% if climber is not none and climber is not undefined  %}
+<div class="container">
+	<div class="row">
+				{{ reference_data['current_language'].name}} {{ climber['name'] }}
+	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
+
+
+
+				{{ climber['routesClimbed'] }}
+
+</div>
+		<div class="row">
+			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
+<table style="width:100%"><tr>
+
+					{% for i in range(100) %}
+<td style="width:10%">
+
+						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
+								 {{i}}</a>
+
+
+								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
+								{% if i in climber['routesClimbed'] %}checked{% endif %} ></h3>
+
+</td>
+	{% if i%10==9 %} </tr><tr> {% endif %}
+
+</td>
+
+					{%endfor%}
+</tr>
+			</table>
+				<button>Submit</button>
+				</form>
+
+</div>
+	</div>
+				{% endif %}
+
+
+
+
+{% if competition is not none and competition is not undefined  %}
+
+<!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
+<div class="container-fluid">
+<table class="table thead-dark table-hover"  id="entrytable">
+         <thead><tr>
+         <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-sortable="True">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
+         <th data-field="category" data-sortable="True">{{ reference_data['current_language'].category }}</th>
+         <th data-field="routes" data-filter-control="input">{{ reference_data['current_language'].routes_climbed }}</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for climberId in competition['climbers'] %}
+		<tr>
+
+			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
+			 <td><i>
+				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
+
+				 {{ competition['climbers'][climberId]['routesClimbed']|length }}  </a></td>
+		 </tr>
+		 {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+
+
+
+
+
+				{%endif %}
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+		</div>
+
+{% endblock %}

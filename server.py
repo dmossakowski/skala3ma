@@ -6,14 +6,13 @@ from functools import wraps
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
-#from flask_oauthlib.client import OAuth, OAuthException
+
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
 import requests
 import json
-import pandas as pd
-from matplotlib.backends.backend_template import FigureCanvas
+
 
 import analyze
 import graph as saagraph
@@ -24,7 +23,24 @@ import datetime
 import threading
 import random
 import logging
-import sqlite3 as lite
+from competitionsApp import fsgtapp
+from skala_api import skala_api_app
+from competitionsApp import languages
+import competitionsEngine
+import locale
+import glob
+from flask import Flask
+#from flask_cors import CORS
+
+
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+
 
 
 load_dotenv()
@@ -39,12 +55,24 @@ SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
 SPOTIFY_APP_SECRET = os.getenv('SPOTIFY_APP_SECRET')
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
+# Configuration
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", None)
+GOOGLE_DISCOVERY_URL = (
+    "https://accounts.google.com/.well-known/openid-configuration"
+)
+
+FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
+FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
 app = Flask(__name__, static_folder='public', template_folder='views')
+app.register_blueprint(fsgtapp)
+app.register_blueprint(skala_api_app)
 
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
+#CORS(app)
 
 genres = {"test": "1"}
 authenticated = False
@@ -55,9 +83,29 @@ gdata = {}
 templateArgs = {}
 processedDataDir = "/additivespotifyanalyzer"
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+#login_manager.blueprint_login_views = {
+#    'admin': '/admin/login',
+#    'site': '/login',
+#}
 
 #logging.basicConfig(filename=DATA_DIRECTORY+'/std.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',
  #                   encoding='utf-8', level=logging.DEBUG)
+
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    return "You must be logged in to access this content.", 403
+
+
+# Flask-Login helper to retrieve a user from our db
+@login_manager.user_loader
+def load_user(user_id):
+    return user_id
+    #return User.get(user_id)
+
 
 @app.before_first_request
 def init():
@@ -78,7 +126,30 @@ def init():
         os.mkdir(DATA_DIRECTORY + "/db")
         print('Created db directory')
 
+    #app_language = 'en_US'
+    #locale.setlocale(locale.LC_ALL, app_language)
+
+    #accepted_languages = request.accept_languages
+    #print("accepted_languages="+str(accepted_languages))
+    #session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+
+    language_list = glob.glob("language/*.json")
+    for lang in language_list:
+
+        #filename = lang.split('\\')
+        #lang_code = filename[1].split('.')[0]
+        lang_code = lang[9:-5]  # skip language/ and .json
+
+        with open(lang, 'r', encoding='utf8') as file:
+            languages[lang_code] = json.loads(file.read())
+
+    competitionsEngine.reference_data['languages'] = languages
+    langpack = competitionsEngine.reference_data['languages']['fr_FR']
+    competitionsEngine.reference_data['current_language'] = langpack
+
     analyze.init()
+    competitionsEngine.init()
+
 
 def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     """Set up logging to file and console."""
@@ -91,7 +162,8 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
                             format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
                             # datefmt='%m-%d %H:%M',
                             filename=log_file,
-                            filemode=filemode_val)
+                            filemode=filemode_val
+                            )
     # define a Handler which writes INFO messages or higher to the sys.stderr
 
     console = logging.StreamHandler()
@@ -120,8 +192,8 @@ class ExportingThread(threading.Thread):
             _retrieveSpotifyData()
 
 
-
 exporting_threads = {}
+
 
 def login_required(fn):
     @wraps(fn)
@@ -140,8 +212,6 @@ def login_required(fn):
             session["wants_url"] = request.url
             return redirect(url_for("login"))
     return decorated_function
-
-
 
 
 def fetch_token():
@@ -184,10 +254,14 @@ spotify = oauth.register(
 
 @app.route('/')
 def index():
+    if 'skala3ma.com' in request.url_root or 'localhost' in request.url_root:
+        return redirect("/main")
+
     session['hellomsg'] = 'Welcome to Spotify Analyzer'
     hellomsg = 'Welcome to Additive Spotify Analyzer'
     _setUserSessionMsg(None)
     library = analyze.loadLibraryFromFiles(_getDataPath())
+    profileimageurlv=None
 
     if session.get('username'):
         genres = analyze.getTopGenreSet(library)
@@ -196,10 +270,10 @@ def index():
         if library is not None:
             profile = library.get('profile')
         if profile is None:
-            profileimageurl=None
+            #profileimageurl=None
             display_name = session.get('username')
         else:
-            profileimageurl = profile['images'][0]['url']
+            profileimageurlv = profile['images'][0]['url']
             display_name = profile['display_name']
             session['profileimageurl'] = profile['images'][0]['url']
 
@@ -207,10 +281,9 @@ def index():
         lastModifiedDt = analyze.getUpdateDtStr(_getDataPath())
         #_setUserSessionMsg("Library size: "+l)
         return render_template('index.html', subheader_message=hellomsg, genres=genres, library=library,
-                               sizetext=l, lastmodified=lastModifiedDt,
+                               sizetext=l, lastmodified=lastModifiedDt, profileimageurl=profileimageurlv,
                                display_name=display_name, **session)
     else:
-
         return render_template('index.html', subheader_message=hellomsg, genres={}, library={},  **session)
 
     #accessToken = session.get('access_token')
@@ -257,6 +330,8 @@ def logout():
     session['refresh_token'] = None
     session['expires_at'] = None
     session['expires_in'] = None
+    session['expires_at_localtime'] = None
+    session['email'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
     spotify.token
@@ -265,6 +340,26 @@ def logout():
                            subheader_message="Logged out ",
                            library={}, **session)
 
+
+@app.route('/logoutfb')
+def logoutfb():
+    logging.info("doing revoke")
+    session.pop('token', None)
+    session.pop('username', None)
+    session.pop('wants_url', None)
+    session.pop('access_token', None)
+    session['access_token'] = None
+    session['logged_in'] = False
+    session['refresh_token'] = None
+    session['expires_at'] = None
+    session['expires_in'] = None
+    session['expires_at_localtime'] = None
+
+    session.clear()
+    _setUserSessionMsg('You have been logged out')
+    #spotify.token
+
+    return redirect("/main")
 
 #@app.route('/authorize')
 #def authorize():
@@ -374,6 +469,134 @@ def refreshToken():
         logging.info(" error response received when refreshing the token "+responseraw.text)
         return
     response = json.loads(responseraw.text)
+
+
+
+
+
+
+
+@app.route('/facebook/')
+def facebook():
+    # Facebook Oauth Config
+    print('client id and secret')
+    #print(FACEBOOK_CLIENT_ID)
+    #print(FACEBOOK_CLIENT_SECRET)
+    oauth.register(
+        name='facebook',
+        client_id=FACEBOOK_CLIENT_ID,
+        client_secret=FACEBOOK_CLIENT_SECRET,
+        access_token_url='https://graph.facebook.com/oauth/access_token',
+        access_token_params=None,
+        authorize_url='https://www.facebook.com/dialog/oauth',
+        authorize_params=None,
+        api_base_url='https://graph.facebook.com/',
+        client_kwargs={'scope': 'email'},
+    )
+
+    redirect_uri = url_for('facebook_auth', _external=True)
+    return oauth.facebook.authorize_redirect(redirect_uri)
+
+
+@app.route('/facebook/auth/')
+def facebook_auth():
+    error = request.args.get('error')
+    if error is not None:
+        if error == 'access_denied':
+            print('access was denied')
+        else:
+            print('other auth error:')
+            print(str(error))
+        return redirect('/competitionDashboard')
+
+    logging.info(str(request))
+    # check first if auth was succesful
+
+    token = oauth.facebook.authorize_access_token()
+    resp = oauth.facebook.get(
+        'https://graph.facebook.com/me?fields=id,name,email,picture{url}')
+    profile = resp.json()
+    print("Facebook User ", profile)
+    session['username']=profile['id']
+    session['name']=profile['name']
+    session['email']=profile['email']
+    session['picture']=profile['picture']['data']['url']
+    session['expires_at'] = token['expires_at']
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    session['authsource'] = 'facebook'
+    competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
+    if session.get('wants_url') is not None:
+        return redirect(session['wants_url'])
+    else:
+        return redirect('/competitionDashboard')
+
+
+@app.route('/google/')
+def googleauth():
+    # Google Oauth Config
+    # Get client_id and client_secret from environment variables
+    # For developement purpose you can directly put it
+    # here inside double quotes
+    #GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+    #GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+    CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+
+    oauth.register(
+        name='google',
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        server_metadata_url=CONF_URL,
+        client_kwargs={
+            'scope': 'openid email profile'
+        }
+    )
+
+    redirect_uri = url_for('googleauth_reply', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+
+@app.route('/google/authaaa/')
+def googleauth_replyqq():
+    error = request.args.get('error')
+
+
+@app.route('/google/auth/')
+def googleauth_reply():
+    error = request.args.get('error')
+    if error is not None:
+        if error == 'access_denied':
+            print('access was denied')
+        else:
+            print('other auth error:')
+            print(str(error))
+        return redirect('/competitionDashboard')
+
+    logging.info(str(request))
+    # check first if auth was succesful
+
+    token = oauth.google.authorize_access_token()
+    profile = oauth.google.parse_id_token(token)
+    print(" Google User ", profile)
+
+    session['username']=profile['email']
+    session['name']=profile['name']
+    session['email']=profile['email']
+    session['picture']=profile['picture']
+    session['expires_at'] = token['expires_at']
+    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    session['authsource'] = 'google'
+    competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
+
+    if session.get('wants_url') is not None:
+        return redirect(session['wants_url'])
+    else:
+        return redirect('/competitionDashboard')
+
+
+
+
 
 
 @app.route('/datadownload')
@@ -528,6 +751,10 @@ def getPublicPlaylistDashboard():
                            subheader_message=subheader_message,
                            library=library,
                             **session)
+
+
+
+
 
 
 
@@ -1318,9 +1545,17 @@ def blog():
     return render_template('login.html', **session)
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 if __name__ == '__main__':
     print('Executing main')
     #init()
+
+
+    #fetch_data()
     app.run(host='localhost', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
 

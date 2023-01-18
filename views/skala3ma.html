@@ -1,0 +1,95 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+
+
+		<aside id="fh5co-hero" class="js-fullheight">
+			<div class="flexslider js-fullheight">
+				<ul class="slides">
+			   	<!--li style="background-image: url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);"-->
+					<!--li style="background-image: url(/public/images/PXL_20220520_152411154.jpg);"-->
+
+					<li style="background-image: url(/public/images/main-back.jpg);">
+
+			   		<div class="overlay"></div>
+			   		<div class="container-fluid">
+			   			<div class="row">
+				   			<div class="col  text-center js-fullheight slider-text">
+
+								<div class="col"><br><br>
+										<img src="public/images/fsgt-logo-me.png" style="width: 350px; margin-left:50px" ><br>
+
+									</div>
+
+			   				<div class="col-md slider-text-inner container-fluid">
+								<h2 class="heading-title">{{ reference_data['current_language'].app_welcome}}
+								</h2>
+
+							</div>
+
+
+							</div>
+						</div>
+
+
+
+			   	</li>
+			  	</ul>
+		  	</div>
+		</aside>
+
+
+			<!--div class="container"-->
+				<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(public/images/pexels-arthouse-studio-6310418.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>
+
+
+
+
+	<div style="text-align: left;">
+		{{ reference_data['current_language'].manage_competitions_and_gyms}}
+		{{ reference_data['current_language'].The_source_code_for_this_app_is_on}} <a href="https://github.com/dmossakowski/additive-spotify-analyzer">GitHub</a>.<br>
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/discussions">{{ reference_data['current_language'].Join_the_discussion_there}}</a> {{ reference_data['current_language'].or}}
+		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">{{ reference_data['current_language'].add_an_issue}}</a><br><br>
+
+		{{ reference_data['current_language'].list_features}}		<li>{{ reference_data['current_language'].Add_a_new_competition}}</li>
+		<li>{{ reference_data['current_language'].Public_registration_link}}</li>
+		<li>{{ reference_data['current_language'].Easy_scaled_route_entry}} </li>
+		<li>{{ reference_data['current_language'].Instant_scoring}}</li>
+		<li>{{ reference_data['current_language'].Multi_language}}</Li>
+		<li>{{ reference_data['current_language'].Google_and_Facebook_logins}}</li>
+
+
+
+
+<div id="fblikebutton"  class="fb-like" data-href="https://www.facebook.com/AdditiveSpotifyAnalyzer" data-width="" data-layout="button" data-action="like" data-size="small" data-share="true"></div>
+
+
+
+	</div><br><br>
+
+
+
+						{% if plot is defined and plot %}
+    <div class="chart" id="bargraph">
+    <script>
+        var graphs = {{plot | safe}};
+        Plotly.plot('bargraph',graphs,{});
+    </script>
+    </div>
+						{% endif %}
+</div>
+				</div>
+{% endblock %}
+
+	{% block secondarycontent %}
+
+
+{% endblock %}

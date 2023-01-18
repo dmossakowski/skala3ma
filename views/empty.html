@@ -1,0 +1,139 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
+
+<div class="container-fluid">
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>{{ subheader_message }} </h3>
+
+
+					</div>
+
+
+
+
+
+
+
+
+
+
+{% if gym is not none and gym is not undefined  %}
+
+
+
+
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">Line</th>
+         <th data-field="artist" data-filter-control="input">Route num</th>
+         <th data-field="track" data-filter-control="input">Grade</th>
+         <th data-field="artist" data-filter-control="input">Name</th>
+         <th data-field="track" data-filter-control="input">Opened by</th>
+         <th data-field="track" data-filter-control="input">Opened date</th>
+         <th data-field="artist" data-filter-control="input">Notes</th>
+
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for route in gym['routes'] %}
+
+		 <tr><td>{{ route['line'] }} </td>
+			 <td  bgcolor="{{ route['color1'] }}"> <b>{{ route['routenum'] }}</b></td> <td><i>{{route['grade'] }}</i></td>
+			 <td> {{ route['name'] }}</td>
+
+			 <td> {{ route['openedby'] }}</td>
+			 <td> {{ route['opendate'] }}</td>
+			 <td> {{ route['notes'] }}</td>
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+</div>
+
+
+
+				{%endif %}
+
+
+
+{% if gyms is not none  %}
+
+
+
+
+
+					{% for gymid in gyms %}
+
+
+				<div class=" col-md-2 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
+							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')">
+
+							<a href="gyms/{{ gymid }}">
+							<div class="blog-text">
+								<div class="prod-title">
+									<h4>{{ gyms[gymid]['name'] }}</h4>
+									<span class="posted_by">{{ gyms[gymid]['routesid'] }}</span>
+									<br>
+									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+
+{% endif %}
+
+
+{% endblock %}

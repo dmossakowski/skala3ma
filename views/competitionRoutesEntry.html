@@ -1,0 +1,152 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+	<div  >
+	{% include "skala3ma-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>{{ competition['name'] }} - {{ subheader_message }}
+ </h3>
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+{% if routes is not none and routes is not undefined  %}
+
+<div class="container-fluid">
+
+
+<form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}" method="post">
+<h2><input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
+
+<table class="table thead-dark table-hover" id="my_table_id"
+    data-url="data/url.json"
+    data-id-field="id"
+    data-editable-emptytext="Default empty text."
+    data-editable-url="/my/editable/update/path">
+         <thead><tr>
+         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].route_num }}</th>
+         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
+         <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].name }}</th>
+         <th data-field="climbed" data-filter-control="input">{{ reference_data['current_language'].climbed }}</th>
+
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for route in routes['routes'] %}
+		 <tr onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;">
+			 <td>{{ route['line'] }} </td>
+			 <td  align="center"
+				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
+				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
+				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
+				</b></td>
+			 <td><i>{{route['grade'] }}</i></td>
+			 <td> {{ route['name'] }}</td>
+
+			 <td>				<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
+									   onclick="event.stopPropagation();"
+								{% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
+								>
+
+			 </td>
+
+		 </tr></a>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+</form>
+
+</div>
+
+
+
+
+				{%endif %}
+
+{% if gyms is not none  %}
+
+
+
+
+
+					{% for gymid in gyms %}
+
+
+					<div class=" col-md-2 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
+							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
+						>
+							<a href="gyms/{{ gymid }}">
+							<div class="blog-text">
+								<div class="prod-title">
+									{% if gyms[gymid]['logoimg'] is not none %}
+									<img src="public/images/gyms/{{ gyms[gymid]['logoimg'] }}">
+									{% else %}
+
+									<h4>{{ gyms[gymid]['name'] }}</h4>
+									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
+									{% endif %}
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+
+
+{% endif %}
+
+
+
+
+			</div>
+		</div>
+
+	</div>
+{% endblock %}

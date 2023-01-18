@@ -1,0 +1,116 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+	<div name='bbb'>
+
+		{% include "skala3ma-menu.html" %}
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="text-center heading-section animate-box">
+						<br>
+				<h3>Your climbing journey </h3>
+						 {{ reference_data['current_language'].start }}
+					</div>
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+<form action="/journey/add" method="POST">
+
+<div class="container-fluid">
+
+	<label for="competition_status">{{ reference_data['current_language'].newsession}}:</label>
+	<select name="competition_status" id="competition_status">
+		<option value="choose" size="20" ></option>
+
+		{% for competition_status in reference_data['competition_status'] %}
+		<option value="{{reference_data['competition_status'][competition_status]}}" size="20" >{{competition_status}}</option>
+		{% endfor %}
+	</select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+	<label for="gym_id">{{ reference_data['current_language'].where }}:</label>
+		<select name="gym_id" id="gym_id">
+			<option value="-1" size="20" >{{ reference_data['current_language'].other }}</option>
+			{% for gym_id in reference_data['clubs'] %}
+			<option value="{{gym_id}}" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
+			{% endfor %}
+
+		</select>
+
+
+<label for="date">{{ reference_data['current_language'].date }}:</label> <input id='date' name="date" size="30" type="date" value="{{today}}"/>
+
+
+	<button name="update_status" value="update_status">{{ reference_data['current_language']['create']}}</button>
+
+
+
+<br><br>
+
+
+
+{% if journeys is not none and journeys is not undefined  %}
+
+
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].email }}</th>
+			 <th>Actions</th>
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+    				{% for journey in journeys %}
+
+		 <tr><td>{{ journey['id'] }}</td>
+					<td> {{ journey['date'] }}</td>
+			 <td><i>{{journey['gym_id']}}</i></td>
+			 <td><i>{{ journey['routes_id'] }}</i></td>
+ <td><i>{{ journey['description'] }}</i></td>
+			 <td>
+				 <a href="/journey/{{ journey['id']}}">{{ reference_data['current_language'].open }}</a>
+				<button name="remove_climber" value="{{ journey['user_id'] }}">{{ reference_data['current_language'].open }}</button>
+
+			 </td>
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+</div>
+
+
+</form>
+
+
+				{% else %}
+
+
+				No journyes yet. Add your first!
+
+
+				{% endif %}
+			</div>
+
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}

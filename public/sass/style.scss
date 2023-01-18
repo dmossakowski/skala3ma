@@ -410,7 +410,7 @@ figure {
 	border-top: none;
 	text-decoration: none;
 	zoom: 1; 
-	font-size: 16px;
+	font-size: 12px;
 	border-bottom: none!important;
 	font-weight: bold;
 
@@ -436,9 +436,9 @@ figure {
 .sf-menu ul li a,
 .sf-menu ul ul li a {
 	text-transform: none;
-	padding: .20em 1em!important;	
+	padding: .1em 1em!important;
 	letter-spacing: 1px;
-	font-size: 14px!important;
+	font-size: 12px!important;
 }
 .sf-menu li:hover a,
 .sf-menu li.sfHover a,
@@ -496,13 +496,14 @@ figure {
 	left: 0;
 	width: 100%;
 	z-index: 1022;
-	background: $brand-white;
+	/*background: $brand-white;*/
 }
 .nav-header{
 	
 	position: relative;
-	float: left;
+	float: right;
 	width: 100%;
+	margin: 0 auto;
 }
 
 #fh5co-logo{
@@ -658,8 +659,8 @@ figure {
 #fh5co-primary-menu .fh5co-sub-menu a {
 	letter-spacing: 0;
 	padding:0 15px;
-	font-size:18px;
-	line-height:34px;
+	font-size:12px;
+	line-height:22px;
 	color: #575757 !important;
 	text-transform:none;
 	background:none;

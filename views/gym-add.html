@@ -1,0 +1,134 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div >
+		<!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>{{ reference_data['current_language'].add_new }} </h3>
+
+		<form action="/gyms/add" method="post" enctype="multipart/form-data">
+
+			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
+			<input name="gymName" size="40" id="gymName" type="text"/><br><br>
+
+				<label for="numberOfRoutes">Number of routes:</label>
+			<br><input name="numberOfRoutes" id="numberOfRoutes" size="20" type="text"/><br><br>
+
+	<label for="address">Address:</label><br>
+	<input name="address" id="address" type="address" size="80"/>
+							<br><br>
+	<label for="file1">Logo:</label><br>
+			<input type="file" name="file1" id="file1"><br>
+
+<label for="url">Link:</label><br>
+	<input name="url" id="url" type="url" size="80"/>
+							<br><br>
+
+
+	<label for="organization">Organization:</label><br>
+	<input name="organization" id="organization" type="organization" size="80"/>
+							<br><br>
+
+
+
+
+
+<button >{{ reference_data['current_language'].submit }}</button>
+					</form>
+
+
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+
+
+
+{% if climber is not none and climber is not undefined  %}
+<div class="container">
+	<div class="row">
+				Name {{ climber['name'] }}
+	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
+
+
+
+				{{ climber['routesClimbed'] }}
+
+</div>
+		<div class="row">
+			<form targt="/competitionDashboard/{{competitionId}}/updateRoutes">
+<table style="width:100%"><tr>
+
+					{% for i in range(100) %}
+<td style="width:10%">
+
+						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
+								 {{i}}</a>
+
+
+								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
+								{% if i in climber['routesClimbed'] %}checked{% endif %}
+
+								></h3>
+
+</td>
+	{% if i%10==9 %} </tr><tr> {% endif %}
+
+</td>
+
+					{%endfor%}
+</tr>
+			</table>
+				<button>Submit</button>
+				</form>
+
+</div>
+	</div>
+				{% endif %}
+
+
+
+
+
+
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+{% endblock %}
