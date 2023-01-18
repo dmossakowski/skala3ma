@@ -275,6 +275,7 @@ def index():
         else:
             profileimageurlv = profile['images'][0]['url']
             display_name = profile['display_name']
+            session['profileimageurl'] = profile['images'][0]['url']
 
         l = analyze.getLibrarySize(library)
         lastModifiedDt = analyze.getUpdateDtStr(_getDataPath())
@@ -778,11 +779,12 @@ def testDB():
     #return redirect(url_for('getRandomPlaylist', playlistId=playlistId))
 
 
-@app.route('/playlist')
-#@login_required
-def getPlaylist():
-    playlistId = request.args.get('playlistId')
+@app.route('/playlist/<playlistId>')
+@login_required
+def getPlaylist(playlistId):
+    #playlistId = request.args.get('playlistId')
 
+    logging.info(session['id']+' getPlaylist '+playlistId)
     # r = request
     # username = request.args.get('username')
 
@@ -792,15 +794,35 @@ def getPlaylist():
         playlist = analyze.getPublicPlaylist(playlistId)
 
     if playlist is None:
-        return render_template('dataload.html', sortedA=None,
+        playlist = {}
+        playlist['id']=playlistId
+        playlist['name']='unknown'
+        playlists = []
+        playlists.append(playlist)
+        playlistsWithTracks = getPlaylistTracks(playlists)
+
+        if playlistsWithTracks is None:
+            return render_template('dataload.html', sortedA=None,
                                subheader_message="",
                                library={},
                                **session)
+        elif playlistsWithTracks is LookupError:
+            return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+        elif len(playlistsWithTracks) == 0:
+            return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
 
+        playlist=playlistsWithTracks[0][0]
     #https: // localhost: 5000 / playlist?playlistId = 6
     #HoWLyjABf4N7oSItTrv94
     #https: // localhost: 5000 / playlist?playlistId = 1
     #KQnGup7xI7Zyk9lBhcoD5
+    #3Y7iQBZXTBoiScWRONJOAe
 
     playlistName = playlist['name']
     subheader_message = "Playlist '" + playlistName + "' by "+playlist['owner']['display_name']
@@ -821,8 +843,48 @@ def getPlaylist():
                            **session)
 
 
+@app.route('/loadPlaylist')
+def getLoadPlaylist():
+    playlistInfo = request.args.get('playlistInfo')
+
+    if playlistInfo is None:
+        return render_template('index.html', sortedA=None,
+                               subheader_message="",
+                               library={},
+                               **session)
+
+    #https://open.spotify.com/playlist/0s5mcEiGHNj50h3k3bZLSJ?si=d621b68e570544b3&fbclid=IwAR1UfvoR-fUxXbzG4eTgd5ZaaNtbIWGQCjRA_qCG37dkgTrMJDt7fdIT2eM&nd=1
+    #a = playlistInfo.split('https://')
+    a = playlistInfo.split('spotify.com/playlist/')
+
+    playlistId = None
+    if len(a)>1:
+        playlistIds = a[1].split('?')
+
+        playlistId = playlistIds[0]
+    elif len(a) == 1:
+        if '/' not in a[0]:
+            playlistIds = a[0].split('?')
+            playlistId = playlistIds[0]
+
+
+    if playlistId is not None:
+        logging.info("found match "+playlistId)
+        return redirect(url_for('getPlaylist', playlistId=playlistId))
+    else:
+
+        return redirect(url_for('index'))
+
+        #return render_template('index.html', sortedA=None,
+         #                      subheader_message="",
+          #                     library={},
+           #                    **session)
+
+
+
+
+
 @app.route('/randomPlaylist')
-#@login_required
 def getRandomPlaylist():
 
 
@@ -851,7 +913,7 @@ def getRandomPlaylist():
 
 
     playlistId = playlist['id']
-    logging.info("playlist " + str(playlist))
+    #logging.info("playlist " + str(playlist))
 
     return redirect(url_for('getPlaylist', playlistId=playlistId))
 
@@ -1081,7 +1143,7 @@ def _retrieveSpotifyData(session):
     # _setUserSessionMsg("Top artists loaded. Loading playlists..." + analyze.getLibrarySize(library))
     # when retrieving all user playlists, tracks are not included so we need to do another request
     # in the end we will have all playlists with their tracks for the user
-    library['playlists'] = getPlaylistTracks(library['playlists'], file_path)
+    library['playlists'] = getPlaylistTracks(library['playlists'])
 
     _setUserSessionMsg("All data loaded <br>" + analyze.getLibrarySize(library))
     logging.info("All data downloaded "+analyze.getLibrarySize(library))
@@ -1259,7 +1321,7 @@ def getAudioFeatures(tracks, file_path='data/'):
 # this expects a url that retrieves some batch of data
 # the URL is not modified in the method and just the raw
 # results are returned
-def retrieveBatch(api_url, auth_header):
+def retrieveBatch(api_url, auth_header, iter=0):
     payload = {}
     responseraw = requests.get(api_url, params=payload, headers=auth_header)
     response = json.loads(responseraw.text)
@@ -1267,9 +1329,14 @@ def retrieveBatch(api_url, auth_header):
     # check if message='The access token expired'
     # status 401
     if 'error' in response:
-        logging.info ("response had an error ", response['error']['status'])
+        logging.info ("response had an error "+str(response['error']['status']))
         if response['error']['status'] == 401:
+            logging.info("relogin required... will retry "+str(iter))
+            if iter>2:
+                return None
             login()
+            return retrieveBatch(api_url, auth_header, iter+1)
+        if response['error']['status'] == 404:
             return None
     items = response
 
@@ -1285,13 +1352,14 @@ def retrieveBatch(api_url, auth_header):
 #         },
 # this method loops over all playlists downloaded (public and private)
 # and it generates one json file for each playlist
-def getPlaylistTracks(playlists, file_path='data/'):
-    logging.info ("Retrieving playlist tracks from spotify for all playlists ")
+def getPlaylistTracks(playlists):
     if (session!=None and session.get('token')!=None):
         oauthtoken = session['token']['access_token']
     else:
         logging.info("not loggged in")
         return render_template('index.html', subheader_message="No oauthtoken.. bad flow ", library={}, **session)
+
+    logging.info(session.get('username')+" retrieving playlist tracks from spotify for all playlists ")
 
     auth_header = {'Authorization': 'Bearer {token}'.format(token=oauthtoken), 'Content-Type': 'application/json'}
     api_url_base = 'https://api.spotify.com/v1/playlists/'
@@ -1309,10 +1377,12 @@ def getPlaylistTracks(playlists, file_path='data/'):
         #ids.append(id)
         limit-=1
         #if (limit == 0 or (len(tracks)+len(ids))==len(playlists)):
-        api_url = api_url_base+"" + id
+        #api_url = api_url_base+"" + id + "/?fields=tracks.items(track(name,href,album(!name,href,available_markets)))"
+        api_url = api_url_base + "" + id
+
         featureBatch = retrieveBatch(api_url, auth_header)
         if featureBatch==None:
-            logging.info('no features returned')
+            #logging.info('no tracks returned')
             #break
             featureBatch = {'audio_features': {}} #dict.fromkeys(lastFeatureBatch,0)
 
