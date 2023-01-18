@@ -74,7 +74,7 @@ $(document).ready(function () {
 
 			{% if gym is not none and gym is not undefined  %}
 
-						<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" align="left">
+						<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150" align="left">
 
 						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -177,7 +177,8 @@ $(document).ready(function () {
 							<div class="blog-text">
 								<div class="prod-title">
 
-									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}">
+									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
+									height="130">
 
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
 
