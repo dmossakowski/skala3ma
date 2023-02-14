@@ -18,6 +18,7 @@
 						<br>
 				<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
 						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
+| <a href="/gyms/{{competition['gym_id']}}/{{ competition['routesid']}}">  {{ reference_data['current_language'].routes }}</a>
 
 
 					</div>

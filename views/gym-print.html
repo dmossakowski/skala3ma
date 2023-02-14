@@ -1,0 +1,70 @@
+
+
+	
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div >
+						<br><br><br>
+
+			{% if gym is not none and gym is not undefined  %}
+
+						<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="50" height="50" align="left">
+
+						<font size="+3"> {{ gym['name'] }}</font>
+						&nbsp;&nbsp;&nbsp;&nbsp;
+						<a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
+
+						&nbsp;&nbsp;&nbsp;&nbsp;<a href="/main"><img src="/public/images/favicon.png" height="15"> https://skala3ma.com</a>
+
+						{% endif %}
+					</div>
+
+
+					
+
+
+{% for a in range(5) %}
+
+
+
+
+<div style="padding-block: 2px 2px;padding:2px 2px; border: 2px solid white; float:none; position:relative; display:inline-block">
+			
+	
+		 {# here we iterate over every item in our list which we will pass from bar() #}
+		 {% for route in routes['routes'] %}
+
+
+		 <div style="margin:2px 2px; width:100;  float:left; border: 2px solid {{ route['color1'] }}">
+
+
+		
+			
+				  <font style="font-size:24px; background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
+				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
+				&nbsp;&nbsp;&nbsp;</font>
+				
+				
+				<font style="font-size:24px; text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
+				</b>
+
+			 <i>{{route['grade'] }}</i>
+			  <!-- {{ route['name'] }} -->
+			 <!--td> {{ route['opendate'] }}</td-->
+			</div>
+		 {% endfor %}
+
+
+</div>
+
+-----
+{% endfor %}
+
+
+<div>
+
+			
+</div>
+			
+
+

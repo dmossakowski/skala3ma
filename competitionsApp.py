@@ -1033,12 +1033,15 @@ def downloadCompetitionCsv(competitionId):
     count = 0
     for climberid in competition['climbers']:
         data = competition['climbers'][climberid]
+        data.pop('id', None)
+        data.pop('email', None)
+        data.pop('name',None)
+
         for i in range(100):
             if (i in competition['climbers'][climberid]['routesClimbed']):
                 data['r' + str(i)] = 1
             else:
                 data['r' + str(i)] = 0
-
 
         if count == 0:
             header = data.keys()
@@ -1047,7 +1050,6 @@ def downloadCompetitionCsv(competitionId):
             count += 1
         out = {}
         routesClimbed = flatten(data['routesClimbed'])
-
 
         csv_writer.writerow(data.values())
         writer.writerow(data.values())
@@ -1080,7 +1082,15 @@ def competitionRoutesList(competitionId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
 
+    #sortedClimbers = sorted(climbers, key=lambda climber: climber['lastname'] )
 
+    #sortedClimbers = sorted(competition.get('climbers'),
+    #                     key=lambda k: (competition.get('climbers')[k]['lastname'],
+    #                                    competition.get('climbers')[k]))
+
+    sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+    
+    competition['climbers']= sorted_data
     # library= {}
     # library['tracks'] = tracks
     # playlist = json.dumps(playlist)
@@ -1497,6 +1507,90 @@ def gym_routes_save(gymid, routesid):
                            routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            )
+
+
+
+
+
+@fsgtapp.route('/gyms/<gym_id>/<routesid>/download')
+def downloadRoutes(gym_id, routesid):
+
+    gym = competitionsEngine.get_gym(gym_id)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+
+    out = {}
+
+    def flatten(x, name=''):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + '_')
+        elif type(x) is list:
+            i = 0
+            for a in x:
+                flatten(a, name + str(i) + '_')
+                i += 1
+        else:
+            out[name[:-1]] = x
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    data_file = open('jsonoutput.csv', 'w', newline='')
+    csv_writer = csv.writer(data_file)
+
+    count = 0
+    data = []
+    header = routes['routes'][0].copy()
+    header.pop('id')
+    header.pop('colorfr')
+    header.pop('color_modifier')
+    header.pop('opendate')
+    header.pop('notes')
+    header.pop('openedby')
+
+    data = routes['routes']
+    csv_writer.writerow(header)
+    writer.writerow(header)
+    count += 1
+    out = {}
+    #rethtml="<table>"
+    #rethtml="<style>p.one { border-style: solid; border-color: red;}"
+    rethtml=""
+
+    for route in routes['routes']:
+        route.pop('id')
+        route.pop('colorfr')
+        route.pop('color_modifier')
+        route.pop('opendate')
+        route.pop('notes')
+        route.pop('openedby')
+        csv_writer.writerow(route.values())
+        writer.writerow(route.values())
+        #rethtml+="<tr><td>"+route['routenum']+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp;</td><td>"+route['grade']+"</td></tr>"
+        rethtml+="<div style='border:1px solid "+route['color1']+"'>"+route['routenum']+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp; "+route['grade']+" "
+        rethtml+="</div>"
+
+    #rethtml+="</table>"
+    data_file.close()
+
+    return render_template('gym-print.html',
+                           gymid=gym_id,
+                           gyms=None,
+                           gym=gym,
+                           routes=routes,
+                           reference_data=competitionsEngine.reference_data,
+                           )
+
+    #return rethtml
+
+    #return Response(
+    #    output.getvalue(),
+    #    mimetype="text/csv",
+    #    headers={"Content-disposition":
+    #                 "attachment; filename=routes.csv"})
+
+
 
 
 
