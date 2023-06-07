@@ -7,9 +7,12 @@ set -eu
 export PYTHONUNBUFFERED=true
 
 # Install Python 3 virtual env
-#VIRTUALENV=.data/venv
 VIRTUALENV=.mainenv
 
+# create certificate and key file:
+# openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
+
+# mkdir userdata
 
 if [ ! -d $VIRTUALENV ]; then
   #virtualenv -p python3 $VIRTUALENV
@@ -28,3 +31,8 @@ $VIRTUALENV/bin/python3 server.py
 
 # allow chrome to open self signed https localhost:
 # chrome://flags/#allow-insecure-localhost
+
+
+#deactivate
+
+

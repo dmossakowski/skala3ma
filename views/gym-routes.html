@@ -1,0 +1,738 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+
+
+
+	{% if gym is not none and gym is not undefined  %}
+
+
+
+
+
+        <style>
+            /* Style for the modal dialog container */
+            .modal-container {
+                display: none;
+                position: fixed;
+                z-index: 1023;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.4);
+            }
+    
+            /* Style for the modal dialog box */
+            .modal-box {
+                background-color: #fff;
+                margin: 10% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width:max-content;
+                
+                display: flex;
+                
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-size: 14px;
+                color: #333;
+            }
+    
+            /* Style for the close button */
+            .close-button {
+                position: absolute;
+                top: 20px;
+                right: 30px;
+                font-size: 30px;
+                color: #aaa;
+                font-weight: bold;
+                cursor: pointer;
+            }
+        </style>
+    
+        
+
+
+        
+        <div id="modal" class="modal-container">
+            
+            <div id="modal-box" class="modal-box">
+               
+                <form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
+                    <style>
+                        .form-row-heading {
+                          display: flex;
+                          justify-content: center;
+                          align-items: baseline;
+                          margin: 10px;
+                          font-size: 20px;
+                          color: #292424;
+                          font-weight: bold;
+                          vertical-align: bottom;
+                        }
+                        .form-row {
+                          display: flex;
+                          justify-content: center;
+                          align-items: center;
+                          margin: 10px;
+                        }
+                      
+                        .form-row label {
+                          text-align: right;
+                          margin-right: 6px;
+                          flex: 1;
+                        }
+                      
+                        .form-row input,
+                        .form-row select,
+                        .form-row textarea {
+                          flex: 1;
+                        }
+                      </style>
+
+                <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
+               
+                <div id="mainModalMenu">
+                    
+                    <div  onclick="hideModal()">
+                    <div class="form-row-heading">
+                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
+                    </div>
+    
+                <div class="form-row-heading">
+                    <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
+                    <div id="route-color1">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-grade"></div>
+                </div>
+                <div class="form-row-heading">
+                    <div id="route-openedby">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-opendate"></div>
+                </div>
+                <div class="form-row">
+                    <div id="route-notes">&nbsp;&nbsp;&nbsp;</div>
+                </div>
+                </div>
+                
+                <div class="form-row">
+                    <span class="close-button" onclick="hideModal()">&times;</span>
+                    {% if (user_can_edit_gym) %}
+                    <button id='editbutton' type="button" class="btn btn-info btn-md" onclick="editContent();">Edit</button>&nbsp;
+                    {% endif %}
+                    <button id='cancelbutton' type="button" class="btn btn-info" onclick="document.getElementById('modal').style.display='none';">Close</button>
+                </div> 
+                </div>
+
+                    <div id="editContent" style="display: none">
+
+                         <div class="form-row">
+                          <input type="hidden" id="id" name="id" value="">
+                          
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="routenum">Route Number:</label>
+                          <input type="text" id="routenum" name="routenum" value="1">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="line">Line:</label>
+                          <input type="text" id="line" name="line" value="1">
+                        </div>
+                      
+                        <div class="form-row">
+                          <input type="hidden" id="colorfr" name="colorfr" value="#2e8b57">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="color1">Color 1:</label>
+                          <input class="color-input" id="color1" name="color1" value="" />
+                          <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="color_modifier">Color Modifier:</label>
+                          <select id="color_modifier" name="color_modifier">
+                            <option value="solid">Solid</option>
+                            <option value="dashed">Marble</option>
+                          </select>
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="grade">Grade:</label>
+                          <select id="grade" name="grade">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4a">4a</option>
+                            <option value="4b">4b</option>
+                            <option value="4c">4c</option>
+                            <option value="5a">5a</option>
+                            <option value="5a+">5a+</option>
+                            <option value="5b">5b</option>
+                            <option value="5b+">5b+</option>
+                            <option value="5c">5c</option>
+                            <option value="5c+">5c+</option>
+                            <option value="6a">6a</option>
+                            <option value="6a+">6a+</option>
+                            <option value="6b">6b</option>
+                            <option value="6b+">6b+</option>
+                            <option value="6c">6c</option>
+                            <option value="6c+">6c+</option>
+                            <option value="7a">7a</option>
+                            <option value="7a+">7a+</option>
+                            <option value="7b">7b</option>
+                            <option value="7b+">7b+</option>
+                            <option value="7c">7c</option>
+                            <option value="7c+">7c+</option>
+                            <option value="8a">8a</option>
+                            <option value="8a+">8a+</option>
+                            <option value="8b">8b</option>
+                            <option value="8b+">8b+</option>
+                            <option value="8c">8c</option>
+                            <option value="8c+">8c+</option>
+                            <option value="9a">9a</option>
+                            <option value="9a+">9a+</option>
+                            <option value="9b">9b</option>
+                            <option value="9b+">9b+</option>
+                            <option value="9c">9c</option>
+                          </select>
+                          
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="name">Name:</label>
+                          <input type="text" id="name" name="name" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="openedby">Opened By:</label>
+                          <input type="text" id="openedby" name="openedby" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="opendate">Open Date:</label>
+                          <input type="date" id="opendate" name="opendate" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="notes">Notes:</label>
+                          <textarea id="notes" name="notes">très facile</textarea>
+                        </div>
+                      
+                  <div class="form-row">
+                    <span class="close-button" onclick="hideModal()">&times;</span>
+                    
+                    <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">Save</button>&nbsp;
+                  
+                  <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">Delete</button>&nbsp;
+                  <button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">Cancel</button>
+                    </div>    <div class="form-row">
+                  <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">Add before</button>&nbsp;
+                  <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">Add after</button>
+                    </div>
+               
+                </div>
+                </form>
+                
+            </div>
+            
+        </div>
+
+
+        <script>
+            // Get the modal dialog container
+            var modal = document.getElementById("modal");
+            var editDiv = document.getElementById('editContent');
+            var mainModalMenuDiv = document.getElementById('mainModalMenu');
+            var modalBoxDiv = document.getElementById('modal-box');
+            var currentRow;
+            var mod_type;
+
+
+            function showEditDiv(){
+                mainModalMenuDiv.style.display='none'
+                editDiv.style.display='block';
+            }
+
+            function editContent(){
+                mod_type='save'
+                showEditDiv();
+            }
+
+            function deleteContent(){
+                mod_type='delete'
+                document.getElementById('routenum').value=-1
+                var data = getFormData();
+                
+                saveData(data)
+                //mainModalMenuDiv.style.display='none'
+                //editDiv.style.display='none';
+                //modal.style.display='none'
+                
+            }
+
+            // Function to display the modal dialog
+            function showModal() {
+                mainModalMenuDiv.style.display='block'
+                
+                editDiv.style.display='none';
+                modal.style.display = "block";
+            }
+    
+            // Function to hide the modal dialog
+            function hideModal() {
+
+                modal.style.display = "none";
+            }
+  
+  
+        function addBefore(){
+            mod_type='add_before';
+            clearModal();
+            showEditDiv();
+        }
+
+        function addAfter(){
+            mod_type='add_after';
+            clearModal();
+            showEditDiv();
+        }
+
+        function clearModal(){
+            document.getElementById('hidden_message').textContent='';
+            const greenColor = '#aaffaa';
+            document.getElementById('id').value = '';
+            if (mod_type == 'add_before'){
+                document.getElementById('routenum').value = currentRow.routenum-0.5;
+            }else if (mod_type == 'add_after'){
+                document.getElementById('routenum').value = parseInt(currentRow.routenum)+0.5;
+            }
+            document.getElementById('routenum').disabled = true;
+
+            document.getElementById('line').value = '';
+            document.getElementById('colorfr').value = '#aaffaa';
+            document.getElementById('color1').value = '#aaffaa';
+            //document.getElementById('color1-display').style.backgroundColor = '#aaffaa';
+            document.getElementById('color_modifier').value = 'solid';
+            document.getElementById('grade').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('openedby').value = '';
+            document.getElementById('opendate').value = '';
+            document.getElementById('notes').value = '';
+
+            document.getElementById('route-color1').style.background = greenColor;
+           
+            document.getElementById('route-name').innerHTML =  '';
+            
+            document.getElementById('route-routenum').innerHTML =  '';
+            document.getElementById('route-grade').innerHTML =  '';
+            modalBoxDiv.style.border="5px solid "+greenColor;
+            document.getElementById('color1').style.backgroundColor = greenColor;
+        
+        }
+
+
+        function routeDetail(data) {
+        	//console.log("routeDetail.. "+data+" - ");
+            currentRow=data;
+            document.getElementById('id').value = data.id;
+            document.getElementById('routenum').value = data.routenum;
+            document.getElementById('line').value = data.line;
+            document.getElementById('colorfr').value = data.colorfr;
+            document.getElementById('color1').value = data.color1;
+            //document.getElementById('color1-display').style.backgroundColor = data.color1;
+            document.getElementById('color_modifier').value = data.color_modifier;
+            document.getElementById('grade').value = data.grade;
+            document.getElementById('name').value = data.name;
+            document.getElementById('openedby').value = data.openedby;
+            document.getElementById('opendate').value = data.opendate;
+            document.getElementById('notes').value = data.notes;
+
+            document.getElementById('route-color1').style.background = data.color1;
+            document.getElementById('route-name').innerHTML = data.name;
+            document.getElementById('route-routenum').innerHTML = data.routenum;
+            document.getElementById('route-grade').innerHTML = data.grade;
+            modalBoxDiv.style.border="5px solid "+data.color1;
+            document.getElementById('route-openedby').innerHTML = data.openedby;
+            document.getElementById('route-opendate').innerHTML = data.opendate;
+            document.getElementById('route-notes').innerHTML = data.notes;
+            document.getElementById('route-line').innerHTML = data.line;
+            
+            document.getElementById('color1').style.backgroundColor = currentRow.color1;
+            document.getElementById('hidden_message').textContent='';
+        }
+
+        // use selector string to initialize on single element
+        var hueb = new Huebee( '.color-input', {
+            // options
+            notation: 'hex',
+            setBGColor: true,
+            saturations: 3,
+            hue0: 210,
+            hues: 9,
+            shades: 4,
+
+        });
+
+        hueb.on( 'change', function( color, hue, sat, lum ) {
+                    //console.log( 'color changed to: ' + color )
+                    modalBoxDiv.style.border="5px solid "+color;
+                    hueb.close();
+        })
+
+
+    </script>
+{%endif%}
+
+
+
+<div class=" text-center  heading-section" style="border: 0px solid black; display:flexbox; align-items: center;">
+    <br><br>
+
+        {% if gym is not none and gym is not undefined  %}
+
+                
+        <table width="80%" border=0 cellpadding="15"><tr><td cellpadding="20" valign="right" width="20%">
+                <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
+
+        </td><td>
+                <h1  class="display-2"> {{ gym['name'] }}</h1>
+                <h1>
+                <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
+                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
+
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-print"></i></a>
+            
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="{{gym['homepage']}}"><i class="icon-file-text"></i></a></h1>
+                
+            </h1>
+                    
+                {{ gym['address'] }} <i class="icon-location"></i><br>
+                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
+                
+        </td></tr></table>
+
+    {% else %}
+                <h3>{{ reference_data['current_language'].gyms }} </h3>
+
+                {% if user is defined and user is not none and 'create_gym' in user['permissions']['general'] %}
+                    <button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
+                            onclick='location.href="/gyms/add"'>{{reference_data['current_language'].add}}</button>
+
+                {% endif %}
+        
+    {% endif %}
+    
+    
+</div>
+    
+
+
+
+<div class="container">  
+
+
+    <div id="tabulator-table"></div>
+</div>
+
+<br><br>
+{% if gym is not none and gym is not undefined  %}
+
+
+
+	<!-- Trigger the modal with a button -->
+
+
+   
+
+
+
+
+
+
+    <script>
+
+        var routes;
+      
+        function getData()
+        {
+          const gymid = "{{gymid}}";
+          const routeid = "{{routesid}}";
+      
+          fetch(`/api1/gym/${gymid}/${routeid}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+              console.log(data);
+              routes=data.routes
+              renderTabulatorTable(routes);
+                
+      
+          })
+          .catch(error => console.error(error));
+      
+        }
+      
+      
+      function renderTabulatorTable(routesA)
+      {
+        var columns = [
+          {title: "#", field: "routenum"},
+          {title: "Line", field: "line"},
+          {title: "Color", field: "color1", formatter:"color"},
+          {title: "Grade", field: "grade"},
+          {title: "Name", field: "name"},
+          {title: "Opened By", field: "openedby"},
+          {title: "Open Date", field: "opendate"},
+          {title: "Notes", field: "notes"}
+          ];
+      
+          // Create the Tabulator table
+          var table = new Tabulator("#tabulator-table", {
+              columns: columns,
+              data: routesA ,
+              layout:"fitDataStretch",
+              movableRows: false,
+              selectable: 1,
+              responsiveLayout:"collapse",
+              //movableColumns: true, 
+
+              /*rowContextMenu:[
+              {
+                label:"Edit Row",
+                action:function(e, row){
+                    row.delete();
+                }
+                },
+                {
+                    label:"Delete Row",
+                    action:function(e, row){
+                        row.delete();
+                    }
+                },
+            ]*/
+          });
+
+          table.on("rowClick", function(e, row){
+            routeDetail(row.getData());
+            showModal();
+          });
+
+          if (currentRow !== undefined)
+          {
+            //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
+            table.selectRow(2);
+          }
+      
+      }
+      
+      
+        getData();
+        
+        function getFormData() {
+          const formData = {};
+
+          
+          
+          const id = document.getElementById('id').value;
+          formData['id'] = id;
+          
+          const routenum = document.getElementById('routenum').value;
+          formData['routenum'] = routenum;
+          
+          const line = document.getElementById('line').value;
+          formData['line'] = line;
+          
+          const colorfr = document.getElementById('colorfr').value;
+          formData['colorfr'] = colorfr;
+          
+          const color1 = document.getElementById('color1').value;
+          formData['color1'] = color1;
+          
+          const colorModifier = document.getElementById('color_modifier').value;
+          formData['color_modifier'] = colorModifier;
+          
+          const grade = document.getElementById('grade').value;
+          formData['grade'] = grade;
+          
+          const name = document.getElementById('name').value;
+          formData['name'] = name;
+          
+          const openedBy = document.getElementById('openedby').value;
+          formData['openedby'] = openedBy;
+          
+          const openDate = document.getElementById('opendate').value;
+          formData['opendate'] = openDate;
+          
+          const notes = document.getElementById('notes').value;
+          formData['notes'] = notes;
+          
+          const jsonData = JSON.stringify(formData);
+          
+          return jsonData;
+          }
+      
+      
+        function addRoute() {
+          const id = document.getElementById('id').value;
+          const routenum = parseInt(document.getElementById('routenum').value);
+          const line = document.getElementById('line').value;
+          const colorfr = document.getElementById('colorfr').value;
+          const color1 = document.getElementById('color1').value;
+          const color_modifier = document.getElementById('color_modifier').value;
+          const grade = document.getElementById('grade').value;
+          const name = document.getElementById('name').value;
+          const openedby = document.getElementById('openedby').value;
+          const opendate = document.getElementById('opendate').value;
+          const notes = document.getElementById('notes').value;
+      
+          const route = {
+            id,
+            routenum,
+            line,
+            colorfr,
+            color1,
+            color_modifier,
+            grade,
+            name,
+            openedby,
+            opendate,
+            notes
+          };
+      
+          // insert the new route into the array
+          routes.splice(routenum, 0, route);
+      
+          console.log('Route added:', route);
+          console.log('Routes array:', routes);
+        }
+
+        function saveLine() {
+            var data = getFormData();
+            saveData(data)
+        }
+
+        function saveData(data){
+            console.log('saving data '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/saveone', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.log('error response',response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response:', data);
+                routes=data.routes
+                renderTabulatorTable(routes);
+                //table.replaceData(routes);
+                hideModal()
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+            }
+
+
+      </script>
+      
+      
+      
+
+
+
+</div>
+
+
+
+
+				{%endif %}
+
+{% if gyms is not none  %}
+
+
+
+
+
+					{% for gymid in gyms %}
+
+                    
+					<div class=" col-lg-6 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
+							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
+						>
+							<a href="gyms/{{ gymid }}">
+							<div class="blog-text">
+								<div class="prod-title">
+
+									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
+									height="130">
+
+									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
+
+									<br><br>
+									<h4>{{ gyms[gymid]['name'] }}</h4>
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+
+
+{% endif %}
+
+
+
+
+			</div>
+		</div>
+
+	</div>
+{% endblock %}

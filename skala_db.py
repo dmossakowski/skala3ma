@@ -12,11 +12,6 @@ import numpy as np
 import pandas as pd
 import numpy.random
 from collections import Counter
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import plotly
-import plotly.graph_objects as go
-import plotly.express as px
 import tracemalloc
 import sqlite3 as lite
 import uuid
