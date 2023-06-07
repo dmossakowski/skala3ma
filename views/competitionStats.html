@@ -1,0 +1,580 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+    
+	<!--script src="https://cdn.jsdelivr.net/npm/apexcharts"></script-->
+
+
+		<!--styaaale="background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
+		{% include "skala3ma-menu.html" %}
+
+
+		
+
+<div class="container">
+    <div class="text-center heading-section">
+   
+			{% if rankings is not none and rankings is not undefined %}
+	
+						<br> 
+
+							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+
+			{% else %}
+            <br><br>
+							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+						<br><br>
+						<h3> {{ reference_data['current_language'].competition_results }} <br>
+						<br>{{ reference_data['current_language'].not_available }}</h3>
+						{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}
+			{% endif %}
+    </div>
+</div>
+
+
+{% if rankings is not none and rankings is not undefined %}
+
+<div class="container">
+    <div class="text-center">
+
+
+				<!--div>
+					<div style="display: flex;" id="chartMF"></div>
+                    <div style="display: flex;" id="chartRoutes"></div>
+                    
+                    
+                </div-->
+                    <div class="">
+                        <div  id="myChart3"></div>
+                    </div>
+                    <br><br>
+                    <div class="">
+                   
+						<div id="myChart2"></div>
+				  </div>
+				  
+
+
+				
+<script>
+	const ctx2 = document.getElementById('myChart2');
+
+   
+                const url = '/api1/competition/{{competition['id']}}/stats';
+                const url2 = '/api1/competition_results/{{competition['id']}}/stats';
+                
+                async function getData() {
+                  const jsondata = await (await fetch(url)).json();
+                  processData2(jsondata);
+                  
+                  const rangejsondata = await (await fetch(url2)).json();
+                  processDataRange(rangejsondata);
+                  
+                }
+                
+            
+                getData();
+                //console.log('lll');
+            
+                
+	
+//'#008FAB', '#33B2DF', '#81D4FA', 
+	var options2 = {
+		labels: ['Femme Senior', 'Femme Titane', 'Femme Diamante', 'Homme Senior'],
+		colors: ['#4CAF50','#C5D86D','#1B998B', '#FF9800', '#FEC029', '#F9E83E'],
+        series: [{
+          name: '{{ reference_data['current_language'].women}} Senior',
+          data: []
+        }, {
+          name: '{{ reference_data['current_language'].woman}} Titane',
+          data: []
+        }, {
+          name: '{{ reference_data['current_language'].women}} Diamant',
+          data: []
+        }, {
+          name: '{{ reference_data['current_language'].men}} Senior',
+          data: []
+        }, {
+          name: '{{ reference_data['current_language'].men}} Titane',
+          data: []
+        }, {
+          name: '{{ reference_data['current_language'].men}} Diamant',
+          data: []
+        }],
+          chart: {
+          type: 'bar',
+          height: 800,
+          
+          stacked: true,
+          toolbar: {
+            show: true
+          },
+          zoom: {
+            enabled: true
+          }
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            legend: {
+              position: 'bottom',
+              offsetX: -10,
+              offsetY: 0
+            }
+          }
+        }],
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            borderRadius: 0,
+            dataLabels: {
+              total: {
+                enabled: true,
+                style: {
+                  fontSize: '10px',
+                  fontWeight: 500
+                }
+              }
+            }
+          },
+        },
+        xaxis: {
+          //type: 'datetime',
+          categories: [1,2],
+        },
+        legend: {
+          position: 'top',
+          offsetZ: 40,
+		  onItemHover: {
+      		highlightDataSeries: true
+    		},
+        },
+        fill: {
+          opacity: 1
+        },
+		tooltip: {
+                shared: false,
+                x: {
+                  formatter: function (val) {
+                    return val
+                  }
+                },
+                y: {
+                  formatter: function (val) {
+                    return Math.abs(val) + ""
+                  }
+                }
+              },
+        };
+
+        var chart2 = new ApexCharts(document.querySelector("#myChart2"), options2);
+        chart2.render();
+      
+
+
+
+
+
+	function processData(fullresponse)
+	{
+		//console.log('here');
+		//console.log(fullresponse['results']['F']['0']);
+		chart.updateSeries([{
+          name: 'Feminin',
+          //data: fullresponse['results']['F']['0'],
+		  data: [{
+      x: 'category A',
+      y: 10
+    }, {
+      x: 'category B',
+      y: 18
+    }, {
+      x: 'category C',
+      y: 13
+    }]
+        }])
+
+	}
+
+
+
+	function processData2(fullresponse)
+	{
+		//console.log('here2');
+		//console.log(fullresponse['F0']);
+		//
+
+		var routes = []
+		for (routeid in fullresponse['routedata'])
+		{
+			routes.push(fullresponse['routedata'][routeid]['grade']+' - '+fullresponse['routedata'][routeid]['routenum']);
+		}
+
+		chart2.updateOptions({
+   			xaxis: {
+      			categories: routes
+   			}
+   			
+			
+		});
+		chart2.updateSeries(fullresponse['chartdata']);
+	}
+
+
+	function processDataRange(fullresponse)
+	{
+		//console.log('here3');
+		//console.log(fullresponse['rangeData']);
+		
+		chart3.updateSeries(fullresponse['rangeData']);
+	}
+
+    var optionsMFchart = {
+          series: [76, 67, 61, 90],
+          chart: {
+          height: 390,
+          width: 400,
+          type: 'radialBar',
+        },
+        plotOptions: {
+          radialBar: {
+            offsetY: 0,
+            startAngle: 0,
+            endAngle: 270,
+            hollow: {
+              margin: 5,
+              size: '30%',
+              background: 'transparent',
+              image: undefined,
+            },
+            dataLabels: {
+              name: {
+                show: false,
+              },
+              value: {
+                show: false,
+              }
+            }
+          }
+        },
+        colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5'],
+        labels: ['Vimeo', 'Messenger', 'Facebook', 'LinkedIn'],
+        legend: {
+          show: true,
+          floating: true,
+          fontSize: '16px',
+          position: 'left',
+          offsetX: 20,
+          offsetY: 15,
+          labels: {
+            useSeriesColors: true,
+          },
+          markers: {
+            size: 0
+          },
+          formatter: function(seriesName, opts) {
+            return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
+          },
+          itemMargin: {
+            vertical: 3
+          }
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            legend: {
+                show: false
+            }
+          }
+        }]
+        };
+
+    var optionsMFchartORIG = {
+          series: [24, 54],
+          chart: {
+          height: 250,
+          
+          type: 'radialBar',
+        },
+        plotOptions: {
+          radialBar: {
+            endAngle: 270,
+            dataLabels: {
+              name: {
+                show: true,
+                fontSize: '22px',
+              },
+              value: {
+                fontSize: '32px',
+                formatter: function (val) {
+                    return val 
+                  }
+              },
+              total: {
+                show: true,
+                label: '',
+                formatter: function (w) {
+                    return w.globals.seriesTotals.reduce((a, b) => {
+                      return a + b
+                    }, 0) 
+                  }
+              }
+            }
+          }
+        },
+        labels: ['Man', 'Woman'],
+        legend: {
+          show: true,
+          floating: true,
+          fontSize: '16px',
+          position: 'left',
+          offsetX: 10,
+          offsetY: 15,
+          horizontalAlign: 'left',
+          labels: {
+            useSeriesColors: true,
+          },
+          markers: {
+            size: 0
+          },
+          formatter: function(seriesName, opts) {
+            return seriesName //+ ":  " + opts.w.globals.series[opts.seriesIndex]
+          },
+          itemMargin: {
+            vertical: 3
+          }
+        },
+        };
+
+        //var chartMF = new ApexCharts(document.querySelector("#chartMF"), optionsMFchart);
+        //chartMF.render();
+      
+
+    var optionsRouteschart = {
+          series: [12],
+          chart: {
+          height: 250,
+          type: 'radialBar',
+        },
+        plotOptions: {
+          radialBar: {
+            dataLabels: {
+                show: true,
+              name: {
+                fontSize: '24px',
+              },
+              value: {
+                fontSize: '26px',
+                formatter: function (val) {
+                    return val 
+                  }
+              },
+              total: {
+                show: true,
+                label: 'Total',
+                formatter: function (w) {
+                    return w.globals.seriesTotals.reduce((a, b) => {
+                      return a + b
+                    }, 0) 
+                  }
+              }
+            }
+          }
+        },
+        labels: ['Apples', 'Oranges', "soooo"],
+       };
+
+        //var chartRoutes = new ApexCharts(document.querySelector("#chartRoutes"), optionsRouteschart);
+        //chartRoutes.render();
+      
+    
+
+
+
+    var options3 = {
+        //labels: ['Femme Senior', 'Femme Titane'],
+		colors: [ '#FF9800','#4CAF50'],
+        
+          series:  [
+    {
+      
+      
+        "data": [
+        {
+          "x": "5a", 
+          "y": [
+            121, 
+            379
+          ]
+        }, 
+        {
+          "x": "5b", 
+          "y": [
+            400, 
+            650
+          ]
+        }, 
+        {
+          "x": "7a", 
+          "y": [
+            890, 
+            1000
+          ]
+        }
+      ], 
+      "name": "Homme"
+    }, 
+    {
+      "data": [
+        {
+          "x": "6b", 
+          "y": [
+            790, 
+            1000
+          ]
+        }, 
+        {
+          "x": "6b", 
+          "y": [
+            190, 
+            300
+          ]
+        }, 
+        {
+          "x": "7a", 
+          "y": [
+            390, 
+            600
+          ]
+        }
+      ], 
+      "name": "Femme"
+    }
+  ], 
+  
+  
+        chart: {
+          height: 650,
+          
+          type: 'rangeBar'
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true
+          }
+        },
+        tooltip: {
+            enabled: true,
+            enabledOnSeries: undefined,
+            shared: false,
+            x: {
+                show: true,
+                format: 'dd MMM',
+                formatter: undefined,
+                },
+            y: {
+            formatter: function(value) {
+                return value
+                },
+                title: {
+                    formatter: (seriesName) => seriesName,
+                },
+            },    
+        },
+   
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) {
+            var a = val[0]
+            var b = val[1]
+            var diff = val[1] - val[0]
+            return diff 
+          }
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shade: 'light',
+            type: 'vertical',
+            shadeIntensity: 0.25,
+            gradientToColors: undefined,
+            inverseColors: true,
+            opacityFrom: 1,
+            opacityTo: 1,
+            stops: [50, 0, 100, 100]
+          }
+        },
+        xaxis: {
+          type: 'integer'
+        },
+        legend: {
+          position: 'top'
+        }
+        };
+
+
+        var options4 = {
+          series: [{
+          name: "SAMPLE A",
+          data: [
+          ["4", 5.4], ["5a", 2], ["5a", 3], ["5b", 2]]
+        },{
+          name: "SAMPLE B",
+          data: [
+          ["4", 51.4], ["5a", 2], ["5a", 3], ["5b", 21]]
+        },{
+          name: "SAMPLE C",
+          data: [
+          ["4", 5.4], ["5a", 21], ["5a", 31], ["5b", 2]]
+        }],
+          chart: {
+          height: 350,
+          type: 'scatter',
+          zoom: {
+            enabled: true,
+            type: 'xy'
+          }
+        },
+        xaxis: {
+          tickAmount: 10,
+          
+        },
+        yaxis: {
+          tickAmount: 7
+        }
+        };
+
+
+        var chart3 = new ApexCharts(document.querySelector("#myChart3"), options3);
+        chart3.render();
+
+
+
+
+
+      
+				  </script>
+			  
+
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+
+	{% endif %}
+
+{% endblock %}

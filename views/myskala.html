@@ -1,0 +1,274 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+	<div name='bbb'>
+
+		<!--   % include "myskala-menu.html" %--> 
+
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="text-center heading-section">
+						<br>
+				<h3>{{ reference_data['current_language'].my_resultats}}</h3>
+					
+
+					</div>
+               
+		<div class="container">
+          
+                
+			<div class="row">
+                <div id="chartbox"></div>
+                <div id="chartbox2"></div>
+              
+                   
+             
+            <!--div class="expo-box row">
+                Routes climbed: <label id="routes_climbed_count"></label><br>
+                Competitions attended: <label id="competitions_count"></label-->
+                
+            </div>
+            
+
+<div id="tabulator-table"></div>
+
+
+<div class="container-fluid">
+
+
+</div>
+
+<br>
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+<script>
+
+        var options = {
+          series: [
+          {
+            name: 'Total',
+            data: [
+              {
+                x: '',
+                y: 12,
+                goals: [
+                  {
+                    name: 'Yours',
+                    value: 8,
+                    strokeWidth: 10,
+                    strokeHeight: 16,
+                    strokeColor: '#00E396'
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+          chart: {
+          height: 100,
+          toolbar: {
+            show: false
+            },
+            type: 'bar'
+        },
+        plotOptions: {
+        bar: {
+            horizontal: true,
+        }
+        },
+        
+        colors: ['#4CAF50'],
+        dataLabels: {
+          formatter: function(val, opt) {
+            const goals =
+              opt.w.config.series[opt.seriesIndex].data[opt.dataPointIndex]
+                .goals
+        
+            if (goals && goals.length) {
+              return `${goals[0].value} / ${val} `
+            }
+            return val
+          }
+        },
+        legend: {
+          show: false,
+          showForSingleSeries: true,
+          customLegendItems: ['Actual', 'Expected'],
+          markers: {
+            fillColors: ['#00E396', '#775DD0']
+          }
+        },
+        "grid": {
+        "show": false,
+        "yaxis": {
+            "lines": {
+                "show": false
+            }
+        },
+        "row": {},
+        "column": {},
+        "padding": {
+            "right": 3,
+            "left": 3
+        }
+    },
+    tooltip: {
+            enabled: false
+        },
+    xaxis: {
+        "labels": {
+            "show": false,
+            "trim": true,
+            "style": {}
+        },
+        "axisBorder": {
+            "show": false
+        },
+        "axisTicks": {
+            "show": false
+        },
+        "tickPlacement": "between",
+        title: {
+            text: "Competitions attended over total",
+            align: "top",
+            floating:"false",
+            offsetX: 0,
+            offsetY: -80,
+            style: {
+                fontWeight: "300",
+                fontSize: "16px"
+            }
+        },
+        tooltip: {
+            enabled: false
+        }
+    },
+    "yaxis": {
+        "show": false,
+        "tickAmount": 10,
+        "labels": {
+            "show": false,
+            "style": {}
+        },
+        "title": {
+            "style": {
+                "fontWeight": 700
+            }
+        }
+    },
+        };
+
+        
+
+
+	const url = '/api1/climber/stats';
+    //const url2 = '/api1/competition_results/{{competition['id']}}/stats';
+	var fulldata;
+
+	async function getData() {
+	  const jsondata = await (await fetch(url)).json();
+	  processData(jsondata);
+      
+      //const rangejsondata = await (await fetch(url2)).json();
+      //processDataRange(rangejsondata);
+	  
+	}
+	
+
+	getData();
+
+
+function processData(fullresponse)
+	{
+		//console.log('here2');
+		//console.log(fullresponse['F0']);
+		//
+        fulldata=fullresponse
+
+        options.xaxis.title.text='{{ reference_data["current_language"].stat_title_competitions_attended}}';
+        options.series[0].data[0].y=fulldata['personalstats']['total_competitions_count']
+        options.series[0].data[0].goals[0].value=fulldata['personalstats']['competitions_count']
+        
+        var chart = new ApexCharts(document.querySelector("#chartbox"), options);
+        chart.render();
+      
+
+        options.xaxis.title.text='{{ reference_data["current_language"].stat_title_competition_routes_climbed}}';
+        options.series[0].data[0].y=fulldata['personalstats']['competition_routes_total']
+        options.series[0].data[0].goals[0].value=fulldata['personalstats']['routes_climbed_count']
+        var chart2 = new ApexCharts(document.querySelector("#chartbox2"), options);
+        chart2.render();
+      
+
+		var routes = []
+		for (routeid in fullresponse['routedata'])
+		{
+			routes.push(fullresponse['routedata'][routeid]['grade']+' - '+fullresponse['routedata'][routeid]['routenum']);
+		}
+        
+        //document.querySelector("#routes_climbed_count").innerHTML = fulldata['personalstats']['routes_climbed_count']
+        //document.querySelector("#competitions_count").innerHTML = fulldata['personalstats']['competitions_count']
+        renderTabulatorTable(fullresponse['competitions'])
+    }
+
+
+    function renderTabulatorTable(routesA)
+      {
+        var columns = [
+          {title: "{{ reference_data['current_language'].name}}", field: "name"},
+          {title: "{{ reference_data['current_language'].date}}", field: "date", width: 110},
+          {title: "{{ reference_data['current_language'].club}}", field: "gym"},
+          {title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100},
+          {title: "{{ reference_data['current_language'].grades_points}}", field: "grades_climbed", formatter:"textarea"},
+          ];
+      
+          // Create the Tabulator table
+          var table = new Tabulator("#tabulator-table", {
+              columns: columns,
+              data: routesA ,
+              //layout:"fitDataFill",
+              layout:"fitColumns",
+              movableRows: false,
+              selectable: false,
+              responsiveLayout:"collapse",
+              resizableRows:false,
+              //movableColumns: true, 
+
+              /*rowContextMenu:[
+              {
+                label:"Edit Row",
+                action:function(e, row){
+                    row.delete();
+                }
+                },
+                {
+                    label:"Delete Row",
+                    action:function(e, row){
+                        row.delete();
+                    }
+                },
+            ]*/
+          });
+
+       
+      }
+      
+
+
+</script>
+
+
+{% endblock %}

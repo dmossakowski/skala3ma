@@ -1,0 +1,53 @@
+					<!-- START #fh5co-menu-wrap -->
+					<div class="nav-header">
+
+
+			<ul class="sf-menu sf-menu2" id="fh5co-primary-menu">
+<!-- li>{{ competition['name'] }}</li -->
+					<li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li>
+					<li><a href="/competitionRoutesEntry/{{ competitionId}}">{{ reference_data['current_language'].routes }}</a></li>
+
+							<li><a href="/competitionResults/{{ competitionId}}">{{ reference_data['current_language'].resultats }}</a></li>
+
+								<li><a href="/competitionStats/{{ competitionId}}">{{ reference_data['current_language'].statistics }}</a>
+                                
+                                    <!--ul class="fh5co-sub-menu">
+                                        <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
+                                    </ul-->
+                                
+                                </li>
+
+
+						
+							<!-- <ul class="fh5co-sub-menu">
+							<li><a href="/competitionResults/{{ competitionId}}/download">Download</a> </li>
+								</li></ul>-->
+
+
+						{% if username is defined %}
+
+							<!--li><a href="/progresstest">Progress</a></li-->
+
+
+
+								{% endif %}
+							<!--li><a href="blog.html">Blog</a></li-->
+							<!--li class="active"><a href="blog.html">Blog</a></li-->
+							<!--li><a href="contact.html">Contact</a></li-->
+							{% if username is not defined %}
+
+							{% endif %}
+
+{% if session is defined and session['name'] is defined %}
+
+
+{% else %}
+
+
+
+
+  {% endif %}
+						</ul>
+
+</div>
+					<br>
