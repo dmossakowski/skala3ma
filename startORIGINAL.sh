@@ -7,12 +7,15 @@ set -eu
 export PYTHONUNBUFFERED=true
 
 # Install Python 3 virtual env
-VIRTUALENV=.mainenv
+VIRTUALENV=.venv
 
 # create certificate and key file:
 # openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
 
 # mkdir userdata
+
+#create venv
+python -m venv $VIRTUALENV
 
 if [ ! -d $VIRTUALENV ]; then
   #virtualenv -p python3 $VIRTUALENV

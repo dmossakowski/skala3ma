@@ -18,7 +18,7 @@
 				   			<div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
 			   				<div class="slider-text-inner">
 <br><br>
-												<a href="/login"><img src="/public/images/Spotify_Logo_RGB_Green.png" width="470"><br>
+												<a href="/login"><img src="public/images/Spotify_Logo_RGB_Green.png" width="470"><br>
 		   						<h2 class="heading-title">Click to login</h2></a>
 								<br><br><br>
 
@@ -37,19 +37,20 @@
 {% endif %}
 
 			<!--div class="container"-->
-				<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(/public/images/group-of-people-1587927.jpg);  background-size: cover;">
+				<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 
-					<br>
-				{% if session['username'] is defined and session['username'] %}
 
-						<h3>Welcome {{ session['username'] }}
+					<br>
+				{% if display_name is defined and display_name %}
+
+						<h3>Welcome {{ display_name }}
 							{% if profileimageurl is defined and profileimageurl %}
-								<img src="{{ session['profileimageurl'] }}" width="150">
+								<img src="{{ profileimageurl }}" width="150">
 							{% endif %}
 							</h3>
 				{% else %}
-						<h3>Additive Spotify Analyzer</h3>
+						Welcome to Additive Spotify Analyzer
 
 				{% endif %}
 
@@ -64,13 +65,10 @@
 		<a href="https://github.com/dmossakowski/additive-spotify-analyzer/issues">add an issue</a><br><br>
 
 
-		<div class="d-grid gap-2 d-md-block" id="updateButton">
-		Enter below a Spotify playlist link (or just playlist id):<br>
-			<font color="red">{{ getPlaylistError }}</font>
-		<form class="form-outline" action="/loadPlaylist" method="get">
-			<input type="text" name="playlistInfo" size="60" class="form-control">
-			<button type="submit" class="btn btn-primary">Load</button> </form>
-		</div>
+	{% if lastmodified is defined and lastmodified %}
+
+		<i>Your data was last updated: {{ lastmodified }}</i><br><br>
+	{% endif %}
 
 
 <div id="fblikebutton"  class="fb-like" data-href="https://www.facebook.com/AdditiveSpotifyAnalyzer" data-width="" data-layout="button" data-action="like" data-size="small" data-share="true"></div>
@@ -78,7 +76,7 @@
 
 <div style="text-align: center;">
 		<br>
-<img src="/public/images/spotify-app-logo.png">
+<img src="public/images/spotify-app-logo.png">
 </div>
 
 

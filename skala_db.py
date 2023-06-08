@@ -48,7 +48,11 @@ IMG_TABLE = "images"
 def init():
     logging.info('initializing skala_db...')
 
-    if os.path.exists(DATA_DIRECTORY) and os.path.exists(COMPETITIONS_DB):
+    if not os.path.exists(DATA_DIRECTORY):
+        os.makedirs(DATA_DIRECTORY)
+
+
+    if os.path.exists(DATA_DIRECTORY):
         db = lite.connect(COMPETITIONS_DB)
 
         # ptype 0-public
@@ -115,7 +119,7 @@ def init():
 
 
         print('created ' + COMPETITIONS_DB)
-
+    
 
 
 def _add_competition(compId, competition):
@@ -188,6 +192,17 @@ def get_competition(compId):
         competition = json.loads(one[0])
         return competition
 
+
+def get_competitions_for_email(email):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    cursor.execute("SELECT DISTINCT json_extract(competitions.jsondata,'$.id') FROM competitions, json_tree(competitions.jsondata, '$.climbers') WHERE json_tree.key='email' AND json_tree.value=?;", [email])
+
+    # Extract the competition ids from the query results
+    competition_ids = [row[0] for row in cursor.fetchall()]
+
+    return competition_ids
 
 
 

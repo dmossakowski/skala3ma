@@ -18,6 +18,7 @@ body {
   color: #333333;
   font-weight: 300;
   overflow-x: hidden; }
+
 body.fh5co-offcanvas {
   overflow: hidden; }
 
@@ -42,6 +43,10 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
   margin: 0 0 30px 0; }
 
+#prod-title {
+    font-size: 24px;
+}
+
 figure {
   margin-bottom: 2em; }
 
@@ -57,7 +62,7 @@ figure {
   color: #fcfcfc;
   background: #44C662; }
 
-#fh5co-header {
+/*#fh5co-header {
   position: relative;
   margin-bottom: 0;
   z-index: 9999999; }
@@ -107,11 +112,13 @@ figure {
 @media screen and (max-width: 768px) {
   .header-top .fh5co-social {
     text-align: center !important; } }
+*/
 
-#fh5co-hero {
+
+/*#fh5co-hero {
   min-height: 700px;
-  /*background: #fff url(../images/loader.gif) no-repeat center center;*/
-  position: relative; }
+  position: relative; 
+}
 #fh5co-hero .overlay {
   position: absolute;
   top: 0;
@@ -231,6 +238,7 @@ figure {
 #fh5co-hero .flexslider .slider-text > .slider-text-inner .heading-title {
   font-size: 60px; }
 
+  */
 /* Superfish Override Menu */
 .sf-menu {
   margin: 1px 0 0 0 !important; }
@@ -309,7 +317,7 @@ figure {
   border-top: none;
   border-top: none;
   text-decoration: none;
-  //zoom: 1;
+  /*zoom: 1;*/
   font-size: 12px;
   border-bottom: none !important;
   font-weight: bold;
@@ -332,7 +340,7 @@ figure {
    }
 
 .sf-menu2 ul li, .sf-menu2 ul ul li {
-    //line-height: 10;
+    /*line-height: 10;*/
     background : #FFFFFF;
     padding: 0px 1 0 0 !important;
 
@@ -390,6 +398,9 @@ figure {
 .sf-arrows ul li > .sf-with-ul:focus:after, .sf-arrows ul li:hover > .sf-with-ul:after, .sf-arrows ul .sfHover > .sf-with-ul:after {
   border-left-color: #ccc; }
 
+
+
+  
 #fh5co-header-section {
   padding: 0;
   position: relative;
@@ -684,7 +695,8 @@ div.cs-select span {
   padding: 7em 0; }
 @media screen and (max-width: 768px) {
   #fh5co-blog-section, #fh5co-features, #fh5co-popular-properties, #fh5co-properties, #fh5co-testimonial, #fh5co-about, #fh5co-contact, .fh5co-content-section {
-    padding: 4em 0; } }
+    padding: 4em 0; } 
+}
 
 .fh5co-section-gray {
   background: rgba(0, 0, 0, 0.04); }
@@ -1131,8 +1143,8 @@ div.cs-select span {
   position: relative;
   background: #EFEFF1;
   width: 100%;
-  height: 260px;
-  padding: 13px;
+  height: 310px;
+  padding: 6px;
   float: right;
   -webkit-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
   -moz-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
@@ -1157,13 +1169,31 @@ div.cs-select span {
 .fh5co-blog .blog-text h3 a {
   color: rgba(0, 0, 0, 0.6); }
 
+
+
+
+  
 #map {
   width: 100%;
   height: 500px;
   position: relative; }
 @media screen and (max-width: 768px) {
   #map {
-    height: 200px; } }
+    height: 200px; 
+} }
+
+.expo-box {
+    margin-bottom: 10px;
+    position: flex;
+    background: #EFEFF1;
+    padding: 10px;
+    float: right;
+    -webkit-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
+    -moz-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
+    box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18); }
+  
+
+
 
 .fh5co-social-icons > a {
   padding: 4px 10px;

@@ -27,10 +27,10 @@
 
 	<div>
 		<!--style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
-	{% include "skala3ma-menu.html" %}
-
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+	    {% include "skala3ma-menu.html" %}
+        <div class="container">
+		    <!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class=" text-left heading-section animate-box">
 						<br>
 						<h3>{{ reference_data['current_language'].register }} - {{ competition['name']}} - {{ competition['date']}}</h3>
 						<font color="red">{{ reference_data['current_language'][error_code] }}</font>
@@ -72,37 +72,28 @@
 									{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
-							<option value="other" size="20" >{{ reference_data['current_language'].other}}</option>
+							<!--option value="other" size="20" >{{ reference_data['current_language'].other}}</option-->
 
 
 							</select>
 							<br><br>
 
-							<label for="otherclub">{{ reference_data['current_language'].other_club_not_listed}}:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
+							<!--label for="otherclub">{{ reference_data['current_language'].other_club_not_listed}}:</label><br> 
+								<input id="otherclub" name="otherclub" size="40" /><br><br-->
 
 
-<button >{{ reference_data['current_language'].submit}}</button>
+                    <button class="btn btn-success btn-lg">{{ reference_data['current_language'].submit}}</button>
 					</form>
 
 
 						{% else %}
-<!-- climber is null here -->
+            <!-- climber is null here -->
 						{% endif %}
 
 
 					</div>
 
 
-		<div class="container">
-			<div class="row row-bottom-padded-md">
-
-
-
-
-
-
-
-			</div>
 		</div>
 		<!-- fh5co-blog-section -->
 

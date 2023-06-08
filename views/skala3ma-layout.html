@@ -3,6 +3,9 @@
 
 <html lang="en">
 	<head>
+        <meta
+  http-equiv="Content-Security-Policy-Report-Only"
+  content="default-src 'self'; img-src https://*; child-src 'none';" />
 	<meta charset="utf-8"/>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 	<title>skala3ma</title>
@@ -32,66 +35,84 @@
 	 -->
 
   	<!-- Facebook and Twitter integration -->
-	<meta property="og:title" content=""/>
-	<meta property="og:image" content=""/>
-	<meta property="og:url" content=""/>
-	<meta property="og:site_name" content="skala3ma"/>
-	<meta property="og:description" content=""/>
 	<meta name="twitter:title" content="" />
 	<meta name="twitter:image" content="" />
 	<meta name="twitter:url" content="" />
 	<meta name="twitter:card" content="" />
-		<meta name="google-signin-client_id" content="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com">
+	<meta name="google-signin-client_id" content="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com">
 
 
 	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 	<link rel="shortcut icon" href="/public/images/favicon.png?v5"/>
-		<link rel="icon" href="/public/images/favicon.png?v5"/>
+	<link rel="icon" href="/public/images/favicon.png?v5"/>
 
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'/>
 
-			<link rel="stylesheet" href="/public/css/languages.min.css"/>
+	<link rel="stylesheet" href="/public/css/languages.min.css"/>
 
 	<!-- Animate.css -->
-	<link rel="stylesheet" href="/public/css/animate.css"/>
+	<!--link rel="stylesheet" href="/public/css/animate.css"/-->
 	<!-- Icomoon Icon Fonts-->
 	<link rel="stylesheet" href="/public/css/icomoon.css"/>
 	<!-- Bootstrap  -->
 	<link rel="stylesheet" href="/public/css/bootstrap.css">
+
+
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    />
+
+    <!--link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    /-->
+    
 	<!-- Superfish -->
 	<link rel="stylesheet" href="/public/css/superfish.css"/>
 	<!-- Flexslider  -->
-	<link rel="stylesheet" href="/public/css/flexslider.css"/>
+	<!--link rel="stylesheet" href="/public/css/flexslider.css"/-->
 	<!-- Magnific Popup -->
-	<link rel="stylesheet" href="/public/css/magnific-popup.css"/>
+	<!--link rel="stylesheet" href="/public/css/magnific-popup.css"/-->
 	<!-- Date Picker -->
-	<link rel="stylesheet" href="/public/css/bootstrap-datepicker.min.css"/>
-	<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.css"/>
-	<link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
+	<!--link rel="stylesheet" href="/public/css/bootstrap-datepicker.min.css"/-->
+	<!--link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.css"/-->
+	<!--link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
 
 	<link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
-
+    -->
 
 
 	<!-- CS Select -->
-	<link rel="stylesheet" href="/public/css/cs-select.css">
-	<link rel="stylesheet" href="/public/css/cs-skin-border.css">
+	<!--link rel="stylesheet" href="/public/css/cs-select.css"-->
+	<!--link rel="stylesheet" href="/public/css/cs-skin-border.css"-->
 	
 	<link rel="stylesheet" href="/public/css/style.css">
 
 
 	<!-- Modernizr JS -->
-	<script src="/public/js/modernizr-2.6.2.min.js"></script>
+	<!--script src="/public/js/modernizr-2.6.2.min.js"></script-->
 	<!-- FOR IE9 below -->
 	<!--[if lt IE 9]>
 	<script src="/public/js/respond.min.js"></script>
 	<![endif]-->
-	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+	<!--script src="https://cdn.plot.ly/plotly-latest.min.js"></script-->
+    <!--script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script-->
 	<script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <link rel="stylesheet" href="/public/css/huebee.min.css"/>
+
+    <link href="/public/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/public/js/tabulator.min.js"></script>
+	
+    <!--script src="https://cdn.jsdelivr.net/npm/apexcharts"></script-->
+    <script src="/public/js/apexcharts.js"></script>
+
+    <!-- script for custom color picker-->
+    <script src="/public/js/huebee.pkgd.min.js"></script>
 <script>
 //https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
@@ -132,7 +153,7 @@
  }
 
 	//280503233781760
-  window.fbAsyncInit = function() {
+  /*window.fbAsyncInit = function() {
     FB.init({
       appId      : '368679864760074',
       cookie     : true,
@@ -146,8 +167,9 @@
     	statusChangeCallback(response);
 	});
 
-  };
+  };*/
 
+  /*
   (function(d, s, id){
      var js, fjs = d.getElementsByTagName(s)[0];
      if (d.getElementById(id)) {return;}
@@ -155,7 +177,7 @@
      js.src = "https://connect.facebook.net/en_US/sdk.js";
      fjs.parentNode.insertBefore(js, fjs);
    }(document, 'script', 'facebook-jssdk'));
-
+*/
 
 	function checkLoginState() {
   		FB.getLoginStatus(function(response) {
@@ -165,8 +187,8 @@
 
 	function statusChangeCallback(response)
 	{
-		console.log('layout.html statusChangeCallback');
-		console.log(response)
+		//console.log('layout.html statusChangeCallback');
+		//console.log(response)
 		if (response.status=="connected")
 		{
 			//console.log(' is connected boy')
@@ -206,30 +228,33 @@
 							<!--li>
 								<a href="/journey" class="fh5co-sub-ddown">{{ reference_data['current_language'].journey }}</a>
 										</li-->
-
-						<li>
+                    
+                                
+						    <li>
 								<a href="/gyms" class="fh5co-sub-ddown">{{ reference_data['current_language'].gyms }}</a>
 
 
 
-										</li>
+							</li>
 
 							<li>
 								<a href="/competitionDashboard" class="fh5co-sub-ddown">{{ reference_data['current_language'].competitions }}</a>
 								<!--li>	<a href="/competitionDashboard" >{{ reference_data['current_language'].list }} </a></li-->
-
+                                <ul class="fh5co-sub-menu" >
+                                <li><a href="/myresultats" class="fh5co-sub-ddown">{{ reference_data['current_language'].my_resultats }}</a>
+                                </li>
+                            </ul>
 
 
 							</li>
 
 
 
-						{% if username is defined %}
+						    {% if username is defined %}
 
 							<!--li><a href="/progresstest">Progress</a></li-->
-<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
-<!--li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
-</li-->
+                            <!--li><a href="https://www.facebook.com/AdditiveSpotifyAnalyzer" target="_blank" title="Facebook page"><i class="icon-facebook2"></i></a>
+                            </li-->
 
 								{% endif %}
 							<!--li><a href="blog.html">Blog</a></li-->
@@ -239,52 +264,54 @@
 
 							{% endif %}
 
-{% if session is defined and session['name'] is defined %}
+                            {% if session is defined and session['name'] is defined %}
 
-<li><a href="/user">{{ session['name'] }}
+                            <li><a href="/user">{{ session['name'] }}
 
-<img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a>
+                                <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer"></a>
 
-	<ul class="fh5co-sub-menu">
-		<li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
+                                <ul class="fh5co-sub-menu">
+                                    <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
+                                
+                                    <li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
 
-	{% if session['name'] == 'David Mossakowski' %}
-		<li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
+                                    {% if session['name'] == 'David Mossakowski' %}
+                                    <li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
 
-		{% endif %}
+                                    {% endif %}
 
-		{% if session['name'] == 'Sebastiao Correia' %}
-		<li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
+                                    {% if session['name'] == 'Sebastiao Correia' %}
+                                    <li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
 
-		{% endif %}
-
-
-		</ul>
-
-</li>
+                                    {% endif %}
 
 
-{% else %}
+                                </ul>
 
-<li><a href="/loginchoice">Login
-         </a>
-
-
-	<!--li><a href="/facebook/"><img id="facebooklogin	"
-            src="/public/images/facebooklogin.png" height="25"
-            alt="Facebook">
-         </a>
-	<li><a href="/google"><img id="googlelogin"
-            src="/public/images/googlelogin.jpeg" height="23"
-            alt="Facebook"></a-->
+                            </li>
 
 
-</li>
-						</ul>
+                            {% else %}
 
-         {% endif %}
+                            <li><a href="/loginchoice">Login
+                                </a>
 
-				</nav>
+
+                            <!--li><a href="/facebook/"><img id="facebooklogin	"
+                                    src="/public/images/facebooklogin.png" height="25"
+                                    alt="Facebook">
+                                </a>
+                            <li><a href="/google"><img id="googlelogin"
+                                    src="/public/images/googlelogin.jpeg" height="23"
+                                    alt="Facebook"></a-->
+
+
+                            </li>
+                        </ul>
+
+                                {% endif %}
+
+				    </nav>
 
 				</div>
 
@@ -296,8 +323,8 @@
 
 
 						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
-			<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
-		<!-- end:header-top -->
+		            	<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
+	                	<!-- end:header-top -->
 
 
 
@@ -311,28 +338,6 @@
 
 			{% endblock %}
 
-
-		<!-- aside id="fh5co-hero" class="js-fullheight">
-			<div class="flexslider js-fullheight">
-				<ul class="slides">
-			   	<li style="background-image: url(public/images/timeseries1.png);">
-			   		<div class="overlay"></div>
-			   		<div class="container-fluid">
-			   			<div class="row">
-				   			<div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
-			   				<div class="slider-text-inner">
-			   				CONTENT
-
-		   					</div>
-			   			</div>
-				   		</div>
-			   		</div>
-			   	</li>
-			  	</ul>
-		  	</div>
-		</aside>
-		-->
-
 		<footer>
 			<div id="footer">
 				<div class="container">
@@ -345,10 +350,6 @@
 
 
 						<div class="col-md-5">
-
-
-
-
 							<h3 class="section-title">Links</h3>
 							<ul>
 
@@ -369,9 +370,9 @@
 							<a href="/language/en_US"><span class="lang-lg lang-lbl" lang="en"></span></a> &nbsp;&nbsp;&nbsp;
 							<a href="/language/pl_PL"><span class="lang-lg lang-lbl" lang="pl"></span></a>
 
-<!--div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with"
-data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div-->
-<br><br>
+                            <!--div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with"
+                            data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div-->
+                            <br><br>
 						</div>
 
 						<div class="row">
@@ -413,6 +414,7 @@ data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"
 	<!--script src="/public/js/jquery.easing.1.3.js"></script-->
 	<!-- Bootstrap -->
 	<script src="/public/js/bootstrap.min.js"></script>
+    <!--script src="/public/js/b"></script-->
 	<!-- Waypoints -->
 	<script src="/public/js/jquery.waypoints.min.js"></script>
 	<script src="/public/js/sticky.js"></script>
@@ -420,18 +422,18 @@ data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"
 	<script src="/public/js/hoverIntent.js"></script>
 	<script src="/public/js/superfish.js"></script>
 	<!-- Flexslider -->
-	<script src="/public/js/jquery.flexslider-min.js"></script>
+	<!--script src="/public/js/jquery.flexslider-min.js"></script-->
 	<!-- Date Picker -->
-	<script src="/public/js/bootstrap-datepicker.min.js"></script>
-	<script src="/public/js/bootstrap-table.min.js"></script>
-		<script src="/public/js/bootstrap-table-filter-control.min.js"></script>
+	<!--script src="/public/js/bootstrap-datepicker.min.js"></script-->
+	<!--script src="/public/js/bootstrap-table.min.js"></script-->
+		<!--script src="/public/js/bootstrap-table-filter-control.min.js"></script-->
 	<!-- CS Select -->
 	<script src="/public/js/classie.js"></script>
 	<script src="/public/js/selectFx.js"></script>
 
 	
 	<!-- Main JS -->
-	<script src="/public/js/main.js"></script>
+	<!--script src="/public/js/main.js"></script-->
 
 
 	</body>

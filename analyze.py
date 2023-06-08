@@ -5,24 +5,13 @@ import os
 import glob
 import random
 from datetime import datetime, date, time, timedelta
-import numpy as np
-import pandas as pd
-import numpy.random
 from collections import Counter
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import plotly
-import plotly.graph_objects as go
-import plotly.express as px
 import tracemalloc
 import sqlite3 as lite
 
-from sklearn.cluster import KMeans
 
 from collections import defaultdict
 
-from matplotlib.figure import Figure
-from sklearn.preprocessing import MinMaxScaler
 
 from functools import lru_cache
 import logging
@@ -35,8 +24,11 @@ DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 PLAYLISTS_TRACKS_DB = DATA_DIRECTORY + "/db/playlists-tracks.sqlite"
 PLAYLISTS_TRACKS_TABLE = "playliststracks"
 
+processedDataDir = "/additivespotifyanalyzer"
 lru_cache.DEBUG = True
 
+publicPlaylistFile = {}
+publicPlaylistDb = None
 
 def init():
     logging.info('initializing analyze...')
@@ -328,7 +320,7 @@ def getRandomPlaylist(directory, dtype, restriction):
 
 
     logging.info("public playlists file is "+str(PLAYLISTS_TRACKS_DB))
-
+    #data = getOrGeneratePublicPlaylistsFile(directory,publicPlaylistFile, dtype, restriction)
 
     #if data is None:
     #    return None
@@ -781,7 +773,7 @@ def dataofish():
 
     kmeans = KMeans(n_clusters=3).fit(df)
     centroids = kmeans.cluster_centers_
-    #print(centroids)
+    print(centroids)
     xs = df['x']
     ys = df['y']
 

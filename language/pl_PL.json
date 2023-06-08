@@ -73,11 +73,11 @@
   "save": "Zapisz",
 
   "routes_climbed": "Spięte drogi",
-  "rank": "Rank",
+  "rank": "Ranga",
 
 
-  "ranked_women": "Women ranking",
-  "ranked_men": "Men ranking",
+  "ranked_women": "Kobiety ranking",
+  "ranked_men": "Mezczyzni ranking",
 
   "make_copy": "Make copy",
 
@@ -131,7 +131,16 @@
   "status": "Stan",
   "waitlist": "Poczekalnia",
   "max_participants": "Liczba zawodników",
-
+  "statistics": "Statystyki",
+  "delete_competition": "Usuń zawody",
+  "myprofile": "Mój profil",
+  "clubs": "Kluby",
+  "delete_gym": "Usuń klub z aplikacji",
+  "my_skala": "Moja skała",
+  "stat_title_competitions_attended": "Zawody zaliczone",
+  "stat_title_competition_routes_climbed": "Trasy pokonane",
+  "my_resultats": "Moje wyniky",
+  "grades_points": "Trudność (punkty)",
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",

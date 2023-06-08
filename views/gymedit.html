@@ -24,22 +24,14 @@
 
 	{% block secondarycontent %}
 
-	<div >
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class=" text-center heading-section animate-box">
-						<br>
-{% if gym is not none and gym is not undefined  %}
-						<h3>{{ gym['name'] }}</h3>
-						{% else %}
-						<h3>{{ reference_data['current_language'].gyms }} </h3>
-				{% endif %}
-					</div>
+	
+<div class=" text-center heading-section animate-box">
+                <br>
+                <h3>{{ gym['name'] }}</h3>
+</div>
 
 
-		<div class="container">
-
-{% if gym is not none and gym is not undefined  %}
-
+    
 
 <script>
 
@@ -118,157 +110,82 @@ function deleteRow(id) {
 </script>
 
 
-<div class="row">
 
-	<form action="/gyms/{{gym['id']}}/update" method="POST" enctype="multipart/form-data">
+<div class="container">
+
+    <div class="row">
+
+	    <form action="/gyms/{{gym['id']}}/update" method="POST" enctype="multipart/form-data">
 
 
 			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
 			<input name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br><br>
 
-
-	<label for="address">Address:</label><br>
-	<input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
+            <label for="address">Address:</label><br>
+            <input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
 							<br><br>
 
 
-	<label for="file1">Logo:</label><br>
-		<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="100">
-			<input type="file" name="file1" id="file1"><br>
+            <label for="file1">Logo:</label><br>
+                <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="100">
+                    <input type="file" name="file1" id="file1"><br>
 
-<label for="url">Link:</label><br>
-	<input name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
-							<br><br>
-
-
-	<label for="organization">Organization:</label><br>
-	<input name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
-							<br><br>
+            <label for="url">Link:</label><br>
+                <input name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
+                                    <br><br>
 
 
-		<label for="default_routes">{{ reference_data['current_language'].routes }}</label> {{gym['routesid']}}
-		<br>
-	<select name="default_routes" id="default_routes">
-
-		{% for route in all_routes %}
-			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
-
-		{% endfor %}
+            <label for="organization">Organization:</label><br>
+            <input name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
+                                    <br><br>
 
 
-	</select>
+            <label for="default_routes">{{ reference_data['current_language'].routes }}</label> {{gym['routesid']}}
+            <br>
+            <select name="default_routes" id="default_routes">
 
-		<br><br>
-	<label for="permissioned_user">{{ reference_data['current_language'].permissioned_user}}Permission user:</label>
-		<br>
-	<select name="permissioned_user" id="permissioned_user">
-							<option value="choose" size="20" ></option>
+            {% for route in all_routes %}
+                <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
 
-		{% for email in user_list %}
-
-							<option value="{{email}}" size="20" >{{email}}</option>
-	{% endfor %}
-
-							</select>&nbsp;&nbsp;&nbsp;&nbsp;
+            {% endfor %}
 
 
+            </select>
 
-<br><br>
+            <br><br>
+            <label for="permissioned_user">{{ reference_data['current_language'].permissioned_user}}Permission user:</label>
+            <br>
+            <select name="permissioned_user" id="permissioned_user">
+                                <option value="choose" size="20" ></option>
+
+            {% for email in user_list %}
+
+                                <option value="{{email}}" size="20" >{{email}}</option>
+            {% endfor %}
+
+                                </select>&nbsp;&nbsp;&nbsp;&nbsp;
 
 
 
-
-			<button name=save value="Save" class="btn btn-info btn-md">Save</button>
-			<button name=delete value="Delete" class="btn btn-danger btn-md">Delete</button>
-	</form>
+                <br><br>
 
 
-<!-- Modal -->
-<div id="myModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
 
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Modal Header</h4>
-      </div>
-      <div class="modal-body">
-        <p>Some text in the modal.</p>
-		  	<form action="/gyms/{{gym['id']}}/edit" enctype="multipart/form-data"  method="POST">
-				<input type="text" name="afterrow" id="afterrow" value=""/>
-			</form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
+
+            <button name=save value="Save" class="btn btn-success btn-lg">{{ reference_data['current_language'].save}}</button>
+            <button name=delete value="Delete" class="btn btn-danger btn-lg">{{ reference_data['current_language'].delete_gym}}</button>
+    	</form>
+
+
+
     </div>
 
-  </div>
-</div>
+    <br><br>
 
-
-
-
-<br><br>
-
-
-</div>
-
-
-
-
-				{%endif %}
-
-{% if gyms is not none  %}
 
 
 
 
 
-					{% for gymid in gyms %}
-
-
-					<div class=" col-md-2 ">
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
-							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
-							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
-						>
-							<a href="gyms/{{ gymid }}">
-							<div class="blog-text">
-								<div class="prod-title">
-									{% if gyms[gymid]['logoimg'] is not none %}
-									<img src="public/images/gyms/{{ gyms[gymid]['logoimg'] }}">
-									{% else %}
-
-									<h4>{{ gyms[gymid]['name'] }}</h4>
-									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
-									{% endif %}
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
-
-
-
-								</div>
-							</div>
-								</a>
-						</div>
-					</div>
-
-					 {% endfor %}
-
-
-
-
-
-{% endif %}
-
-
-
-
-			</div>
-		</div>
-
-	</div>
+</div>
 {% endblock %}

@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from flask import Blueprint
 import skala_journey as journeys_engine
 
+import skala_db
 from io import BytesIO
 
 from flask import send_file
@@ -506,6 +507,74 @@ def addCompetitionClimber(competitionId):
     return comp
 
 
+
+# Statistics for a competition
+@skala_api_app.route('/competition/<competitionId>/stats')
+#@login_required
+def getCompetitionStats(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    routesid = competition.get('routesid')
+    routesDict = competitionsEngine.get_routes(routesid)
+    routes = routesDict['routes']
+
+    rankings = competitionsEngine.get_sorted_rankings(competition)
+    # we need 6 categories:
+    categories = ["F0","F1","F2","M0","M1","M2"]
+    #category_names =  [reference_data['current_language'].ranking_diament_women,
+#				reference_data['current_language'].ranking_titan_women,
+#				reference_data['current_language'].ranking_senior_women,
+#				reference_data['current_language'].ranking_diament_men,
+#				reference_data['current_language'].ranking_titan_men,
+#				reference_data['current_language'].ranking_senior_men]
+				 
+
+
+    statistics = {}
+    for category in categories:
+        repeatArray = [0]*len(routes) 
+        statistics[str(category)]=repeatArray
+        
+    for climber in competition['climbers'].values():
+        
+        key = str(climber.get('sex'))+str(climber.get('category'))
+        stats = statistics.get(key)
+        for routenum in climber.get('routesClimbed'):
+            if climber.get('sex') is 'M':
+                stats[routenum-1]=stats[routenum-1]+1
+            else:
+                stats[routenum-1]=stats[routenum-1]+1  # can make -1 to have a stacked chart with males and females
+                
+    statout = []
+    for category in categories:     
+        statout.append( {  #"name":category,
+                           "data": statistics.get(category)})
+
+    statresponse = { "chartdata": statout,
+                    "routedata" : routes}
+    
+    return json.dumps(statresponse)
+
+
+
 ### USER
 
 
@@ -614,6 +683,7 @@ def get_competition_results(competitionId):
 
 #@skala_api_app.route('/competitionDashboard/<competitionId>/climber/<climberId>')
 #@login_required
+# PROBABLY NOT USED EVER!!!
 def getCompetitionClimber(competitionId, climberId):
     #competitionId = request.args.get('competitionId')
 
@@ -852,6 +922,277 @@ def migrategyms():
     return {}
 
 
+
+
+@skala_api_app.route('/competition_results/<competitionId>/stats')
+def get_competition_stats(competitionId):
+    comp = competitionsEngine.get_competition(competitionId)
+    routes = competitionsEngine.get_routes(comp['routesid'])
+
+    if comp is None:
+        return {}
+    
+    results = {}
+
+    pointsPerRouteM = competitionsEngine.get_route_repeats("M", comp)
+    pointsPerRouteF = competitionsEngine.get_route_repeats("F", comp)
+
+    for index, route in enumerate(routes['routes']):
+        route['pointsM'] = pointsPerRouteM[index+1]
+        route['pointsF'] = pointsPerRouteF[index+1]
+
+    #grades = ["4a", "4b", "4","4c", "5a", "5b", "5c", "6a", "6a+", "6b", "6b+", "6c", "7a"] # list of french climbing grades
+    #grades = ["5b", "5c", "6a"] # list of french climbing grades
+    
+    routes['rangeData'] = transform_json(routes)
+    routes['rangeDataOld']  =transform_jsonold(routes)
+
+    #routes['grades']
+    return routes
+
+
+
+    male_data = []
+    female_data = []
+    
+    male_points = []
+    female_points = []
+
+    male_grades = {}
+    female_grades = {}
+    for route in routes["routes"]:
+        grade = route['grade']
+        male_points.append(int(route["pointsM"]))
+        female_points.append(int(route["pointsF"]))
+        
+        male_grades[grade] = male_points
+        female_grades[grade] = female_points
+    
+        male_y = [male_points-3, male_points] if male_points else [None, None]
+        female_y = [female_points-3, female_points] if female_points else [None, None]
+    
+        male_data.append({"x": grade, "y": male_y})
+        female_data.append({"x": grade, "y": female_y})
+
+    male_data = sorted(male_data, key=lambda k: k['x'])
+    female_data = sorted(female_data, key=lambda k: k['x'])
+
+    series_json = [
+        {"name": "Male", "data": male_data},
+        {"name": "Female", "data": female_data}
+    ]
+
+    routes['rangeData'] = series_json
+
+    return routes
+
+
+
+@skala_api_app.route('/climber/stats')
+@login_required
+def get_myskala():
+    username = session.get('username')
+    stats = {}
+    competitions = skala_db.get_all_competitions()
+    competition_routes_total = 0
+    
+    for competition in competitions.values():
+        #competition = skala_db.get_competition(id)
+        routesid = competition.get('routesid')
+        routes = competitionsEngine.get_routes(routesid)
+        if routes is None:
+            continue
+        routes = routes.get('routes')
+    
+        competition_routes_total += len(routes)
+        
+    competition_ids = skala_db.get_competitions_for_email(username)
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+    
+    all_competitions = []
+    stats['personalstats']={}
+    stats['personalstats']['all_grades'] = []
+    
+    routes_climbed_count = 0
+    
+    for id in competition_ids:
+        ##competition = skala_db.get_competition(id)
+        #pointsEarned = competitionsEngine._calculatePointsPerClimber(id, user['id'], competition)
+        competition = competitionsEngine.recalculate(id)
+        routesid = competition.get('routesid')
+        routes = competitionsEngine.get_routes(routesid)
+        if routes is None:
+            continue
+        routes = routes.get('routes')
+        all_competitions.append(competition)
+        
+        
+
+        climber = competition.get('climbers').get(user['id'])
+        competition['climber'] = climber
+        if climber is not None:
+            routes_climbed = climber['routesClimbed']
+            routes_climbed_count += len(climber['routesClimbed'] )
+            grades_climbed = []
+            for idx, route_num in enumerate(routes_climbed):
+                route = routes[route_num-1]
+                grade = route.get('grade')
+                points = round(climber['points_earned'][idx])
+                stats['personalstats']['all_grades'].append(route.get('grade'))
+                grades_climbed.append(' '+str(grade) + ' ('+str(points)+')')
+            competition['grades_climbed'] = grades_climbed
+            competition['points_earned'] = climber['points_earned']
+            competition['rank']  = climber['rank']
+        # clear unnecessary data for other
+        competition.get('climbers').clear()
+
+        competition_points_per_route = {}
+        
+        
+        #logging.info(climbers)
+
+        
+
+    
+    stats['user'] = user
+
+    stats['personalstats']['competitions_count'] = len(competition_ids)
+    stats['personalstats']['total_competitions_count'] = len(competitions)
+    
+    stats['personalstats']['routes_climbed_count'] = routes_climbed_count
+    stats['personalstats']['competition_routes_total'] = competition_routes_total
+
+
+    stats['competitions'] = all_competitions
+
+
+
+    
+    return json.dumps(stats)
+
+
+def transform_json(input_data):
+    # Create a dictionary to hold the data for each grade
+    grades = {}
+    
+    # Loop over the routes and add them to the appropriate grade
+    for route in input_data['routes']:
+        grade = route['grade']
+        points_m = int(route['pointsM'])
+        points_f = int(route['pointsF'])
+        
+        # If this is the first route we've seen for this grade, create a new dictionary for it
+        if grade not in grades:
+            grades[grade] = {'homme': {'min': points_m-2, 'max': points_m, 'goals': []}, 
+                             'femme': {'min': points_f-2, 'max': points_f, 'goals': []}}
+        # Otherwise, update the min and max points for this grade
+        else:
+            if points_m < grades[grade]['homme']['min']:
+                grades[grade]['homme']['min'] = points_m
+            if points_m > grades[grade]['homme']['max']:
+                grades[grade]['homme']['max'] = points_m
+            if points_f < grades[grade]['femme']['min']:
+                grades[grade]['femme']['min'] = points_f
+            if points_f > grades[grade]['femme']['max']:
+                grades[grade]['femme']['max'] = points_f
+        
+        # Add the route to the appropriate gender's goals list
+        if points_m not in grades[grade]['homme']['goals']:
+            grades[grade]['homme']['goals'].append(points_m)
+        if points_f not in grades[grade]['femme']['goals']:
+            grades[grade]['femme']['goals'].append(points_f)
+    
+    sorted_grades = sorted(grades.keys(), key=lambda x: (x  if x else 'ZZZ'))
+
+    # Create a list of series data for each gender
+    series = []
+    for gender in ['homme', 'femme']:
+        data = []
+        for grade in sorted_grades:
+            if grade in grades:
+                grade_data = {'x': grade, 'y': [grades[grade][gender]['min'], grades[grade][gender]['max']]}
+                if grades[grade][gender]['goals']:
+                    goals = []
+                    for goal in grades[grade][gender]['goals']:
+                        goals.append({'name': str(goal), 'value': goal, 'strokeColor': '#FFCCCC'})
+                    grade_data['goals'] = goals
+                data.append(grade_data)
+        series.append({'name': gender.capitalize(), 'data': data})
+    
+    return series
+
+
+
+
+def transform_jsonold(input_json):
+    # Create two empty lists to store male and female data
+    male_data = []
+    female_data = []
+    
+    # Create a dictionary to store route data by grade
+    data_by_grade = {}
+    
+    # Loop through each route in the input JSON
+    for route in input_json['routes']:
+        grade = route['grade']
+        pointsM = int(route['pointsM'])
+        pointsF = int(route['pointsF'])
+        
+        # Add the route to the data for its grade
+        if grade not in data_by_grade:
+            data_by_grade[grade] = {'goals': []}
+        data_by_grade[grade]['goals'].append({
+            'name': route['routenum'],
+            'value': pointsM,
+            'strokeColor': route['color1']
+        })
+        
+        # Update the min and max points for male and female data
+        if not any(d['x'] == grade for d in male_data):
+            male_data.append({'x': grade, 'y': [pointsM, pointsM]})
+        else:
+            for d in male_data:
+                if d['x'] == grade:
+                    d['y'][0] = min(d['y'][0], pointsM)
+                    d['y'][1] = max(d['y'][1], pointsM)
+                    break
+                
+        if not any(d['x'] == grade for d in female_data):
+            female_data.append({'x': grade, 'y': [pointsF, pointsF]})
+        else:
+            for d in female_data:
+                if d['x'] == grade:
+                    d['y'][0] = min(d['y'][0], pointsF)
+                    d['y'][1] = max(d['y'][1], pointsF)
+                    break
+    
+    # Sort male and female data by grade
+    male_data.sort(key=lambda x: x['x'])
+    female_data.sort(key=lambda x: x['x'])
+    
+    # Combine male and female data into the output series JSON
+    series_json = [
+        {'name': 'Male', 'data': male_data},
+        {'name': 'Female', 'data': female_data}
+    ]
+    
+    # Add the data for each grade to the appropriate object in the series JSON
+    for grade, data in data_by_grade.items():
+        for d in male_data:
+            if d['x'] == grade:
+                d.update(data)
+                break
+    
+    return series_json
+
+
+
+
+
+
+
+
 ######## GYMS
 @skala_api_app.route('/gym')
 def gyms():
@@ -894,6 +1235,15 @@ def gym_by_id(gymid):
     return gym
 
 
+@skala_api_app.route('/gym/<gymid>/')
+def gym_by_id_default_route(gymid):
+
+    gym = competitionsEngine.get_gym(gymid)
+    routes = competitionsEngine.get_routes(gym.get('routesid'))
+
+    return routes
+
+
 @skala_api_app.route('/gym/<gymid>/routes')
 def routes_by_gym_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
@@ -909,6 +1259,82 @@ def gym_by_id_route(gymid, routesid):
     routes = competitionsEngine.get_routes(routesid)
 
     return routes
+
+
+
+
+@skala_api_app.route('/gym/<gymid>/<routesid>/add', methods=['POST'])
+@login_required
+def route_add(gymid, routesid):
+
+    routedata = request.get_json()
+    routedata = json.loads(routedata)
+
+    
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return redirect(url_for("skala_api_app.fsgtlogin"))
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    allroutes = all_routes.get(routesid)
+
+    routeset = allroutes.get('routes')
+    
+    for route in routes:
+        if route['id'] == routedata['id']:
+            routeset.insert(routeset['routenum'], routesdata)
+
+    return json.dumps(allroutes)
+
+
+# the input is json of a single route
+# the response is all the routes as they have been saved
+# this should be made thread safe but it isn't right now
+@skala_api_app.route('/gym/<gymid>/<routesid>/saveone', methods=['POST'])
+@login_required
+def route_save(gymid, routesid):
+
+    routedata = request.get_json()
+    routedata = json.loads(routedata)
+
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+
+    gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return Response("{'a':'b'}", status=401, mimetype='application/json')
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    routeset = all_routes.get(routesid)
+
+    routes = routeset.get('routes')
+    if routedata['id'] is None or routedata['id'] == '':
+        routedata['id'] = str(uuid.uuid4().hex)
+    
+    #idx = 0
+    #while idx < int(routedata['routenum']):
+    renumerate = False
+
+    for idx, x in enumerate(routes):
+            
+        if x['id'] == routedata['id']:
+            if routedata['routenum'] == '-1':
+                routes.pop(idx)
+            else:
+                x.update(routedata)
+            break
+        # check if routenum is 3.5
+        if float(routedata['routenum']) > float(x['routenum']) and float(routedata['routenum']) < float(x['routenum'])+1:
+            routedata['routenum']= int(x['routenum'])+1
+            routes.insert(int(x['routenum']),routedata )
+           
+    for idx, x in enumerate(routes):
+        x['routenum']=int(idx)+1
+    
+    competitionsEngine.upsert_routes(routesid, gymid, routeset)
+
+    return json.dumps(routeset)
 
 
 
@@ -1002,7 +1428,7 @@ def gym_routes_save(gymid, routesid):
 
     gym = competitionsEngine.get_gym(gymid)
     if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("skala_api_app.fsgtlogin"))
+        return Response("{'a':'b'}", status=401, mimetype='application/json')
 
     routes = []
     for i, routeline1 in enumerate(routeline):

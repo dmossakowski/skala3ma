@@ -26,38 +26,35 @@
 	<div  >
 	{% include "skala3ma-menu.html" %}
 
+    <div class="container">
+        <div class="row">
+
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+					<div class=" text-left heading-section">
 						<br>
 						<h3>{{ competition['name'] }} - {{ subheader_message }}
- </h3>
+                        </h3>
 
 					</div>
 
-
-		<div class="container">
-			<div class="row row-bottom-padded-md">
-
+</div></div>
 
 {% if routes is not none and routes is not undefined  %}
 
-<div class="container-fluid">
+<div class="container">
 
 
 <form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}" method="post">
 <h2><input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
 
 <table class="table thead-dark table-hover" id="my_table_id"
-    data-url="data/url.json"
-    data-id-field="id"
-    data-editable-emptytext="Default empty text."
-    data-editable-url="/my/editable/update/path">
+>
          <thead><tr>
-         <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
-         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].route_num }}</th>
-         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
-         <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].name }}</th>
-         <th data-field="climbed" data-filter-control="input">{{ reference_data['current_language'].climbed }}</th>
+         <th >{{ reference_data['current_language'].line }}</th>
+         <th >{{ reference_data['current_language'].route_num }}</th>
+         <th >{{ reference_data['current_language'].grade }}</th>
+         <th >{{ reference_data['current_language'].name }}</th>
+         <th >{{ reference_data['current_language'].climbed }}</th>
 
 
          </tr>

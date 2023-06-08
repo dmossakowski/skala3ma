@@ -7,7 +7,6 @@ import random
 from datetime import datetime, date, timedelta
 import time
 import numpy as np
-#import pandas as pd
 import numpy.random
 from collections import Counter
 import tracemalloc
@@ -70,21 +69,34 @@ colors = { 'Vert':'#2E8B57',
 'Saumon':'#FFE4C4'}
 
 
-categories = {0:"Séniors 16-49 ans", 1:"Titane 50-64 ans", 2: "Diamant 65 ans et +"}
+categories = {0:"Séniors 16-49 ans", 
+              1:"Titane 50-64 ans | Ado 14-15 ", 
+              2: "Diamant 65 ans et + | Ado 16-17"}
 
-clubs = {               0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
+#last 41 
+clubs = {               
+    40:"11C+",
+    0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
                        7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 10:"CPS 10 - Faites le mur" ,
-                       11:"Dahu 91" , 12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
+                       11:"Dahu 91" , 
+                       41:"EscaladA'sceaux",
+                       39:"Escalade Populaire Montreuilloise",
+                       12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
                        1:"Entente Sportive de Nanterre"  ,14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
-                      17:"Grimpe 13"   ,18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
+                      17:"Grimpe 13"   ,
+                      38:"Grimpe Fertoise Pays de Brie",
+                      18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
                       20:"Groupe Escalade Saint Thibault"  ,
                       21:"Le Mur 20"  ,
                       22:"Neuf-a-pic", 23:"Quatre +"  ,24:"ROC 14"  , 25:"RSC Champigny",
                       26:"RSC Montreuillois"   ,27:"SNECMA Sports Corbeil", 28:"SNECMA Sports Genevilliers"   ,
                       29:"Union Sportive Saint Arnoult", 30:"US Fontenay"   , 31:"US Ivry" , 32:"US Métro"  ,
-                      33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" ,
-                      37:"Autre club non répertorié"  }
+                      33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" 
+                        }
+
+
+
 
 # created - only visible to admin or someone who has the right to see it
 # open - visible and registration is possible
@@ -261,6 +273,7 @@ def update_competition(competitionId, competition):
     _update_competition(competitionId, competition)
 
 
+
 # calculates points per route per sex
 # first loop counts how many times the route was climbed
 # second loop iterates over this same list but then does 1000/times the route was climbed
@@ -271,6 +284,7 @@ def _getRouteRepeats(competitionId, sex, comp):
             continue
         #print(climber)
         routesClimbed = comp['climbers'][climber]['routesClimbed']
+        #print(comp['climbers'][climber]['sex'])
         #print(routesClimbed)
         for r in routesClimbed:
             pointsPerRoute[r]=pointsPerRoute[r]+1
@@ -288,6 +302,9 @@ def _getRouteRepeats(competitionId, sex, comp):
 
     return pointsPerRoute
 
+
+def get_route_repeats(sex, comp):
+    return _getRouteRepeats(None, sex, comp)
 
 
 def recalculate(competitionId, comp=None):
@@ -394,7 +411,6 @@ def get_sorted_rankings(competition):
             points = clubs[climber['club']][sex+"C"]
             clubs[climber['club']][sex+"C"] = points + 6 - classement
 
-
     for clubname in clubs:
         total = clubs[clubname]['M']+clubs[clubname]['F']+clubs[clubname]['MC']+clubs[clubname]['FC']
         clubs[clubname]['TOTAL'] = total
@@ -426,8 +442,11 @@ def get_sorted_rankings(competition):
 
 
 
+# for a climber it takes routes climbed array, regenerates points for route repeats
+#
 def _calculatePointsPerClimber(competitionId, climberId, comp):
     routesClimbed = comp['climbers'][climberId]['routesClimbed']
+    pointsEarned = []
     sex = comp['climbers'][climberId]['sex']
 
     if sex == "M":
@@ -437,10 +456,14 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
     else:
         return None;
     points = 0
+
+    # route climbed is an index into routeRepeats points calculated earlier
     for i, v in enumerate(routesClimbed):
         points += routeRepeats[v]
+        pointsEarned.append(routeRepeats[v])
         #logging.info(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
 
+    comp['climbers'][climberId]['points_earned'] = pointsEarned
     points = round(points)
     comp['climbers'][climberId]['score'] = points
     climbersex = comp['climbers'][climberId]['sex']
@@ -455,21 +478,197 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
     return comp
 
 
+
+
+
+def calculate_score(grades):
+    points_per_grade = {
+        '1': 1,
+        '2': 4,
+        '3': 16,
+        '4a': 64,
+        '4b': 256,
+        '4c': 1024,
+        '5a': 4096,
+        '5a+': 8096,
+        '5b': 16384,
+        '5b+': 32384,
+        '5c': 65536,
+        '5c+': 125384,
+        '6a': 262144,
+        '6a+': 524288,
+        '6b': 1048576,
+        '6b+': 2097152,
+        '6c': 4194304,
+        '6c+': 8388608,
+        '7a': 16777216,
+        '7a+': 33554432,
+        '7b': 67108864,
+        '7b+': 134217728,
+        '7c': 268435456,
+        '7c+': 536870912,
+        '8a': 1073741824,
+        '8a+': 2147483648,
+        '8b': 4294967296,
+        '8b+': 8589934592,
+        '8c': 17179869184,
+        '8c+': 34359738368,
+        '9a': 68719476736,
+        '9a+': 137438953472,
+        '9b': 274877906944,
+        '9b+': 549755813888,
+        '9c': 1099511627776
+    }
+    
+    score = 0
+    for i, grade in enumerate(grades):
+        if grade in points_per_grade:
+            points = points_per_grade[grade]
+            if i > 0 and grades[i-1].endswith('+'):
+                points /= 2
+            score += points
+    
+    return score
+
+
+
+def test_calcul():
+    test_data = []
+    test_data.append(['6a','2'])
+    test_data.append(['4a','4b','5a','2'])
+    test_data.append(['4a','4b','5a'])
+    test_data.append(['4a','4b','6a','5a','2'])
+    test_data.append(['4a','4b','6a','5b','2'])
+    test_data.append(['4a','4b','6a','5a','7a'])
+
+    
+
+
+def avg(grades):
+    # create a dictionary to convert grades to numbers
+    grade_dict2 = {"1": 0, "2": 1, "3": 2, "4a": 3, "4b": 4, "4c": 5, "5a": 6, "5b": 7, "5c": 8, "6a": 9,
+                  "6a+": 10, "6b": 11, "6b+": 12, "6c": 13, "6c+": 14, "7a": 15, "7a+": 16, "7b": 17, 
+                  "7b+": 18, "7c": 19, "7c+": 20, "8a": 21, "8a+": 22, "8b": 23, "8b+": 24, "8c": 25, 
+                  "8c+": 26, "9a": 27, "9a+": 28, "9b": 29, "9b+": 30, "9c": 31}
+    grade_dict = {'1': 1, '2': 2, '3': 3, '4a': 4.1, '4b': 4.4, '4c': 4.7,
+                    '5a': 5.2, '5b': 5.5, '5c': 5.8, '6a': 6.1, '6a+': 6.2, 
+                    '6b': 6.4, '6b+': 6.5, '6c': 6.7, '6c+': 6.8, '7a': 7.1,
+                    '7a+': 7.2, '7b': 7.4, '7b+': 7.5, '7c': 7.7, '7c+': 7.8,
+                    '8a': 8.1, '8a+': 8.2, '8b': 8.4, '8b+': 8.5, '8c': 8.7, '8c+': 8.8,
+                    '9a': 9.1, '9a+': 9.2, '9b': 9.5, '9b+': 9.6, '9c': 9.9}
+
+    # convert grades to numbers
+    nums = [grade_dict[g] for g in grades]
+    # calculate the average number
+    avg_num = sum(nums) / len(nums)
+    avg_grade = ""
+
+    # Convert the grades to numerical values and calculate the mean
+    grade_sum = sum([grade_dict[grade] for grade in grades])
+    mean_num = grade_sum / len(grades)
+    mean_grade=''
+    # convert the average number back to a grade
+    for g, n in grade_dict.items():
+        if n == round(avg_num):
+            avg_grade= g
+        if n == round(mean_num):
+            mean_grade= g
+
+
+    return {'avg':avg_grade,'avg_num':avg_num, 'mean':mean_grade, 'mean_num':mean_num}
+
+
+def mean_climbing_grade(grades):
+    # Define a dictionary to map the letter grades to numerical values
+    grade_values = {'1': 1, '2': 2, '3': 3, '4a': 4.1, '4b': 4.4, '4c': 4.7,
+                    '5a': 5.2, '5b': 5.5, '5c': 5.8, '6a': 6.1, '6a+': 6.2, 
+                    '6b': 6.4, '6b+': 6.5, '6c': 6.7, '6c+': 6.8, '7a': 7.1,
+                    '7a+': 7.2, '7b': 7.4, '7b+': 7.5, '7c': 7.7, '7c+': 7.8,
+                    '8a': 8.1, '8a+': 8.2, '8b': 8.4, '8b+': 8.5, '8c': 8.7, '8c+': 8.8,
+                    '9a': 9.1, '9a+': 9.2, '9b': 9.5, '9b+': 9.6, '9c': 9.9}
+
+    # Convert the grades to numerical values and calculate the mean
+    grade_sum = sum([grade_values[grade] for grade in grades])
+    mean_grade = grade_sum / len(grades)
+
+    return mean_grade
+
+
+
+def calculate_average_score(routes):
+    score_dict = {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4a": 4.1,
+        "4b": 4.2,
+        "4c": 4.3,
+        "5a": 5.1,
+        "5b": 5.2,
+        "5c": 5.3,
+        "6a": 6.1,
+        "6a+": 6.15,
+        "6b": 6.2,
+        "6b+": 6.25,
+        "6c": 6.3,
+        "6c+": 6.35,
+        "7a": 7.1,
+        "7a+": 7.15,
+        "7b": 7.2,
+        "7b+": 7.25,
+        "7c": 7.3,
+        "7c+": 7.35,
+        "8a": 8.1,
+        "8a+": 8.15,
+        "8b": 8.2,
+        "8b+": 8.25,
+        "8c": 8.3,
+        "8c+": 8.35,
+        "9a": 9.1,
+        "9a+": 9.15,
+        "9b": 9.2,
+        "9b+": 9.25,
+        "9c": 9.3,
+    }
+    score_total = 0
+    count = 0
+    route_counts = {}
+    for route in routes:
+        if route in score_dict:
+            if route in route_counts:
+                route_counts[route] += 1
+            else:
+                route_counts[route] = 1
+            count += 1
+    for route, count in route_counts.items():
+        score_total += score_dict[route] * count ** 0.5
+    if count == 0:
+        return 0
+    else:
+        return round(score_total / count * count ** 0.25, 2)
+
+
+
+
 lru_cache.DEBUG = True
+
+
+
+
 
 
 def init():
     logging.info('initializing competition engine...')
 
     skala_db.init()
-    user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
-                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+    #user_authenticated_fb("c1", "Bob Mob", "bob@mob.com",
+    #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-    user_authenticated_fb("c1", "Bob Mob2", "bob@mob.com",
-                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+    #user_authenticated_fb("c1", "Bob Mob2", "bob@mob.com",
+    #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-    user_authenticated_fb("c2", "Mary J", "mary@j.com",
-                           "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
+    #user_authenticated_fb("c2", "Mary J", "mary@j.com",
+    #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
 
     skala_journey.init()
@@ -547,6 +746,36 @@ def _validate_or_upgrade_competition(competition):
 
 def get_all_competitions():
     return skala_db.get_all_competitions()
+
+
+def get_competitions_by_year(year):
+    competitions = get_all_competitions()
+    competitions2 = {}
+
+    if not year.isdigit():
+        year = datetime.now().year
+
+    date_strt, date_end = datetime(int(year), 1, 1), datetime(int(year), 12, 31)
+    input_format = "%Y-%m-%d"
+    
+    for competition_id in competitions:
+        competition = competitions.get(competition_id)
+        competition_date = competition.get('date')
+        try:
+            if competition_date is None or len(competition_date)<2:
+                parsered_date=date_end
+            else:
+                parsered_date = datetime.strptime(competition_date, input_format)
+            if parsered_date >= date_strt and parsered_date <= date_end:
+                res = True
+                competitions2[competition['id']] = competition
+
+        except ValueError:
+            print("This is the incorrect date string format.")
+
+    return dict(sorted(competitions2.items(),
+                         key=lambda x: x[1]['date'],
+                         reverse=True))
 
 
 def get_active_competitions():
@@ -692,13 +921,14 @@ def get_permissions(user):
         return _generate_permissions()
 
     if user.get('permissions') is None:
-        user['permissions'] = _generate_permissions()
-
-    if user.get('email') == 'dmossakowski@gmail.com':
-        user['permissions']['godmode'] = True
-        user['permissions']['general'] = ['create_competition', 'edit_competition', 'update_routes']
-        user['permissions']['competitions'] = ['abc','def','ghi']
-        user['permissions']['gyms'] = ['1']
+        all_users = get_all_user_emails()
+        if len(all_users)==0:
+            user['permissions']['godmode'] = True
+            user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
+            user['permissions']['competitions'] = ['abc','def','ghi']
+            user['permissions']['gyms'] = ['1']
+        else:
+            user['permissions'] = _generate_permissions()
 
     return user['permissions']
 
@@ -773,6 +1003,17 @@ def can_edit_competition(climber, competition):
     #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
+def competition_can_be_deleted(competition):
+    climbers = competition.get('climbers')
+    
+    if climbers is not None and len(climbers)>0:
+        return False
+    if competition['status'] != competition_status_created:
+        return False
+
+    return True
+    
+
 # can update routes if:
 # user has update_routes general permission
 # competition is in scoring or inprogress status
@@ -812,6 +1053,8 @@ def can_register(user, competition):
 
 
 def can_edit_gym(user, gym):
+    if user is None or gym is None: 
+        return False
     permissions = user.get('permissions')
     if gym['id'] in permissions['gyms'] or session['name'] in ['David Mossakowski']:
         return True
@@ -1113,10 +1356,10 @@ def get_img(img_id):
 
 def loadroutesdict():
     return {'routes': [
-        {'id': '', 'routenum': '1', 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '4b', 'name': 'Dummy route', 'openedby': '', 'opendate': '', 'notes': 'dummy routes'},
-        {'id': '', 'routenum': '2', 'line': '1', 'colorfr': 'Rouge', 'color1': '#FF0000', 'color2': '', 'grade': '5a+', 'name': "L'égyptienne", 'openedby': 'Sebastiao', 'opendate': 'dec.-21', 'notes': 'Départ bas / horizontal'},
-        {'id': '', 'routenum': '3', 'line': '1', 'colorfr': 'Gris', 'color1': '#708090', 'color2': '', 'grade': '5b+', 'name': 'Fifty shades of grès', 'openedby': 'Olivier', 'opendate': 'oct.-19', 'notes': 'sans arête'},
-        {'id': '', 'routenum': '4', 'line': '1', 'colorfr': 'Marron', 'color1': '#A0522D', 'color2': '', 'grade': '5c', 'name': 'James Brown', 'openedby': 'Florian, Guillaume, Paulo', 'opendate': 'oct.-19', 'notes': ''},
+        {'id': '111', 'routenum': '1', 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '4b', 'name': 'Dummy route', 'openedby': '', 'opendate': '', 'notes': 'dummy routes'},
+        {'id': '222', 'routenum': '2', 'line': '1', 'colorfr': 'Rouge', 'color1': '#FF0000', 'color2': '', 'grade': '5a+', 'name': "L'égyptienne", 'openedby': 'Sebastiao', 'opendate': 'dec.-21', 'notes': 'Départ bas / horizontal'},
+        {'id': '333', 'routenum': '3', 'line': '1', 'colorfr': 'Gris', 'color1': '#708090', 'color2': '', 'grade': '5b+', 'name': 'Fifty shades of grès', 'openedby': 'Olivier', 'opendate': 'oct.-19', 'notes': 'sans arête'},
+        {'id': '444', 'routenum': '4', 'line': '1', 'colorfr': 'Marron', 'color1': '#A0522D', 'color2': '', 'grade': '5c', 'name': 'James Brown', 'openedby': 'Florian, Guillaume, Paulo', 'opendate': 'oct.-19', 'notes': ''},
         {'id': '', 'routenum': '5', 'line': '1', 'colorfr': 'Rose marbré', 'color1': '#FF69B4', 'color2': '', 'grade': '6b', 'name': 'Jeny dans le 6', 'openedby': 'Guillaume', 'opendate': 'dec.-21', 'notes': ''},
         {'id': '', 'routenum': '6', 'line': '1', 'colorfr': 'Jaune', 'color1': '#FFFF00', 'color2': '', 'grade': '6a+', 'name': '', 'openedby': '', 'opendate': 'déc.-17', 'notes': ''},
         {'id': '', 'routenum': '7', 'line': '2', 'colorfr': 'Orange', 'color1': '#FFA500', 'color2': '', 'grade': '5a', 'name': "Jeanne d'Arc", 'openedby': 'Jeanne', 'opendate': 'avr.-19', 'notes': 'voie enfants'},

@@ -319,8 +319,10 @@ def competition_admin_post(competition_id):
     update_status = request.form.get('update_status')
     permission_admin_user = request.form.get('permission_admin_user')
     permission_scorer_user = request.form.get('permission_scorer_user')
+    max_participants = request.form.get('max_participants')
 
     competition_update_button = request.form.get('competition_update_button')
+    delete_competition_button = request.form.get('delete_competition_button')
 
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -372,13 +374,21 @@ def competition_admin_post(competition_id):
         competition_name = request.form.get('competition_name')
         competition_date = request.form.get('competition_date')
         competition_routes = request.form.get('competition_routes')
+        max_participants = request.form.get('max_participants')
         # update gym name in the competition if Gym Name is changed somewhere else
         gym = competitionsEngine.get_gym(competition['gym_id'])
         if gym is not None:
             if gym['name'] != competition['gym']:
                 competition['gym']=gym['name']
+        competition['max_participants']=max_participants
 
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes)
+
+
+    if delete_competition_button is not None:
+        if competitionsEngine.competition_can_be_deleted(competition):
+            competitionsEngine.delete_competition(competition['id'])
+            return redirect(f'/competitionDashboard')
 
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
@@ -561,43 +571,21 @@ def getCompetitionDashboard():
 def competitions_by_year(year):
 
     username = session.get('username')
-    #if username:
-    #    return 'logged in '+str(username)
-    print(username)
-
-    #username = request.args.get('username')
     name = request.args.get('name')
     date = request.args.get('date')
     gym = request.args.get('gym')
-    comp = {}
-    competitionId=None
     if not year.isdigit():
         year = datetime.now().year
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
     subheader_message = request.accept_languages
     langs = competitionsEngine.reference_data['languages']
-    competitions = competitionsEngine.getCompetitions()
-    #test_list = [datetime(year, 1, 1), datetime(year, 12, 31)]
-    date_strt, date_end = datetime(int(year), 1, 1), datetime(int(year), 12, 31)
-
-    input_format = "%Y-%m-%d"
-    competitions2 = {}
-    for competition_id in competitions:
-        competition = competitions.get(competition_id)
-        competition_date = competition.get('date')
-        try:
-            parsered_date = datetime.strptime(competition_date, input_format)
-            if parsered_date >= date_strt and parsered_date <= date_end:
-                res = True
-                competitions2[competition['id']] = competition
-
-        except ValueError:
-            print("This is the incorrect date string format.")
+    
+    competitions3 = competitionsEngine.get_competitions_by_year(year)
 
     return render_template('competitionDashboard.html',
                            subheader_message=subheader_message,
-                           competitions=competitions2,
+                           competitions=competitions3,
                            competitionName=None,
                            session=session,
                            user=user,
@@ -844,6 +832,25 @@ def update_user():
 
 
 
+
+@fsgtapp.route('/myresultats')
+@login_required
+def myskala():
+    subheader_message = "My skala"
+    
+    competition={}
+
+
+    return render_template("myskala.html", 
+                           subheader_message=subheader_message,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           library=None,
+                           **session)
+
+
+
+
 @fsgtapp.route('/competitionDetails/<competitionId>')
 #@login_required
 def getCompetition(competitionId):
@@ -927,15 +934,53 @@ def getCompetitionResults(competitionId):
 
 
 
-    return render_template("competitionResults.html", competitionId=competitionId,
+    return render_template("competitionResults.html", 
+                           competitionId=competitionId,
                            competition=competition,
                            reference_data=competitionsEngine.reference_data,
                            rankings = rankings,
                            **session)
 
 
+
+# Statistics for a competition
+@fsgtapp.route('/competitionStats/<competitionId>')
+#@login_required
+def getCompetitionStats(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    rankings = competitionsEngine.get_sorted_rankings(competition)
+
+
+    return render_template("competitionStats.html", competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           rankings = rankings,
+                           **session)
+
+
+
 #@fsgtapp.route('/competitionDashboard/<competitionId>/climber/<climberId>')
 #@login_required
+# THIS IS NOT USED PROBABLY!!!!
 def getCompetitionClimber(competitionId, climberId):
     #competitionId = request.args.get('competitionId')
 
@@ -1007,6 +1052,14 @@ def getCompetitionClimber(competitionId, climberId):
 def downloadCompetitionCsv(competitionId):
 
     competition = competitionsEngine.getCompetition(competitionId)
+    gymid = competition['gym']
+    #gym = competitionsEngine.get_gym(gymid)
+    routesid = competition.get('routesid')
+    routes = competitionsEngine.get_routes(routesid)
+    if routes is not None:
+        routes = routes.get('routes')
+
+
 
     out = {}
 
@@ -1033,15 +1086,27 @@ def downloadCompetitionCsv(competitionId):
     count = 0
     for climberid in competition['climbers']:
         data = competition['climbers'][climberid]
-        data.pop('id', None)
-        data.pop('email', None)
-        data.pop('name',None)
+        data['grades'] = ""
+        grades = []
+        for routenum in competition['climbers'][climberid]['routesClimbed']:
+            grades.append(routes[routenum-1]['grade'])
+        
+        #data['grades'] = data['grades']+ routes[routenum-1]['grade'] + " "
+        #grades.append(routes[routenum-1]['grad e'])
+        grades = sorted(grades)
+        data['grades'] = ' '.join(grades)
+        data['newscore'] = competitionsEngine.calculate_score(grades)
 
         for i in range(100):
+            data.pop('id', None)
+            data.pop('email', None)
+            data.pop('name',None)
+
             if (i in competition['climbers'][climberid]['routesClimbed']):
                 data['r' + str(i)] = 1
             else:
                 data['r' + str(i)] = 0
+
 
         if count == 0:
             header = data.keys()
@@ -1050,6 +1115,7 @@ def downloadCompetitionCsv(competitionId):
             count += 1
         out = {}
         routesClimbed = flatten(data['routesClimbed'])
+
 
         csv_writer.writerow(data.values())
         writer.writerow(data.values())
@@ -1082,15 +1148,10 @@ def competitionRoutesList(competitionId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
 
-    #sortedClimbers = sorted(climbers, key=lambda climber: climber['lastname'] )
+    if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
+        sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+        competition['climbers']= sorted_data
 
-    #sortedClimbers = sorted(competition.get('climbers'),
-    #                     key=lambda k: (competition.get('climbers')[k]['lastname'],
-    #                                    competition.get('climbers')[k]))
-
-    sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
-    
-    competition['climbers']= sorted_data
     # library= {}
     # library['tracks'] = tracks
     # playlist = json.dumps(playlist)
@@ -1263,67 +1324,43 @@ def gyms():
 
 @fsgtapp.route('/gyms/<gymid>')
 def gym_by_id(gymid):
-    fullname = request.args.get('fullname')
-    nick = request.args.get('nick')
-    email = request.args.get('email')
-    sex = request.args.get('sex')
-    club = request.args.get('club')
-    category = request.args.get('category')
-
     gym = competitionsEngine.get_gym(gymid)
     #gym['routesid']='abc1'
-
-    subheader_message = '' + str(gym['name'])
-
-    #gyms = competitionsEngine.get_gyms()
-    email = session.get('email')
-    if email is not None:
-        user = competitionsEngine.get_user_by_email(email)
-
-    if fullname is not None and sex is not None and club is not None and email is not None:
-        #climber = competitionsEngine.user_self_update(climber, fullname, nick, sex, club, category)
-        subheader_message = 'Your details were saved'
-    else:
-        iemail = session.get('email')
-        comp = None # this is to not show the list of climbers before registration
-
-    email = session.get('email')
-    name = session.get('name')
 
     routes_dict = competitionsEngine.get_routes_by_gym_id(gymid)
 
     #routes1 = competitionsEngine.get_routes(gym['routesid'])
     routes = routes_dict.get(gym['routesid'])
+    routesid = gym['routesid']
+    return redirect(f'/gyms/{gymid}/{routesid}')
 
-    if name is None:
-        name = ""
 
-    return render_template('gyms.html',
-                           subheader_message=subheader_message,
-                           gymid=gymid,
+
+@fsgtapp.route('/gyms/<gym_id>/<routesid>', methods=['GET'])
+#@login_required
+def gym_routes_new(gym_id, routesid):
+    gym = competitionsEngine.get_gym(gym_id)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+
+    return render_template('gym-routes.html',
+                           gymid=gym_id,
+                           routesid=routesid,
                            gyms=None,
                            gym=gym,
                            routes=routes,
-                           routes_dict=routes_dict,
+                           all_routes=all_routes,
+                           user=user,
                            reference_data=competitionsEngine.reference_data,
-                           logged_email=email,
-                           logged_name=name,
-                            **session)
+                           user_can_edit_gym=user_can_edit_gym,
+                           )
 
 
-@fsgtapp.route('/gyms/<gymid>/<routesid>')
-def gym_by_id_route(gymid, routesid):
-
-    gym = competitionsEngine.get_gym(gymid)
-    routes = competitionsEngine.get_routes(routesid)
-
-    return render_template('gyms.html',
-                           gymid=gymid,
-                           gyms=None,
-                           gym=gym,
-                           routes=routes,
-                           reference_data=competitionsEngine.reference_data,
-                            **session)
 
 
 @fsgtapp.route('/gyms/<gymid>/data')
@@ -1500,13 +1537,59 @@ def gym_routes_save(gymid, routesid):
     # pickup the default routes to be rendered
     routes = competitionsEngine.get_routes(gym.get('routesid'))
 
-    return render_template('gyms.html',
+    return render_template('gym-routes.html',
                            gymid=gymid,
                            gyms=None,
                            gym=gym,
                            routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            )
+
+
+
+
+@fsgtapp.route('/gyms/<gym_id>/<routesid>/routes_csv')
+def downloadRoutesCsv(gym_id, routesid):
+
+    gym = competitionsEngine.get_gym(gym_id)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+
+    filename = 'routes-'+routes['id']
+    routes = routes['routes']
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+
+    data_file = open('jsonoutput2.csv', 'w', newline='')
+    csv_writer = csv.writer(data_file)
+
+    count = 0
+    for route in routes:
+        route.pop('id',None)
+        route.pop('colorfr',None)
+        
+        if count == 0:
+            header = route.keys()
+            csv_writer.writerow(header)
+            writer.writerow(header)
+            count += 1
+        out = {}
+        
+
+        csv_writer.writerow(route.values())
+        writer.writerow(route.values())
+
+    data_file.close()
+
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition":
+                     "attachment; filename="+filename+".csv"})
+
+
 
 
 
@@ -1568,7 +1651,7 @@ def downloadRoutes(gym_id, routesid):
         csv_writer.writerow(route.values())
         writer.writerow(route.values())
         #rethtml+="<tr><td>"+route['routenum']+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp;</td><td>"+route['grade']+"</td></tr>"
-        rethtml+="<div style='border:1px solid "+route['color1']+"'>"+route['routenum']+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp; "+route['grade']+" "
+        rethtml+="<div style='border:1px solid "+route['color1']+"'>"+str(route['routenum'])+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp; "+route['grade']+" "
         rethtml+="</div>"
 
     #rethtml+="</table>"
@@ -1735,6 +1818,9 @@ def gyms_update(gym_id):
     competitionsEngine.update_gym(gym_id, gym)
 
     return redirect(url_for('fsgtapp.gym_by_id', gymid=gym_id))
+
+
+
 
 
 

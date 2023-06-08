@@ -1,31 +1,24 @@
-Additive Spotify Analyzer
+SKALA3MA
 =========================
 
 
-![logo](public/images/spotify-app-logo.png)
+![logo](public/images/skala3ma-front.png)
 
-Collection of various analysis on Spotify data. 
+https://skala3ma.com
 
-For suggesting an analysis or report a bug add an issue here on GitHub. 
+Application to manage climbing gym routes and competitions. 
 
-Available on Render: https://spotify.onrender.com/
+Features:
+- Add and edit gym
+- Add and edit route sets
+- Create a competition
+- Public registration link
+- Easy route entry during competition
+- Instant scoring
+- Multi-language
+- Google and Facebook logins
 
-... and on Heroku (free account so takes a while to reactivate): https://additive-spotify-analyzer.herokuapp.com/
 
-Data retrieved from Spotify:
-- All tracks saved (liked)
-- All albums saved
-- All artists liked
-- All playlists created 
-- Top 50 tracks (long, medium and short term)
-- Top 50 artists (long, medium and short term)
-
-Analysis implemented:
-- Audio features graph - plots normalized track features as a time series
-- Orphaned tracks - shows tracks which were added without adding a whole album
-- Top artists - shows top artists as a gallery
-- Top genres - shows top genres in a word cloud 
-- Tracks list - just a simple list of tracks
 
 Technologies used
 -----------------
@@ -33,11 +26,40 @@ Technologies used
 - Python 3
 - Flask
 - OAuth libraries for authentication with Spotify
-- Numpy
-- Pandas
-- matplotlib for generating a plot (not used right now) 
-- Plotly for plotting features as a timeseries
-- sklearn for clustering and preprocessing the data
 - Jinja2 templates
+- Apexcharts https://apexcharts.com/
+- Tabulator https://tabulator.info/
+
+
+
+
+![logo](public/images/skala3ma-route-edit.png)
+
+
+To setup development environment:
+
+1 Create certificate and key file:
+# openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
+
+2. Create Python Virtual Environment
+python -m venv $VIRTUALENV
+
+3. Enter Virtual Environment
+  source $VIRTUALENV/bin/activate
+
+4 Install the requirements
+$VIRTUALENV/bin/pip install -r requirements.txt
+
+5 Run the server
+python server.py
+
+# create localhost certificats:
+# openssl req -new -x509 -days 365 -nodes -out cert.pem -keyout key.pem
+
+# allow chrome to open self signed https localhost:
+# chrome://flags/#allow-insecure-localhost
+
+
+#deactivate
 
 
