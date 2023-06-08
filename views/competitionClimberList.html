@@ -11,12 +11,11 @@
 
 	{% block secondarycontent %}
 
-	<div>
-
 		{% include "skala3ma-menu.html" %}
 
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+					<div class="container">
+                        <div class="text-center heading-section">
 
 
 						<br>
@@ -25,11 +24,12 @@
 
 						<font color="red">	{{ reference_data['current_language'][error_code] }} </font>
 
-					</div>
+					    </div>
+                    </div>
 
 
-		<div class="container">
-			<div class="row row-bottom-padded-md">
+<div class="container">
+	<div class="row row-bottom-padded-md">
 
 
 
@@ -37,19 +37,19 @@
 <div class="container">
 	<div class="row">
 				{{ reference_data['current_language'].name}} {{ climber['name'] }}
-	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
+	            ({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
 
 
 
 				{{ climber['routesClimbed'] }}
 
-</div>
-		<div class="row">
+    </div>
+	<div class="row">
 			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
-<table style="width:100%"><tr>
+            <table style="width:100%"><tr>
 
 					{% for i in range(100) %}
-<td style="width:10%">
+                    <td style="width:10%">
 
 						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
 								 {{i}}</a>
@@ -66,7 +66,7 @@
 					{%endfor%}
 </tr>
 			</table>
-				<button>Submit</button>
+				<button class="btn btn-success btn-lg">Submit</button>
 				</form>
 
 </div>

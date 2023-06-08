@@ -11,7 +11,6 @@
 	{% block secondarycontent %}
 
 
-	<div>
 		<!--styaaale="background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
 
 		{% include "skala3ma-menu.html" %}
@@ -21,94 +20,97 @@
  <!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
 
 
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="row text-center heading-section animate-box">
+<div class="container">
+    <div class="text-center heading-section">
+   
 
-
-			{% if rankings is not none and rankings is not undefined %}
+		{% if rankings is not none and rankings is not undefined %}
 
 						<br>{{ reference_data['current_language'].competition_results }} |
 						<a href="{{competition['id']}}/download">{{ reference_data['current_language'].download }} </a>
 
 							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
 
-			{% else %}
-<br><br>
+		{% else %}
+            <br><br>
 							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
 						<br><br>
-						<h3> <br>{{ reference_data['current_language'].competition_results }} <br>
+						<h3> {{ reference_data['current_language'].competition_results }} <br>
 						<br>{{ reference_data['current_language'].not_available }}</h3>
 						{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}
-			{% endif %}
-					</div>
+		{% endif %}
+	</div>
+</div>
 
-		<div class="container">
-			<div class="row row-bottom-padded-md">
+<div class="container">
+    <div class="row row-bottom-padded-md">
 
-{% if rankings is not none and rankings is not undefined %}
+        {% if rankings is not none and rankings is not undefined %}
 
-	<!-- first do club rankings -->
-<h2>{{ reference_data['current_language'].ranking_clubs }}</h2>
-<table class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
-         <thead><tr>
-		 <th data-field="rank" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
-    	 <th data-width="350" data-sortable="true" >{{ reference_data['current_language'].full_name }}</th>
-         <th data-field="m" >{{ reference_data['current_language'].men }}</th>
-         <th data-field="f" >{{ reference_data['current_language'].women }}</th>
-		 <th data-field="mc" data-sortable="false">{{ reference_data['current_language'].ranked_men }}</th>
-         <th data-field="fc" data-sortable="false">{{ reference_data['current_language'].ranked_women }}</th>
+	    <!-- first do club rankings -->
+        <h2 class="display-4">{{ reference_data['current_language'].ranking_clubs }}</h2>
+        <table class="table thead-dark table-bordered table-hover "  id="classsment"   data-toggle="table">
+            <thead><tr>
+                <th data-field="rank" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
+                <th data-width="350" data-sortable="true" >{{ reference_data['current_language'].full_name }}</th>
+                <th data-field="m" >{{ reference_data['current_language'].men }}</th>
+                <th data-field="f" >{{ reference_data['current_language'].women }}</th>
+                <th data-field="mc" data-sortable="false">{{ reference_data['current_language'].ranked_men }}</th>
+                <th data-field="fc" data-sortable="false">{{ reference_data['current_language'].ranked_women }}</th>
 
-         <th data-field="total"  data-sortable="false">{{ reference_data['current_language'].points }}</th>
+                <th data-field="total"  data-sortable="false">{{ reference_data['current_language'].points }}</th>
 
-         </tr>
-         </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for club in rankings['club'] %}
+                </tr>
+            </thead>
+            <tbody>
+                {# here we iterate over every item in our list which we will pass from bar() #}
+                {% for club in rankings['club'] %}
 
-		 {% if loop.index == 1 %}
-		 <tr style="background: #CFC">
-		{% elif loop.index == 2 %}
-			 <tr style="background: #AEA">
-		{% elif loop.index == 3 %}
-			 <tr style="background: #9C9">
-		{% else  %}
-			 <tr >
-		{% endif  %}
-			<td>{{ club['rank']}}</td>
-			 <td>	<b>{{ club['name'] }}</b></a></td>
+                {% if loop.index == 1 %}
+                <tr style="background: #CFC">
+                {% elif loop.index == 2 %}
+                    <tr style="background: #AEA">
+                {% elif loop.index == 3 %}
+                    <tr style="background: #9C9">
+                {% else  %}
+                    <tr >
+                {% endif  %}
+                    <td>{{ club['rank']}}</td>
+                    <td>	<b>{{ club['name'] }}</b></a></td>
 
-			 <td><i>{{club['M'] }}</i></td>
-			 <td><i> {{club['F'] }}   </i></td>
-			 <td><i>{{club['MC'] }}</i></td>
-			 <td><i> {{club['FC'] }}   </i></td>
-			 <td><i> {{club['TOTAL'] }}   </i></td>
+                    <td><i>{{club['M'] }}</i></td>
+                    <td><i> {{club['F'] }}   </i></td>
+                    <td><i>{{club['MC'] }}</i></td>
+                    <td><i> {{club['FC'] }}   </i></td>
+                    <td><i> {{club['TOTAL'] }}   </i></td>
 
-			        </tr>
-             {% endfor %}
-
-
-         </tbody>
-     </table>
-<br><br>
+                            </tr>
+                    {% endfor %}
 
 
+            </tbody>
+        </table>
+        <br><br>
 
 
-				{% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
-				<h2>
-				{% if key == '2F' %} {{ reference_data['current_language'].ranking_diament_women}} {% endif %}
-				{% if key == '1F' %} {{ reference_data['current_language'].ranking_titane_women}} {% endif %}
-				{% if key == '0F' %} {{ reference_data['current_language'].ranking_senior_women}} {% endif %}
-				{% if key == '2M' %} {{ reference_data['current_language'].ranking_diament_men}} {% endif %}
-				{% if key == '1M' %} {{ reference_data['current_language'].ranking_titane_men}} {% endif %}
-				{% if key == '0M' %} {{ reference_data['current_language'].ranking_senior_men}} {% endif %}
-				{% if key == 'M' %} {{ reference_data['current_language'].ranking_scratch_men}} {% endif %}
-				{% if key == 'F' %} {{ reference_data['current_language'].ranking_scratch_women}}  {% endif %}
 
-</h2>
+        {% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
+    </div>
+    <div class="row row-bottom-padded-md">
+        
+        <h2 class="display-4">
+        {% if key == '2F' %} {{ reference_data['current_language'].ranking_diament_women}} {% endif %}
+        {% if key == '1F' %} {{ reference_data['current_language'].ranking_titan_women}} {% endif %}
+        {% if key == '0F' %} {{ reference_data['current_language'].ranking_senior_women}} {% endif %}
+        {% if key == '2M' %} {{ reference_data['current_language'].ranking_diament_men}} {% endif %}
+        {% if key == '1M' %} {{ reference_data['current_language'].ranking_titan_men}} {% endif %}
+        {% if key == '0M' %} {{ reference_data['current_language'].ranking_senior_men}} {% endif %}
+        {% if key == 'M' %} {{ reference_data['current_language'].ranking_scratch_men}} {% endif %}
+        {% if key == 'F' %} {{ reference_data['current_language'].ranking_scratch_women}}  {% endif %}
 
-<table class="table thead-dark table-hover"  data-toggle="table">
+        </h2>
+
+        <table class="table thead-dark table-hover table-bordered"  data-toggle="table">
          <thead><tr>
 		 <th data-field="rank" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].ranking }}</th>
     	 <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].full_name }}</th>
@@ -119,7 +121,7 @@
 
          </tr>
          </thead>
-    <tbody>
+         <tbody>
          {# here we iterate over every item in our list which we will pass from bar() #}
     				{% for climber in rankings[key] %}
 
@@ -144,62 +146,18 @@
 
 
          </tbody>
-     </table>
-<br><br>
-			{% endfor %}
+        </table><br><br>
+        <br><br>
+		{% endfor %}
 
 
-				{% endif %} <!-- if rankings -->
-
-
-
-
-
-{% if competitions is not none  %}
+		{% endif %} 
 
 
 
 
-
-					{% for competitionId in competitions %}
-
-
-<div class=" col-md-2 ">
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
-							>
-
-							<a href="competitionDashboard/{{ competitionId }}">
-							<div class="blog-text">
-								<div class="prod-title">
-									<h4>{{ competitions[competitionId]['name'] }}</h4>
-									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
-									<br>
-									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
-
-
-
-								</div>
-							</div>
-								</a>
-						</div>
-					</div>
-
-					 {% endfor %}
-
-
-
-
-
-{% endif %}
-
-
-			</div>
-		</div>
-		<!-- fh5co-blog-section -->
 
 	</div>
+</div>
 
 {% endblock %}

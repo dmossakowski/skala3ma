@@ -15,157 +15,47 @@
 
 		{% include "skala3ma-menu.html" %}
 
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="text-center heading-section animate-box">
+			<div class="text-center heading-section">
 						<br>
-						<div>
-				<h3>{{ reference_data['current_language'].competitions }}
-					<select class="custom-select"
-            style="width:100px; border-radius: 5px; font-size: 22px	" onchange="document.location.href='/competitions/year/'+this.value+''">
+				
+				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
+					<select 
+                        style="width:100px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
 						name="competition_year">
 						<!--option name="all" {% if year=="Latest" %} selected {% endif %}>Latest</option-->
 						<option name="2023" value="2023" {% if year=="2023" %} selected {%endif %}>2023</option>
 						<option name="2022" value="2022" {% if year=="2022" %} selected {%endif %}>2022</option>
 						<option name="2021" value="2021" {% if year=="2021" %} selected {%endif %}>2021</option>
 	
-</select>
-</h3>
+                    </select>
+                    </h3>
 
-						</div><div>
+			    
 
 						{% if user is defined and user is not none and 'create_competition' in user['permissions']['general'] %}
-							<button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
-
-onclick='location.href="/newCompetition"'>{{reference_data['current_language'].add}}</button>
+							<button type="button" class="btn btn-success btn-md" 
+                                onclick='location.href="/newCompetition"'>{{reference_data['current_language'].add}}</button>
 
 						{% endif %}
 
-
-					</div>
+			</div>
 
 		<div class="container">
-			<div class="row row-bottom-padded-md">
-
-
-
-
-
-{% if climber is not none and climber is not undefined  %}
-<div class="container">
-	<div class="row">
-		{{ reference_data['current_language'].name }} {{ climber['name'] }}
-	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
-
-
-
-				{{ climber['routesClimbed'] }}
-
-</div>
-		<div class="row">
-			<form targt="/competitionDashboard/{{competitionId}}/updateRoutes">
-<table style="width:100%"><tr>
-
-					{% for i in range(100) %}
-<td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %}
-
-								></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button>{{ reference_data['current_language'].submit }}</button>
-				</form>
-
-</div>
-	</div>
-				{% endif %}
-
-
-
-
-
-{% if competition is not none and competition is not undefined  %}
-
-
-
-<div class="container-fluid">
-<table class="table thead-dark table-hover" >
-         <thead><tr>
-         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
-         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
-         <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
-<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
-
-         </tr>
-         </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for climberId in competition['climbers'] %}
-
-		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
-
-
-                    </tr>
-             {% endfor %}
-
-
-         </tbody>
-     </table>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="container-fluid">
-
-
-
-
-
-
-				{%endif %}
-
-{% if competitions is not none  %}
-
-
-<br>
-
-</div>
-
+		
 
 					{% for competitionId in competitions %}
 
 
 <div class=" col-lg-3 ">
 
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog text-center"
 							>
 
 							<a href="/competitionDetails/{{ competitionId }}">
-							<div class="blog-text">
-								<div class="prod-title">
-									<h4>{{ competitions[competitionId]['name'] }}<br>
-										{{ competitions[competitionId]['date'] }}</h4>
+							<div class="blog-text" >
+								<div class="AAprod-title">
+									<h3>{{ competitions[competitionId]['name'] }}<br>
+										{{ competitions[competitionId]['date'] }}</h3>
 
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
 									<br>
@@ -190,8 +80,6 @@ onclick='location.href="/newCompetition"'>{{reference_data['current_language'].a
 
 
 
-
-{% endif %}
 
 
 			</div>

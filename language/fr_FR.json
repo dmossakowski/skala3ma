@@ -132,7 +132,16 @@
   "status": "Etat",
   "waitlist": "Liste d'attente",
   "max_participants": "Nombre de participants",
-
+  "statistics": "Statistiques",  
+  "delete_competition": "Supprimer la competition",
+  "myprofile": "Mon profil",
+  "clubs": "Clubs",
+  "delete_gym": "Supprimer le club de l'appli",
+  "my_skala": "Ma skala",
+  "stat_title_competitions_attended": "Compétitions suivies sur le total",
+  "stat_title_competition_routes_climbed": "Voies grimpées sur le total",
+  "my_resultats": "Mes resultats",
+  "grades_points": "Cotation (points)",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

@@ -1,15 +1,11 @@
 import calendar
 from datetime import datetime, date, time, timedelta
-import numpy as np
-import plotly.graph_objects as go
 import datetime
 import functools as functools
-from sklearn.preprocessing import MinMaxScaler
 import logging
 
 import analyze
 
-from sklearn.cluster import KMeans
 from functools import lru_cache
 
 
@@ -736,7 +732,7 @@ def dataofish():
 
     kmeans = KMeans(n_clusters=3).fit(df)
     centroids = kmeans.cluster_centers_
-    #print(centroids)
+    print(centroids)
     xs = df['x']
     ys = df['y']
 

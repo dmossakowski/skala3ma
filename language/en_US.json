@@ -132,6 +132,17 @@
   "status": "Status",
   "waitlist": "Waitlist",
   "max_participants": "Number of participants",
+  "statistics": "Statistics",
+  "delete_competition": "Delete competition",
+  "myprofile": "My profile",
+  "clubs": "Clubs",
+  "delete_gym": "Delete the gym from the app",
+  "my_skala": "My skala",
+  "stat_title_competitions_attended": "Competitions attended over total",
+  "stat_title_competition_routes_climbed": "Routes climbed over total",
+  "my_resultats": "My resultats",
+  "grades_points": "Grade (points)",
+
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
