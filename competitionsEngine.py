@@ -923,6 +923,7 @@ def get_permissions(user):
     if user.get('permissions') is None:
         all_users = get_all_user_emails()
         if len(all_users)==0:
+            user['permissions'] = {}
             user['permissions']['godmode'] = True
             user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
             user['permissions']['competitions'] = ['abc','def','ghi']

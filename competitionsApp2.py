@@ -94,7 +94,6 @@ googleAuth = oauth.register(
     #consumer_secret=SPOTIFY_APP_SECRET,
     # Change the scope to match whatever it us you need
     # list of scopes can be found in the url below
-    # https://developer.spotify.com/web-api/using-scopes/
     access_token_params=None,
     #scope = 'playlist-read-private user-library-read	 user-top-read',
     base_url='https://accounts.spotify.com/',
