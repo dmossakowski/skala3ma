@@ -55,6 +55,19 @@ Minimum version of Python is 3.7.
   ```
   pip install -r requirements.txt
   ```
+4. Export the following variables 
+
+  ```
+   export DATA_DIRECTORY=<path to the data directory/create one as needed>
+   ```
+	```
+   export GOOGLE_CLIENT_ID=<your Google client id>
+   ```
+   ```
+   export GOOGLE_CLIENT_SECRET=<your Google client secret>
+  	```
+   
+   See how to create your Google client ID and secret at [https://developers.google.com/identity/protocols/oauth2?hl=en](https://developers.google.com/identity/protocols/oauth2?hl=en)
 
 5. Run the server
   ```
