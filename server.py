@@ -120,6 +120,11 @@ def init():
         os.mkdir(DATA_DIRECTORY + "/db")
         print('Created db directory')
 
+    UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.mkdir(UPLOAD_FOLDER)
+        print('Created uploads directory')
+
     #app_language = 'en_US'
     #locale.setlocale(locale.LC_ALL, app_language)
 
