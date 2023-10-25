@@ -106,6 +106,8 @@ def init():
     print ('initializing server...')
 
     r = random.randint(0, 10000)
+
+    
     init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
     # init_logging(console_loglevel=logging.DEBUG)
 
@@ -151,7 +153,7 @@ def init():
 
 def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     """Set up logging to file and console."""
-    if log_file is not None:
+    if log_file is not None and os.path.exists(log_file):
         if append:
             filemode_val = 'a'
         else:
@@ -170,13 +172,11 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     formatter = logging.Formatter("%(asctime)s %(message)s")
     console.setFormatter(formatter)
     # add the handler to the root logger
-    logging.getLogger('').addHandler(console)
+    #logging.getLogger('').addHandler(console)
     #global LOG
     #LOG = logging.getLogger(__name__)
 
 
-init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
-#init_logging(console_loglevel=logging.DEBUG)
 
 
 
