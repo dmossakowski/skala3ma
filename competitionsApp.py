@@ -563,8 +563,13 @@ def main():
 
 @fsgtapp.route('/competitionDashboard')
 def getCompetitionDashboard():
-    year = datetime.now().year
-    return competitions_by_year(str(year))
+    # select season year depending on current month;
+    # e.g. if 2023-10-01 then season is 2023-24 
+    # if 2023-05-01 then season is 2022-23
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+    season = current_year if current_month >= 9 else current_year-1 
+    return competitions_by_year(str(season))
 
 
 @fsgtapp.route('/competitions/year/<year>')

@@ -749,13 +749,23 @@ def get_all_competitions():
 
 
 def get_competitions_by_year(year):
+    """
+    This function returns the list of competitions for the current year (actually season, e.g. 2023-2024).
+
+    Args:
+        year (int): The first year of the season (e.g. 2023)
+        
+
+    Returns:
+        The list of competitions
+    """
     competitions = get_all_competitions()
     competitions2 = {}
-
     if not year.isdigit():
         year = datetime.now().year
 
-    date_strt, date_end = datetime(int(year), 1, 1), datetime(int(year), 12, 31)
+    # The sport season starts in September and ends in August.
+    date_strt, date_end = datetime(int(year), 9, 1), datetime(int(year)+1, 8, 31)
     input_format = "%Y-%m-%d"
     
     for competition_id in competitions:
@@ -767,7 +777,6 @@ def get_competitions_by_year(year):
             else:
                 parsered_date = datetime.strptime(competition_date, input_format)
             if parsered_date >= date_strt and parsered_date <= date_end:
-                res = True
                 competitions2[competition['id']] = competition
 
         except ValueError:

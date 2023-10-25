@@ -20,12 +20,12 @@
 				
 				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
 					<select 
-                        style="width:100px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
+                        style="width:200px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
 						name="competition_year">
-						<!--option name="all" {% if year=="Latest" %} selected {% endif %}>Latest</option-->
-						<option name="2023" value="2023" {% if year=="2023" %} selected {%endif %}>2023</option>
-						<option name="2022" value="2022" {% if year=="2022" %} selected {%endif %}>2022</option>
-						<option name="2021" value="2021" {% if year=="2021" %} selected {%endif %}>2021</option>
+						<!--option name="all" {% if year=="Latest" %} selected {% endif %}>Latest</option-->		
+						<option name="2023" value="2023" {% if year=="2023" %} selected {%endif %}>2023-2024</option>
+						<option name="2022" value="2022" {% if year=="2022" %} selected {%endif %}>2022-2023</option>
+						<option name="2021" value="2021" {% if year=="2021" %} selected {%endif %}>2021-2022</option>
 	
                     </select>
                     </h3>
