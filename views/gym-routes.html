@@ -282,6 +282,7 @@
             function editContent(){
                 mod_type='save'
                 showEditDiv();
+                return false;
             }
 
             function deleteContent(){
@@ -417,10 +418,11 @@
         {% if gym is not none and gym is not undefined  %}
 
                 
-        <table width="80%" border=0 cellpadding="15"><tr><td cellpadding="20" valign="right" width="20%">
-                <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
+        <div>
+                    <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
 
-        </td><td>
+        </div>
+        <div>
                 <h1  class="display-2"> {{ gym['name'] }}</h1>
                 <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -434,8 +436,7 @@
                     
                 {{ gym['address'] }} <i class="icon-location"></i><br>
                 <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
-                
-        </td></tr></table>
+            </div>
 
     {% else %}
                 <h3>{{ reference_data['current_language'].gyms }} </h3>
@@ -502,14 +503,14 @@
       function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "#", field: "routenum"},
-          {title: "Line", field: "line"},
-          {title: "Color", field: "color1", formatter:"color"},
-          {title: "Grade", field: "grade"},
-          {title: "Name", field: "name"},
-          {title: "Opened By", field: "openedby"},
-          {title: "Open Date", field: "opendate"},
-          {title: "Notes", field: "notes"}
+          {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "Line", field: "line", "responsive": 0 , minWidth:2, width:80, headerVertical:false},
+          {title: "Color", field: "color1", formatter:"color", "responsive": 0 , minWidth:10},
+          {title: "Grade", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+          {title: "Name", field: "name", "responsive": 1 , minWidth:10},
+          {title: "Opened By", field: "openedby", "responsive": 2 , minWidth:10},
+          {title: "Open Date", field: "opendate", "responsive": 2},
+          {title: "Notes", field: "notes", "responsive": 1 , formatter:"plaintext"}
           ];
       
           // Create the Tabulator table
@@ -517,10 +518,25 @@
               columns: columns,
               data: routesA ,
               layout:"fitDataStretch",
+              //layout: "fitDataFill",
               movableRows: false,
               selectable: 1,
               responsiveLayout:"collapse",
+              //responsiveLayout:"fitColumns",
               //movableColumns: true, 
+              responsiveLayoutCollapseStartOpen:false,
+              formatter:"responsiveCollapse", headerSort:false,
+              rowFormatter:function(row){
+                if(row.getData().line % 2 == 0){
+                    //row.getElement().style.backgroundColor = "#dddddd";
+                    //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
+                    row.getElement().style.backgroundColor = "#f1f1f1";
+                
+                }else{
+                    row.getElement().style.backgroundColor = "#ffffff";
+                
+                }
+                },
 
               /*rowContextMenu:[
               {
@@ -704,7 +720,7 @@
 						>
 							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
-								<div class="prod-title">
+								<div class="prod-title">aaaa
 
 									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
 									height="130">
