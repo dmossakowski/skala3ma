@@ -81,12 +81,7 @@
 
   "make_copy": "Make copy",
 
-  "last_updated": "Zuletzt aktualisiert am",
-  "dashboard_title": "Mein Dashboard",
-  "message": "Nachrichten",
-  "view": "Views",
-  "share": "Aktien",
-  "user": "Uzytkownik",
+  "priviledged_user": "Priviledged user",
   "general_stat": "Allgemeine Statistiken",
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",

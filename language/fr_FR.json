@@ -81,17 +81,8 @@
 
   "make_copy": "Dupliquer",
 
-  "last_updated": "Dernière mise à jour",
-  "dashboard_title": "Mon tableau de bord",
-  "message": "Message",
-  "view": "Vues",
-  "share": "Partager",
-  "user": "Utilisateur",
-  "general_stat": "Statistiques générales",
-  "new_visitor": "Nouveau visiteur",
-  "new_user": "Nouvel utilisateur",
-  "country": "Pays",
-  "country_list": {"germany": "Allemagne", "united_kingdom": "Grande Bretagne", "russia": "Russie", "spain": "Espagne", "india": "Inde", "france": "France"},
+  "priviledged_user": "Utilisateur privilégié",
+  
   "date": "Date",
   "gym": "Mur",
   "competition_status": "État de la compétition",

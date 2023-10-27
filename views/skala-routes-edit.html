@@ -36,7 +36,7 @@
 
 
 		{% for route in all_routes %}
-			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}} - {{all_routes[route]['id']}} </option>
+			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
 
 		{% endfor %}
 

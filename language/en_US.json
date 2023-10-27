@@ -57,8 +57,6 @@
   "men": "Men",
   "woman": "Woman",
   "man": "Man",
-  "ranked_women": "Women ranked",
-  "ranked_men": "Men ranked",
 
   "line": "Line",
   "color": "Color", 
@@ -81,18 +79,8 @@
   "ranked_men": "Men ranking",
 
   "make_copy": "Make copy",
-
-  "last_updated": "Zuletzt aktualisiert am",
-  "dashboard_title": "Mein Dashboard",
-  "message": "Nachrichten",
-  "view": "Views",
-  "share": "Aktien",
-  "user": "Benutzer",
-  "general_stat": "Allgemeine Statistiken",
-  "new_visitor": "Neue Besucher",
-  "new_user": "Neue Benutzer",
-  "country": "Länder",
-  "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"},
+  "priviledged_user": "Priviledged user",
+  
   "date": "Date",
   "gym": "Gym",
   "competition_status": "Competition status",
