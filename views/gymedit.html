@@ -5,20 +5,6 @@
 
 {% block topcontent %}
 
-			<!--div class="container"-->
-		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-
-
-					<br>	<h3>{{ subheader_message }}</h3>
-
-
-			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
-</div>
-				</div>
-				-->
-<!--/div-->
-
 {% endblock %}
 
 
@@ -121,7 +107,7 @@ function deleteRow(id) {
 			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
 			<input name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br><br>
 
-            <label for="address">Address:</label><br>
+            <label for="address">{{ reference_data['current_language'].address }}:</label><br>
             <input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
 							<br><br>
 
@@ -130,17 +116,17 @@ function deleteRow(id) {
                 <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="100">
                     <input type="file" name="file1" id="file1"><br>
 
-            <label for="url">Link:</label><br>
+            <label for="url">{{ reference_data['current_language'].link }}:</label><br>
                 <input name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
                                     <br><br>
 
 
-            <label for="organization">Organization:</label><br>
+            <label for="organization">{{ reference_data['current_language'].organization }}:</label><br>
             <input name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
                                     <br><br>
 
 
-            <label for="default_routes">{{ reference_data['current_language'].routes }}</label> {{gym['routesid']}}
+            <label for="default_routes">{{ reference_data['current_language'].routes }}</label> 
             <br>
             <select name="default_routes" id="default_routes">
 
@@ -153,7 +139,7 @@ function deleteRow(id) {
             </select>
 
             <br><br>
-            <label for="permissioned_user">{{ reference_data['current_language'].permissioned_user}}Permission user:</label>
+            <label for="permissioned_user">{{ reference_data['current_language'].authorized_user}}:</label>
             <br>
             <select name="permissioned_user" id="permissioned_user">
                                 <option value="choose" size="20" ></option>

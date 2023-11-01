@@ -30,8 +30,12 @@
   "Instant_scoring": "Calcul instantanné des scores",
   "Multi_language": "Multi-langue",
   "Google_and_Facebook_logins":"Login Google et Facebook",
-
-
+  
+  "number_of_routes": "Nombre de voies",
+  "address": "Adresse",
+  "link": "URL",
+  "organization": "Association",
+  "authorized_user": "Utilisateur autorisé",
 
   "register": "S'inscrire",
   "climbers": "Grimpeur.se.s",
@@ -127,7 +131,7 @@
   "delete_competition": "Supprimer la competition",
   "myprofile": "Mon profil",
   "clubs": "Clubs",
-  "delete_gym": "Supprimer le club de l'appli",
+  "delete_gym": "Supprimer le club",
   "my_skala": "Ma skala",
   "stat_title_competitions_attended": "Compétitions suivies sur le total",
   "stat_title_competition_routes_climbed": "Voies grimpées sur le total",

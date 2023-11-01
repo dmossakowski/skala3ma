@@ -30,8 +30,12 @@
   "Instant_scoring": "Instant scoring",
   "Multi_language": "Multi-language",
   "Google_and_Facebook_logins":"Google and Facebook logins",
-
-
+  
+  "number_of_routes": "Number of routes",
+  "address": "Address",
+  "link": "Link",
+  "organization": "Organization",
+  "authorized_user": "Authorized user",
 
   "register": "Register",
   "climbers": "Climbers",
@@ -57,7 +61,6 @@
   "men": "Men",
   "woman": "Woman",
   "man": "Man",
-
   "line": "Line",
   "color": "Color", 
   "solid": "solid",

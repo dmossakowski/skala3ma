@@ -5,20 +5,6 @@
 
 {% block topcontent %}
 
-			<!--div class="container"-->
-		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-
-
-					<br>	<h3>{{ subheader_message }}</h3>
-
-
-			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
-</div>
-				</div>
-				-->
-<!--/div-->
-
 {% endblock %}
 
 
@@ -37,21 +23,21 @@
 			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
 			<input name="gymName" size="40" id="gymName" type="text"/><br><br>
 
-				<label for="numberOfRoutes">Number of routes:</label>
+				<label for="numberOfRoutes">{{ reference_data['current_language'].number_of_routes }}:</label>
 			<br><input name="numberOfRoutes" id="numberOfRoutes" size="20" type="text"/><br><br>
 
-	<label for="address">Address:</label><br>
+	<label for="address">{{ reference_data['current_language'].address }}:</label><br>
 	<input name="address" id="address" type="address" size="80"/>
 							<br><br>
 	<label for="file1">Logo:</label><br>
 			<input type="file" name="file1" id="file1"><br>
 
-<label for="url">Link:</label><br>
+<label for="url">{{ reference_data['current_language'].link }}:</label><br>
 	<input name="url" id="url" type="url" size="80"/>
 							<br><br>
 
 
-	<label for="organization">Organization:</label><br>
+	<label for="organization">{{ reference_data['current_language'].organization }}:</label><br>
 	<input name="organization" id="organization" type="organization" size="80"/>
 							<br><br>
 
