@@ -6,3 +6,4 @@ cert.pem
 data
 key.pem
 my_run.sh
+my_kill.sh
