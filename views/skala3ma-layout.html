@@ -104,8 +104,6 @@
 
 
 
-
-
 	function retrieveData() {
 		var targetContainer = document.getElementById('progressMessages');
     	targetContainer.innerHTML = "<h3>Loading...</h3>";
@@ -298,9 +296,23 @@
 
 
                             </li>
-                        </ul>
+                        
 
                                 {% endif %}
+						
+								<div class="btn-group dropdown">
+									<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+										<img src="/public/images/translation.png" alt="language" width="30"/> 					
+									</button>
+									<ul class="dropdown-menu" role="menu">
+										<li><a href="/language/fr_FR"><span class="lang-sm lang-lbl" lang="fr"></span></a></li>
+										<li><a href="/language/en_US"><span class="lang-sm lang-lbl" lang="en"></span></a></li>
+										<li><a href="/language/pl_PL"><span class="lang-sm lang-lbl" lang="pl"></span></a></li>
+										<!-- Ajoutez d'autres langues avec leurs liens href -->
+									</ul>
+								</div>
+								
+						</ul>
 
 				    </nav>
 
@@ -376,6 +388,7 @@
 								</p>
 								<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
 									Demo Images: <a href="https://pexels.com/" target="_blank">Pexels</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
+								<p><a href="https://www.flaticon.com/free-icons/translation" title="translation icons">Translation icons created by Freepik - Flaticon</a></p>
 							</div>
 						</div>
 					</div>
