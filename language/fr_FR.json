@@ -142,6 +142,9 @@
   "stat_title_competition_routes_climbed": "Voies grimpées sur le total",
   "my_resultats": "Mes resultats",
   "grades_points": "Cotation (points)",
+  "help": "Aide",
+  "participant_guide": "Guide participant",
+  "admin_guide": "Guide administrateur",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
