@@ -67,7 +67,7 @@
   "color": "Couleur",
   "solid": "pleine",
   "marble": "marbrée",
-  "route_num": "Num de voie",
+  "route_num": "#",
   "grade": "Cotation",
   "climbed": "enchaînée",
   "route_name": "Nom",
