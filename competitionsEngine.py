@@ -69,7 +69,7 @@ colors = { 'Vert':'#2E8B57',
 'Saumon':'#FFE4C4'}
 
 
-categories = {0:"Séniors 16-49 ans", 
+categories = {0:"Séniors 16-49 ans | Ado 12-13", 
               1:"Titane 50-64 ans | Ado 14-15 ", 
               2: "Diamant 65 ans et + | Ado 16-17"}
 

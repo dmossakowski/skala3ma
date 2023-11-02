@@ -5,20 +5,6 @@
 
 {% block topcontent %}
 
-			<!--div class="container"-->
-		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-
-
-					<br>	<h3>{{ subheader_message }}</h3>
-
-
-			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
-</div>
-				</div>
-				-->
-<!--/div-->
-
 {% endblock %}
 
 
@@ -503,14 +489,14 @@
       function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "Line", field: "line", "responsive": 0 , minWidth:2, width:80, headerVertical:false},
-          {title: "Color", field: "color1", formatter:"color", "responsive": 0 , minWidth:10},
-          {title: "Grade", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
-          {title: "Name", field: "name", "responsive": 1 , minWidth:10},
-          {title: "Opened By", field: "openedby", "responsive": 2 , minWidth:10},
-          {title: "Open Date", field: "opendate", "responsive": 2},
-          {title: "Notes", field: "notes", "responsive": 1 , formatter:"plaintext"}
+          {title: "{{ reference_data['current_language'].route_num}}", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color", "responsive": 0 , minWidth:10},
+          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
           ];
       
           // Create the Tabulator table

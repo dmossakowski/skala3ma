@@ -30,8 +30,14 @@
   "Instant_scoring": "Instant scoring",
   "Multi_language": "Multi-language",
   "Google_and_Facebook_logins":"Google and Facebook logins",
-
-
+  "competition_climber_list": "Competition climber list",
+  
+  "number_of_routes": "Number of routes",
+  "address": "Address",
+  "link": "Link",
+  "organization": "Organization",
+  "authorized_user": "Authorized user",
+  
   "register": "Zarejestruj się",
   "climbers": "Spinacze",
   "routes": "Drogi",
@@ -56,9 +62,7 @@
   "men": "Męższczyzni",
   "woman": "Kobieta",
   "man": "Męższczyzna",
-  "ranked_women": "Kobiet",
-  "ranked_men": "Męższczyzn",
-
+  
   "line": "Linia",
   "color": "Color", 
   "solid": "solid",
@@ -81,12 +85,7 @@
 
   "make_copy": "Make copy",
 
-  "last_updated": "Zuletzt aktualisiert am",
-  "dashboard_title": "Mein Dashboard",
-  "message": "Nachrichten",
-  "view": "Views",
-  "share": "Aktien",
-  "user": "Uzytkownik",
+  "priviledged_user": "Priviledged user",
   "general_stat": "Allgemeine Statistiken",
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",
