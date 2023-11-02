@@ -66,7 +66,7 @@
   "color": "Color", 
   "solid": "solid",
   "marble": "marble",
-  "route_num": "Route num",
+  "route_num": "#",
   "grade": "Grade",
   "climbed": "Climbed",
   "route_name": "Name",
