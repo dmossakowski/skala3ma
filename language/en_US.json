@@ -137,7 +137,8 @@
   "help": "Help",
   "participant_guide": "Particpant Guide",
   "admin_guide": "Admin Guide",
-
+  "competition_type_0": "Adult FSGT",
+  "competition_type_1": "Youth FSGT",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
