@@ -411,6 +411,7 @@
         </div>
         <div>
                 <h1  class="display-2"> {{ gym['name'] }}</h1>
+                
                 <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
                     <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
@@ -423,8 +424,6 @@
             
             </h1>
                 
-               
-            </h1>
                     
                 {{ gym['address'] }} <i class="icon-location"></i><br>
                 <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
@@ -449,8 +448,9 @@
 
 <div class="container">  
 
-
+    
     <div id="tabulator-table"></div>
+    {{ routes['name'] }}
 </div>
 
 <br><br>
@@ -517,7 +517,7 @@
       
           // Create the Tabulator table
           var table = new Tabulator("#tabulator-table", {
-            printHeader:"<h1>SKALA3MA - {{ gym['name'] }}</h1>", // set header content on printed table
+            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
             //printStyled:true, //copy Tabulator styling to HTML table
