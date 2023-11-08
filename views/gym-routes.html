@@ -370,6 +370,7 @@
             document.getElementById('route-notes').innerHTML = data.notes;
             document.getElementById('route-line').innerHTML = data.line;
             
+            // this is a background on edit popup input field
             document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('hidden_message').textContent='';
         }
@@ -410,15 +411,19 @@
         </div>
         <div>
                 <h1  class="display-2"> {{ gym['name'] }}</h1>
+                
                 <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
                     <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
 
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-print"></i></a>
+
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2"></i></a>
+                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print"></i></a>
             
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="{{gym['homepage']}}"><i class="icon-file-text"></i></a></h1>
-                
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download"><i class="icon-download2"></i></a>
+            
             </h1>
+                
                     
                 {{ gym['address'] }} <i class="icon-location"></i><br>
                 <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
@@ -443,12 +448,14 @@
 
 <div class="container">  
 
-
+    
     <div id="tabulator-table"></div>
+    {{ routes['name'] }}
 </div>
 
 <br><br>
 {% if gym is not none and gym is not undefined  %}
+
 
 
 
@@ -491,7 +498,16 @@
         var columns = [
           {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
-          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color", "responsive": 0 , minWidth:10},
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color",
+           "responsive": 0 , minWidth:10,
+        
+            formatterPrint:function(cell, formatterParams, onRendered){
+                //cell - the cell component
+                //formatterParams - parameters set for the column
+                //onRendered - function to call when the formatter has been rendered
+                return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+cell.getValue()+"; background-color:" +cell.getValue()+ " '>   </div>"; 
+            },
+        },
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
@@ -501,6 +517,19 @@
       
           // Create the Tabulator table
           var table = new Tabulator("#tabulator-table", {
+            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
+            printFooter:"<h3></h3>", // set footer content on printed table
+            printAsHtml:true,
+            //printStyled:true, //copy Tabulator styling to HTML table
+            printConfig:{
+                //columnHeaders:false, //do not include column headers in printed table
+                columnGroups:false, //do not include column groups in column headers for printed table
+                rowGroups:false, //do not include row groups in printed table
+                //columnCalcs:false, //do not include column calcs in printed table
+                //dataTree:false, //do not include data tree in printed table
+                //formatCells:true, //show raw cell values without formatter
+            },
+
               columns: columns,
               data: routesA ,
               layout:"fitDataStretch",
@@ -550,6 +579,11 @@
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
             table.selectRow(2);
           }
+
+          document.getElementById("print-table").addEventListener("click", function(){
+            table.print(false, true);
+            });
+
       
       }
       
