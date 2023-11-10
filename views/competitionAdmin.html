@@ -87,8 +87,8 @@
 
 <br><br>
 
-
-
+<!-- display editable field for unclosed competitions -->
+{%if competition['status'] < 4 %} 
 
 <table class="table thead-dark table-hover" >
          <thead><tr>
@@ -102,35 +102,58 @@
 			 <th>{{reference_data['current_language'].action}}</th>
          </tr>
          </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for climberId in competition['climbers'] %}
+		 <tbody>
+			{% for climberId in competition['climbers'] %}
+				<tr>
+					<td>{{ loop.index }}</td>
+					<td><input type="text" name="name_{{ climberId }}" value="{{ competition['climbers'][climberId]['name'] }}"></td>
+					<td>
+						<select name="sex_{{ climberId }}">
+							<option value="M" {% if competition['climbers'][climberId]['sex'] == 'M' %}selected{% endif %}>M</option>
+							<option value="F" {% if competition['climbers'][climberId]['sex'] == 'F' %}selected{% endif %}>F</option>
+						</select>
+					</td>
+					<td><select name="club_{{ climberId }}" >
+								{% for club in reference_data['clubs'] %}
 
-		 <tr><td>{{ loop.index }} </td>
-			<td>{{ competition['climbers'][climberId]['name'] }}</td>
-			<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
- <td><i>{{competition['climbers'][climberId]['email'] }}</i></td>
- 		{%if (loop.index <= competition['max_participants']|int) %}
-			 <td><i>{{reference_data['current_language'].registered}}</i></td>
-			 {%  else %}
-			 <td><i>{{reference_data['current_language'].waitlist}}</i></td>
+								{% if reference_data['clubs'][club] == competition['climbers'][climberId]['club'] %}selected{% endif %}
+								<option value="{{reference_data['clubs'][club]}}"
+									{% if reference_data['clubs'][club] == competition['climbers'][climberId]['club'] %}selected{% endif %}
+									size="20" >{{reference_data['clubs'][club]}}</option>
+							{% endfor %}
+						</select></td>
+					<td><select name="category_{{ climberId }}" >
+						<!-- option value="{{category}}" size="20" >{{ reference_data['categories'][competition['climbers'][climberId]['category']] }}</option-->
+						{% for category in reference_data['categories'] %}
+						{% if reference_data['categories'][category] == competition['climbers'][climberId]['category'] %}selected{% endif %}
+						<option value="{{category}}" 
+							{% if category == competition['climbers'][climberId]['category'] %}selected{%endif %}
+							size="10" >{{reference_data['categories'][category]}}</option>
+						{% endfor %}
+					</select></td>
+					<td><input type="text" name="email_{{ climberId }}" value="{{ competition['climbers'][climberId]['email'] }}" required></td>
+					{% if (loop.index <= competition['max_participants']|int) %}
+						<td><i>{{ reference_data['current_language'].registered }}</i></td>
+					{% else %}
+						<td><i>{{ reference_data['current_language'].waitlist }}</i></td>
+					{% endif %}
+					<td>
+						<button type="submit" name="update_climber" value="{{ climberId }}" class="btn btn-primary btn-sm">
+							{{ reference_data['current_language'].save }}
+						</button>
+					</td>
+					<td>
+						<button type="submit" name="remove_climber" value="{{ climberId }}" class="btn btn-danger btn-sm">
+							{{ reference_data['current_language'].remove }}
+						</button>
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+		
+			 </table>
+
 			 {% endif %}
-    
-			 <td>
-				<button name="remove_climber" value="{{ competition['climbers'][climberId]['id'] }}">{{ reference_data['current_language'].remove}}</button>
-
-			 </td>
-
-                    </tr>
-             {% endfor %}
-
-
-         </tbody>
-     </table>
-
-
 </div>
 
 

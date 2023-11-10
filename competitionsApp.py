@@ -335,6 +335,9 @@ def competition_admin_post(competition_id):
     permission_admin_user = request.form.get('permission_admin_user')
     permission_scorer_user = request.form.get('permission_scorer_user')
     max_participants = request.form.get('max_participants')
+    # get climber id in competition admin table (not none when a change is saved)
+    climber_id = request.form.get('update_climber')
+
 
     competition_update_button = request.form.get('competition_update_button')
     delete_competition_button = request.form.get('delete_competition_button')
@@ -383,6 +386,21 @@ def competition_admin_post(competition_id):
 
     if remove_climber is not None:
         competition['climbers'].pop(remove_climber)
+        competitionsEngine.update_competition(competition['id'], competition)
+
+    if climber_id is not None:
+        competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
+        competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
+        competition['climbers'][climber_id]['club'] = request.form.get('club_'+ climber_id)
+        competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
+        try:
+            # Attempt to retrieve the category from the form data and convert it to an integer
+            competition['climbers'][climber_id]['category'] = int(request.form.get('category_' + str(climber_id)))
+        except (ValueError, TypeError):
+            # Handle the exception if the conversion fails
+            print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id]['name'])
+            # Set to a default value or handle the error as appropriate
+            competition['climbers'][climber_id]['category'] = 0  # Replace default_value with whatever default you wish to use
         competitionsEngine.update_competition(competition['id'], competition)
 
     if competition_update_button is not None:

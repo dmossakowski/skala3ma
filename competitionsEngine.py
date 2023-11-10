@@ -468,6 +468,7 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
     elif sex == "F":
         routeRepeats = _getRouteRepeats(competitionId, "F", comp)
     else:
+        logging.error(f"Invalid sex value found during calculation of points per climber: {sex}")  
         return None;
     points = 0
 
