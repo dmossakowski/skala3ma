@@ -7,3 +7,4 @@ data
 key.pem
 my_run.sh
 my_kill.sh
+.vscode/launch.json

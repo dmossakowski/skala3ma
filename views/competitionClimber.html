@@ -38,28 +38,40 @@
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
-							<label for="firstname">{{ reference_data['current_language'].firstname}}</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}"/><br><br>
+							<label for="firstname">{{ reference_data['current_language'].firstname}}</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br><br>
 							<label for="lastname">{{ reference_data['current_language'].lastname}}</label><br> <input id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br><br>
 
 							{% if climber['email'] is none or logged_email is none %}
-							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
+							<label for="email">Email:</label><br> <input id="email" name="email" size="40" required /><br><br>
 							{% else %}
 							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
 							{% endif %}
 
 
-							<input type="radio" id="F" value="F" name="sex" {% if user['sex']=='F'%}checked{%endif%}>
+							<input type="radio" id="F" value="F" name="sex" {% if user['sex']=='F'%}checked{%endif%} required>
 							<label for="F">{{ reference_data['current_language'].women}}</label>
-							<input type="radio" id="M" value="M" name="sex" {% if user['sex']=='M'%}checked{%endif%}>
+							<input type="radio" id="M" value="M" name="sex" {% if user['sex']=='M'%}checked{%endif%} required>
 							<label for="M">{{ reference_data['current_language'].men}}</label>
 
 
 							<br>
 							<br>
-							<label for="category">{{ reference_data['current_language'].category}}:</label><br><select name="category" id="category">
+							<label for="category">{{ reference_data['current_language'].category}}:</label><br>
+							<select name="category" id="category">
 							{% for category in reference_data['categories'] %}
-							{{category}}
-							<option value="{{category}}" size="20" >{{reference_data['categories'][category]}}</option>
+							
+							<!-- Print the current category value in the loop and the user's category for debugging -->
+							<p>Loop Category: {{ category }}</p>
+							<p>User Category: {{ user['category'] }}</p>
+							
+							<option value={{category}} size="20"
+								{% if (category|string == user['category']|string) %}selected  
+								{{ "Selected category: " ~ category }} 
+								{% endif %}
+							>{{reference_data['categories'][category]}}</option>
+	
+							
+							
 							{% endfor %}
 						</select><br><br>
 
