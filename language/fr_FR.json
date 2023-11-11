@@ -141,6 +141,8 @@
   "help": "Aide",
   "participant_guide": "Guide participant",
   "admin_guide": "Guide administrateur",
+  "competition_type_0": "Adult FSGT",
+  "competition_type_1": "Youth FSGT",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

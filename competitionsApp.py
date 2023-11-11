@@ -685,6 +685,7 @@ def new_competition_post():
     date = request.form.get('date')
     #gym = request.form.get('gym')
     routesid = request.form.get('routes')
+    competition_type = request.form.get('competition_type')
     max_participants = request.form.get('max_participants')
     comp = {}
     competitionId = None
@@ -694,7 +695,8 @@ def new_competition_post():
         return redirect(url_for('fsgtapp.fsgtlogin', competitionId=competitionId))
 
     if name is not None and date is not None and routesid is not None and max_participants is not None:
-        competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants)
+        competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
+                                                          competition_type=competition_type)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
         return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))

@@ -57,7 +57,11 @@
 									<h3>{{ competitions[competitionId]['name'] }}<br>
 										{{ competitions[competitionId]['date'] }}</h3>
 
-									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
+                                      
+									<span class="posted_by">{{ competitions[competitionId]['gym'] }}<br>
+                                    <!--    {{ reference_data['current_language']['competition_type_'~competitions[competitionId]['competition_type']] }}-->
+
+                                    </span>
 									<br>
 									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
 										{% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
@@ -65,8 +69,6 @@
  {{ reference_data['current_language'].registered }}</span>
 										{% endif %}
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
-
 
 
 								</div>

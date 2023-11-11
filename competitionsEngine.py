@@ -87,6 +87,10 @@ categories = {0:"Séniors 16-49 ans | Ado 12-13",
               1:"Titane 50-64 ans | Ado 14-15 ", 
               2: "Diamant 65 ans et + | Ado 16-17"}
 
+categories_ado = {0:"Ado 12-13", 
+              1:"Ado 14-15 ", 
+              2: "Ado 16-17"}
+
 #last 41 
 clubs = {               
     40:"11C+",
@@ -132,12 +136,20 @@ user_roles = ["none", "judge", "competitor", "admin"]
 
 supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
 
-reference_data = {"categories":categories, "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
-                  "supported_languages":supported_languages, "route_finish_status": skala_journey.route_finish_status}
+competition_type_adult_fsgt = 0;
+competition_type_ado_fsgt = 1;
 
+competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
+
+
+
+reference_data = {"categories":categories, "categories_ado":categories_ado,
+                   "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
+                  "supported_languages":supported_languages, "route_finish_status": skala_journey.route_finish_status,
+                  "competition_types":competition_types}
 
 # called from competitionsApp
-def addCompetition(compId, name, date, routesid, max_participants):
+def addCompetition(compId, name, date, routesid, max_participants, competition_type):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -149,7 +161,8 @@ def addCompetition(compId, name, date, routesid, max_participants):
     competition = {"id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
                    "routesid": routesid, "status": "preopen", "climbers": {},
                    "max_participants": max_participants,
-                   "results": copy.deepcopy(emptyResults)}
+                   "results": copy.deepcopy(emptyResults),
+                   "competition_type":competition_type}
     # write this competition to db
     skala_db._add_competition(compId, competition);
 
@@ -751,6 +764,10 @@ def _validate_or_upgrade_competition(competition):
 
     if competition.get('max_participants') is None:
         competition['max_participants'] = 80
+        needs_updating = True
+
+    if competition.get('competition_type') is None:
+        competition['competition_type'] = competition_type_adult_fsgt
         needs_updating = True
 
     if needs_updating:
