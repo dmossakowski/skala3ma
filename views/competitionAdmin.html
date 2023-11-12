@@ -91,7 +91,10 @@
 		
 
 		<button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+		<!-- Don't display delete button if status is not created -->
+		{% if competition['status'] == 0 %} 
 		<button name="delete_competition_button" value="delete_competition_button" class="btn btn-danger btn-sm">{{ reference_data['current_language'].delete_competition}}</button>
+		{% endif %}
 		<br><br>
 
 

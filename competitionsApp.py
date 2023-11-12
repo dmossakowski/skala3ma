@@ -420,8 +420,10 @@ def competition_admin_post(competition_id):
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
-            competitionsEngine.delete_competition(competition['id'])
+            competitionsEngine.delete_competition(competition['id']) 
             return redirect(f'/competitionDashboard')
+        else:
+            print('Cannot delete this competition: ' + competition['id']) # TODO ideally return an error message to the user
 
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
