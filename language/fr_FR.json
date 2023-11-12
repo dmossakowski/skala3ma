@@ -122,6 +122,7 @@
   "youareonwaitinglist": "Merci. Le nombre maximum de participants a été atteint, vous avez été placé sur liste d'attente",
   "remove": "Supprimer",
   "action": "Action",
+  "logout": "Se déconnecter",
 
   "logged_in_as" : "Connecté en tant que ",
   "status": "Etat",
@@ -142,6 +143,8 @@
   "admin_guide": "Guide administrateur",
   "competition_type_0": "Adult FSGT",
   "competition_type_1": "Youth FSGT",
+  "adult_contest_rules": "Règlement Adulte",
+  "ado_contest_rules": "Règlement Ado",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

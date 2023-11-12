@@ -104,6 +104,7 @@
   "lastname": "Nazwisko",
   "nickname": "Nickname ",
   "email": "Email ",
+  "logout": "Logout",
 
   "other_club_not_listed": "Sprecyzuj jeśli inny",
   "choose": "Wybierz",
@@ -144,6 +145,8 @@
   "admin_guide": "Instrukcja dla administratorów",
   "competition_type_0": "Dorośli FSGT",
   "competition_type_1": "Młodzi FSGT",
+  "adult_contest_rules": "Adult contest rules",
+  "ado_contest_rules": "Ado contest rules",
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",

@@ -217,6 +217,8 @@
 							<li>
 								<a href="/main" class="fh5co-sub-ddown">{{ reference_data['current_language'].help }}</a>
 								<ul class="fh5co-sub-menu">
+									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
+									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
 									<li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
 									<li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
 								</ul>
@@ -262,7 +264,7 @@
                                 <ul class="fh5co-sub-menu">
                                     <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
                                 
-                                    <li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
+                                    <li><a href="/logoutfb" class="fh5co-sub-down">{{ reference_data['current_language'].logout }}</a></li>
 
                                     {% if session['name'] == 'David Mossakowski' %}
                                     <li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>

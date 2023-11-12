@@ -98,6 +98,7 @@
   "lastname": "Last name",
   "nickname": "Nickname ",
   "email": "Email ",
+  "logout": "Logout",
 
   "other_club_not_listed": "If other club, enter here",
   "choose": "Choose",
@@ -138,6 +139,8 @@
   "admin_guide": "Admin Guide",
   "competition_type_0": "Adult FSGT",
   "competition_type_1": "Youth FSGT",
+  "adult_contest_rules": "Adult contest rules",
+  "ado_contest_rules": "Ado contest rules",
 
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
