@@ -590,26 +590,6 @@ def downloadData():
 
 
 
-
-@app.route('/testdb')
-def testDB():
-    logging.info("testing db")
-    playlistName = request.args.get('name')
-
-    ret = "done"
-    if playlistName is not None:
-        ret = analyze.testDb(playlistName)
-
-    #playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
-    #playlistId = playlist['id']
-    #logging.info("playlist " + str(playlist))
-    return ret
-    #return redirect(url_for('getRandomPlaylist', playlistId=playlistId))
-
-
-
-
-
 def _getGlobalKey(msgtype = ''):
     key = msgtype + 'backgroundMsg'
     if (session.get('id')):
@@ -775,9 +755,9 @@ def blog():
     return render_template('login.html', **session)
 
 
-@app.route('/privacy')
+@app.route('/skala3ma-privacy')
 def privacy():
-    return render_template('privacy.html')
+    return render_template('skala3ma-privacy.html')
 
 
 if __name__ == '__main__':

@@ -570,7 +570,7 @@ def journey_session_remove(journey_id, route_id):
 
 @fsgtapp.route('/skala3ma-privacy')
 def privacy():
-    return render_template('skala3maprivacy.html',
+    return render_template('skala3ma-privacy.html',
                            reference_data=competitionsEngine.reference_data
                            )
 
