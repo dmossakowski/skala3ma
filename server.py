@@ -755,9 +755,9 @@ def blog():
     return render_template('login.html', **session)
 
 
-@app.route('/skala3ma-privacy')
+@app.route('/privacy')
 def privacy():
-    return render_template('skala3ma-privacy.html')
+    return render_template('privacy.html')
 
 
 if __name__ == '__main__':
