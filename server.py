@@ -590,26 +590,6 @@ def downloadData():
 
 
 
-
-@app.route('/testdb')
-def testDB():
-    logging.info("testing db")
-    playlistName = request.args.get('name')
-
-    ret = "done"
-    if playlistName is not None:
-        ret = analyze.testDb(playlistName)
-
-    #playlist = analyze.getRandomPlaylist(DATA_DIRECTORY, 'playlists-tracks', publicPlaylist)
-    #playlistId = playlist['id']
-    #logging.info("playlist " + str(playlist))
-    return ret
-    #return redirect(url_for('getRandomPlaylist', playlistId=playlistId))
-
-
-
-
-
 def _getGlobalKey(msgtype = ''):
     key = msgtype + 'backgroundMsg'
     if (session.get('id')):
