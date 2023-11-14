@@ -217,6 +217,8 @@
 							<li>
 								<a href="/main" class="fh5co-sub-ddown">{{ reference_data['current_language'].help }}</a>
 								<ul class="fh5co-sub-menu">
+									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
+									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
 									<li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
 									<li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
 								</ul>
@@ -262,7 +264,7 @@
                                 <ul class="fh5co-sub-menu">
                                     <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
                                 
-                                    <li><a href="/logoutfb" class="fh5co-sub-down">Logout</a></li>
+                                    <li><a href="/logoutfb" class="fh5co-sub-down">{{ reference_data['current_language'].logout }}</a></li>
 
                                     {% if session['name'] == 'David Mossakowski' %}
                                     <li><a href="/competitionRawAdmin" class="fh5co-sub-down">Admin</a></li>
@@ -338,7 +340,8 @@
 					<div class="row row-bottom-padded-md">
 						<div class="col-md-5">
 							<h3 class="section-title"> <img src="/public/images/favicon.png" height="30">  {{ reference_data['current_language'].about }} skala3ma</h3>
-							<p>{{ reference_data['current_language'].short_app_description }}
+							<p>{{ reference_data['current_language'].short_app_description }}</p>
+							<p><a href="mailto:competitions-autrement@listes.montagne.fsgt.org?subject=Skala3ma%20Question%20contest%20IDF">{{ reference_data['current_language'].contact_email }}</a>
 							</p>
 						</div>
 
@@ -378,7 +381,6 @@
 									<a href="#"><i class="icon-youtube"></i></a-->
 								</p>
 								<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
-									Demo Images: <a href="https://pexels.com/" target="_blank">Pexels</a> &amp; <a href="http://blog.gessato.com/" target="_blank">Gessato</a></p>
 							</div>
 						</div>
 					</div>
