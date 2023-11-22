@@ -1198,6 +1198,10 @@ def get_routes(routesid):
             routesdict = {"id":routesid, "routes":routes}
             skala_db._update_routes(routesid, routesdict)
             routes = routesdict
+        for route in routes.get('routes'):
+            if route.get('sector') is None:
+                route['sector'] = 'main'
+    
         return routes
 
 

@@ -149,6 +149,11 @@
                           <label for="line">Line:</label>
                           <input type="text" id="line" name="line" value="1">
                         </div>
+                        <div class="form-row">
+                            <label for="sector">sector:</label>
+                            <input type="text" id="sector" name="sector" value="1">
+                          </div>
+       
                       
                         <div class="form-row">
                           <input type="hidden" id="colorfr" name="colorfr" value="#2e8b57">
@@ -322,6 +327,7 @@
             document.getElementById('routenum').disabled = true;
 
             document.getElementById('line').value = '';
+            document.getElementById('sector').value = '';
             document.getElementById('colorfr').value = '#aaffaa';
             document.getElementById('color1').value = '#aaffaa';
             //document.getElementById('color1-display').style.backgroundColor = '#aaffaa';
@@ -350,6 +356,7 @@
             document.getElementById('id').value = data.id;
             document.getElementById('routenum').value = data.routenum;
             document.getElementById('line').value = data.line;
+            document.getElementById('sector').value = data.sector;
             document.getElementById('colorfr').value = data.colorfr;
             document.getElementById('color1').value = data.color1;
             //document.getElementById('color1-display').style.backgroundColor = data.color1;
@@ -498,6 +505,7 @@
         var columns = [
           {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+          {title: "Sector", field: "sector", "responsive": 0 , headerVertical:false, visible:false, download:false},
           {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color",
            "responsive": 0 , minWidth:10,
         
@@ -520,11 +528,19 @@
             printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
+            groupBy: "sector",
+            groupHeader: function(value, count, data, group){
+                return value + "<span style=' margin-left:10px;'>(" + count + ")</span>";
+            },
+            //groupHeaderPrint: function(value, count, data, group){
+            //    return value + "<span style='color:#d00; margin-left:10px;'>aaa</span>";
+            //},
+                    
             //printStyled:true, //copy Tabulator styling to HTML table
             printConfig:{
                 //columnHeaders:false, //do not include column headers in printed table
                 columnGroups:false, //do not include column groups in column headers for printed table
-                rowGroups:false, //do not include row groups in printed table
+                rowGroups:true, //do not include row groups in printed table
                 //columnCalcs:false, //do not include column calcs in printed table
                 //dataTree:false, //do not include data tree in printed table
                 //formatCells:true, //show raw cell values without formatter
@@ -603,6 +619,9 @@
           
           const line = document.getElementById('line').value;
           formData['line'] = line;
+
+          const sector = document.getElementById('sector').value;
+          formData['sector'] = sector;
           
           const colorfr = document.getElementById('colorfr').value;
           formData['colorfr'] = colorfr;
@@ -638,6 +657,7 @@
           const id = document.getElementById('id').value;
           const routenum = parseInt(document.getElementById('routenum').value);
           const line = document.getElementById('line').value;
+          const sector = document.getElementById('sector').value;
           const colorfr = document.getElementById('colorfr').value;
           const color1 = document.getElementById('color1').value;
           const color_modifier = document.getElementById('color_modifier').value;
@@ -651,6 +671,7 @@
             id,
             routenum,
             line,
+            sector,
             colorfr,
             color1,
             color_modifier,
@@ -664,8 +685,8 @@
           // insert the new route into the array
           routes.splice(routenum, 0, route);
       
-          console.log('Route added:', route);
-          console.log('Routes array:', routes);
+          //console.log('Route added:', route);
+          //console.log('Routes array:', routes);
         }
 
         function saveLine() {

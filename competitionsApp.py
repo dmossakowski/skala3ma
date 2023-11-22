@@ -1383,6 +1383,10 @@ def gym_routes_new(gym_id, routesid):
     all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
     routes = all_routes.get(routesid)
 
+    # for each object in routes array add a parameter called sector
+    for route in routes.get('routes'):
+        route['sector'] = 'main'
+        
     user = competitionsEngine.get_user_by_email(session.get('email'))
     user_can_edit_gym = False
     if user is not None:

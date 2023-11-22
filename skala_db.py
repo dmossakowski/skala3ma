@@ -36,6 +36,8 @@ import csv
 
 import requests
 
+from Gym import Gym
+
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -612,15 +614,19 @@ def _get_gym(gymid):
         for row in rows.fetchall():
             #comp = row[0]
             gym = json.loads(row[0])
+            #gym = Gym.from_json(row[0])
             #gyms[gym['id']] = gym
 
     db.close()
+    #l = gym.gymid
+
     #routes = _get_routes(gym['routesid'])
     #gym['routes'] = routes
     return gym
 
 
 # should gym_id be added to ouput?
+# this returns all routes for a gym
 def get_routes_by_gym_id(gym_id):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -637,6 +643,8 @@ def get_routes_by_gym_id(gym_id):
             routes['id'] = id
             if routes.get('name') is None:
                 routes['name'] = ''
+            #if routes.get('sector') is None:
+             #   routes['sector'] = 'main'
             allroutes[routes['id']] = routes
 
     db.close()
