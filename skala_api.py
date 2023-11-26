@@ -74,7 +74,7 @@ CLIMBERS_TABLE = "climbers"
 
 FSGT_APP_ID = os.getenv('FSGT_APP_ID')
 FSGT_APP_SECRET = os.getenv('FSGT_APP_SECRET')
-DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
