@@ -26,6 +26,10 @@ import os
 sql_lock = RLock()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+
 #PLAYLISTS_DB = DATA_DIRECTORY + "/db/playlists.sqlite"
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 

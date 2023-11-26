@@ -23,9 +23,6 @@ from io import BytesIO
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-import pandas as pd
-import numpy.random
 from collections import Counter
 import tracemalloc
 import sqlite3 as lite
@@ -47,6 +44,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+
 #PLAYLISTS_DB = DATA_DIRECTORY + "/db/playlists.sqlite"
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 

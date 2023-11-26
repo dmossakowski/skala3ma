@@ -61,6 +61,10 @@ languages = {}
 load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 
 # ID, date, name, location

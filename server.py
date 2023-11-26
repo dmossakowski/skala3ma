@@ -66,6 +66,9 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+    
 # Configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", None)
@@ -516,7 +519,9 @@ def googleauth_reply():
     # check first if auth was succesful
 
     token = oauth.google.authorize_access_token()
-    profile = oauth.google.parse_id_token(token)
+    profile1 = oauth.google.get('https://www.googleapis.com/oauth2/v1/userinfo')
+    profile = token.get('userinfo')
+    #profile = oauth.google.parse_id_token(token)
     print(" Google User ", profile)
 
     session['username']=profile['email']
