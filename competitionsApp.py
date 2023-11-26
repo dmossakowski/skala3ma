@@ -74,7 +74,7 @@ CLIMBERS_TABLE = "climbers"
 
 FSGT_APP_ID = os.getenv('FSGT_APP_ID')
 FSGT_APP_SECRET = os.getenv('FSGT_APP_SECRET')
-DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
@@ -114,6 +114,7 @@ import requests
 fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
+
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 #fsgtapp.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
