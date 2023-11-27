@@ -1762,8 +1762,8 @@ def gyms_add():
     formdata = request.form.to_dict(flat=False)
 
     args1 = request.args
-    body = request.data
-    bodyj = request.json
+    #body = request.data
+    #bodyj = request.json
     files = request.files
 
     imgfilename = None
@@ -1818,7 +1818,7 @@ def gyms_update(gym_id):
                                **session)
 
     body = request.data
-    bodyj = request.json
+    #bodyj = request.json
     files = request.files
     delete = formdata.get('delete')
     save = formdata.get('save')
