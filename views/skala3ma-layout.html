@@ -351,8 +351,8 @@
 							<ul>
 
 							{% if username is defined %}
-								<a href="/privacy">Privacy notice</a>
-								<li><a href="/logoutfb">Logout</a></li>
+								<a href="/privacy">{{ reference_data['current_language'].privacy_notice }}</a>
+								<li><a href="/logoutfb">{{ reference_data['current_language'].logout }}</a></li>
 							{% endif %}
 
 								<li><a href="https://www.facebook.com/skala3ma">Facebook page</a></li>
