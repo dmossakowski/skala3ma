@@ -5,20 +5,6 @@
 
 {% block topcontent %}
 
-			<!--div class="container"-->
-		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
-					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-
-
-					<br>	<h3>{{ subheader_message }}</h3>
-
-
-			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
-</div>
-				</div>
-				-->
-<!--/div-->
-
 {% endblock %}
 
 
@@ -233,8 +219,8 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
 			 <td>
 				 <input name="color1" type ="color" value="{{ route['color1'] }}">
 				 <select type="select" name="color_modifier">
-					 <option name="solid" {% if route['color_modifier'] == 'solid' %}selected{% endif %} > {{reference_data['current_language'].solid}}</option>
-					 <option name="marble" {% if route['color_modifier'] == 'marble' %}selected{% endif %} > {{reference_data['current_language'].marble}}</option>
+					 <option name="solid" value="solid" {% if route['color_modifier'] == 'solid' %}selected{% endif %} > {{reference_data['current_language'].solid}}</option>
+					 <option name="marble" value="marble" {% if route['color_modifier'] == 'marble' %}selected{% endif %} > {{reference_data['current_language'].marble}}</option>
 				 </select>
 			 </td>
 
