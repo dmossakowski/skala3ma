@@ -164,7 +164,9 @@
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
   "error5321": "Un utilisateur avec cet email est déjà inscrit",
   "error5322": "L'état de la compétition ne permet pas de nouvelles inscriptions",
-  "error5323": "Nombre maximal d'inscriptions atteint"
+  "error5323": "Nombre maximal d'inscriptions atteint",
+  "error5324": "Choose a valid gym",
 
 
+  "last": "Last"
 }

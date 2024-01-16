@@ -161,7 +161,9 @@
   "error5316": "User with this email is known and they should login and register themselves",
   "error5321": "This email address is already registered",
   "error5322": "Current competition status does not allow new registrations",
-  "error5323": "Maximum registrations reached"
+  "error5323": "Maximum registrations reached",
+  "error5324": "Choose a valid gym",
 
 
+  "last": "Last"
 }

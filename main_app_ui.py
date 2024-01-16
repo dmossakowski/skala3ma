@@ -56,6 +56,7 @@ import requests
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
+import activities_db as activities_db
 #from flask_openapi3 import Info, Tag, APIBlueprint
 #from flask_openapi3 import OpenAPI
 
@@ -305,7 +306,7 @@ def fsgtadmin():
             #jsonobject = {"success": "competition updated"}
             # None is gymid but this is ok as the routes id will be found
             competitionsEngine.upsert_routes(id, None, jsonobject)
-
+    
 
         if id is not None and action == 'find':
             jsonobject = competitionsEngine.get_routes(id)
@@ -313,6 +314,19 @@ def fsgtadmin():
         if id is not None and action == 'findall':
             jsonobject = competitionsEngine.get_all_routes_ids()
 
+
+    elif edittype == 'activities':
+        if jsonobject is not None  and action == 'update':
+            #jsonobject = {"success": "competition updated"}
+            # None is gymid but this is ok as the routes id will be found
+            # competitionsEngine.upsert_routes(id, None, jsonobject)
+            return
+
+        if id is not None and action == 'find':
+            jsonobject = activities_db.get_activities(id)
+
+        if id is not None and action == 'findall':
+            jsonobject = competitionsEngine.get_activities(id)
 
     else :
         jsonobject = {"error": "choose edit type" }

@@ -104,7 +104,7 @@
 	
                 <label for="gym_id">{{ reference_data['current_language'].where }}:</label>
                 <select name="gym_id" id="gym_id">
-                    <option value="{{gym_id}}" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
+                    <option value="-1" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
                     
         
                 </select>
@@ -225,6 +225,8 @@
     
     function saveData() {
             var data = getFormData();
+            if (Object.keys(data).length === 0) 
+                return;
             postData(data)
 
         }
@@ -236,6 +238,10 @@
         
         const gym_id = document.getElementById('gym_id').value;
         formData['gym_id'] = gym_id;
+        if (gym_id == -1){
+            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5324'] }}";
+            return {};
+        }
 
         const activity_name = document.getElementById('activity_name').value;
         formData['activity_name'] = activity_name;
@@ -249,6 +255,8 @@
 
     function postJsonDataToServer() {
         var data = getFormData();
+        if (data == {}) return;
+            postData(data)
 
         
         

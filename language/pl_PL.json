@@ -166,8 +166,9 @@
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
   "error5321": "Ten adres jest juz zarejestrowany",
   "error5322": "Rejestracja na te zawody jest niemożliwa",
-  "error5323": "Osiągnięto maksymalną liczbę zawodników"
+  "error5323": "Osiągnięto maksymalną liczbę zawodników",
+  "error5324": "Choose a valid gym",
 
 
-
+  "last": "Last"
 }
