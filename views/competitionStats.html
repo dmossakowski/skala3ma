@@ -176,7 +176,7 @@
               },
         };
 
-        var chart2 = new ApexCharts(document.querySelector("#myChart2"), options2);
+        var chart2 = new ApexCharts(document.getElementById("myChart2"), options2);
         chart2.render();
       
 
@@ -554,7 +554,9 @@
         };
 
 
-        var chart3 = new ApexCharts(document.querySelector("#myChart3"), options3);
+        //var chart3 = new ApexCharts(document.querySelector("#myChart3"), options3);
+        var chart3 = new ApexCharts(document.getElementById("myChart3"), options3);
+        
         chart3.render();
 
 

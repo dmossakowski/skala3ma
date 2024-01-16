@@ -33,15 +33,14 @@ if DATA_DIRECTORY is None:
 #PLAYLISTS_DB = DATA_DIRECTORY + "/db/playlists.sqlite"
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 
-JOURNEYS_TABLE = "journeys"
-JOURNEY_ENTRY_DB = "journey_entries"
+activities_TABLE = "activities"
 
 
 route_finish_status = {0: "attempt", 1: "flash", 2: "redpoint", 3: "toprope"}
 
 
 def init():
-    logging.info('initializing skala_journey...')
+    logging.info('initializing skala_activity...')
 
     if os.path.exists(DATA_DIRECTORY) and os.path.exists(COMPETITIONS_DB):
         db = lite.connect(COMPETITIONS_DB)
@@ -49,7 +48,7 @@ def init():
         # ptype 0-public
         cursor = db.cursor()
 
-        cursor.execute('''CREATE TABLE if not exists ''' + JOURNEYS_TABLE + '''(
+        cursor.execute('''CREATE TABLE if not exists ''' + activities_TABLE + '''(
                        id text NOT NULL UNIQUE,
                        user_id text NOT NULL, 
                        gym_id text NOT NULL,
@@ -59,77 +58,103 @@ def init():
                        )''')
         db.commit()
 
-        print('created ' + JOURNEYS_TABLE)
+        print('created ' + activities_TABLE)
 
-def add_journey_session(user, gym_id, routes_id, date):
-    journey_id = str(uuid.uuid4().hex)
 
-    journey = {"id": journey_id, "gym_id": gym_id, "routes_id": routes_id, "description": "", "routes": [],
+def add_activity(user, gym, name, date):
+    activity_id = str(uuid.uuid4().hex)
+
+    gym_id = gym.get('id')
+    routes_id = gym.get('routesid')
+    activity = {"id": activity_id, "gym_id": gym_id, "routes_id": routes_id, "starttime": date, "name": name, 
+        "gym_name": gym.get('name'), 
+            "routes": []
                }
     # write this competition to db
-    _add_journey_session(journey_id, user.get('id'), gym_id, routes_id, date, journey)
-    return id
+    _add_activity(activity_id, user.get('id'), gym_id, routes_id, date, activity)
+    return activity_id
 
 
 
-def add_journey_session2(date, user, gym_id, routes_id, description):
-    journey_id = str(uuid.uuid4().hex)
-
-    journey = {"id": journey_id, "gym_id": gym_id, "routes_id": routes_id, "description": description, "routes": [],
-               }
-    # write this competition to db
-    _add_journey_session(date, user, gym_id, routes_id, description, journey)
-    return id
 
 
-def get_journey_session(session_id):
-    return _get_journey(session_id)
+def get_activity(session_id):
+    return _get_activity(session_id)
 
-def get_journey_sessions(user_id):
-    return _get_journey_sessions_by_user_id(user_id)
+
+def get_activities(user_id):
+    return _get_activities_by_user_id(user_id)
+
 
 # add an entry to an existing session
-def add_journey_session_entry(journey_id, route_id, status, note):
+def add_activity_entry(activity_id, route, status, note):
     entry_id = str(uuid.uuid4().hex)
 
-    journey = get_journey_session(journey_id)
+    route_id = route.get('id')  
+
+    activity = get_activity(activity_id)
     session_entry = {"id": entry_id, "route_id": route_id, "status": status, "note": note,
                    }
-    journey.get('routes').append(session_entry)
+    session_entry = {**route, **session_entry}
+    activity.get('routes').append(session_entry)
     # write this competition to db
-    _update_journey(journey_id, journey.get("user_id"), journey.get("gym_id"), journey.get("routes_id"), journey);
+    _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
 
-    return journey
+    return activity
 
 
-def remove_journey_session(journey_id, entry_id):
-    journey = get_journey_session(journey_id)
+def delete_activity(activity_id):
+    activity = get_activity(activity_id)
 
-    if journey is None:
+    if activity is None:
         return None
-    for route_index, route in enumerate(journey['routes']):
-        if route['id'] == entry_id:
-            journey['routes'].pop(int(route_index))
-    _update_journey(journey_id, journey.get("user_id"), journey.get("gym_id"), journey.get("routes_id"), journey);
 
-    return journey
-
-
-def _add_journey_session(journey_id, user_id, gym_id, routes_id, date, jsondata):
     try:
         sql_lock.acquire()
 
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
-        jsondata['id']=journey_id
+
+        cursor.execute("delete from " + activities_TABLE + " where id =? ",
+                       [str(activity_id)])
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info("deleted activity for user:"+str(activity_id))
+
+    return activity
+
+
+
+def delete_activity_route(activity_id, entry_id):
+    activity = get_activity(activity_id)
+
+    if activity is None:
+        return None
+    for route_index, route in enumerate(activity['routes']):
+        if route['id'] == entry_id:
+            activity['routes'].pop(int(route_index))
+    _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
+
+    return activity
+
+
+def _add_activity(activity_id, user_id, gym_id, routes_id, date, jsondata):
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        jsondata['id']=activity_id
         jsondata['user_id']=user_id
         jsondata['gym_id']=gym_id
         jsondata['routes_id']=routes_id
         jsondata['date']=date
 
-        cursor.execute("INSERT INTO " + JOURNEYS_TABLE + " (id, user_id, gym_id, routes_id, added_at, jsondata ) "
+        cursor.execute("INSERT INTO " + activities_TABLE + " (id, user_id, gym_id, routes_id, added_at, jsondata ) "
                                                     "values (?, ?, ?, ?, ?, ?)",
-                       [str(journey_id), str(user_id), str(gym_id), str(routes_id), date, json.dumps(jsondata)])
+                       [str(activity_id), str(user_id), str(gym_id), str(routes_id), date, json.dumps(jsondata)])
     finally:
         db.commit()
         db.close()
@@ -137,15 +162,15 @@ def _add_journey_session(journey_id, user_id, gym_id, routes_id, date, jsondata)
         logging.info("added climbing session for user:"+str(user_id))
 
 
-def _get_journey(journey_id):
+def _get_activity(activity_id):
     try:
         #sql_lock.acquire()
 
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
-        result = cursor.execute("select jsondata from " + JOURNEYS_TABLE + " where id =? ",
-                       [str(journey_id)])
+        result = cursor.execute("select jsondata from " + activities_TABLE + " where id =? ",
+                       [str(activity_id)])
         result = result.fetchone()
 
         if result is None or result[0] is None:
@@ -163,23 +188,23 @@ def _get_journey(journey_id):
         #logging.info("retrieved climbing session for user:"+str(session_id))
 
 
-def _get_journey_sessions_by_user_id(user_id):
+def _get_activities_by_user_id(user_id):
     try:
         #sql_lock.acquire()
 
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
-        result = cursor.execute("select jsondata from " + JOURNEYS_TABLE + " where user_id =? ",
+        result = cursor.execute("select jsondata from " + activities_TABLE + " where user_id =? ",
                        [str(user_id)])
         #result = result.fetchall()
-        journeys=[]
+        activities=[]
         if result is not None and result.arraysize > 0:
             for row in result.fetchall():
                 # comp = row[0]
-                journeys.append(json.loads(row[0]))
+                activities.append(json.loads(row[0]))
                 # gyms[gym['id']] = gym
-        return journeys
+        return activities
 
     finally:
         db.commit()
@@ -191,7 +216,7 @@ def _get_journey_sessions_by_user_id(user_id):
 
 
 
-def _update_journey(journey_id, user_id, gym_id, routes_id, jsondata):
+def _update_activity(activity_id, user_id, gym_id, routes_id, jsondata):
     try:
         sql_lock.acquire()
 
@@ -199,8 +224,8 @@ def _update_journey(journey_id, user_id, gym_id, routes_id, jsondata):
         cursor = db.cursor()
 
         cursor.execute(
-            "update " + JOURNEYS_TABLE + " set user_id = ?, gym_id = ?, routes_id = ?, jsondata = ? where id=?",
-            [str(user_id), str(gym_id), str(routes_id), json.dumps(jsondata), str(journey_id)])
+            "update " + activities_TABLE + " set user_id = ?, gym_id = ?, routes_id = ?, jsondata = ? where id=?",
+            [str(user_id), str(gym_id), str(routes_id), json.dumps(jsondata), str(activity_id)])
 
     finally:
         db.commit()

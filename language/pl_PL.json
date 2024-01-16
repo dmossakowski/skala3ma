@@ -149,6 +149,18 @@
   "ado_contest_rules": "Ado contest rules",
   "contact_email": "Contact organizers",
 
+  "activities": "Activities",
+  "add_activity": "Add activity",
+  "delete_activity": "Delete activity",
+  "activity": "Activity",
+  "activity_name": "Activity name",
+  "activity_date": "Activity date",
+  "activity_time": "Activity time",
+  "activity_location": "Activity location",
+  "activity_description": "Activity description",
+  "attempted": "Spróbowane",
+  "flashed": "Flashed",
+
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",

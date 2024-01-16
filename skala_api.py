@@ -23,6 +23,8 @@ from datetime import datetime, date, time, timedelta
 import competitionsEngine
 import csv
 from functools import wraps
+from dataclasses import dataclass
+
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, jsonify, Response, \
     stream_with_context, copy_current_request_context, g
@@ -31,13 +33,24 @@ import logging
 from dotenv import load_dotenv
 
 from flask import Blueprint
-import skala_journey as journeys_engine
+import activities_db as activities_db
 
 import skala_db
 from io import BytesIO
 
 from flask import send_file
 
+#import Activity
+
+#from flask_openapi3 import APIBlueprint, OpenAPI, Tag
+
+#book_tag = Tag(name="book", description="Some Book")
+
+#comp_tag = Tag(name="competition", description="""
+#        Some competition
+#        with multiple lines 
+#        #header also
+#        """)
 
 # Third party libraries
 from flask import Flask, redirect, request, url_for
@@ -51,6 +64,7 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
+from pydantic import BaseModel
 #skala_api_app = Blueprint('skala_api_app', __name__)
 
 from authlib.integrations.flask_client import OAuth
@@ -79,7 +93,9 @@ GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 
+#skala_api_app = APIBlueprint('skala_api', __name__, url_prefix='/api1', doc_ui=True, abp_tags= [book_tag, comp_tag])
 skala_api_app = Blueprint('skala_api', __name__, url_prefix='/api1')
+
 
 skala_api_app.debug = True
 skala_api_app.secret_key = 'development'
@@ -111,6 +127,24 @@ UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 # skala_api_app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+#from flask_openapi3 import Info, Tag
+#from flask_openapi3 import OpenAPI
+
+
+#info = Info(title="book API", version="1.0.0")
+#book_tag = Tag(name="book", description="Some Book")
+
+
+
+class Activity1(BaseModel):
+    activity_name: str
+    gym_id: str
+    date: datetime
+    
+
+
 
 
 # User session management setup
@@ -184,7 +218,14 @@ def competition_authentication_required(fn):
     return decorated_function
 
 
-@skala_api_app.route('/competitionRawAdmin', methods=['POST'])
+
+#@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
+def testapi():
+    return {"code": 0, "message": "ok"}
+
+
+
+@skala_api_app.post('/competitionRawAdmin')
 @login_required
 def fsgtadmin():
     edittype = request.form.get('edittype')
@@ -315,44 +356,155 @@ def competition_admin_post(competition_id):
                            id=id)
 
 
-@skala_api_app.route('/journey', methods=['GET'])
+
+@skala_api_app.get('/activities')
 @login_required
-def journey_list():
+def get_activities():
     user = competitionsEngine.get_user_by_email(session['email'])
-
-    journeys = journeys_engine._get_journey_sessions_by_user_id(user.get('id'))
-
-    return json.dumps(journeys)
+    activities = activities_db.get_activities(user.get('id'))
+    return json.dumps(activities)
 
 
-@skala_api_app.route('/journey/add', methods=['POST'])
+
+
+
+@skala_api_app.post('/activity')
 @login_required
 def journey_add():
     user = competitionsEngine.get_user_by_email(session['email'])
 
-    date = request.form.get('date')
-    gym_id = request.form.get('gym_id')
+    data = request.get_json()
+    #data = request.get_data()
+    # get the data from the body of the request
+
+    date = data.get('date')
+    gym_id = data.get('gym_id')
+    name = data.get('activity_name')
     comp = {}
     gym = competitionsEngine.get_gym(gym_id)
 
-    journey = journeys_engine.add_journey_session(user,gym_id, gym.get('routesid'), date)
+
+    #a = Activity1(**data)
+
+    activity_id = activities_db.add_activity(user, gym, name, date)
+    activity = activities_db.get_activity(activity_id)
     # journey_id = user.get('journey_id')
 
-    journeys = journeys_engine._get_journey_sessions_by_user_id(user.get('id'))
-    return render_template('skala-journey.html',
-                           user=user,
-                           journeys=journeys,
-                           journey=journey,
-                           reference_data=competitionsEngine.reference_data
-                           )
+    #journeys = activities_db.get_activities(user.get('id'))
+    return json.dumps(activity)
+
+
+
+@skala_api_app.delete('/activity/<activity_id>')
+@login_required
+def delete_activity(activity_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    activity = activities_db.get_activity(activity_id)
+    if (activity is None):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+
+    activities_db.delete_activity(activity_id)
+    # journey_id = user.get('journey_id')
+
+    #journeys = activities_db.get_activities(user.get('id'))
+    return {}
+
+
+
+
+
+@skala_api_app.get('/activity/<activity_id>')
+@login_required
+def get_activity(activity_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    activity = activities_db.get_activity(activity_id)
+    if (activity is None):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+    activity = activities_db.get_activity(activity_id)
+    # journey_id = user.get('journey_id')
+
+    #journeys = activities_db.get_activities(user.get('id'))
+    return json.dumps(activity)
+    
+
+
+@skala_api_app.post('/activity/<activity_id>')
+@login_required
+def add_activity_route(activity_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    data = request.get_json()
+    #data = request.get_data()
+    # get the data from the body of the request
+
+    gym_id = data.get('gym_id')
+    routes_id = data.get('routes_id')
+    routes = competitionsEngine.get_routes(routes_id)
+
+    route_id = data.get('route_id')
+    note = data.get('note')
+    route_finish_status = data.get('route_finish_status')
+    route = competitionsEngine.get_route(routes_id, route_id)
+    
+    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note)
+    
+
+    # journey_id = user.get('journey_id')
+
+    #journeys = activities_db.get_activities(user.get('id'))
+    return json.dumps(activity)
+
+
+
+
+@skala_api_app.get('/activity/user/<user_id>')
+@login_required
+def get_activities_by_user(user_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    activity = activities_db.get_activity(activity_id)
+    if (activity is None):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+
+    activities_db.delete_activity(activity_id)
+    # journey_id = user.get('journey_id')
+
+    #journeys = activities_db.get_activities(user.get('id'))
+    return {}
+
 
 
 @skala_api_app.route('/journey/<journey_id>', methods=['GET'])
 @login_required
 def journey_session(journey_id):
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activities_db.get_journey_session(journey_id)
 
     return journey
+
+
+
+@skala_api_app.delete('/activity/<activity_id>/route/<route_id>')
+@login_required
+def delete_activity_route(activity_id, route_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    activity = activities_db.get_activity(activity_id)
+    if (activity is None):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+
+    activity = activities_db.delete_activity_route(activity_id, route_id)
+    # journey_id = user.get('journey_id')
+
+    #journeys = activities_db.get_activities(user.get('id'))
+    return activity
+
+
 
 
 @skala_api_app.route('/journey/<journey_id>/add', methods=['POST'])
@@ -366,10 +518,11 @@ def journey_session_entry_add(journey_id):
 
     comp = {}
 
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activities_db.get_journey_session(journey_id)
 
-    journey = journeys_engine.add_journey_session_entry(journey_id,route_id, route_finish_status, notes)
+    journey = activities_db.add_journey_session_entry(journey_id,route_id, route_finish_status, notes)
     routes = competitionsEngine.get_routes(journey.get('routes_id'))
+
 
     return render_template('skala-journey-session.html',
                            user=user,
@@ -383,12 +536,12 @@ def journey_session_entry_add(journey_id):
 @login_required
 def journey_session_remove(journey_id, route_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activities_db.get_journey_session(journey_id)
 
     testid = request.args.get('testid')
     if journey is None:
         return {}
-    journeys_engine.remove_journey_session(journey_id, route_id)
+    activities_db.remove_journey_session(journey_id, route_id)
     routes = competitionsEngine.get_routes(journey.get('routes_id'))
 
     return {}
@@ -449,6 +602,10 @@ def competitions_by_year(year):
 @login_required
 def new_competition_post():
     username = session.get('username')
+
+    routedata = request.get_json()
+    routedata = json.loads(routedata)
+
 
     #username = request.args.get('username')
     name = request.form.get('name')
@@ -1045,8 +1202,6 @@ def get_myskala():
             continue
         routes = routes.get('routes')
         all_competitions.append(competition)
-        
-        
 
         climber = competition.get('climbers').get(user['id'])
         competition['climber'] = climber
@@ -1068,12 +1223,6 @@ def get_myskala():
 
         competition_points_per_route = {}
         
-        
-        #logging.info(climbers)
-
-        
-
-    
     stats['user'] = user
 
     stats['personalstats']['competitions_count'] = len(competition_ids)
@@ -1084,11 +1233,11 @@ def get_myskala():
 
 
     stats['competitions'] = all_competitions
+    stats['thursday'] = datetime.today().weekday() == 3
+    # return well formatted json
+    return json.dumps(stats, indent=4)
 
 
-
-    
-    return json.dumps(stats)
 
 
 def transform_json(input_data):

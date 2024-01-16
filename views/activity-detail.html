@@ -1,0 +1,553 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+
+
+
+    <style>
+        /* Style for the modal dialog container */
+        .modal-container {
+            display: none;
+            position: fixed;
+            z-index: 1023;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Style for the modal dialog box */
+        .modal-box {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width:max-content;
+            
+            display: flex;
+            
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Style for the close button */
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            color: #aaa;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+
+    
+
+
+    
+    <div id="modal" class="modal-container">
+        
+        <div id="modal-box" class="modal-box">
+           
+            <form action="#" enctype="multipart/form-data"  method="POST">
+                <style>
+                    .form-row-heading {
+                      display: flex;
+                      justify-content: center;
+                      align-items: baseline;
+                      margin: 10px;
+                      font-size: 20px;
+                      color: #292424;
+                      font-weight: bold;
+                      vertical-align: bottom;
+                    }
+                    .form-row {
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      margin: 10px;
+                    }
+                  
+                    .form-row label {
+                      text-align: right;
+                      margin-right: 6px;
+                      flex: 1;
+                    }
+                  
+                    .form-row input,
+                    .form-row select,
+                    .form-row textarea {
+                      flex: 1;
+                    }
+                  </style>
+
+            <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
+           
+            <div id="tabulator-table" class="form-row"></div>
+
+            <div id="mainModalMenu">
+                
+            
+                <div class="form-row">
+                <span class="close-button" onclick="hideModal()">&times;</span>
+
+                <div class="form-row-heading">
+                    <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
+                </div>
+
+            <div class="form-row-heading">
+                <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
+                <div id="route-color1" >&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div style="font-size:20px;" id="route-grade"></div>
+            </div>
+            </div>
+            
+            <div class="form-row">
+
+              
+	
+                </div>
+                <div class="form-row">
+
+                    <div id="toggle-flash-icon">
+                    <img id="toggle-flash-image" class="img-fluid  btn-outline-light" src="" width="60" height="60" onclick="toggleFlashImage()"/>
+                    
+                </div>
+                       <input id='notes' name="notes" size="20" type="text"/>
+
+                 
+                    
+
+           
+                      </div>
+                      <div class="form-row">
+                    
+                        </div>
+
+                        
+            
+
+                        <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData('climbed');">Save</button>&nbsp;
+                 
+                <button id='cancelbutton' type="button" class="btn btn-primary  btn-lg" onclick="closeDialog()">Cancel</button>
+            </div> 
+            </div>
+
+                  
+                    </form>
+            </form>
+            
+        </div>
+        
+    </div>
+
+
+
+
+<script>
+
+
+    // Get the modal dialog container
+    var modal = document.getElementById("modal");
+    var mainModalMenuDiv = document.getElementById('mainModalMenu');
+    var modalBoxDiv = document.getElementById('modal-box');
+    var currentRow;
+    var mod_type;
+
+
+    function showEditDiv(){
+        mainModalMenuDiv.style.display='none'
+        editDiv.style.display='block';
+    }
+
+    function editContent(){
+        mod_type='save'
+        showEditDiv();
+        return false;
+    }
+
+// Function to display the modal dialog
+function showModal() {
+        mainModalMenuDiv.style.display='none';
+        document.getElementById('tabulator-table').style.display='block';
+        
+        modal.style.display = "block";
+    }
+
+    // Function to hide the modal dialog
+    function hideModal() {
+        modal.style.display = "none";
+    }
+
+    function hideTable(){
+        document.getElementById('tabulator-table').style.display='none';
+        //tabulator-table.style.display = 'none';
+    }
+
+    function clearModal(){
+        document.getElementById('hidden_message').textContent='';
+        
+        document.getElementById('activity_name').value = 'My activity';
+        
+        
+    }
+
+
+    function closeDialog(){
+        //clearModal();
+        hideModal();
+    }
+    
+
+    function deleteActivity()
+    {
+        fetch(`/api1/activity/{{activity['id']}}`,
+        { method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            // use the retrieved data here
+            window.location.href = "/activities";
+        })
+        .catch(error => console.error(error));
+        
+        // redirect to /activities page
+        
+
+    }
+
+
+
+    var gym_id;
+    var routes;
+    var activity;
+      
+      function getData()
+      {
+        const gymid = "{{gym['gym_id']}}";
+        const routeid = "{{routes['id']}}";
+    
+        fetch(`/api1/activity/{{activity['id']}}`)
+        .then(response => response.json())
+        .then(data => {
+            // use the retrieved data here
+            //console.log(data);
+            activity=data;
+            document.getElementById('activityName').innerHTML = data.name;
+            document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+data.gym_id+'">'+data.gym_name+'</a> - '+data.starttime;
+    
+        })
+        .catch(error => console.error(error));
+    
+
+        fetch(`/api1/gym/{{gym['id']}}/`)
+        .then(response => response.json())
+        .then(data => {
+            // use the retrieved data here
+            //console.log(data);
+            routes=data.routes
+            renderTabulatorTable(routes);
+              
+    
+        })
+        .catch(error => console.error(error));
+      }
+    
+    
+
+    getData();
+
+    function renderTabulatorTable(routesA)
+      {
+        var columns = [
+          {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color",
+           "responsive": 0 , minWidth:10,
+        
+            
+        },
+          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+          ];
+      
+          // Create the Tabulator table
+          var table = new Tabulator("#tabulator-table", {
+              columns: columns,
+              data: routesA ,
+              layout:"fitDataStretch",
+              //layout: "fitDataFill",
+              movableRows: false,
+              selectable: 1,
+              responsiveLayout:"collapse",
+              //responsiveLayout:"fitColumns",
+              //movableColumns: true, 
+              responsiveLayoutCollapseStartOpen:false,
+              formatter:"responsiveCollapse", headerSort:false,
+              rowFormatter:function(row){
+                if(row.getData().line % 2 == 0){
+                    //row.getElement().style.backgroundColor = "#dddddd";
+                    //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
+                    row.getElement().style.backgroundColor = "#f1f1f1";
+                
+                }else{
+                    row.getElement().style.backgroundColor = "#ffffff";
+                
+                }
+                },
+
+              /*rowContextMenu:[
+              {
+                label:"Edit Row",
+                action:function(e, row){
+                    row.delete();
+                }
+                },
+                {
+                    label:"Delete Row",
+                    action:function(e, row){
+                        row.delete();
+                    }
+                },
+            ]*/
+          });
+
+          table.on("rowClick", function(e, row){
+            routeDetail(row.getData());
+            
+          });
+
+          if (currentRow !== undefined)
+          {
+            //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
+            //table.selectRow(2);
+          }
+      
+      }
+      
+    
+      var formData = {};
+
+      function routeDetail(data) {
+        	//console.log("routeDetail  ");
+            resetFlashImage();
+
+            //console.log(data);
+            currentRow=data;
+            document.getElementById('route-routenum').innerHTML = data.routenum;
+            document.getElementById('route-grade').innerHTML = data.grade;
+            document.getElementById('route-name').innerHTML = data.name;
+            //document.getElementById('color1').style.backgroundColor = currentRow.color1;
+            document.getElementById('route-color1').style.background = data.color1;
+            document.getElementById('mainModalMenu').style.display='block';
+            mainModalMenuDiv.style.display='block';
+
+            formData = {};
+            formData['route_id'] = data.id;
+            
+            hideTable();
+            //hideModal();
+            //document.getElementById('id').value = data.id;
+
+      }
+
+
+
+    function saveData(status)
+    {
+        //console.log("saveData  ");
+        ///console.log(currentRow);
+        //console.log(status);
+        //console.log(document.getElementById('notes').value);
+
+        formData['note'] = document.getElementById('notes').value;
+        formData['route_finish_status'] = routeFinishStatus;
+        formData['gym_id'] = "{{gym['id']}}";
+        formData['routes_id'] = "{{routes['id']}}";
+
+        fetch('/api1/activity/{{activity['id']}}', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // use the retrieved data here
+            //console.log('data after save')
+            //console.log(data);
+
+            hideModal();
+            window.location.href = "/activities/{{activity['id']}}";
+              
+        })
+        .catch(error => console.error(error));
+        
+    
+    }
+
+
+    function deleteRoute(routeId)
+    {
+        //console.log("deleteActivity  "+routeId);
+        if (routeId == undefined || routeId.length == 0)
+        {
+            return;
+        }
+
+        fetch(`/api1/activity/{{activity['id']}}/route/`+routeId,
+        { method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            // reload the activities page
+            window.location.href = "/activities/{{activity['id']}}";
+        })
+        .catch(error => console.error(error));
+        
+        // redirect to /activities page
+        
+
+    }
+
+    // create an array with image names
+    var images = ["1398911_correct_mark_success_tick_valid_icon.png",        // success icon 2
+    "2682840_bolt_elictricity_light_lightning_storm_icon.png",   //flash icon 0
+    "4125784_confounded_confused_emoji_emotion_fail_icon.png",    // attempt icon 1
+    
+];
+
+    var currentRouteStatusIconIndex = 0;
+    var routeFinishStatus;
+
+    function resetFlashImage()
+    {
+        //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
+        currentRouteStatusIconIndex = 0;
+        routeFinishStatus = 'climbed';
+        //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
+        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
+        
+    }
+
+    function toggleFlashImage()
+    {
+        //console.log("toggleFlashImage  "+ currentRouteStatusIconIndex);
+        
+        // advance to the next image index with every execution of this function
+        currentRouteStatusIconIndex = (++currentRouteStatusIconIndex ) % images.length;
+        // set the image source of oggle-flash-image to the image at the current index
+
+        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
+        // set routeFinishStatus to flashed, attempt or success based on the current index
+        if (currentRouteStatusIconIndex == 0)
+        {
+            routeFinishStatus = 'climbed';
+        }
+        else if (currentRouteStatusIconIndex == 1)
+        {
+            routeFinishStatus = 'flashed';
+        }
+        else if (currentRouteStatusIconIndex == 2)
+        {
+            routeFinishStatus = 'attempted';
+        }
+    }
+        
+</script>
+
+
+
+
+	<div name='bbb'>
+
+		{% include "skala3ma-menu.html" %}
+     
+		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+					<div class="text-center heading-section">
+					<br>
+				<h3><div id="activityName"></div>	</h3>
+						 {{ reference_data['current_language'].start }}
+                         <div id="activityDate"></div>
+					</div>
+                    
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].grade }}</th>
+         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].status }}</th>
+<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
+			 <th><button name="competition_update_button" value="competition_update_button" 
+                class="btn btn-primary btn-lg" onClick="showModal()">{{ reference_data['current_language'].add}} {{ reference_data['current_language'].route}}</button>
+                </th>
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+    				{% for route in activity['routes'] %}
+
+		 <tr><td>{{ route['name'] }}</td>
+            <td>{{ route['grade'] }}</td>
+					<td> {{ reference_data['current_language'][route['status']] }} </td>
+<td><i>{{ route['note'] }}</i></td>
+			 <td>
+				 <a href="#" onclick="deleteRoute('{{route['id']}}')">{{ reference_data['current_language'].remove }}</a>
+				
+                
+			 </td>
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+<hr/>
+     <button id='deletebutton' type="button" class="btn btn-danger  btn-lg" onclick="deleteActivity()">{{ reference_data['current_language'].remove }} {{ reference_data['current_language'].activity }}</button>
+
+</div>
+
+
+
+
+
+{% if activity is not none and activity is not undefined  %}
+
+
+				{% else %}
+
+
+				No journyes yet. Add your first!
+
+
+				{% endif %}
+			</div>
+
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+
+
+
+{% endblock %}

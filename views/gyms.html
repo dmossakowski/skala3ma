@@ -79,7 +79,7 @@ NOT USED
 
 			    {% if gym is not none and gym is not undefined  %}
 
-						<img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" >
+						<img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="150" >
 
 						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -170,7 +170,7 @@ NOT USED
 							<div class="blog-text">
 								<div class="text-center">
 
-									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
+									<img src="{{ url_for('app_ui.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
 									width="200px">
 
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>

@@ -23,20 +23,21 @@ from datetime import datetime, date, time, timedelta
 import competitionsEngine
 import csv
 from functools import wraps
+import qrcode 
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, jsonify, Response, \
-    stream_with_context, copy_current_request_context, g
+    stream_with_context, copy_current_request_context, make_response
 
 import logging
 from dotenv import load_dotenv
 
 from flask import Blueprint
-import skala_journey as journeys_engine
+import activities_db as activity_engine
 
 from io import BytesIO
 
 from flask import send_file
-
+import skala_api
 
 # Third party libraries
 from flask import Flask, redirect, request, url_for
@@ -50,10 +51,13 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-#fsgtapp = Blueprint('fsgtapp', __name__)
+#app_ui = Blueprint('app_ui', __name__)
 
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
+
+#from flask_openapi3 import Info, Tag, APIBlueprint
+#from flask_openapi3 import OpenAPI
 
 languages = {}
 
@@ -79,11 +83,13 @@ GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 
-fsgtapp = Blueprint('fsgtapp', __name__)
+#tag = Tag(name="UI operations", description='UI operations which return HTML pages - competitionsApp.py')
+#app_ui = APIBlueprint('app_ui', __name__, abp_tags=[tag])
+app_ui = Blueprint('app_ui', __name__)
 
-fsgtapp.debug = True
-fsgtapp.secret_key = 'development'
-oauth = OAuth(fsgtapp)
+app_ui.debug = True
+app_ui.secret_key = 'development'
+oauth = OAuth(app_ui)
 
 genres = {"test": "1"}
 authenticated = False
@@ -111,13 +117,13 @@ import requests
 
 
 
-fsgtapp.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
+app_ui.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
-#fsgtapp.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#app_ui.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # User session management setup
@@ -125,7 +131,7 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 
 
-@fsgtapp.before_request
+@app_ui.before_request
 def x(*args, **kwargs):
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
@@ -134,7 +140,7 @@ def x(*args, **kwargs):
         ##return redirect('/en' + request.full_path)
 
 
-@fsgtapp.route('/language/<language>')
+@app_ui.route('/language/<language>')
 def set_language(language=None):
     session['language'] = language
 
@@ -162,12 +168,12 @@ def login_required(fn):
                 if session['authsource'] == 'google':
                     return redirect(url_for("googleauth"))
 
-                #return redirect(url_for("fsgtapp.fsgtlogin"))
+                #return redirect(url_for("app_ui.fsgtlogin"))
             else:
                 return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
-            return redirect(url_for("fsgtapp.fsgtlogin"))
+            return redirect(url_for("app_ui.fsgtlogin"))
     return decorated_function
 
 
@@ -183,7 +189,7 @@ def admin_required(fn):
             return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
-            return redirect(url_for("fsgtapp.fsgtlogin"))
+            return redirect(url_for("app_ui.fsgtlogin"))
     return decorated_function
 
 
@@ -198,11 +204,11 @@ def competition_authentication_required(fn):
             return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
-            return redirect(url_for("fsgtapp.fsgtlogin"))
+            return redirect(url_for("app_ui.fsgtlogin"))
     return decorated_function
 
 
-@fsgtapp.route("/aa")
+@app_ui.get("/aa")
 def index():
     if session.get('username'):
         return '<a class="button" href="/login">logged in </a>'+session.get('username')
@@ -223,10 +229,13 @@ def index():
 
 
 
-@fsgtapp.route('/competitionRawAdmin', methods=['GET'])
+@app_ui.route('/competitionRawAdmin', methods=['GET'])
 @login_required
 @admin_required
 def fsgtadminget():
+    """
+    Load Admin page from competitionRawAdmin.html
+    """
     edittype = request.args.get('edittype')
     id = request.args.get('id')
     action = request.args.get('action')
@@ -239,11 +248,16 @@ def fsgtadminget():
                            id=id)
 
 
-@fsgtapp.route('/competitionRawAdmin', methods=['POST'])
+@app_ui.post('/competitionRawAdmin')
 @login_required
 @admin_required
 def fsgtadmin():
+    """
     
+    Do admin action
+
+    This is an admin action
+    """
     edittype = request.form.get('edittype')
     id = request.form.get('id')
     action = request.form.get('action')
@@ -309,7 +323,9 @@ def fsgtadmin():
                            id=id)
 
 
-@fsgtapp.route('/competition_admin/<competition_id>', methods=['GET'])
+@app_ui.route('/competition_admin/<competition_id>', methods=['GET'])
+#, summary='returns competitionAdmin.html', 
+ #           responses={"default": {"description": "Render template competitionAdmin.html"}})
 @login_required
 def competition_admin_get(competition_id):
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -318,7 +334,7 @@ def competition_admin_get(competition_id):
     user_list = competitionsEngine.get_all_user_emails()
     if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
         session["wants_url"] = request.url
-        return redirect(url_for('fsgtapp.getCompetition', competitionId=competition['id']))
+        return redirect(url_for('app_ui.getCompetition', competitionId=competition['id']))
 
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
 
@@ -332,7 +348,7 @@ def competition_admin_get(competition_id):
                            id=id)
 
 
-@fsgtapp.route('/competition_admin/<competition_id>', methods=['POST'])
+@app_ui.route('/competition_admin/<competition_id>', methods=['POST'])
 @login_required
 def competition_admin_post(competition_id):
     remove_climber = request.form.get('remove_climber')
@@ -363,7 +379,7 @@ def competition_admin_post(competition_id):
 
     if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
         session["wants_url"] = request.url
-        return redirect(url_for("fsgtapp.fsgtlogin"))
+        return redirect(url_for("app_ui.fsgtlogin"))
 
 
     
@@ -444,7 +460,7 @@ def competition_admin_post(competition_id):
                            id=id)
 
 
-@fsgtapp.route('/fsgtadmin/<edittype>')
+@app_ui.route('/fsgtadmin/<edittype>')
 def fsgtadminedit(edittype):
     j = request.args.get('jsondata')
 
@@ -455,7 +471,7 @@ def fsgtadminedit(edittype):
                            reference_data=competitionsEngine.reference_data)
 
 
-@fsgtapp.route('/loginchoice')
+@app_ui.route('/loginchoice')
 def fsgtlogin():
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data
@@ -464,28 +480,47 @@ def fsgtlogin():
 
 
 
-@fsgtapp.route('/journey', methods=['GET'])
+
+
+@app_ui.route('/activities', methods=['GET'])
 @login_required
-def journey_list():
+def activities():
     user = competitionsEngine.get_user_by_email(session['email'])
 
-    journey = None
-    journey_id = user.get('journey_id')
-
-    #if journey_id is None:
-    #    journey = journeys_engine.add_journey(user, description)
-
-    journeys = journeys_engine._get_journey_sessions_by_user_id(user.get('id'))
-
-    return render_template('skala-journey.html',
+    return render_template('activities.html',
                            user=user,
-                           journeys=journeys,
-                           journey_id=journey_id,
                            reference_data=competitionsEngine.reference_data,
                            today=date.today()
                            )
 
-@fsgtapp.route('/journey/add', methods=['POST'])
+
+#@app_ui.route('/activities/<activity_id>', methods=['GET'], description='returns activity-detail.html')
+@app_ui.route('/activities/<activity_id>', methods=['GET'])
+#@login_required
+def activity_detail(activity_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+    activity = activity_engine.get_activity(activity_id)
+    gym = competitionsEngine.get_gym(activity['gym_id'])
+
+    #gym = competitionsEngine.get_gym(journey['gym_id'])
+
+    if activity.get('routes_id') is None:
+        routes = competitionsEngine.get_routes("7134a8ef-fa2e-4672-a247-115773183bcd")  # should return  Nanterre routes
+    else:
+        routes = competitionsEngine.get_routes(activity['routes_id'])
+
+    return render_template('activity-detail.html',
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           activity=activity,
+                           routes=routes,
+                           gym=gym,
+                           today=date.today(),
+                           activity_id=activity_id,
+                           )
+
+
+@app_ui.route('/journey/add', methods=['POST'])
 @login_required
 def journey_add():
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -495,13 +530,13 @@ def journey_add():
     comp = {}
     gym = competitionsEngine.get_gym(gym_id)
 
-    journey = journeys_engine.add_journey_session(user,gym_id, gym.get('routesid'), date)
+    journey = activity_engine.add_journey_session(user,gym_id, gym.get('routesid'), date)
     #journey_id = user.get('journey_id')
 
     #if journey_id is None:
-    #    journey = journeys_engine.add_journey(user, description)
+    #    journey = activity_engine.add_journey(user, description)
 
-    journeys = journeys_engine._get_journey_sessions_by_user_id(user.get('id'))
+    journeys = activity_engine._get_journey_sessions_by_user_id(user.get('id'))
     return render_template('skala-journey.html',
                            user=user,
                            journeys=journeys,
@@ -510,11 +545,11 @@ def journey_add():
                            )
 
 
-@fsgtapp.route('/journey/<journey_id>', methods=['GET'])
+@app_ui.route('/journey/<journey_id>', methods=['GET'])
 @login_required
 def journey_session(journey_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activity_engine.get_journey_session(journey_id)
 
     #gym = competitionsEngine.get_gym(journey['gym_id'])
 
@@ -531,7 +566,7 @@ def journey_session(journey_id):
                            )
 
 
-@fsgtapp.route('/journey/<journey_id>/add', methods=['POST'])
+@app_ui.route('/journey/<journey_id>/add', methods=['POST'])
 @login_required
 def journey_session_entry_add(journey_id):
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -542,9 +577,9 @@ def journey_session_entry_add(journey_id):
 
     comp = {}
 
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activity_engine.get_journey_session(journey_id)
 
-    journey = journeys_engine.add_journey_session_entry(journey_id,route_id, route_finish_status, notes)
+    journey = activity_engine.add_journey_session_entry(journey_id,route_id, route_finish_status, notes)
     routes = competitionsEngine.get_routes(journey.get('routes_id'))
 
     return render_template('skala-journey-session.html',
@@ -555,13 +590,13 @@ def journey_session_entry_add(journey_id):
                            )
 
 
-@fsgtapp.route('/journey/<journey_id>/<route_id>/remove', methods=['GET'])
+@app_ui.route('/journey/<journey_id>/<route_id>/remove', methods=['GET'])
 @login_required
 def journey_session_remove(journey_id, route_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-    journey = journeys_engine.get_journey_session(journey_id)
+    journey = activity_engine.get_journey_session(journey_id)
 
-    journeys_engine.remove_journey_session(journey_id, route_id)
+    activity_engine.remove_journey_session(journey_id, route_id)
     routes = competitionsEngine.get_routes(journey.get('routes_id'))
 
     return render_template('skala-journey-session.html',
@@ -573,7 +608,7 @@ def journey_session_remove(journey_id, route_id):
 
 
 
-@fsgtapp.route('/privacy')
+@app_ui.route('/privacy')
 def privacy():
     return render_template('privacy.html',
                            reference_data=competitionsEngine.reference_data
@@ -581,7 +616,7 @@ def privacy():
 
 
 
-@fsgtapp.route('/main')
+@app_ui.route('/main')
 def main():
     langs = competitionsEngine.reference_data['languages']
 
@@ -599,7 +634,7 @@ def main():
                            )
 
 
-@fsgtapp.route('/competitionDashboard')
+@app_ui.route('/competitionDashboard')
 def getCompetitionDashboard():
     # select season year depending on current month;
     # e.g. if 2023-10-01 then season is 2023-24 
@@ -610,7 +645,7 @@ def getCompetitionDashboard():
     return competitions_by_year(str(season))
 
 
-@fsgtapp.route('/competitions/year/<year>')
+@app_ui.route('/competitions/year/<year>')
 def competitions_by_year(year):
 
     username = session.get('username')
@@ -639,7 +674,7 @@ def competitions_by_year(year):
                            )
 
 
-@fsgtapp.route('/newCompetition', methods=['GET'])
+@app_ui.route('/newCompetition', methods=['GET'])
 @login_required
 def new_competition():
 
@@ -677,7 +712,7 @@ def new_competition():
                             **session)
 
 
-@fsgtapp.route('/newCompetition', methods=['POST'])
+@app_ui.route('/newCompetition', methods=['POST'])
 @login_required
 def new_competition_post():
     username = session.get('username')
@@ -697,14 +732,14 @@ def new_competition_post():
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is None or not competitionsEngine.can_create_competition(user):
-        return redirect(url_for('fsgtapp.fsgtlogin', competitionId=competitionId))
+        return redirect(url_for('app_ui.fsgtlogin', competitionId=competitionId))
 
     if name is not None and date is not None and routesid is not None and max_participants is not None:
         competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
                                                           competition_type=competition_type)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
-        return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+        return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
 
     subheader_message='Welcome '
     competitions= competitionsEngine.getCompetitions()
@@ -721,7 +756,7 @@ def new_competition_post():
 
 
 
-@fsgtapp.route('/competitionDashboard/<competitionId>/register')
+@app_ui.route('/competitionDashboard/<competitionId>/register')
 #@login_required
 def addCompetitionClimber(competitionId):
     useremail = session.get('email')
@@ -760,7 +795,7 @@ def addCompetitionClimber(competitionId):
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'
-            #return redirect(url_for('fsgtapp.getCompetition', competitionId=competitionId))
+            #return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
             return render_template("competitionClimberRegistered.html", 
                     competitionId=competitionId,
                     competition=comp,
@@ -794,7 +829,7 @@ def addCompetitionClimber(competitionId):
                             **session)
 
 
-@fsgtapp.route('/user')
+@app_ui.route('/user')
 def get_user():
     if session.get('email') is None:
         return render_template('competitionDashboard.html', sortedA=None,
@@ -822,7 +857,7 @@ def get_user():
                             **session)
 
 
-@fsgtapp.route('/updateuser')
+@app_ui.route('/updateuser')
 def update_user():
     if session.get('email') is None:
         return render_template('competitionDashboard.html', sortedA=None,
@@ -878,7 +913,7 @@ def update_user():
 
 
 
-@fsgtapp.route('/myresultats')
+@app_ui.route('/myresultats')
 @login_required
 def myskala():
     subheader_message = "My skala"
@@ -896,7 +931,7 @@ def myskala():
 
 
 
-@fsgtapp.route('/competitionDetails/<competitionId>')
+@app_ui.route('/competitionDetails/<competitionId>')
 #@login_required
 def getCompetition(competitionId):
     #competitionId = request.args.get('competitionId')
@@ -951,7 +986,7 @@ def getCompetition(competitionId):
 
 
 
-@fsgtapp.route('/competitionResults/<competitionId>')
+@app_ui.route('/competitionResults/<competitionId>')
 #@login_required
 def getCompetitionResults(competitionId):
     competition = None
@@ -989,7 +1024,7 @@ def getCompetitionResults(competitionId):
 
 
 # Statistics for a competition
-@fsgtapp.route('/competitionStats/<competitionId>')
+@app_ui.route('/competitionStats/<competitionId>')
 #@login_required
 def getCompetitionStats(competitionId):
     competition = None
@@ -1023,7 +1058,7 @@ def getCompetitionStats(competitionId):
 
 
 
-#@fsgtapp.route('/competitionDashboard/<competitionId>/climber/<climberId>')
+#@app_ui.route('/competitionDashboard/<competitionId>/climber/<climberId>')
 #@login_required
 # THIS IS NOT USED PROBABLY!!!!
 def getCompetitionClimber(competitionId, climberId):
@@ -1093,7 +1128,7 @@ def getCompetitionClimber(competitionId, climberId):
 
 
 
-@fsgtapp.route('/competitionResults/<competitionId>/download')
+@app_ui.route('/competitionResults/<competitionId>/download')
 def downloadCompetitionCsv(competitionId):
 
     competition = competitionsEngine.getCompetition(competitionId)
@@ -1176,7 +1211,7 @@ def downloadCompetitionCsv(competitionId):
 
 
 
-@fsgtapp.route('/competitionRoutesEntry/<competitionId>')
+@app_ui.route('/competitionRoutesEntry/<competitionId>')
 @login_required
 def competitionRoutesList(competitionId):
     #competitionId = request.args.get('competitionId')
@@ -1218,7 +1253,7 @@ def competitionRoutesList(competitionId):
 
 
 # enter competition climbed routes for a climber and save them
-@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
+@app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
 @login_required
 def routes_climbed(competitionId, climberId):
 
@@ -1244,7 +1279,7 @@ def routes_climbed(competitionId, climberId):
     competition = competitionsEngine.getCompetition(competitionId)
 
     if not competitionsEngine.can_update_routes(user,competition):
-        return redirect(url_for('fsgtapp.competitionRoutesList', competitionId=competitionId))
+        return redirect(url_for('app_ui.competitionRoutesList', competitionId=competitionId))
 
 
     routesid = competition.get('routesid')
@@ -1262,7 +1297,7 @@ def routes_climbed(competitionId, climberId):
                            **session)
 
 
-@fsgtapp.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
+@app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
 @login_required
 def update_routes_climbed(competitionId, climberId):
     # generate array of marked routes from HTTP request
@@ -1323,7 +1358,7 @@ def update_routes_climbed(competitionId, climberId):
 
 
 
-@fsgtapp.route('/migrategyms')
+@app_ui.route('/migrategyms')
 def migrategyms():
     gyms = competitionsEngine.get_gyms()
 
@@ -1332,10 +1367,13 @@ def migrategyms():
     nanterre['homepage'] = 'https://www.esnanterre.com/'
 
     competitionsEngine.update_gym("1", "667", json.dumps(nanterre))
-    return redirect(url_for('fsgtapp.gyms'))
+    return redirect(url_for('app_ui.gyms'))
+
+
+
 
 ######## GYMS
-@fsgtapp.route('/gyms')
+@app_ui.route('/gyms')
 def gyms():
     fullname = request.args.get('fullname')
     nick = request.args.get('nick')
@@ -1367,7 +1405,7 @@ def gyms():
 
 
 
-@fsgtapp.route('/gyms/<gymid>')
+@app_ui.route('/gyms/<gymid>')
 def gym_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
     #gym['routesid']='abc1'
@@ -1381,9 +1419,11 @@ def gym_by_id(gymid):
 
 
 
-@fsgtapp.route('/gyms/<gym_id>/<routesid>', methods=['GET'])
+@app_ui.route('/gyms/<gym_id>/<routesid>', methods=['GET'])
 #@login_required
 def gym_routes_new(gym_id, routesid):
+
+
     gym = competitionsEngine.get_gym(gym_id)
     all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
     routes = all_routes.get(routesid)
@@ -1392,6 +1432,8 @@ def gym_routes_new(gym_id, routesid):
     user_can_edit_gym = False
     if user is not None:
         user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        #activities = skala_api.get_activities()
+
 
     return render_template('gym-routes.html',
                            gymid=gym_id,
@@ -1408,7 +1450,7 @@ def gym_routes_new(gym_id, routesid):
 
 
 
-@fsgtapp.route('/gyms/<gymid>/data')
+@app_ui.route('/gyms/<gymid>/data')
 def gym_data(gymid):
     fullname = request.args.get('fullname')
     nick = request.args.get('nick')
@@ -1423,7 +1465,7 @@ def gym_data(gymid):
     return json.dumps(gym)
 
 
-@fsgtapp.route('/gyms/<gymid>/edit', methods=['GET'])
+@app_ui.route('/gyms/<gymid>/edit', methods=['GET'])
 @login_required
 def gym_edit(gymid):
     gym = competitionsEngine.get_gym(gymid)
@@ -1443,7 +1485,8 @@ def gym_edit(gymid):
                            )
 
 
-@fsgtapp.route('/gyms/<gymid>/edit', methods=['POST'])
+
+@app_ui.route('/gyms/<gymid>/edit', methods=['POST'])
 @login_required
 def gym_save(gymid):
 
@@ -1470,7 +1513,7 @@ def gym_save(gymid):
 
     gym = competitionsEngine.get_gym(gymid)
     if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("fsgtapp.fsgtlogin"))
+        return redirect(url_for("app_ui.fsgtlogin"))
 
     routes = []
     for i, routeline1 in enumerate(routeline):
@@ -1505,7 +1548,9 @@ def gym_save(gymid):
                            )
 
 
-@fsgtapp.route('/gyms/<gym_id>/<routesid>/edit', methods=['GET'])
+
+# this is the old HTML form routes editor
+@app_ui.route('/gyms/<gym_id>/<routesid>/edit', methods=['GET'])
 @login_required
 def gym_routes_edit(gym_id, routesid):
     gym = competitionsEngine.get_gym(gym_id)
@@ -1525,14 +1570,15 @@ def gym_routes_edit(gym_id, routesid):
 
 
 
-@fsgtapp.route('/gyms/<gymid>/<routesid>/edit', methods=['POST'])
+#saving old type of html routes editor
+@app_ui.route('/gyms/<gymid>/<routesid>/edit', methods=['POST'])
 @login_required
 def gym_routes_save(gymid, routesid):
     formdata = request.form.to_dict(flat=False)
 
     args1 = request.args
     body = request.data
-    bodyj = request.json
+    #bodyj = request.json
 
     routeid = formdata['routeid']
     routeline = formdata['routeline']
@@ -1554,7 +1600,7 @@ def gym_routes_save(gymid, routesid):
 
     gym = competitionsEngine.get_gym(gymid)
     if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("fsgtapp.fsgtlogin"))
+        return redirect(url_for("app_ui.fsgtlogin"))
 
     routes = []
     for i, routeline1 in enumerate(routeline):
@@ -1582,18 +1628,11 @@ def gym_routes_save(gymid, routesid):
     # pickup the default routes to be rendered
     routes = competitionsEngine.get_routes(gym.get('routesid'))
 
-    return render_template('gym-routes.html',
-                           gymid=gymid,
-                           gyms=None,
-                           gym=gym,
-                           routes=routes,
-                           reference_data=competitionsEngine.reference_data,
-                           )
+    return redirect(f'/gyms/{gymid}/{routesid}')
 
 
 
-
-@fsgtapp.route('/gyms/<gym_id>/<routesid>/routes_csv')
+@app_ui.route('/gyms/<gym_id>/<routesid>/routes_csv')
 def downloadRoutesCsv(gym_id, routesid):
 
     gym = competitionsEngine.get_gym(gym_id)
@@ -1640,7 +1679,7 @@ def downloadRoutesCsv(gym_id, routesid):
 
 
 
-@fsgtapp.route('/gyms/<gym_id>/<routesid>/download')
+@app_ui.route('/gyms/<gym_id>/<routesid>/download')
 def downloadRoutes(gym_id, routesid):
 
     gym = competitionsEngine.get_gym(gym_id)
@@ -1723,7 +1762,7 @@ def downloadRoutes(gym_id, routesid):
 
 
 
-@fsgtapp.route('/gyms/<gymid>/edittest')
+@app_ui.route('/gyms/<gymid>/edittest')
 def edit_test(gymid):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -1735,7 +1774,7 @@ def user_authenticated(id, username, email, picture):
     competitionsEngine.user_authenticated(id, username, email, picture)
 
 
-@fsgtapp.route('/gyms/add', methods=['GET'])
+@app_ui.route('/gyms/add', methods=['GET'])
 @login_required
 def gyms_add_form():
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -1754,7 +1793,7 @@ def gyms_add_form():
                                **session)
 
 
-@fsgtapp.route('/gyms/add', methods=['POST'])
+@app_ui.route('/gyms/add', methods=['POST'])
 @login_required
 def gyms_add():
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -1799,7 +1838,7 @@ def gyms_add():
                             **session)
 
 
-@fsgtapp.route('/gyms/<gym_id>/update', methods=['POST'])
+@app_ui.route('/gyms/<gym_id>/update', methods=['POST'])
 @login_required
 def gyms_update(gym_id):
     user = competitionsEngine.get_user_by_email(session['email'])
@@ -1847,7 +1886,7 @@ def gyms_update(gym_id):
         competitionsEngine.delete_gym(gym_id)
         competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
         os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
-        return redirect(url_for('fsgtapp.gyms'))
+        return redirect(url_for('app_ui.gyms'))
 
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']
@@ -1862,7 +1901,7 @@ def gyms_update(gym_id):
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 
-    return redirect(url_for('fsgtapp.gym_by_id', gymid=gym_id))
+    return redirect(url_for('app_ui.gym_by_id', gymid=gym_id))
 
 
 
@@ -1870,7 +1909,7 @@ def gyms_update(gym_id):
 
 
 
-@fsgtapp.route('/competitionDashboard/loadData')
+@app_ui.route('/competitionDashboard/loadData')
 def loadData():
     competitionsEngine.init()
     subheader_message='data loaded'
@@ -1879,10 +1918,36 @@ def loadData():
                            reference_data=competitionsEngine.reference_data)
 
 
-@fsgtapp.route('/image/<img_id>')
+@app_ui.route('/image/<img_id>')
 def image_route(img_id):
     #bytes_io = competitionsEngine.get_img(img_id)
     #return send_file(bytes_io, mimetype='image/png')
 
     #return send_file(os.path.join(UPLOAD_FOLDER, img_id))
     return send_from_directory(UPLOAD_FOLDER, img_id)
+
+
+
+
+
+@app_ui.route('/qr', methods=['GET'])
+def qr():
+    try:
+        # Get the URL from the query string
+        url = request.args.get('url')
+
+        # Create the QR code image
+        img = qrcode.make(url)
+
+        buffer = io.BytesIO()
+        img.save(buffer)
+        buffer.seek(0)
+
+        response = make_response(buffer.getvalue())
+        #response.headers['Content-Disposition'] = 'attachment; filename=qr-code.png'
+        response.mimetype = 'image/png' 
+
+        return response
+    except Exception as e:
+        print(e)
+        return 'Internal Server Error', 500
