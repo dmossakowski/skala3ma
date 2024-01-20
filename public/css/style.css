@@ -1304,7 +1304,7 @@ div.cs-select span {
   background: #44C662;
   color: #fff !important; }
 .btn:hover, .btn:active, .btn:focus {
-  background: #393e46 !important;
+  /*background: #393e46 !important;*/
   color: #fff;
   outline: none !important; }
 .btn.btn-default:hover, .btn.btn-default:focus, .btn.btn-default:active {
