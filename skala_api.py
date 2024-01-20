@@ -428,7 +428,7 @@ def get_activity(activity_id):
         return {"error":"activity not found"}   
     #a = Activity1(**data)
     activity = activities_db.get_activity(activity_id)
-    activity = calculate_activity_stats(activity)
+    #activity = calculate_activity_stats(activity)
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
@@ -473,7 +473,7 @@ def get_activities_by_user(user_id):
 
     activities_db.delete_activity(activity_id)
     # journey_id = user.get('journey_id')
-    calculate_activity_stats(activity)
+    # calculate_activity_stats(activity)
     #journeys = activities_db.get_activities(user.get('id'))
     return {}
 
