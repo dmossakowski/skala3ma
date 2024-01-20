@@ -34,7 +34,7 @@
             border: 1px solid #888;
             width:max-content;
             
-            /*display: flex;*/
+            display: flex;
             
             justify-content: center;
             align-items: center;
@@ -95,7 +95,7 @@
                   </style>
 
             <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
-            <span class="close-button" onclick="hideModal()">aaaaa</span>
+            <span class="close-button" onclick="hideModal()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
 
             <div id="tabulator-table" class="form-row"></div>
 
@@ -103,7 +103,7 @@
                 
             
                 <div class="form-row">
-                <span class="close-button" onclick="hideModal()"> llaaaaa</span>
+                <span class="close-button" onclick="hideModal()"></span>
 
                 <div class="form-row-heading">
                     <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
@@ -277,7 +277,7 @@ function showModal() {
             
         },
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
-          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 0 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
           {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
