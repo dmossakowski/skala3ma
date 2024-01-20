@@ -64,6 +64,7 @@
   "man": "Man",
   "line": "Line",
   "color": "Color", 
+  "color_modifier": "Color modifier", 
   "solid": "solid",
   "marble": "marble",
   "route_num": "#",
@@ -74,10 +75,13 @@
   "route_opened_date": "Opened date",
   "notes": "Notes",
   "save": "Save",
-
+  "cancel": "Cancel",
+  "add_before": "Add before",
+  "add_after": "Add after",
   "routes_climbed": "Routes climbed",
   "rank": "Rank",
-
+  "edit": "Edit",
+  "close": "Close",
 
   "ranked_women": "Women ranking",
   "ranked_men": "Men ranking",
