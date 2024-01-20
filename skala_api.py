@@ -74,6 +74,9 @@ languages = {}
 
 load_dotenv()
 
+grades = ['1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
+    
+
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
 if DATA_DIRECTORY is None:
@@ -389,7 +392,7 @@ def journey_add():
     activity_id = activities_db.add_activity(user, gym, name, date)
     activity = activities_db.get_activity(activity_id)
     # journey_id = user.get('journey_id')
-
+    
     #journeys = activities_db.get_activities(user.get('id'))
     return json.dumps(activity)
 
@@ -425,8 +428,9 @@ def get_activity(activity_id):
         return {"error":"activity not found"}   
     #a = Activity1(**data)
     activity = activities_db.get_activity(activity_id)
-    # journey_id = user.get('journey_id')
+    activity = calculate_activity_stats(activity)
 
+    # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
     return json.dumps(activity)
     
@@ -449,6 +453,8 @@ def add_activity_route(activity_id):
     note = data.get('note')
     route_finish_status = data.get('route_finish_status')
     route = competitionsEngine.get_route(routes_id, route_id)
+
+    activity = calculate_activity_stats(activity)
     
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note)
     
@@ -473,7 +479,7 @@ def get_activities_by_user(user_id):
 
     activities_db.delete_activity(activity_id)
     # journey_id = user.get('journey_id')
-
+    calculate_activity_stats(activity)
     #journeys = activities_db.get_activities(user.get('id'))
     return {}
 
@@ -500,10 +506,58 @@ def delete_activity_route(activity_id, route_id):
 
     activity = activities_db.delete_activity_route(activity_id, route_id)
     # journey_id = user.get('journey_id')
-
+    
     #journeys = activities_db.get_activities(user.get('id'))
     return activity
 
+
+def calculate_activity_stats(activity):
+    routes = activity.get('routes')
+    routes_count = len(routes)
+    grades_climbed = []
+    for route in routes:
+        route['grade_index'] = grades.index(route['grade'])
+        #route['grade_points'] = np.exp(-((route['grade_index'] - mean) / std_dev) ** 2 / 2)
+        if route['status'] == 'climbed' or route['status'] == 'flashed':
+            grades_climbed.append(route['grade'])
+    
+    avg_grade_climbed = avg_grade(routes)
+    activity['stats'] = {}
+    activity['stats']['routes_count'] = routes_count
+    activity['stats']['avg_grade_climbed'] = avg_grade_climbed
+
+    return activity
+
+    
+
+
+def avg_grade(routes, flash_weight=2, climb_weight=1, attempt_weight=0.1):
+    if not routes:
+        return None
+
+    # Convert grades to indices and apply weights
+    weighted_indices = []
+    for route in routes:
+        grade = route['grade']
+        status = route['status']
+        if status == 'flashed':
+            weight = flash_weight
+        elif status == 'climbed':
+            weight = climb_weight
+        else:  # status is 'attempted' or anything else
+            weight = attempt_weight
+        weighted_indices.append(grades.index(grade) * weight)
+
+    # Calculate average index
+    average_index = sum(weighted_indices) / sum(flash_weight if route['status'] == 'flashed' else climb_weight if route['status'] == 'climbed' else attempt_weight for route in routes)
+
+    # Round to nearest integer
+    average_index = round(average_index)
+
+    # Convert index back to grade
+    average_grade = grades[average_index]
+
+    return average_grade
 
 
 

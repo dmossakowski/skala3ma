@@ -326,7 +326,7 @@ def fsgtadmin():
             jsonobject = activities_db.get_activities(id)
 
         if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_activities(id)
+            jsonobject = activities_db.get_activities(id)
 
     else :
         jsonobject = {"error": "choose edit type" }

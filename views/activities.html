@@ -358,6 +358,7 @@ function processGyms(gyms)
 
 function addActivityEntry(text) 
 {
+    console.log(text)
     if (!text) return;
     // Create a new row div
     date = text.date
@@ -373,6 +374,11 @@ function addActivityEntry(text)
     entry = document.createElement('div');
     entry.className = 'activity-entry-text col';
     entry.innerHTML = `<a href="/activities/${text.id}">`+ text.name+'</a>';
+    row.appendChild(entry);
+
+    entry = document.createElement('div');
+    entry.className = 'activity-entry-text col';
+    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.routes.length+'</a>';
     row.appendChild(entry);
 
     entry = document.createElement('div');

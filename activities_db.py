@@ -102,6 +102,12 @@ def add_activity_entry(activity_id, route, status, note):
 
     return activity
 
+def update_activity(activity_id, activity_json):
+    if activity_json is None or activity_id is None:
+        return None
+    # write this competition to db
+    _update_activity_jsondata(activity_id, activity_json)
+
 
 def delete_activity(activity_id):
     activity = get_activity(activity_id)
@@ -160,6 +166,24 @@ def _add_activity(activity_id, user_id, gym_id, routes_id, date, jsondata):
         db.close()
         sql_lock.release()
         logging.info("added climbing session for user:"+str(user_id))
+
+
+def _update_activity_jsondata(activity_id, new_jsondata):
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        # Convert new_jsondata to a JSON string
+        new_jsondata_str = json.dumps(new_jsondata)
+
+        cursor.execute(f"UPDATE {activities_TABLE} SET jsondata = ? WHERE id = ?", (new_jsondata_str, str(activity_id)))
+    finally:
+        db.commit()
+        db.close()
+        sql_lock.release()
+        logging.info(f"Updated jsondata for activity: {activity_id}")
 
 
 def _get_activity(activity_id):
