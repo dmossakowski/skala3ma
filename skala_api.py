@@ -453,18 +453,12 @@ def add_activity_route(activity_id):
     note = data.get('note')
     route_finish_status = data.get('route_finish_status')
     route = competitionsEngine.get_route(routes_id, route_id)
-
-    activity = calculate_activity_stats(activity)
     
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note)
-    
 
     # journey_id = user.get('journey_id')
-
     #journeys = activities_db.get_activities(user.get('id'))
     return json.dumps(activity)
-
-
 
 
 @skala_api_app.get('/activity/user/<user_id>')
