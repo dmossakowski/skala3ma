@@ -124,7 +124,7 @@
                    
 
                     </div>
-                       <input id='notes' name="notes" size="40" type="text" 
+                       <input id='notes' name="notes" size="30" type="text" 
                        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
                        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
 
@@ -395,8 +395,6 @@ function showModal() {
               
         })
         .catch(error => console.error(error));
-        
-    
     }
 
 
@@ -477,10 +475,18 @@ function showModal() {
      
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section">
-					<br>
-				<h3><div id="activityName"></div>	</h3>
-						 {{ reference_data['current_language'].start }}
+					
+				<h3><div id="activityName"></div>	
+						
+                       
+                </h3>
                          <div id="activityDate"></div>
+                         
+                         
+                         <div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+                         outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
+                         <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+                         </div>
 					</div>
                     
 		<div class="container">
@@ -491,12 +497,8 @@ function showModal() {
                 <i class="bi bi-node-plus-fill" style="font-size: 3rem; color: rgb(240, 247, 241);"></i>
                 </button>-->
 
-                <div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-                outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
-                <a href="#" onClick="showModal()"><i class="bi bi-node-plus-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
-                </div>
                 
-
+                
                 
 <table class="table thead-dark table-hover" >
          <!--thead><tr>
