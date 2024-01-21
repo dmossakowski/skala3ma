@@ -91,12 +91,14 @@ categories_ado = {0:"Ado 12-13",
               1:"Ado 14-15 ", 
               2: "Ado 16-17"}
 
-#last 43 
+#last 44 
 clubs = {               
     40:"11C+",
     0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
-                       7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 10:"CPS 10 - Faites le mur" , 
+                       7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 
+                       44: "Cordée 13",
+                       10:"CPS 10 - Faites le mur" , 
                        42:"CSMG Escalade - Gennevilliers",
                        11:"Dahu 91" , 
                        43: "EMA - Maisons-Alfort",
