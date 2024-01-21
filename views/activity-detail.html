@@ -241,7 +241,7 @@ function showModal() {
         .then(data => {
             // use the retrieved data here
             console.log(data);
-            activity=data;
+            activity=data.activities;
             document.getElementById('activityName').innerHTML = data.name;
             document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+data.gym_id+'">'+data.gym_name+'</a> - '+data.starttime;
             

@@ -143,7 +143,10 @@
 
 		<div class="container text-center heading-section" id="activities">
             <h3>{{ reference_data['current_language'].activities}}</h3>
-			<div class="row justify-content-end">
+			
+            <div id="activitiesChart"></div>
+            
+            <div class=" heading-section row  justify-content-end">
               
 			<button id="competition_update_button" value="competition_update_button" 
             class="btn btn-primary btn-lg " onClick="showModal()">{{ reference_data['current_language'].add_activity}}</button>
@@ -320,6 +323,7 @@ function getData()
         //console.log(data);
         activities=data
         processActivities(activities);
+
             
 
     })
@@ -329,16 +333,20 @@ function getData()
 
 function processActivities(activities)
 {
-    if (activities.length == 0){
+    if (activities.activities.length == 0){
         // add class btn-block to competition_update_button 
         var button = document.getElementById("competition_update_button");
         button.className += " btn-block";
         return;
 
     }
+    console.log(activities)
 
-    for (var i = 0; i < activities.length; i++) {
-        addActivityEntry(activities[i]);
+    getActivityChart();
+    processActivityChartData(activities)
+
+    for (var i = 0; i < activities.activities.length; i++) {
+        addActivityEntry(activities.activities[i]);
     }	  
 }
 
@@ -393,14 +401,102 @@ function addActivityEntry(text)
 }
 
 
+    var dateChartOptions;
+
+    function getActivityChart()
+    {
+        dateChartOptions = {
+          series: [{
+          name: '',
+          data: [
+            ]
+        }],
+          chart: {
+          type: 'bar',
+          height: 280
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '100%',
+            endingShape: 'rounded'
+          },
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: [],
+        },
+        yaxis: {
+          title: {
+            text: ''
+          },
+          labels: {
+            show: true,
+            formatter: function (val) {
+              return val + "";
+            }
+          }
+        },
+        fill: {
+          opacity: 1
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return "" + val + ""
+            }
+          }
+        },
+        labels: {
+            show: false,
+            formatter: function (val) {
+              return val + "%";
+            }
+          }
+        };
+
+        //var datesChart = new ApexCharts(document.getElementById("activitychart"), dateChartOptions);
+        //datesChart.render()
+    }
+
+    function processActivityChartData(activities)
+	{
+		//console.log('here2');
+		//console.log(fullresponse['F0']);
+		//
+        if (activities == undefined) return;
+        stats=activities.stats
+
+        console.log(stats)
+        //dateChartOptions.xaxis.title.text='{{ reference_data["current_language"].stat_title_competitions_attended}}';
+        //dateChartOptions.series[0].data[0].x=stats['routes_done']
+        //dateChartOptions.series[0].data[0].y=stats['dates']        
+
+        dateChartOptions.series[0].data= stats['routes_done']
+        dateChartOptions.xaxis.categories= stats['dates']
+        
+        var datesChart = new ApexCharts(document.getElementById("activitiesChart"), dateChartOptions);
+        datesChart.render();
+    }
+
+
+
 window.addEventListener('load', () => {
   
   var now = new Date();
   document.getElementById('date').value  = now.toISOString().split('T')[0];
   getData();
-
   
 });
+
+
 
 
 

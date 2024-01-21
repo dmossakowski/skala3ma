@@ -364,11 +364,39 @@ def competition_admin_post(competition_id):
 @login_required
 def get_activities():
     user = competitionsEngine.get_user_by_email(session['email'])
-    activities = activities_db.get_activities(user.get('id'))
+    activitiesA = activities_db.get_activities(user.get('id'))
+
+    activities = {}
+    activities['activities'] = activitiesA
+
+    newactivities = calculate_activities_stats(activitiesA)
+    activities['stats'] = newactivities
     return json.dumps(activities)
 
 
+def calculate_activities_stats(activities):
+    # Get today's date
+    today = datetime.today().date()
+    stats  = {}
+    # Create a dictionary with dates 30 days back from today as keys and 0 as initial values
+    routes_done = {(today - timedelta(days=i)).strftime('%Y-%m-%d'): 0 for i in range(30)}
 
+    for activity in activities:
+        if activity.get('date') is None:
+            continue
+        # Parse the 'date' into a date object
+        activity_date = activity['date']
+        # If the activity date is in the routes_done dictionary, add the number of routes
+        if activity_date in routes_done:    
+            routes_done[activity_date] += len(activity['routes'])
+
+    # Convert the dictionary to a list of values
+    routes_done_list = list(routes_done.values())
+
+    stats['dates'] = list(routes_done.keys())
+    stats['routes_done'] = routes_done_list
+
+    return stats
 
 
 @skala_api_app.post('/activity')
