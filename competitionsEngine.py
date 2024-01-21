@@ -91,7 +91,7 @@ categories_ado = {0:"Ado 12-13",
               1:"Ado 14-15 ", 
               2: "Ado 16-17"}
 
-#last 41 
+#last 43 
 clubs = {               
     40:"11C+",
     0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
