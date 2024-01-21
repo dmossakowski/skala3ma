@@ -574,6 +574,17 @@ def privacy():
                            reference_data=competitionsEngine.reference_data
                            )
 
+@fsgtapp.route('/calendar')
+def calendar():
+    return render_template('calendar.html',
+                           competitionName=None,
+                           session=session,
+                           user=competitionsEngine.get_user_by_email(session.get('email')),
+                           reference_data=competitionsEngine.reference_data,
+                           competitions=competitionsEngine.getCompetitions(),
+                           langpack=languages['en_US'],
+                            **session
+                           )
 
 
 @fsgtapp.route('/main')
