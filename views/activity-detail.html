@@ -481,7 +481,7 @@ function showModal() {
 					<div class="text-center heading-section">
 					
 				<h3><span id="activityName"></span>	
-                    <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+                   
 						
                        
                 </h3>
@@ -507,13 +507,16 @@ function showModal() {
                 
 <table class="table thead-dark table-hover" >
          <!--thead><tr>
+            <th data-width="250" data-field="Time Added" data-filter-control="input" >
+                <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.2rem; color: #40ad48;"></i></a>
+
+            </th>
             <th data-width="250" data-field="Time Added" data-filter-control="input"></th>
-            <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].grade }}</th>
         
          <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
          
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].notes }}</th>
-			 <th></th>
+			 <th> </th>
          </tr>
          </thead-->
     <tbody>
@@ -561,7 +564,9 @@ function showModal() {
                     </tr>
              {% endfor %}
 
-
+                    <tr><td class="text-center" colspan="5">    
+                        <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
+                    </td></tr>
          </tbody>
      </table>
 <hr/>
