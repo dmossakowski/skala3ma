@@ -1298,8 +1298,12 @@ def routes_climbed(competitionId, climberId):
 
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
+
+    climber_name = climber.get('name')
+    climber_club = climber.get('club')
+
     #routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    subheader_message = str(climber_name)+" - "+str(climber_club)
 
     return render_template("competitionRoutesEntry.html", climberId=climberId,
                            climber=climber,
