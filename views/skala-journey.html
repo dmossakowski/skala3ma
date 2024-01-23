@@ -9,12 +9,93 @@
 
 	{% block secondarycontent %}
 
+
+<script>
+
+
+
+var routes;
+      
+	  function getData()
+	  {
+		const gymid = "{{gymid}}";
+		const routeid = "{{routesid}}";
+	
+		fetch(`/api1/gym/${gymid}/${routeid}`)
+		.then(response => response.json())
+		.then(data => {
+			// use the retrieved data here
+			console.log(data);
+			routes=data.routes
+			renderTabulatorTable(routes);
+			  
+	
+		})
+		.catch(error => console.error(error));
+	
+	  }
+	
+	
+	function renderTabulatorTable(routesA)
+	{
+	 	//{title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+		
+		 // printHeader:"<h1>SKALA3MA - { gym['name'] }- { routes['name'] }}</h1>", // set header content on printed table
+		  
+
+	
+	}
+	
+	
+	  getData();
+	  
+
+
+	function generateActivities()
+	{
+		// Your existing code unmodified...
+var iDiv = document.createElement('div');
+iDiv.id = 'block';
+iDiv.className = 'block';
+document.getElementsByTagName('body')[0].appendChild(iDiv);
+
+// Now create and append to iDiv
+var innerDiv = document.createElement('div');
+innerDiv.className = 'block-2';
+
+// The variable iDiv is still good... Just append to it.
+iDiv.appendChild(innerDiv);
+
+
+	}
+</script>
+
+
 	<div name='bbb'>
 
 		{% include "skala3ma-menu.html" %}
 
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="text-center heading-section animate-box">
+					
+		<div class="container">
+			<div class="row justify-content-end">
+
+			<button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-lg">{{ reference_data['current_language'].save}}</button>
+		</div>
+				
+		<div class="row">
+			<div class="activity-entry">adsfasdf <br>alfasdf</div>
+		</div>
+		<div class="row">
+			<div class="activity-entry">adsfasdf <br>alfasdf</div>
+		</div>
+		<div class="row">
+			<div class="activity-entry">adsfasdf <br>alfasdf</div>
+		</div>
+
+	</div>
+
+
+	
 						<br>
 				<h3>Your climbing journey </h3>
 						 {{ reference_data['current_language'].start }}

@@ -113,7 +113,7 @@ function deleteRow(id) {
 
 
             <label for="file1">Logo:</label><br>
-                <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="100">
+                <img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="100">
                     <input type="file" name="file1" id="file1"><br>
 
             <label for="url">{{ reference_data['current_language'].link }}:</label><br>

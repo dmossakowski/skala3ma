@@ -123,9 +123,14 @@
                     <div id="route-notes">&nbsp;&nbsp;&nbsp;</div>
                 </div>
                 </div>
+                <div class="form-row">
+                  <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
+
+                </div>      
                 
                 <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
+                    
                     {% if (user_can_edit_gym) %}
                     <button id='editbutton' type="button" class="btn btn-info btn-md" onclick="editContent();">Edit</button>&nbsp;
                     {% endif %}
@@ -406,7 +411,7 @@
 
                 
         <div>
-                    <img src="{{ url_for('fsgtapp.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
+                    <img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
 
         </div>
         <div>
@@ -673,6 +678,47 @@
             saveData(data)
         }
 
+        function addActivityRoute() {
+            var data = getFormData();
+            console.log('saving new route to activity '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/activity/{{gymid}}/{{routesid}}/saveone', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.log('error response',response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                //return response.json();
+            })
+            .then(data => {
+                console.log('Response from saving route');
+                console.log(data)
+                //routes=data.routes
+                //renderTabulatorTable(routes);
+                //table.replaceData(routes);
+                hideModal()
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+          }
+
+
+
+        
+
         function saveData(data){
             console.log('saving data '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
@@ -742,7 +788,7 @@
 							<div class="blog-text">
 								<div class="prod-title">aaaa
 
-									<img src="{{ url_for('fsgtapp.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
+									<img src="{{ url_for('app_ui.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
 									height="130">
 
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>

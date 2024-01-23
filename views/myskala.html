@@ -202,14 +202,14 @@ function processData(fullresponse)
         options.series[0].data[0].y=fulldata['personalstats']['total_competitions_count']
         options.series[0].data[0].goals[0].value=fulldata['personalstats']['competitions_count']
         
-        var chart = new ApexCharts(document.querySelector("#chartbox"), options);
+        var chart = new ApexCharts(document.getElementById("chartbox"), options);
         chart.render();
       
 
         options.xaxis.title.text='{{ reference_data["current_language"].stat_title_competition_routes_climbed}}';
         options.series[0].data[0].y=fulldata['personalstats']['competition_routes_total']
         options.series[0].data[0].goals[0].value=fulldata['personalstats']['routes_climbed_count']
-        var chart2 = new ApexCharts(document.querySelector("#chartbox2"), options);
+        var chart2 = new ApexCharts(document.getElementById("chartbox2"), options);
         chart2.render();
       
 
