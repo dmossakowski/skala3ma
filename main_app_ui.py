@@ -1840,11 +1840,19 @@ def gyms_add():
     routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
     gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
+    gym['routes'] = routes
+    routes_id = routes['id']
+    #competitionsEngine.update_gym(gym_id, gym)
+    #gym2 = competitionsEngine.get_gym(gym_id)
+    #all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    #routes=gym2['routes']
+    #gyms = competitionsEngine.get_gyms()
 
-    gyms = competitionsEngine.get_gyms()
-
-    return render_template('gyms.html',
+    return render_template('gym-routes.html',
                            competitionId=None,
+                           gymid=gym_id,
+                           routesid=routes_id,
+                           gyms=None,
                            gym=gym,
                            routes=routes,
                            reference_data=competitionsEngine.reference_data,
