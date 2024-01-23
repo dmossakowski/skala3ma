@@ -100,8 +100,9 @@
             
                 <div class="form-row">
                 <span class="close-button" onclick="hideModal()">&times;</span>
-    
-	
+                <h2>{{ reference_data['current_language'].add_activity }}</h2>
+                </div>
+                <div class="form-row">
                 <label for="gym_id">{{ reference_data['current_language'].where }}:</label>
                 <select name="gym_id" id="gym_id">
                     <option value="-1" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
@@ -137,23 +138,34 @@
 
 
 
-	<div name='bbb'>
+	<div name='container'>
 
 		{% include "skala3ma-menu.html" %}
 
-		<div class="container text-center heading-section" id="activities">
-            <h3>{{ reference_data['current_language'].activities}}</h3>
-			
-            <div id="activitiesChart"></div>
+		<div class="text-center heading-section" >
             
-            <div class=" heading-section row  justify-content-end">
+            <h3>{{ reference_data['current_language'].activities}}
+                <!--div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+            outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
+            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+            </div-->
+            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+            </h3>
+		</div>
+            
+		<div class="container text-center heading-section" >
+        	
+            <div  id="activitiesChart"></div>
+        </div>
+            
+        
+        <div class="container heading-section">
+        
+            <div id="activities"></div>
+        </div>
               
-			<button id="competition_update_button" value="competition_update_button" 
-            class="btn btn-primary btn-lg " onClick="showModal()">{{ reference_data['current_language'].add_activity}}</button>
              
-             
-			</div><br>
-             
+			 
 
 		</div>
 
@@ -335,12 +347,14 @@ function processActivities(activities)
 {
     if (activities.activities.length == 0){
         // add class btn-block to competition_update_button 
-        var button = document.getElementById("competition_update_button");
-        button.className += " btn-block";
-        return;
+        //var button = document.getElementById("competition_update_button");
+        //button.className += " btn-block";
+       // return;
+       showModal();
+       
 
     }
-    console.log(activities)
+    //console.log(activities)
 
     getActivityChart();
     processActivityChartData(activities)
@@ -366,7 +380,7 @@ function processGyms(gyms)
 
 function addActivityEntry(text) 
 {
-    console.log(text)
+    //console.log(text)
     if (!text) return;
     // Create a new row div
     date = text.date
@@ -474,7 +488,7 @@ function addActivityEntry(text)
         if (activities == undefined) return;
         stats=activities.stats
 
-        console.log(stats)
+        //console.log(stats)
         //dateChartOptions.xaxis.title.text='{{ reference_data["current_language"].stat_title_competitions_attended}}';
         //dateChartOptions.series[0].data[0].x=stats['routes_done']
         //dateChartOptions.series[0].data[0].y=stats['dates']        

@@ -704,7 +704,7 @@ div.cs-select span {
 
 .heading-section {
   padding-bottom: 1em;
-  margin-bottom: 4em; }
+  margin-bottom: 2em; }
 .heading-section h3 {
   font-size: 40px;
   font-weight: 400;
@@ -715,7 +715,8 @@ div.cs-select span {
 
 .heading-title {
   font-size: 40px;
-  margin-bottom: 1.5em; }
+  margin-bottom: 1.5em; 
+}
 
 .fh5co-property {
   background-repeat: no-repeat;
@@ -1184,8 +1185,8 @@ div.cs-select span {
 .activity-entry .activity-entry-text {
   margin-bottom: 15px;
   width: 33%;
-  padding: 6px;
-  background: #ebf7ee;
+  padding: 7px;
+  background: #f4f9f5;
   -webkit-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
   -moz-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
   box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18); }
@@ -1199,8 +1200,9 @@ div.cs-select span {
 .activity-entry .activity-entry-text span.comment a {
   color: rgba(0, 0, 0, 0.5); }
 .activity-entry .activity-entry-text span.comment a i {
-  color: #44C662;
-  padding-left: 7px; }
+  color: #71c685;
+  /*padding-left: 7px; */
+}
 .activity-entry-blog .activity-entry-text h3 {
   font-size: 20px;
   margin-bottom: 20px;

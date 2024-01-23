@@ -240,8 +240,12 @@ function showModal() {
         .then(response => response.json())
         .then(data => {
             // use the retrieved data here
-            console.log(data);
+            //console.log(data);
             activity=data.activities;
+            if (data.routes == 0)
+            {
+                showModal();
+            }
             document.getElementById('activityName').innerHTML = data.name;
             document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+data.gym_id+'">'+data.gym_name+'</a> - '+data.starttime;
             
@@ -476,17 +480,18 @@ function showModal() {
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section">
 					
-				<h3><div id="activityName"></div>	
+				<h3><span id="activityName"></span>	
+                    <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i>
 						
                        
                 </h3>
                          <div id="activityDate"></div>
                          
                          
-                         <div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+                         <!--div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
                          outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
                          <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
-                         </div>
+                         </div-->
 					</div>
                     
 		<div class="container">
@@ -527,7 +532,7 @@ function showModal() {
                 <td class="col-5">{{ route['name'] }}</td>
            
 		    
-<td class="col-5"><i>{{ route['note'] }}</i></td>
+        <td class="col-5"><i>{{ route['note'] }}</i></td>
 			 <td>
                 <!--div style="box-sizing: border-box;outline-color: transparent;
                 outline-style:solid; padding: 5px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #d8303777 ">
@@ -560,7 +565,8 @@ function showModal() {
          </tbody>
      </table>
 <hr/>
-<div class="container row justify-content-center">
+</div>
+<div class="text-center heading-section">
     <button id='deletebutton' type="button" class="btn btn-danger  btn-lg" onclick="deleteActivity()">{{ reference_data['current_language'].remove }} {{ reference_data['current_language'].activity }}</button>
 
 </div>
