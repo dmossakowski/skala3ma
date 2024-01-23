@@ -70,7 +70,7 @@
   "marble": "marbrée",
   "route_num": "Num",
   "grade": "Cotation",
-  "climbed": "enchaînée",
+  "climbed": "Enchaînée",
   "route_name": "Nom",
   "route_opened_by": "Ouverte par",
   "route_opened_date": "Date d'ouverture",
@@ -151,12 +151,26 @@
   "ado_contest_rules": "Règlement Ado",
   "contact_email": "Contacter les organisateurs",
 
+  "activities": "Activités",
+  "add_activity": "Nouvelle activité",
+  "delete_activity": "Supprimer activité",
+  "activity": "Activité",
+  "activity_name": "Activity name",
+  "activity_date": "Activity date",
+  "activity_time": "Activity time",
+  "activity_location": "Activity location",
+  "activity_description": "Activity description",
+  "attempted": "Essayé",
+  "flashed": "Flashé",
+ 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
   "error5321": "Un utilisateur avec cet email est déjà inscrit",
   "error5322": "L'état de la compétition ne permet pas de nouvelles inscriptions",
-  "error5323": "Nombre maximal d'inscriptions atteint"
+  "error5323": "Nombre maximal d'inscriptions atteint",
+  "error5324": "Choose a valid gym",
 
 
+  "last": "Last"
 }

@@ -20,6 +20,7 @@ import io
 import urllib
 from functools import wraps
 
+#import fastapi_test  
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -37,9 +38,8 @@ import datetime
 import threading
 import random
 import logging
-from competitionsApp import fsgtapp
+from main_app_ui import app_ui, languages
 from skala_api import skala_api_app
-from competitionsApp import languages
 import competitionsEngine
 #import locale
 import glob
@@ -55,6 +55,8 @@ from flask_login import (
     logout_user,
 )
 
+#from flask_openapi3 import OpenAPI, Info, Tag
+
 
 
 load_dotenv()
@@ -66,6 +68,9 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+    
 # Configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", None)
@@ -76,14 +81,20 @@ GOOGLE_DISCOVERY_URL = (
 FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
+#info = Info(title='Skala3ma API', version='1.0.0', summary='API to interact with skala3ma', description='description of api')
+#app = OpenAPI(__name__, static_folder='public', template_folder='views', info=info)
 app = Flask(__name__, static_folder='public', template_folder='views')
-app.register_blueprint(fsgtapp)
+app.register_blueprint(app_ui)
 app.register_blueprint(skala_api_app)
 
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
 #CORS(app)
+
+#from fastapi.middleware.wsgi import WSGIMiddleware
+
+#fastapi_test.fastapitest.mount("/", WSGIMiddleware(app))
 
 genres = {"test": "1"}
 authenticated = False
@@ -516,7 +527,9 @@ def googleauth_reply():
     # check first if auth was succesful
 
     token = oauth.google.authorize_access_token()
-    profile = oauth.google.parse_id_token(token)
+    profile1 = oauth.google.get('https://www.googleapis.com/oauth2/v1/userinfo')
+    profile = token.get('userinfo')
+    #profile = oauth.google.parse_id_token(token)
     print(" Google User ", profile)
 
     session['username']=profile['email']
