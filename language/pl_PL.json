@@ -149,13 +149,26 @@
   "ado_contest_rules": "Ado contest rules",
   "contact_email": "Contact organizers",
 
+  "activities": "Wyczyny",
+  "add_activity": "Dodaj wyczyn",
+  "delete_activity": "Wymaż wyczyn",
+  "activity": "Wyczyn",
+  "activity_name": "Nazwa wyczynu",
+  "activity_date": "Data wyczynu",
+  "activity_time": "Czas wyczynu",
+  "activity_location": "Lokalizacja wyczynu",
+  "activity_description": "Opis wyczynu",
+  "attempted": "Spróbowane",
+  "flashed": "Flashed",
+
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
   "error5321": "Ten adres jest juz zarejestrowany",
   "error5322": "Rejestracja na te zawody jest niemożliwa",
-  "error5323": "Osiągnięto maksymalną liczbę zawodników"
+  "error5323": "Osiągnięto maksymalną liczbę zawodników",
+  "error5324": "Choose a valid gym",
 
 
-
+  "last": "Last"
 }

@@ -20,8 +20,6 @@ import glob
 import random
 from datetime import datetime, date, timedelta
 import time
-import numpy as np
-import numpy.random
 from collections import Counter
 import tracemalloc
 import sqlite3 as lite
@@ -33,7 +31,7 @@ import csv
 import requests
 
 import skala_db
-import skala_journey
+import activities_db
 
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
@@ -48,6 +46,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+
 #PLAYLISTS_DB = DATA_DIRECTORY + "/db/playlists.sqlite"
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
 
@@ -145,10 +147,10 @@ competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":compet
 
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
-                  "supported_languages":supported_languages, "route_finish_status": skala_journey.route_finish_status,
+                  "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
                   "competition_types":competition_types}
 
-# called from competitionsApp
+# called from main_app_ui
 def addCompetition(compId, name, date, routesid, max_participants, competition_type):
     if compId is None:
         compId = str(uuid.uuid4().hex)
@@ -699,7 +701,7 @@ def init():
     #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
 
-    skala_journey.init()
+    activities_db.init()
     print('created ' + COMPETITIONS_DB)
 
 
@@ -1201,6 +1203,17 @@ def get_routes(routesid):
         return routes
 
 
+def get_route(routesid, route_id):
+    routes = get_routes(routesid)
+    if routes is None:
+        return None
+    routes = routes['routes']
+    for route in routes:
+        if route['id'] == route_id:
+            return route
+    return None
+
+
 def get_routes_by_gym_id(gym_id):
     return skala_db.get_routes_by_gym_id(gym_id)
 
@@ -1382,13 +1395,13 @@ def generate_dummy_routes(size):
     routes_id = str(uuid.uuid4().hex)
     routes = {"id":routes_id }
     routesA = []
-    for i in range(1, size):
+    for i in range(1, size+1):
         route_id = str(uuid.uuid4().hex)
-        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '-', '', '', '', '')
+        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '-', 'route'+str(i), '', '', '')
         routesA.append(route)
 
     routes['routes'] = routesA
-    routes['name'] = "Dummy routes"
+    routes['name'] = "Default routes"
     return routes
 
 

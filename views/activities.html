@@ -1,0 +1,525 @@
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+
+
+
+    <style>
+        /* Style for the modal dialog container */
+        .modal-container {
+            display: none;
+            position: fixed;
+            z-index: 1023;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Style for the modal dialog box */
+        .modal-box {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width:max-content;
+            
+            display: flex;
+            
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Style for the close button */
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            color: #aaa;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+
+    
+
+
+    
+    <div id="modal" class="modal-container">
+        
+        <div id="modal-box" class="modal-box">
+           
+            <form action="#" enctype="multipart/form-data"  method="POST">
+                <style>
+                    .form-row-heading {
+                      display: flex;
+                      justify-content: center;
+                      align-items: baseline;
+                      margin: 10px;
+                      font-size: 20px;
+                      color: #292424;
+                      font-weight: bold;
+                      vertical-align: bottom;
+                    }
+                    .form-row {
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      margin: 10px;
+                    }
+                  
+                    .form-row label {
+                      text-align: right;
+                      margin-right: 6px;
+                      flex: 1;
+                    }
+                  
+                    .form-row input,
+                    .form-row select,
+                    .form-row textarea {
+                      flex: 1;
+                    }
+                  </style>
+
+            <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
+           
+            <div id="mainModalMenu">
+                
+            
+                <div class="form-row">
+                <span class="close-button" onclick="hideModal()">&times;</span>
+                <h2>{{ reference_data['current_language'].add_activity }}</h2>
+                </div>
+                <div class="form-row">
+                <label for="gym_id">{{ reference_data['current_language'].where }}:</label>
+                <select name="gym_id" id="gym_id">
+                    <option value="-1" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
+                    
+        
+                </select>
+                </div>
+                <div class="form-row">
+           
+                        <label for="activity_name">Name:</label>
+                        <input type="text" id="activity_name" name="activitiy_name" value="{{ reference_data['current_language'].activity}}" size="40">
+                      </div>
+                      <div class="form-row">
+                    
+                <label for="date">{{ reference_data['current_language'].date }}:</label> <input id='date' name="date" size="30" type="date" value="{{today}}"/>
+                        </div>
+
+
+                <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData();">Create</button>&nbsp;
+                
+                <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
+            </div> 
+            </div>
+
+                  
+                    </form>
+            </form>
+            
+        </div>
+        
+    </div>
+
+
+
+
+	<div name='container'>
+
+		{% include "skala3ma-menu.html" %}
+
+		<div class="text-center heading-section" >
+            
+            <h3>{{ reference_data['current_language'].activities}}
+                <!--div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+            outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
+            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+            </div-->
+            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+            </h3>
+		</div>
+            
+		<div class="container text-center heading-section" >
+        	
+            <div  id="activitiesChart"></div>
+        </div>
+            
+        
+        <div class="container heading-section">
+        
+            <div id="activities"></div>
+        </div>
+              
+             
+			 
+
+		</div>
+
+
+        <br>
+    </div>
+
+</div>
+<!-- fh5co-blog-section -->
+
+</div>
+
+
+
+<script>
+    // Get the modal dialog container
+    var modal = document.getElementById("modal");
+    var mainModalMenuDiv = document.getElementById('mainModalMenu');
+    var modalBoxDiv = document.getElementById('modal-box');
+    var currentRow;
+    var mod_type;
+
+
+    function showEditDiv(){
+        mainModalMenuDiv.style.display='none'
+        editDiv.style.display='block';
+    }
+
+    function editContent(){
+        mod_type='save'
+        showEditDiv();
+        return false;
+    }
+
+    function deleteContent(){
+        mod_type='delete'
+        document.getElementById('routenum').value=-1
+        var data = getFormData();
+        
+        postData(data)
+        //mainModalMenuDiv.style.display='none'
+        //editDiv.style.display='none';
+        //modal.style.display='none'
+        
+    }
+
+    // Function to display the modal dialog
+    function showModal() {
+        
+        mainModalMenuDiv.style.display='block'
+        
+        modal.style.display = "block";
+    }
+
+    // Function to hide the modal dialog
+    function hideModal() {
+        modal.style.display = "none";
+    }
+
+    function clearModal(){
+        document.getElementById('hidden_message').textContent='';
+        
+        document.getElementById('activity_name').value = '{{ reference_data['current_language'].activity}}';
+        
+    }
+
+
+    function closeDialog(){
+        clearModal();
+        hideModal();
+    }
+    
+    function saveData() {
+            var data = getFormData();
+            if (Object.keys(data).length === 0) 
+                return;
+            postData(data)
+
+        }
+
+    function getFormData() {
+        const formData = {};
+
+        //console.log('getFormData')
+        
+        const gym_id = document.getElementById('gym_id').value;
+        formData['gym_id'] = gym_id;
+        if (gym_id == -1){
+            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5324'] }}";
+            return {};
+        }
+
+        const activity_name = document.getElementById('activity_name').value;
+        formData['activity_name'] = activity_name;
+
+        const date = document.getElementById('date').value;
+        formData['date'] = date;
+  
+        return formData;
+    }
+        
+
+    function postJsonDataToServer() {
+        var data = getFormData();
+        if (data == {}) return;
+            postData(data)
+
+        
+        
+    }
+
+    function postData(data){
+        fetch('/api1/activity', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                //console.log('error response',response.json)
+                //return Promise.reject(response);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // redirect to the new activity page
+            window.location.href = "/activities/"+data.id;
+    
+        })
+        .catch(error => {
+            console.error('catch error:', error);
+            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+            
+            
+        });
+
+       
+    }
+
+
+    
+var activities;
+var gyms;
+
+function getData()
+{
+    fetch(`/api1/gyms`)
+    .then(response => response.json())
+    .then(data => {
+        // use the retrieved data here
+        //console.log("retrieved data in activities.js")
+        //console.log(data);
+        gyms=data
+        processGyms(gyms);
+    })
+    .catch(error => console.error(error));
+    
+
+    fetch(`/api1/activities`)
+    .then(response => response.json())
+    .then(data => {
+        // use the retrieved data here
+        //console.log(data);
+        activities=data
+        processActivities(activities);
+
+            
+
+    })
+    .catch(error => console.error(error));
+
+}
+
+function processActivities(activities)
+{
+    if (activities.activities.length == 0){
+        // add class btn-block to competition_update_button 
+        //var button = document.getElementById("competition_update_button");
+        //button.className += " btn-block";
+       // return;
+       showModal();
+       
+
+    }
+    //console.log(activities)
+
+    getActivityChart();
+    processActivityChartData(activities)
+
+    for (var i = 0; i < activities.activities.length; i++) {
+        addActivityEntry(activities.activities[i]);
+    }	  
+}
+
+function processGyms(gyms)
+{
+    for (var i = 0; i < gyms.length; i++) {
+        //add gym option to gym_id select field
+        var option = document.createElement("option");
+        option.text = gyms[i].name;
+        option.value = gyms[i].id;
+        var select = document.getElementById("gym_id");
+        select.appendChild(option);
+
+    }	  
+}	
+
+
+function addActivityEntry(text) 
+{
+    //console.log(text)
+    if (!text) return;
+    // Create a new row div
+    date = text.date
+    var row = document.createElement('div');
+    row.className = 'row activity-entry ';
+
+    // Create a new activity-entry div
+    var entry = document.createElement('div');
+    entry.className = 'activity-entry-text col';
+    entry.innerHTML = date;
+    row.appendChild(entry);
+
+    entry = document.createElement('div');
+    entry.className = 'activity-entry-text col';
+    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.name+'</a>';
+    row.appendChild(entry);
+
+    entry = document.createElement('div');
+    entry.className = 'activity-entry-text col';
+    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.routes.length+'</a>';
+    row.appendChild(entry);
+
+    entry = document.createElement('div');
+    entry.className = 'activity-entry-text col-6' ;
+    entry.innerHTML = text.gym_name;
+    row.appendChild(entry);
+
+    
+    // Append the row to the activities container
+    var activities = document.getElementById('activities');
+    activities.appendChild(row);
+}
+
+
+    var dateChartOptions;
+
+    function getActivityChart()
+    {
+        dateChartOptions = {
+          series: [{
+          name: '',
+          data: [
+            ]
+        }],
+          chart: {
+          type: 'bar',
+          height: 280
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '100%',
+            endingShape: 'rounded'
+          },
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          show: true,
+          width: 2,
+          colors: ['transparent']
+        },
+        xaxis: {
+          categories: [],
+        },
+        yaxis: {
+          title: {
+            text: ''
+          },
+          labels: {
+            show: true,
+            formatter: function (val) {
+              return val + "";
+            }
+          }
+        },
+        fill: {
+          opacity: 1
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return "" + val + ""
+            }
+          }
+        },
+        labels: {
+            show: false,
+            formatter: function (val) {
+              return val + "%";
+            }
+          }
+        };
+
+        //var datesChart = new ApexCharts(document.getElementById("activitychart"), dateChartOptions);
+        //datesChart.render()
+    }
+
+    function processActivityChartData(activities)
+	{
+		//console.log('here2');
+		//console.log(fullresponse['F0']);
+		//
+        if (activities == undefined) return;
+        stats=activities.stats
+
+        //console.log(stats)
+        //dateChartOptions.xaxis.title.text='{{ reference_data["current_language"].stat_title_competitions_attended}}';
+        //dateChartOptions.series[0].data[0].x=stats['routes_done']
+        //dateChartOptions.series[0].data[0].y=stats['dates']        
+
+        dateChartOptions.series[0].data= stats['routes_done']
+        dateChartOptions.xaxis.categories= stats['dates']
+        
+        var datesChart = new ApexCharts(document.getElementById("activitiesChart"), dateChartOptions);
+        datesChart.render();
+    }
+
+
+
+window.addEventListener('load', () => {
+  
+  var now = new Date();
+  document.getElementById('date').value  = now.toISOString().split('T')[0];
+  getData();
+  
+});
+
+
+
+
+
+</script>
+
+
+
+					
+
+
+	
+{% endblock %}
