@@ -30,7 +30,6 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
     stream_with_context, copy_current_request_context, g
 
 import logging
-from dotenv import load_dotenv
 
 from flask import Blueprint
 import activities_db as activities_db
@@ -71,8 +70,6 @@ from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
 languages = {}
-
-load_dotenv()
 
 grades = ['1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
     
