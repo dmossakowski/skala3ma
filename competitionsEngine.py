@@ -39,11 +39,6 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
 
 from functools import lru_cache, reduce
 import logging
-from dotenv import load_dotenv
-
-
-
-load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
