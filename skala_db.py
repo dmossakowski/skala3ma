@@ -35,10 +35,6 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
     stream_with_context, copy_current_request_context
 
 import logging
-from dotenv import load_dotenv
-
-
-load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 

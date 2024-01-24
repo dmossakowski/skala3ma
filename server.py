@@ -57,7 +57,6 @@ from flask_login import (
 
 #from flask_openapi3 import OpenAPI, Info, Tag
 
-
 load_dotenv(override=True)
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
 # If you are developing on your localhost, remember to set the environment variable:
@@ -67,28 +66,10 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
-if DATA_DIRECTORY is None:
-    DATA_DIRECTORY = os.getcwd()
-
-
-DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-
 print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 
-SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
-
-print("server SPOTIFY_APP_ID="+str(SPOTIFY_APP_ID))
-
-
-ENV_VAR = os.getenv('ENV_VAR')
-
-print("server ENV_VAR="+str(ENV_VAR))
-
-
-LINKED_VAR = os.getenv('LINKED_VAR')
-
-print("server LINKED_VAR="+str(LINKED_VAR))
-
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
 
 
 # Configuration
