@@ -88,26 +88,32 @@ categories_ado = {0:"Ado 12-13",
               1:"Ado 14-15 ", 
               2: "Ado 16-17"}
 
-#last 41 
+#last 44 
 clubs = {               
     40:"11C+",
     0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
-                       7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 10:"CPS 10 - Faites le mur" ,
+                       7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 
+                       44: "Cordée 13",
+                       10:"CPS 10 - Faites le mur" , 
+                       42:"CSMG Escalade - Gennevilliers",
                        11:"Dahu 91" , 
+                       43: "EMA - Maisons-Alfort",
                        41:"EscaladA'sceaux",
                        39:"Escalade Populaire Montreuilloise",
                        12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
-                       1:"Entente Sportive de Nanterre"  ,14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
+                       14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
                       17:"Grimpe 13"   ,
                       38:"Grimpe Fertoise Pays de Brie",
                       18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
                       20:"Groupe Escalade Saint Thibault"  ,
                       21:"Le Mur 20"  ,
+                      1:"Nanterre Grimpe"  ,
                       22:"Neuf-a-pic", 23:"Quatre +"  ,24:"ROC 14"  , 25:"RSC Champigny",
                       26:"RSC Montreuillois"   ,27:"SNECMA Sports Corbeil", 28:"SNECMA Sports Genevilliers"   ,
                       29:"Union Sportive Saint Arnoult", 30:"US Fontenay"   , 31:"US Ivry" , 32:"US Métro"  ,
                       33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" 
+                       
                         }
 
 
