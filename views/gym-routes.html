@@ -548,13 +548,15 @@
               },
               formatterPrint: function(cell, formatterParams, onRendered) {                
                   // Use SVG to display hatched colors in pdf 
-                  var color = cell.getValue();
+                  var color = cell.getRow().getData().color1;
                   var colorModifier = cell.getRow().getData().color_modifier;
+                  
                   
                   // Check if the color modifier is 'marble' to apply the hatched pattern
                   if (colorModifier === 'marble') {
                       var svgHatch = createHatchedSVG(color);
-                      return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px;'>${svgHatch}</div>`;
+                      console.log(svgHatch);
+                      return `<div style='padding: 0px; background: ${color};'>${svgHatch}</div>`; 
                   } else {  // For other color modifiers, render a solid color
                     return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+color+"; background-color:" +color+ " '>   </div>";   
                   }
@@ -626,13 +628,14 @@
           table.on("rowClick", function(e, row){
             routeDetail(row.getData());
             showModal();
+            row.toggleSelect(); 
           });
 
-          if (currentRow !== undefined)
+          /*if (currentRow !== undefined)
           {
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
             table.selectRow(2);
-          }
+          }*/
 
           document.getElementById("print-table").addEventListener("click", function(){
             table.print(false, true);
