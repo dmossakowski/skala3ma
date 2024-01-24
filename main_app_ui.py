@@ -625,7 +625,7 @@ def privacy():
                            reference_data=competitionsEngine.reference_data
                            )
 
-@fsgtapp.route('/calendar')
+@app_ui.route('/calendar')
 def calendar():
     return render_template('calendar.html',
                            competitionName=None,
