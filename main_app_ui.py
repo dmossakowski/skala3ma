@@ -29,7 +29,6 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
     stream_with_context, copy_current_request_context, make_response
 
 import logging
-from dotenv import load_dotenv
 
 from flask import Blueprint
 import activities_db as activity_engine
@@ -61,8 +60,6 @@ import activities_db as activities_db
 #from flask_openapi3 import OpenAPI
 
 languages = {}
-
-load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 

@@ -18,10 +18,29 @@
 import base64
 import io
 import urllib
+import os
+import traceback
+import time
+import datetime
+import threading
+import random
+
 from functools import wraps
 
 #import fastapi_test  
 from dotenv import load_dotenv
+load_dotenv(override=True)
+
+DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
+
+if DATA_DIRECTORY is None:
+    DATA_DIRECTORY = os.getcwd()
+elif not os.path.exists(DATA_DIRECTORY):
+    print("DATA_DIRECTORY does not exist. Creating it"+str(DATA_DIRECTORY))
+    os.makedirs(DATA_DIRECTORY)
+
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
 
@@ -31,13 +50,9 @@ from authlib.integrations.flask_client import OAuthError
 import requests
 import json
 
-import os
-import traceback
-import time
-import datetime
-import threading
-import random
 import logging
+
+
 from main_app_ui import app_ui, languages
 from skala_api import skala_api_app
 import competitionsEngine
@@ -57,9 +72,6 @@ from flask_login import (
 
 #from flask_openapi3 import OpenAPI, Info, Tag
 
-
-
-load_dotenv()
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
 # If you are developing on your localhost, remember to set the environment variable:
 # export AUTHLIB_INSECURE_TRANSPORT=true
@@ -68,9 +80,12 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
+print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
+
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
-    
+
+
 # Configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", None)
@@ -184,6 +199,7 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
             filemode_val = 'a'
         else:
             filemode_val = 'w'
+        
         logging.basicConfig(level=logging.DEBUG,
                             format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
                             # datefmt='%m-%d %H:%M',

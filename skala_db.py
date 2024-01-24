@@ -24,12 +24,9 @@ from io import BytesIO
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections import Counter
-import tracemalloc
 import sqlite3 as lite
 import uuid
-import copy
 from threading import RLock
-import csv
 
 import requests
 
@@ -38,12 +35,27 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
     stream_with_context, copy_current_request_context
 
 import logging
-from dotenv import load_dotenv
-
-
-load_dotenv()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+
+print("DATA_DIRECTORY="+str(DATA_DIRECTORY))
+
+SPOTIFY_APP_ID = os.getenv('SPOTIFY_APP_ID')
+
+print("SPOTIFY_APP_ID="+str(SPOTIFY_APP_ID))
+
+
+ENV_VAR = os.getenv('ENV_VAR')
+
+print("ENV_VAR="+str(ENV_VAR))
+
+
+LINKED_VAR = os.getenv('LINKED_VAR')
+
+print("LINKED_VAR="+str(LINKED_VAR))
+
+
+
 
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
@@ -63,6 +75,7 @@ IMG_TABLE = "images"
 
 def init():
     logging.info('initializing skala_db...')
+
 
     if not os.path.exists(DATA_DIRECTORY):
         os.makedirs(DATA_DIRECTORY)
