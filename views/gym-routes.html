@@ -161,7 +161,8 @@
                       
                         <div class="form-row">
                           <label for="color1">Color 1:</label>
-                          <input class="color-input" id="color1" name="color1" value="" />
+                          <input id="color1"  type="color"  
+                          style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px"  />
                           <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
                         </div>
                       
@@ -344,7 +345,7 @@
             document.getElementById('route-routenum').innerHTML =  '';
             document.getElementById('route-grade').innerHTML =  '';
             modalBoxDiv.style.border="5px solid "+greenColor;
-            document.getElementById('color1').style.backgroundColor = greenColor;
+            //document.getElementById('color1').style.backgroundColor = greenColor;
         
         }
 
@@ -376,12 +377,12 @@
             document.getElementById('route-line').innerHTML = data.line;
             
             // this is a background on edit popup input field
-            document.getElementById('color1').style.backgroundColor = currentRow.color1;
+            //document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('hidden_message').textContent='';
         }
 
         // use selector string to initialize on single element
-        var hueb = new Huebee( '.color-input', {
+        /*var hueb = new Huebee( '.color-input', {
             // options
             notation: 'hex',
             setBGColor: true,
@@ -396,9 +397,26 @@
                     //console.log( 'color changed to: ' + color )
                     modalBoxDiv.style.border="5px solid "+color;
                     hueb.close();
-        })
+        })*/
 
+        
+        function colorChanged(tp){
+          console.log('color changed');
+            var color = document.getElementById('color1').value;
+            document.getElementById('route-color1').style.background = color;
+            //document.getElementById('color1').style.backgroundColor = color;
+            modalBoxDiv.style.border="5px solid "+color;
+            if (tp){
+                color.close();
+            }
+        } 
 
+        console.log('color1')
+        color1input = document.getElementById('color1');
+        color1input.addEventListener("input", colorChanged(0), false);
+        color1input.addEventListener("change", colorChanged(1), false);
+
+        console.log('all scripts loaded')
     </script>
 {%endif%}
 
@@ -577,13 +595,14 @@
           table.on("rowClick", function(e, row){
             routeDetail(row.getData());
             showModal();
+            row.toggleSelect();
           });
 
-          if (currentRow !== undefined)
+          /*if (currentRow !== undefined)
           {
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
             table.selectRow(2);
-          }
+          }*/
 
           document.getElementById("print-table").addEventListener("click", function(){
             table.print(false, true);
@@ -683,6 +702,7 @@
             console.log('saving new route to activity '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
             fetch('/api1/activity/{{gymid}}/{{routesid}}/saveone', {
+                mode: 'no-cors',
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
