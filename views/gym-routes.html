@@ -512,14 +512,14 @@
       
         // Function to create a hatched pattern in color rendering when printing to pdf  
         function createHatchedSVG(color, width = '100px', height = '20px') {
-            return `
+              return `
                 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <pattern id="hatch" width="4" height="4" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+                        <pattern id="hatch-${color}" width="4" height="4" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
                             <line x1="0" y1="0" x2="0" y2="4" style="stroke:${color}; stroke-width:5" />
                         </pattern>
                     </defs>
-                    <rect width="${width}" height="${height}" fill="url(#hatch)" />
+                    <rect width="${width}" height="${height}" fill="url(#hatch-${color})" />
                 </svg>`;
         }
       
@@ -548,15 +548,15 @@
               },
               formatterPrint: function(cell, formatterParams, onRendered) {                
                   // Use SVG to display hatched colors in pdf 
-                  var color = cell.getRow().getData().color1;
+                  var color = cell.getValue();
                   var colorModifier = cell.getRow().getData().color_modifier;
                   
                   
                   // Check if the color modifier is 'marble' to apply the hatched pattern
                   if (colorModifier === 'marble') {
-                      var svgHatch = createHatchedSVG(color);
-                      console.log(svgHatch);
-                      return `<div style='padding: 0px; background: ${color};'>${svgHatch}</div>`; 
+                    var svgHatch = createHatchedSVG(color);
+                    console.log(svgHatch);
+                      return `<div style='padding: 0px; background: ${color};'>${svgHatch}</div>`;
                   } else {  // For other color modifiers, render a solid color
                     return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+color+"; background-color:" +color+ " '>   </div>";   
                   }
