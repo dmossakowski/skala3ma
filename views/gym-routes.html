@@ -358,6 +358,8 @@
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
             document.getElementById('color1').value = data.color1;
+            
+            
             //document.getElementById('color1-display').style.backgroundColor = data.color1;
             document.getElementById('color_modifier').value = data.color_modifier;
             document.getElementById('grade').value = data.grade;
@@ -403,12 +405,13 @@
         function colorChanged(tp){
           console.log('color changed');
             var color = document.getElementById('color1').value;
-            document.getElementById('route-color1').style.background = color;
-            //document.getElementById('color1').style.backgroundColor = color;
+            //document.getElementById('route-color1').style.background = color;
+            
+            document.getElementById('color1').style.backgroundColor = color;
             modalBoxDiv.style.border="5px solid "+color;
-            if (tp){
+            /*if (tp){
                 color.close();
-            }
+            }*/
         } 
 
         console.log('color1')
@@ -521,14 +524,34 @@
         var columns = [
           {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
-          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color",
-           "responsive": 0 , minWidth:10,
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+           "responsive": 0 , minWidth:10,formatter:function(cell, formatterParams, onRendered){ 
+            
+            return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 1px solid ${cell.getValue()}; 
+                
+                background: repeating-radial-gradient(
+  circle,
+  ${cell.getValue()},
+  gray 3px,
+  GRAY 7px, 
+  ${cell.getValue()} 20px
+);'>  &nbsp; </div> `
+            },
         
             formatterPrint:function(cell, formatterParams, onRendered){
                 //cell - the cell component
                 //formatterParams - parameters set for the column
                 //onRendered - function to call when the formatter has been rendered
-                return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+cell.getValue()+"; background-color:" +cell.getValue()+ " '>   </div>"; 
+                
+                return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid ${cell.getValue()}; 
+                background-color:${cell.getValue()} ; 
+                background: repeating-radial-gradient(
+  circle,
+  purple,
+  purple 10px,
+  #4b026f 10px, 
+  #4b026f 20px
+);'>   </div>"; `
             },
         },
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
