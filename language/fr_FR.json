@@ -65,20 +65,24 @@
 
   "line": "Ligne",
   "color": "Couleur",
+  "color_modifier": "Texture", 
   "solid": "pleine",
   "marble": "marbrée",
-  "route_num": "#",
+  "route_num": "Num",
   "grade": "Cotation",
   "climbed": "Enchaînée",
   "route_name": "Nom",
   "route_opened_by": "Ouverte par",
   "route_opened_date": "Date d'ouverture",
   "notes": "Remarques",
-
   "save": "Enregistrer",
-
+  "cancel": "Annuler",
+  "add_before": "Ajouter avant",
+  "add_after": "Ajouter après",
   "routes_climbed": "Voies grimpées",
   "rank": "Classement",
+  "edit": "Editer",
+  "close": "Fermer",
 
 
   "ranked_women": "Classement Femme",

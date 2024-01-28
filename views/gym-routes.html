@@ -111,7 +111,7 @@
                     <div class="form-row-heading">
                         <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
                     </div>
-    
+
                 <div class="form-row-heading">
                     <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
                     <div id="route-color1">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-grade"></div>
@@ -132,9 +132,9 @@
                     <span class="close-button" onclick="hideModal()">&times;</span>
                     
                     {% if (user_can_edit_gym) %}
-                    <button id='editbutton' type="button" class="btn btn-info btn-md" onclick="editContent();">Edit</button>&nbsp;
+                    <button id='editbutton' type="button" class="btn btn-info btn-md" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
                     {% endif %}
-                    <button id='cancelbutton' type="button" class="btn btn-info" onclick="document.getElementById('modal').style.display='none';">Close</button>
+                    <button id='cancelbutton' type="button" class="btn btn-info" onclick="document.getElementById('modal').style.display='none';">{{reference_data['current_language'].close}}</button>
                 </div> 
                 </div>
 
@@ -146,12 +146,12 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="routenum">Route Number:</label>
+                          <label for="routenum">{{reference_data['current_language'].route_num}}:</label>
                           <input type="text" id="routenum" name="routenum" value="1">
                         </div>
                       
                         <div class="form-row">
-                          <label for="line">Line:</label>
+                          <label for="line">{{reference_data['current_language'].line}}:</label>
                           <input type="text" id="line" name="line" value="1">
                         </div>
                       
@@ -160,21 +160,21 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="color1">Color 1:</label>
+                          <label for="color1">{{reference_data['current_language'].color}}:</label>
                           <input class="color-input" id="color1" name="color1" value="" />
                           <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
                         </div>
                       
                         <div class="form-row">
-                          <label for="color_modifier">Color Modifier:</label>
+                          <label for="color_modifier">{{reference_data['current_language'].color_modifier}}:</label>
                           <select id="color_modifier" name="color_modifier">
-                            <option value="solid">Solid</option>
-                            <option value="dashed">Marble</option>
+                            <option value="solid">{{reference_data['current_language'].solid}}</option>
+                            <option value="marble">{{reference_data['current_language'].marble}}</option> 
                           </select>
                         </div>
                       
                         <div class="form-row">
-                          <label for="grade">Grade:</label>
+                          <label for="grade">{{reference_data['current_language'].grade}}:</label>
                           <select id="grade" name="grade">
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -216,35 +216,35 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="name">Name:</label>
+                          <label for="name">{{reference_data['current_language'].route_name}}:</label>
                           <input type="text" id="name" name="name" value="">
                         </div>
                       
                         <div class="form-row">
-                          <label for="openedby">Opened By:</label>
+                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}</label>
                           <input type="text" id="openedby" name="openedby" value="">
                         </div>
                       
                         <div class="form-row">
-                          <label for="opendate">Open Date:</label>
+                          <label for="opendate">{{reference_data['current_language'].route_opened_date}}:</label>
                           <input type="date" id="opendate" name="opendate" value="">
                         </div>
                       
                         <div class="form-row">
-                          <label for="notes">Notes:</label>
-                          <textarea id="notes" name="notes">très facile</textarea>
+                          <label for="notes">{{reference_data['current_language'].notes}}:</label>
+                          <textarea id="notes" name="notes">très facile</textarea>  <!-- TODO revoir le texte ici ?-->
                         </div>
                       
                   <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
                     
-                    <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">Save</button>&nbsp;
+                    <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
-                  <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">Delete</button>&nbsp;
-                  <button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">Cancel</button>
+                  <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}}</button>&nbsp;
+                  <button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button>
                     </div>    <div class="form-row">
-                  <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">Add before</button>&nbsp;
-                  <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">Add after</button>
+                  <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
+                  <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
                     </div>
                
                 </div>
@@ -352,11 +352,18 @@
         function routeDetail(data) {
         	//console.log("routeDetail.. "+data+" - ");
             currentRow=data;
+
+            var hatchColor = data.color1;
+            var backgroundColor = 'transparent'; // or any other color
+            var hatchedBackground = `repeating-linear-gradient(45deg, ${hatchColor}, ${hatchColor} 15px, ${backgroundColor} 5px, ${backgroundColor} 20px)`;
+            
             document.getElementById('id').value = data.id;
             document.getElementById('routenum').value = data.routenum;
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
             document.getElementById('color1').value = data.color1;
+            document.getElementById('color1').style.background = data.color1;
+
             //document.getElementById('color1-display').style.backgroundColor = data.color1;
             document.getElementById('color_modifier').value = data.color_modifier;
             document.getElementById('grade').value = data.grade;
@@ -365,7 +372,13 @@
             document.getElementById('opendate').value = data.opendate;
             document.getElementById('notes').value = data.notes;
 
-            document.getElementById('route-color1').style.background = data.color1;
+            if (data.color_modifier == 'marble') { 
+              document.getElementById('route-color1').style.background = hatchedBackground;
+            } else {
+              document.getElementById('route-color1').style.background = data.color1;
+            }
+
+//            document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('route-name').innerHTML = data.name;
             document.getElementById('route-routenum').innerHTML = data.routenum;
             document.getElementById('route-grade').innerHTML = data.grade;
@@ -497,22 +510,60 @@
       
         }
       
+        // Function to create a hatched pattern in color rendering when printing to pdf  
+        function createHatchedSVG(color, width = '100px', height = '20px') {
+              return `
+                <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="hatch-${color}" width="4" height="4" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="0" x2="0" y2="4" style="stroke:${color}; stroke-width:5" />
+                        </pattern>
+                    </defs>
+                    <rect width="${width}" height="${height}" fill="url(#hatch-${color})" />
+                </svg>`;
+        }
       
       function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_num}}", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
-          {title: "{{ reference_data['current_language'].color }}", field: "color1", formatter:"color",
-           "responsive": 0 , minWidth:10,
-        
-            formatterPrint:function(cell, formatterParams, onRendered){
-                //cell - the cell component
-                //formatterParams - parameters set for the column
-                //onRendered - function to call when the formatter has been rendered
-                return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+cell.getValue()+"; background-color:" +cell.getValue()+ " '>   </div>"; 
-            },
-        },
+          {
+              title: "{{ reference_data['current_language'].color }}",
+              field: "color1",
+              responsive: 0,
+              minWidth: 10,
+              formatter: function(cell, formatterParams, onRendered) {
+                  // Get the route color from the cell value
+                  var color = cell.getValue();
+                  var colorModifier = cell.getRow().getData().color_modifier; // Get the color modifier
+
+                  // Check if the color modifier is 'marble' to apply the hatched pattern
+                  if (colorModifier === 'marble') {
+                      var hatchedBackground = `repeating-linear-gradient(45deg, ${color}, ${color} 15px, transparent 5px, transparent 20px)`;
+                      return "<div style='padding: 10px; background-image:" + hatchedBackground + ";'></div>"; 
+                  } else { // For other color modifiers, render a solid color              
+                      return "<div style='padding: 10px; background-color:" + color + ";'></div>"; 
+                  }
+              },
+              formatterPrint: function(cell, formatterParams, onRendered) {                
+                  // Use SVG to display hatched colors in pdf 
+                  var color = cell.getValue();
+                  var colorModifier = cell.getRow().getData().color_modifier;
+                  
+                  
+                  // Check if the color modifier is 'marble' to apply the hatched pattern
+                  if (colorModifier === 'marble') {
+                    var svgHatch = createHatchedSVG(color);
+                    console.log(svgHatch);
+                      return `<div style='padding: 0px; background: ${color};'>${svgHatch}</div>`;
+                  } else {  // For other color modifiers, render a solid color
+                    return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+color+"; background-color:" +color+ " '>   </div>";   
+                  }
+              },
+          }
+
+      ,
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
@@ -577,13 +628,14 @@
           table.on("rowClick", function(e, row){
             routeDetail(row.getData());
             showModal();
+            row.toggleSelect(); 
           });
 
-          if (currentRow !== undefined)
+          /*if (currentRow !== undefined)
           {
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
             table.selectRow(2);
-          }
+          }*/
 
           document.getElementById("print-table").addEventListener("click", function(){
             table.print(false, true);

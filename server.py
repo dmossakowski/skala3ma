@@ -755,19 +755,9 @@ def progressSimple():
 def hello():
     return "Hello mister"
 
-
-@app.route('/plot.png')
-def plot_png():
-    fig = analyze.create_figure1()
-
-    #output = io.BytesIO()
-    #FigureCanvas(fig).print_figure(output)
-    img = io.BytesIO()
-    fig.savefig(img)
-    img.seek(0)
-    return send_file(img, mimetype='image/png')
-    #return Response(output.getvalue(), mimetype='image/png')
-
+@app.route('/test')
+def test():
+    return render_template('test.html')
 
 @app.route('/contact-us.html')
 def contactus():
