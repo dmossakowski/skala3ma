@@ -160,8 +160,9 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="color1">{{reference_data['current_language'].color}}:</label>
-                          <input class="color-input" id="color1" name="color1" value="" />
+                          <label for="color1">Color 1:</label>
+                          <input id="color1"  type="color"  
+                          style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px"  />
                           <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
                         </div>
                       
@@ -344,7 +345,7 @@
             document.getElementById('route-routenum').innerHTML =  '';
             document.getElementById('route-grade').innerHTML =  '';
             modalBoxDiv.style.border="5px solid "+greenColor;
-            document.getElementById('color1').style.backgroundColor = greenColor;
+            //document.getElementById('color1').style.backgroundColor = greenColor;
         
         }
 
@@ -362,8 +363,8 @@
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
             document.getElementById('color1').value = data.color1;
-            document.getElementById('color1').style.background = data.color1;
-
+            
+            
             //document.getElementById('color1-display').style.backgroundColor = data.color1;
             document.getElementById('color_modifier').value = data.color_modifier;
             document.getElementById('grade').value = data.grade;
@@ -389,28 +390,25 @@
             document.getElementById('route-line').innerHTML = data.line;
             
             // this is a background on edit popup input field
-            document.getElementById('color1').style.backgroundColor = currentRow.color1;
+            //document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('hidden_message').textContent='';
         }
 
-        // use selector string to initialize on single element
-        var hueb = new Huebee( '.color-input', {
-            // options
-            notation: 'hex',
-            setBGColor: true,
-            saturations: 3,
-            hue0: 210,
-            hues: 9,
-            shades: 4,
+        
+        function colorChanged(tp){
+            var color = document.getElementById('color1').value;
+            //document.getElementById('route-color1').style.background = color;
+            
+            document.getElementById('color1').style.backgroundColor = color;
+            modalBoxDiv.style.border="5px solid "+color;
+            /*if (tp){
+                color.close();
+            }*/
+        } 
 
-        });
-
-        hueb.on( 'change', function( color, hue, sat, lum ) {
-                    //console.log( 'color changed to: ' + color )
-                    modalBoxDiv.style.border="5px solid "+color;
-                    hueb.close();
-        })
-
+        color1input = document.getElementById('color1');
+        color1input.addEventListener("input", colorChanged(0), false);
+        color1input.addEventListener("change", colorChanged(1), false);
 
     </script>
 {%endif%}
@@ -500,7 +498,7 @@
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
-              console.log(data);
+              // console.log(data);
               routes=data.routes
               renderTabulatorTable(routes);
                 
@@ -528,42 +526,18 @@
         var columns = [
           {title: "{{ reference_data['current_language'].route_num}}", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
-          {
-              title: "{{ reference_data['current_language'].color }}",
-              field: "color1",
-              responsive: 0,
-              minWidth: 10,
-              formatter: function(cell, formatterParams, onRendered) {
-                  // Get the route color from the cell value
-                  var color = cell.getValue();
-                  var colorModifier = cell.getRow().getData().color_modifier; // Get the color modifier
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+           "responsive": 0 , minWidth:10, 
+           formatter:function(cell, formatterParams, onRendered){ 
+              return getColorSVG(cell, formatterParams, onRendered);
+            },
+        
+            formatterPrint:function(cell, formatterParams, onRendered){
+              return getColorSVG(cell, formatterParams, onRendered);
+            },
+        },
 
-                  // Check if the color modifier is 'marble' to apply the hatched pattern
-                  if (colorModifier === 'marble') {
-                      var hatchedBackground = `repeating-linear-gradient(45deg, ${color}, ${color} 15px, transparent 5px, transparent 20px)`;
-                      return "<div style='padding: 10px; background-image:" + hatchedBackground + ";'></div>"; 
-                  } else { // For other color modifiers, render a solid color              
-                      return "<div style='padding: 10px; background-color:" + color + ";'></div>"; 
-                  }
-              },
-              formatterPrint: function(cell, formatterParams, onRendered) {                
-                  // Use SVG to display hatched colors in pdf 
-                  var color = cell.getValue();
-                  var colorModifier = cell.getRow().getData().color_modifier;
-                  
-                  
-                  // Check if the color modifier is 'marble' to apply the hatched pattern
-                  if (colorModifier === 'marble') {
-                    var svgHatch = createHatchedSVG(color);
-                    console.log(svgHatch);
-                      return `<div style='padding: 0px; background: ${color};'>${svgHatch}</div>`;
-                  } else {  // For other color modifiers, render a solid color
-                    return "<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 12px solid "+color+"; background-color:" +color+ " '>   </div>";   
-                  }
-              },
-          }
-
-      ,
+         
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
@@ -628,7 +602,7 @@
           table.on("rowClick", function(e, row){
             routeDetail(row.getData());
             showModal();
-            row.toggleSelect(); 
+            row.toggleSelect();
           });
 
           /*if (currentRow !== undefined)
@@ -735,6 +709,7 @@
             console.log('saving new route to activity '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
             fetch('/api1/activity/{{gymid}}/{{routesid}}/saveone', {
+                mode: 'no-cors',
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
