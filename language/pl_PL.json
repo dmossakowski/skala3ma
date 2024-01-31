@@ -65,6 +65,7 @@
   
   "line": "Linia",
   "color": "Color", 
+  "color_modifier": "Color modifier", 
   "solid": "solid",
   "marble": "marble",
   "route_num": "Numer drogi",
@@ -75,9 +76,14 @@
   "route_opened_date": "Data otwarcia",
   "notes": "Notki",
   "save": "Zapisz",
-
+  "cancel": "Cancel",
+  "add_before": "Add before",
+  "add_after": "Add after",
+  
   "routes_climbed": "Spięte drogi",
   "rank": "Ranga",
+  "edit": "Edit",
+  "close": "Close",
 
 
   "ranked_women": "Kobiety ranking",
