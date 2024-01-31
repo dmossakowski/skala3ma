@@ -394,27 +394,8 @@
             document.getElementById('hidden_message').textContent='';
         }
 
-        // use selector string to initialize on single element
-        /*var hueb = new Huebee( '.color-input', {
-            // options
-            notation: 'hex',
-            setBGColor: true,
-            saturations: 3,
-            hue0: 210,
-            hues: 9,
-            shades: 4,
-
-        });
-
-        hueb.on( 'change', function( color, hue, sat, lum ) {
-                    //console.log( 'color changed to: ' + color )
-                    modalBoxDiv.style.border="5px solid "+color;
-                    hueb.close();
-        })*/
-
         
         function colorChanged(tp){
-          console.log('color changed');
             var color = document.getElementById('color1').value;
             //document.getElementById('route-color1').style.background = color;
             
@@ -425,12 +406,10 @@
             }*/
         } 
 
-        console.log('color1')
         color1input = document.getElementById('color1');
         color1input.addEventListener("input", colorChanged(0), false);
         color1input.addEventListener("change", colorChanged(1), false);
 
-        console.log('all scripts loaded')
     </script>
 {%endif%}
 
@@ -519,7 +498,7 @@
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
-              console.log(data);
+              // console.log(data);
               routes=data.routes
               renderTabulatorTable(routes);
                 
