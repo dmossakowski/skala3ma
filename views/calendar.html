@@ -1,0 +1,71 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+			
+
+<div name='bbb'>
+	<div class="text-center heading-section">
+		<br>
+		<h3>{{ reference_data['current_language'].calendar}}</h3>
+		{% if user is defined and user is not none and 'create_competition' in user['permissions']['general'] %}
+		<button type="button" class="btn btn-success btn-md" 
+			onclick='location.href="/newCompetition"'>{{reference_data['current_language'].add}}</button>
+
+		{% endif %}
+	</div>
+	<div class="container">
+			<div id='calendar'></div>
+	</div>
+</div>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		var calendarEl = document.getElementById('calendar');
+		var calendar = new FullCalendar.Calendar(calendarEl, {
+			// themeSystem: 'bootstrap', // Bootstrap 4 or 5...
+  			locale: 'fr', // TODO set the initial locale correctly
+			firstDay: 1,
+			// aspectRatio: 2, // for smaller months display
+			initialView: 'multiMonthFourMonth',
+			multiMonthMaxColumns: 2,
+			views: {
+				multiMonthFourMonth: {
+					type: 'multiMonth',
+					duration: { months: 4 },
+					buttonText: 'Grid' // TODO  translate
+				}, 
+				listYear: { 
+					buttonText: 'List' // TODO  translate
+				}
+			},
+			headerToolbar: {
+				left: 'title',
+				center: 'listYear, multiMonthFourMonth'
+			},
+			events: [
+						// Loop through competitions and format them as events
+						{% for competitionId in competitions %}
+						
+						{
+							title: "{{ competitions[competitionId]['name'] }}",
+							start: "{{ competitions[competitionId]['date'] }}",
+							url: '/competitionDetails/{{ competitionId }}',
+							backgroundColor: '#5cb85c', // copied from bootstap.css (don't know how to do better)
+      						borderColor: '#449d44'
+							// other event properties
+						},
+
+						{% endfor %}
+					]
+			// other configuration options
+		});
+		calendar.render();
+		
+	});
+	</script>
+
+{% endblock %}
