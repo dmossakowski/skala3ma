@@ -219,7 +219,7 @@ def _get_activities_by_user_id(user_id):
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
-        result = cursor.execute("select jsondata from " + activities_TABLE + " where user_id =? ",
+        result = cursor.execute("select jsondata from " + activities_TABLE + " where user_id =? order by added_at asc ",
                        [str(user_id)])
         #result = result.fetchall()
         activities=[]
