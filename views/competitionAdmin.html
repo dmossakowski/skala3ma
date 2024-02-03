@@ -23,7 +23,7 @@
 {% if competition is not none and competition is not undefined  %}
 
 
-<form action="/competition_admin/{{competition['id']}}" method="POST">
+<form action="/competition_admin/{{competition['id']}}" method="POST" enctype="multipart/form-data">
 
     
 	<label for="competition_name">{{ reference_data['current_language'].nazwa }}:</label>
@@ -59,7 +59,7 @@
 	<button name="update_status" value="update_status" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
 
 
-<br><br>
+    <br><br>
 	<label for="permissioned_user">{{ reference_data['current_language'].priviledged_user}}:</label>
 	<select name="permissioned_user" id="permissioned_user">
 							<option value="" size="20" ></option>
@@ -77,9 +77,13 @@
 	&nbsp;&nbsp;
 	<button name="permission_scorer_user" value="permission_scorer_user" class="btn btn-primary btn-sm">{{ reference_data['current_language'].addscoreruser}}</button>
 <br>
+<br>
+    <label for="file1">{{ reference_data['current_language'].competition_poster}}
+    <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"  width="200" name="compet"></label> &nbsp;&nbsp;&nbsp;&nbsp;
+    <button name="change_poster_button" value="change_poster_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+     <input type="file" name="file1" id="file1" style="display:visible"/>
 
-
-<br><br>
+<br>
 
 <!-- display editable fields for unclosed competitions only -->
 {% if competition['status'] < 4 %} 

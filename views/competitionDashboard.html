@@ -41,15 +41,14 @@
 			</div>
 
 		<div class="container">
-		
+		<div class="row row-bottom-padded-md">
 
 					{% for competitionId in competitions %}
 
 
-<div class=" col-lg-3 ">
+<div class=" col-lg-3 " >
 
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog text-center"
-							>
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog text-center">
 
 							<a href="/competitionDetails/{{ competitionId }}">
 							<div class="blog-text" >
@@ -63,6 +62,7 @@
 
                                     </span>
 									<br>
+									<img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" width="200"><br><br>
 									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
 										{% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
 										<span class="posted_by"><i class="icon-thumbs-up"></i>
@@ -79,7 +79,7 @@
 
 					 {% endfor %}
 
-
+				</div>
 
 
 

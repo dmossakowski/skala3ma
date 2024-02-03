@@ -99,6 +99,8 @@ FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 #info = Info(title='Skala3ma API', version='1.0.0', summary='API to interact with skala3ma', description='description of api')
 #app = OpenAPI(__name__, static_folder='public', template_folder='views', info=info)
 app = Flask(__name__, static_folder='public', template_folder='views')
+# limit image upload size to 4mb
+app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
 app.register_blueprint(app_ui)
 app.register_blueprint(skala_api_app)
 

@@ -38,12 +38,14 @@
 				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
 
 						{% else %}
-<form action="/newCompetition" method="post">
+<form action="/newCompetition" method="post" enctype="multipart/form-data">
 						<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
 				<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
 
 				<label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label> <br><input name="max_participants" size="30" type="number" value="80"/><br><br>
 
+				<label for="file1">Logo:</label><br>
+                <input type="file" name="file1" id="file1"><br>
 	<!--label for="club">{{ reference_data['current_language'].gym }}:</label><br><select name="gym" id="club">
 							<option value="--" size="20" >--</option>
 							{% for club in reference_data['clubs'] %}
