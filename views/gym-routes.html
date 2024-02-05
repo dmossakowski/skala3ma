@@ -422,7 +422,7 @@
 
                 
         <div>
-                    <img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="150" height="150"/>
+            <img src="/image/{{  gym.get('logo_img_id') }}"  width="150" height="150"/>
 
         </div>
         <div>
@@ -815,7 +815,7 @@
 							<div class="blog-text">
 								<div class="prod-title">aaaa
 
-									<img src="{{ url_for('app_ui.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
+									<img src="/image/{{  gyms.get(gymid).get('logo_img_id') }}"  
 									height="130">
 
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>

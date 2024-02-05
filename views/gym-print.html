@@ -12,7 +12,7 @@
 <div >
                         
 		
-    <img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="50" height="50" align="left">
+    <img src="/image/{{ gym.get('logo_img_id') }}" width="50" height="50" align="left">
 
     <font size="+3"> {{ gym['name'] }}</font>
     &nbsp;&nbsp;&nbsp;&nbsp;

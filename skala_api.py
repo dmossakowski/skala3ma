@@ -1720,10 +1720,11 @@ def gyms_add():
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
-        random = str(uuid.uuid4().hex)
-        imgfilename = random+file1.filename
-        imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
-        file1.save(imgpath)
+        if file1.filename is not None and len(file1.filename) > 0:
+            random = str(uuid.uuid4().hex)
+            imgfilename = random+file1.filename
+            imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
+            file1.save(imgpath)
 
     gymName = formdata['gymName'][0]
     numberOfRoutes = formdata['numberOfRoutes'][0]
@@ -1764,7 +1765,7 @@ def gyms_update(gym_id):
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
-        if len(file1.filename) > 0:
+        if file1.filename is not None and len(file1.filename) > 0:
             random = str(uuid.uuid4().hex)
             imgfilename = random+file1.filename
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
@@ -1781,10 +1782,11 @@ def gyms_update(gym_id):
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
 
-    if delete is not None and gym['logo_img_id'] is not None and len(gym['logo_img_id']) > 8:
+    if delete is not None:
         competitionsEngine.delete_gym(gym_id)
         competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
-        os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:  
+            os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
         return redirect(url_for('skala_api_app.gyms'))
 
     if routesid is None or len(routesid)==0:

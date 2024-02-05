@@ -390,8 +390,10 @@ def competition_admin_post(competition_id):
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
-        imgpath = os.path.join(UPLOAD_FOLDER, competition_id)
-        file1.save(imgpath)
+        if file1.filename is not None and len(file1.filename) > 0:
+            imgfilename = competition_id
+            imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
+            file1.save(imgpath)
 
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competition_id)
@@ -768,8 +770,9 @@ def new_competition_post():
         # any new image will overwrite the previous one
         if 'file1' in request.files:
             file1 = request.files['file1']
-            imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
-            file1.save(imgpath)
+            if file1.filename is not None and len(file1.filename) > 0:
+                imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
+                file1.save(imgpath)
 
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
@@ -1842,14 +1845,15 @@ def gyms_add():
     #body = request.data
     #bodyj = request.json
     files = request.files
-
-    imgfilename = None
+    gym_id = str(uuid.uuid4().hex)
+    imgfilename = gym_id
     if 'file1' in request.files:
         file1 = request.files['file1']
-        random = str(uuid.uuid4().hex)
-        imgfilename = random+file1.filename
-        imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
-        file1.save(imgpath)
+        if file1.filename is not None and len(file1.filename) > 0:
+            #random = str(uuid.uuid4().hex)
+            #imgfilename = random+file1.filename
+            imgpath = os.path.join(UPLOAD_FOLDER, gym_id)
+            file1.save(imgpath)
 
     gymName = formdata['gymName'][0]
     numberOfRoutes = formdata['numberOfRoutes'][0]
@@ -1859,7 +1863,7 @@ def gyms_add():
     url = formdata['url'][0]
     organization = formdata['organization'][0]
 
-    gym_id = str(uuid.uuid4().hex)
+    
 
     routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
@@ -1912,8 +1916,8 @@ def gyms_update(gym_id):
     if 'file1' in request.files:
         file1 = request.files['file1']
         if len(file1.filename) > 0:
-            random = str(uuid.uuid4().hex)
-            imgfilename = random+file1.filename
+            #random = str(uuid.uuid4().hex)
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 
@@ -1928,10 +1932,12 @@ def gyms_update(gym_id):
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
 
-    if delete is not None and gym['logo_img_id'] is not None and len(gym['logo_img_id']) > 8:
+    if delete is not None:
         competitionsEngine.delete_gym(gym_id)
         competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
-        os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:
+            if os.path.exists(os.path.join(UPLOAD_FOLDER, gym['logo_img_id'])):
+                os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
         return redirect(url_for('app_ui.gyms'))
 
     if routesid is None or len(routesid)==0:
@@ -1965,7 +1971,7 @@ def loadData():
 
 
 @app_ui.route('/image/')
-def image_route_no():
+def image_route0():
     #bytes_io = competitionsEngine.get_img(img_id)
     #return send_file(bytes_io, mimetype='image/png')
 
@@ -1989,7 +1995,7 @@ def image_route(img_id):
     else:
         #return app_ui.send_static_file("images/favicon.png")
         return app_ui.send_static_file("images/fsgt-logo-me.png")
-
+    
 
 
 

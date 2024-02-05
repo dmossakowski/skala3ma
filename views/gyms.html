@@ -79,7 +79,7 @@ NOT USED
 
 			    {% if gym is not none and gym is not undefined  %}
 
-						<img src="{{ url_for('app_ui.image_route', img_id=gym['logo_img_id']) }}" width="150" >
+						<img src="/image/{{ gym.get('logo_img_id') }}" width="150" >
 
 						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -169,12 +169,8 @@ NOT USED
 							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
 								<div class="text-center">
-
-									<img src="{{ url_for('app_ui.image_route', img_id=gyms[gymid]['logo_img_id']) }}" 
-									width="200px">
-
+								    <img src="/image/{{  gyms.get(gymid).get('logo_img_id') }}" width="200px">
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
-
 									<br><br>
 									<h3 class="display-2">{{ gyms[gymid]['name'] }}</h3>
 

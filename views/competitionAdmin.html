@@ -78,8 +78,8 @@
 	<button name="permission_scorer_user" value="permission_scorer_user" class="btn btn-primary btn-sm">{{ reference_data['current_language'].addscoreruser}}</button>
 <br>
 <br>
-    <label for="file1">{{ reference_data['current_language'].competition_poster}}
-    <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"  width="200" name="compet"></label> &nbsp;&nbsp;&nbsp;&nbsp;
+    <label for="file1">{{ reference_data['current_language'].competition_poster}} (max 4MB)
+    <img src="/image/{{ competition['id'] }}"  width="200" name="compet"></label> &nbsp;&nbsp;&nbsp;&nbsp;
     <button name="change_poster_button" value="change_poster_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
      <input type="file" name="file1" id="file1" style="display:visible"/>
 
