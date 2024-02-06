@@ -1716,14 +1716,14 @@ def gyms_add():
     body = request.data
     bodyj = request.json
     files = request.files
-
+    gym_id = str(uuid.uuid4().hex)
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
-        random = str(uuid.uuid4().hex)
-        imgfilename = random+file1.filename
-        imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
-        file1.save(imgpath)
+        if file1.filename is not None and len(file1.filename) > 0:
+            imgfilename = gym_id
+            imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
+            file1.save(imgpath)
 
     gymName = formdata['gymName'][0]
     numberOfRoutes = formdata['numberOfRoutes'][0]
@@ -1732,8 +1732,6 @@ def gyms_add():
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-
-    gym_id = str(uuid.uuid4().hex)
 
     routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
@@ -1746,11 +1744,8 @@ def gyms_add():
 @login_required
 def gyms_update(gym_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-
     formdata = request.form.to_dict(flat=False)
-
     gym = competitionsEngine.get_gym(gym_id)
-
 
     if not competitionsEngine.has_permission_for_gym(gym_id, user):
         return " { '7788':'no permission to edit gym' }"
@@ -1764,9 +1759,8 @@ def gyms_update(gym_id):
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
-        if len(file1.filename) > 0:
-            random = str(uuid.uuid4().hex)
-            imgfilename = random+file1.filename
+        if file1.filename is not None and len(file1.filename) > 0:
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 
@@ -1781,10 +1775,11 @@ def gyms_update(gym_id):
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
 
-    if delete is not None and gym['logo_img_id'] is not None and len(gym['logo_img_id']) > 8:
+    if delete is not None:
         competitionsEngine.delete_gym(gym_id)
         competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
-        os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:  
+            os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
         return redirect(url_for('skala_api_app.gyms'))
 
     if routesid is None or len(routesid)==0:

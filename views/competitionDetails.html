@@ -17,8 +17,11 @@
 					<div class="text-center heading-section animate-box">
 						<br>
 				<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+				<img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
+									width="80%"><br><br>
 						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
 | <a href="/gyms/{{competition['gym_id']}}/{{ competition['routesid']}}">  {{ reference_data['current_language'].routes }}</a>
+|  {{ reference_data['current_language'].max_participants }} {{ competition['max_participants'] }}
 
 
 					</div>
