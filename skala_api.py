@@ -1716,13 +1716,12 @@ def gyms_add():
     body = request.data
     bodyj = request.json
     files = request.files
-
+    gym_id = str(uuid.uuid4().hex)
     imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
-            random = str(uuid.uuid4().hex)
-            imgfilename = random+file1.filename
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 
@@ -1733,8 +1732,6 @@ def gyms_add():
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-
-    gym_id = str(uuid.uuid4().hex)
 
     routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
@@ -1747,11 +1744,8 @@ def gyms_add():
 @login_required
 def gyms_update(gym_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-
     formdata = request.form.to_dict(flat=False)
-
     gym = competitionsEngine.get_gym(gym_id)
-
 
     if not competitionsEngine.has_permission_for_gym(gym_id, user):
         return " { '7788':'no permission to edit gym' }"
@@ -1766,8 +1760,7 @@ def gyms_update(gym_id):
     if 'file1' in request.files:
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
-            random = str(uuid.uuid4().hex)
-            imgfilename = random+file1.filename
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 

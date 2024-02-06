@@ -31,21 +31,22 @@
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
 						<h3>{{ reference_data['current_language'].create_new }} </h3>
-
+                        <font color="red">{{ reference_data['current_language'][error_code] }} - {{ error_code }}</font>
+					
 						{% if competitionName is not none  %}
 				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
 
 				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
 
 						{% else %}
-<form action="/newCompetition" method="post" enctype="multipart/form-data">
-						<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
-				<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
+        <form action="/newCompetition" method="post" enctype="multipart/form-data">
+			<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
+			<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
 
-				<label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label> <br><input name="max_participants" size="30" type="number" value="80"/><br><br>
+			<label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label> <br><input name="max_participants" size="30" type="number" value="80"/><br><br>
 
-				<label for="file1">Logo (max 4MB):</label><br>
-                <input type="file" name="file1" id="file1"><br>
+			<label for="file1">Logo (max 4MB):</label><br>
+            <input type="file" name="file1" id="file1"><br>
 	<!--label for="club">{{ reference_data['current_language'].gym }}:</label><br><select name="gym" id="club">
 							<option value="--" size="20" >--</option>
 							{% for club in reference_data['clubs'] %}
@@ -56,16 +57,16 @@
 							</select>
 							<br><br-->
 
-	<label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
-	<br><select name="routes" id="routes">
-							<option value="" size="20" ></option>
-							{% for club in clubs %}
+	        <label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
+	        <br><select name="routes" id="routes">
+                
+                {% for club in clubs %}
 
-							<option value="{{club['routesid']}}" size="20" >{{club['gymname']}} - {{club['routesname']}} </option>
-							{% endfor %}
+                <option value="{{club['routesid']}}" size="20" >{{club['gymname']}} - {{club['routesname']}} </option>
+                {% endfor %}
 
-							</select>
-							<br><br>
+			</select>
+			<br><br>
 
 
 <button >{{ reference_data['current_language'].submit }}</button>

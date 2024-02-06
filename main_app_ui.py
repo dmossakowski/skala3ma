@@ -727,14 +727,13 @@ def new_competition():
             clubs.append ({'gymname':gymname, 'gymid':gymid, 'routesid':routeid, 'routesname':routes[routeid]['name']})
 
 
-    #competitions= competitionsEngine.getCompetitions()
-
     return render_template('newCompetition.html',
                            competitionName=None,
                            session=session,
                            gyms=gyms,
                            clubs=clubs,
                            reference_data=competitionsEngine.reference_data,
+
                             **session)
 
 
@@ -754,13 +753,13 @@ def new_competition_post():
     routesid = request.form.get('routes')
     competition_type = request.form.get('competition_type')
     max_participants = request.form.get('max_participants')
+
     comp = {}
     competitionId = None
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is None or not competitionsEngine.can_create_competition(user):
         return redirect(url_for('app_ui.fsgtlogin', competitionId=competitionId))
-
 
     if name is not None and date is not None and routesid is not None and max_participants is not None:
         competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
@@ -773,6 +772,7 @@ def new_competition_post():
             if file1.filename is not None and len(file1.filename) > 0:
                 imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
                 file1.save(imgpath)
+
 
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
@@ -1846,7 +1846,7 @@ def gyms_add():
     #bodyj = request.json
     files = request.files
     gym_id = str(uuid.uuid4().hex)
-    imgfilename = gym_id
+    imgfilename = None
     if 'file1' in request.files:
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
@@ -1862,8 +1862,6 @@ def gyms_add():
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-
-    
 
     routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
