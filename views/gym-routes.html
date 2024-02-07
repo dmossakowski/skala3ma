@@ -419,7 +419,7 @@
     <br><br>
 
         {% if gym is not none and gym is not undefined  %}
-
+      
                 
         <div>
             <img src="/image/{{  gym.get('logo_img_id') }}"  width="150" height="150"/>
@@ -524,8 +524,15 @@
       function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "{{ reference_data['current_language'].route_num}}", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "#", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
+            formatter:function(cell, formatterParams, onRendered){
+                return `<sup>${cell.getValue()} </sup>${cell.getRow().getData().routenum}`;
+            },
+        
+        
+        
+        },
           {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 

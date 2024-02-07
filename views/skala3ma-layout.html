@@ -88,7 +88,7 @@
 	<![endif]-->
 	<!--script src="https://cdn.plot.ly/plotly-latest.min.js"></script-->
     <!--script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script-->
-	<script src="https://apis.google.com/js/platform.js" async defer></script>
+	<script src="https://accounts.google.com/gsi/client" async></script>
 
     <!--link href="/public/css/tabulator_simple.min.css" rel="stylesheet"-->
     <link href="/public/css/tabulator_semanticui.min.css" rel="stylesheet">
@@ -99,10 +99,23 @@
 
     
 	<script src="/public/js/skala3ma-utils.js"></script>
+
+    <!--div id="g_id_onload"
+    data-client_id="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com"
+    data-context="signin"
+    data-callback="onSignIn"
+    data-itp_support="true"-->
+</div>
 <script>
 //https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
-
+    /*function onSignIn(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    }*/
 
 	function retrieveData() {
 		var targetContainer = document.getElementById('progressMessages');
@@ -213,19 +226,9 @@
 								<a href="/activities" class="fh5co-sub-ddown">{{ reference_data['current_language'].activities }}</a>
 										</li>
                     
-                                
+                               
 							<li>
-								<a href="/main" class="fh5co-sub-ddown">{{ reference_data['current_language'].help }}</a>
-								<ul class="fh5co-sub-menu">
-									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
-									<li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
-									<li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
-									<li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
-								</ul>
-							</li>
-
-							<li>
-								<a href="/gyms" class="fh5co-sub-ddown">{{ reference_data['current_language'].gyms }}</a>
+								<a href="/gyms" class="fh5co-sub-ddown">{{ reference_data['current_language'].gyms }}</a>   
 							</li>
 
 							<li>
@@ -239,6 +242,29 @@
 
 							</li>
 
+
+
+
+
+                            <li><a href=""><h3><i class="bi bi-translate" ></i></h1></a>
+                                
+                                <ul class="fh5co-sub-menu">
+                                <h1>
+										<li><a href="/language/fr_FR" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="fr"></a></li>
+										<li><a href="/language/en_US" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
+										<li><a href="/language/pl_PL" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
+                                    </h1>		<!-- Ajoutez d'autres langues avec leurs liens href -->
+									</ul>
+								
+								</li>
+                                <li><a href=""><h3><i class="bi bi-question-circle-fill" ></i></h1></a>
+                                    <ul class="fh5co-sub-menu">
+                                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
+                                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
+                                        <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
+                                        <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="fh5co-sub-down" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
+                                    </ul>
+						
 
 
 						    {% if username is defined %}
@@ -291,20 +317,6 @@
                             </li>
 
                             {% endif %}
-
-
-                            <li><a href=""><h3 class="icon-flag4">&nbsp;&nbsp;&nbsp;&nbsp;</h1></a>
-                                <ul class="fh5co-sub-menu">
-                                <h1>
-										<li><a href="/language/fr_FR" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="fr"></a></li>
-										<li><a href="/language/en_US" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
-										<li><a href="/language/pl_PL" class="fh5co-sub-down"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
-                                    </h1>		<!-- Ajoutez d'autres langues avec leurs liens href -->
-									</ul>
-								
-								</li>
-						
-						
 						</ul>
 
 				    </nav>
