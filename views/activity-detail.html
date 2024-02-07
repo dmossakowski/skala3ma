@@ -274,8 +274,13 @@ function showModal() {
     function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "#", field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, headerVertical:false},
+        {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
+            formatter:function(cell, formatterParams, onRendered){
+                return `<sup>${cell.getValue()} </sup>${cell.getRow().getData().routenum}`;
+            },
+        
+        },
          
         {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 

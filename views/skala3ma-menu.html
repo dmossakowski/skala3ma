@@ -5,8 +5,10 @@
 
 						<ul class="sf-menu sf-menu2" id="fh5co-primary-menu">
 <!-- li>{{ competition['name'] }}</li -->
+
+<li><a href="/competitionDetails/{{ competitionId}}" onClick="showModal()"><i class="bi bi-house-door-fill" ></i></a></li>
 										<li><a href="/competitionDashboard/{{ competitionId}}/register">{{ reference_data['current_language'].register }}</a> </li>
-						<li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li>
+						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
 					<li><a href="/competitionRoutesEntry/{{ competitionId}}">{{ reference_data['current_language'].routes }}</a></li>
 
 							<li><a href="/competitionResults/{{ competitionId}}">{{ reference_data['current_language'].resultats }}</a></li>
