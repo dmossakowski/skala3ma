@@ -88,7 +88,7 @@
 	<![endif]-->
 	<!--script src="https://cdn.plot.ly/plotly-latest.min.js"></script-->
     <!--script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script-->
-	<script src="https://apis.google.com/js/platform.js" async defer></script>
+	<script src="https://accounts.google.com/gsi/client" async></script>
 
     <!--link href="/public/css/tabulator_simple.min.css" rel="stylesheet"-->
     <link href="/public/css/tabulator_semanticui.min.css" rel="stylesheet">
@@ -99,10 +99,23 @@
 
     
 	<script src="/public/js/skala3ma-utils.js"></script>
+
+    <!--div id="g_id_onload"
+    data-client_id="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com"
+    data-context="signin"
+    data-callback="onSignIn"
+    data-itp_support="true"-->
+</div>
 <script>
 //https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
-
+    /*function onSignIn(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    }*/
 
 	function retrieveData() {
 		var targetContainer = document.getElementById('progressMessages');
