@@ -68,6 +68,8 @@ Minimum version of Python is 3.7.
 5. Run the server
 ```
   python server.py
+
+gunicorn --timeout 60 --limit-request-line 0 --limit-request-field_size 0 -b :5000 --keyfile=key.pem --certfile=cert.pem  -c app.py server:app
 ```
 
 6. Using your favorite browser go to https://localhost:5000/

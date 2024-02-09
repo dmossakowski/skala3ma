@@ -1530,7 +1530,6 @@ def gym_edit(gymid):
 @app_ui.route('/gyms/<gymid>/edit', methods=['POST'])
 @login_required
 def gym_save(gymid):
-
     formdata = request.form.to_dict(flat=False)
 
     args1 = request.args
@@ -1611,15 +1610,24 @@ def gym_routes_edit(gym_id, routesid):
 
 
 
+@app_ui.errorhandler(413)
+def request_entity_too_large(error):    
+    print(error)
+    content_length = request.content_length
+    print(content_length)
+    return 'Request Too Large', 413
+
+
 #saving old type of html routes editor
 @app_ui.route('/gyms/<gymid>/<routesid>/edit', methods=['POST'])
 @login_required
 def gym_routes_save(gymid, routesid):
-    formdata = request.form.to_dict(flat=False)
+    #args1 = request.args
 
-    args1 = request.args
-    body = request.data
+    #body = request.data
     #bodyj = request.json
+
+    formdata = request.form.to_dict(flat=False)
 
     routeid = formdata['routeid']
     routeline = formdata['routeline']
