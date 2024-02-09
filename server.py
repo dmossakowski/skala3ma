@@ -41,7 +41,7 @@ elif not os.path.exists(DATA_DIRECTORY):
     print("DATA_DIRECTORY does not exist. Creating it"+str(DATA_DIRECTORY))
     os.makedirs(DATA_DIRECTORY)
 
-from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
+from flask import Flask, redirect, url_for, session, Request, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
 
 from authlib.integrations.flask_client import OAuth
@@ -96,9 +96,18 @@ GOOGLE_DISCOVERY_URL = (
 FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
+
+# workaround to hardcoded limit in Request class
+# https://stackoverflow.com/questions/77949949/413-request-entity-too-large-flask-werkzeug-gunicorn-max-content-length
+class CustomRequest(Request):
+    def __init__(self, *args, **kwargs):
+        super(CustomRequest, self).__init__(*args, **kwargs)
+        self.max_form_parts = 2000
+
 #info = Info(title='Skala3ma API', version='1.0.0', summary='API to interact with skala3ma', description='description of api')
 #app = OpenAPI(__name__, static_folder='public', template_folder='views', info=info)
 app = Flask(__name__, static_folder='public', template_folder='views')
+app.request_class = CustomRequest
 # limit image upload size to 4mb
 app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
 app.register_blueprint(app_ui)
