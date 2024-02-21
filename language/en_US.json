@@ -160,6 +160,8 @@
   "attempted": "Attempted",
   "flashed": "Flashed",
   "competition_poster": "Competition poster",
+  "registration": "Registration",
+  "unregister": "Unregister",
   
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
