@@ -1892,7 +1892,7 @@ def gyms_add():
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
             #random = str(uuid.uuid4().hex)
-            #imgfilename = random+file1.filename
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, gym_id)
             file1.save(imgpath)
 
