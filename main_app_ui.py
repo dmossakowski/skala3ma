@@ -812,14 +812,26 @@ def addCompetitionClimber(competitionId):
         climber_id = user['id']
     form_user = competitionsEngine.get_user_by_email(email)
 
-    error_code=competitionsEngine.can_register(user, comp)
+    competition_accepts_registrations = competitionsEngine.competition_accepts_registrations(comp)
+    error_code = ''
+    if not competition_accepts_registrations:
+        error_code = "error5322"
+    
+    is_registered = competitionsEngine.is_registered(user, comp)
+
     climber = None
 
+    # check if user with this email is known and should login themselves to register
     if user is None and form_user is not None and (
             form_user.get('fname') is not None or form_user.get('gname') is not None):
-        error_code = "error5316"
+        error_code = "error5316" 
 
-    if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
+    # the user found by email on form is already registered
+    is_form_user_registered = competitionsEngine.is_registered(form_user, comp)
+    if is_form_user_registered:
+        error_code = "error5321"
+    
+    if not error_code and not is_registered and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
@@ -840,19 +852,22 @@ def addCompetitionClimber(competitionId):
                     library=None,
                     **session)
 
-
-
         except ValueError:
+            # this user is alrady registered
             error_code = "error5321"
-
+            
     ##   comp=None # this is to not show the list of climbers before registration
 
     #competitions = competitionsEngine.getCompetitions()
-    email = session.get('email')
     name = session.get('name')
 
     if name is None:
         name = ""
+
+    can_unregister = competitionsEngine.can_unregister(user, comp)
+    enable_registration = False
+    if competition_accepts_registrations and not is_registered and not error_code:
+        enable_registration = True
 
     return render_template('competitionClimber.html',
                            error_code=error_code,
@@ -861,9 +876,27 @@ def addCompetitionClimber(competitionId):
                            climber=climber,
                            user = user,
                            reference_data=competitionsEngine.reference_data,
-                           logged_email=email,
+                           logged_email=useremail,
                            logged_name=name,
+                           can_unregister=can_unregister,
+                           is_registered=is_registered,
+                           enable_registration=enable_registration,
                             **session)
+
+
+
+
+@app_ui.route('/competitionDashboard/<competitionId>/unregister')
+@login_required
+def unregister(competitionId):
+    if session.get('email') is not None:
+        climber = competitionsEngine.get_user_by_email(session.get('email'))
+        if climber is not None:
+            competitionsEngine.removeClimber(climber['id'], competitionId)
+            return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
+        
+    return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
+
 
 
 @app_ui.route('/user')
@@ -1859,7 +1892,7 @@ def gyms_add():
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
             #random = str(uuid.uuid4().hex)
-            #imgfilename = random+file1.filename
+            imgfilename = gym_id
             imgpath = os.path.join(UPLOAD_FOLDER, gym_id)
             file1.save(imgpath)
 

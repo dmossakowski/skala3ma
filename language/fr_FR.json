@@ -164,7 +164,9 @@
   "attempted": "Essayé",
   "flashed": "Flashé",
   "competition_poster": "Affiche de competition",
-
+  "registration": "Inscription",
+  "unregister": "Se désinscrire",
+  
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",

@@ -179,12 +179,12 @@ def update_competition_details(competition, name, date, routesid):
     skala_db._update_competition(competition['id'], competition)
 
 
-# add climber to a competition
+# add or register climber to a competition
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category=0):
     logging.info("adding climber "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
-
+    email = email.lower()
     if climberId is None:
         climberId = str(uuid.uuid4().hex)
 
@@ -208,7 +208,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
         #logging.info(climbers)
 
         for cid in climbers:
-            if climbers[cid]['email']==email:
+            if climbers.get(cid).get('email').lower()==email.lower():
                 #return climbers[cid]
                 raise ValueError('User with email '+email+' already registered')
 
@@ -221,6 +221,20 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
         sql_lock.release()
 
     return climbers[climberId]
+
+
+# remove or unregister climber from a competition
+def removeClimber(climberId, competitionId):
+    try:
+        sql_lock.acquire()
+        competition = get_competition(competitionId)
+
+        climbers = competition['climbers']
+        if climberId in climbers and competition['status'] in [competition_status_open]:
+            del climbers[climberId]
+            _update_competition(competitionId, competition)
+    finally:
+        sql_lock.release()
 
 
 def get_climber_json(climberId, email, name, firstname, lastname, club, sex, category=0):
@@ -859,6 +873,7 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
                       'sex': sex, 'club': club, 'category': category}
         email = climber['email']
+        email = email.lower()
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         if climber is None:
@@ -881,6 +896,7 @@ def upsert_user(user):
         sql_lock.acquire()
         existing_user = None
         email = user.get('email')
+        email = email.lower()
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
@@ -904,6 +920,7 @@ def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
         user = get_user_by_email(email)
+        email = email.lower()
         _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
@@ -928,6 +945,7 @@ def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
         user = get_user_by_email(email)
+        email = email.lower()
         _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
@@ -1077,7 +1095,6 @@ def can_update_routes(user, competition):
 
 # checks if user can register for a competition
 def can_register(user, competition):
-
     if competition is None:
         raise ValueError('competition cannot be None')
 
@@ -1090,11 +1107,50 @@ def can_register(user, competition):
     if len(competition['climbers']) >= 200:
         return 'error5323'
 
-    # if anonymous registration and competition is in the correct state then allow
+    # competition is in the correct state then allow
     if competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
         return ""
     else:
         return 'error5322'
+
+
+def competition_accepts_registrations(competition):
+        # competition is in the correct state then allow
+    return competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]
+
+
+# checks if user can register for a competition
+def is_registered(user, competition):
+    if competition is None:
+        raise ValueError('competition cannot be None')
+
+    if user is not None:
+        climbers = competition['climbers']
+        for cid in climbers:
+            if climbers.get(cid).get('email').lower()==user['email'].lower():
+                return True
+
+    return False
+
+
+# checks if user can unregister from a competition
+def can_unregister(user, competition):
+    if competition is None:
+        raise ValueError('competition cannot be None')
+
+    if competition['status'] not in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
+        return False
+    
+    if user is not None:
+        climbers = competition['climbers']
+        for cid in climbers :
+            if climbers.get(cid).get('email').lower()==user['email'].lower():
+                return True
+
+    return False
+
+
+
 
 
 def can_edit_gym(user, gym):

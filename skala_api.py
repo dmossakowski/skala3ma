@@ -703,58 +703,7 @@ def new_competition_post():
 @skala_api_app.route('/competition/<competitionId>/register')
 #@login_required
 def addCompetitionClimber(competitionId):
-    useremail = session.get('email')
-    firstname = request.args.get('firstname')
-    lastname = request.args.get('lastname')
-    email = request.args.get('email')
-    sex = request.args.get('sex')
-    club = request.args.get('club')
-    otherclub = request.args.get('otherclub')
-    category = request.args.get('category')
-
-    comp = competitionsEngine.getCompetition(competitionId)
-    user = competitionsEngine.get_user_by_email(useremail)
-    climber_id = str(uuid.uuid4().hex)
-    if user is not None:
-        climber_id = user['id']
-    form_user = competitionsEngine.get_user_by_email(email)
-
-    error_code=competitionsEngine.can_register(user, comp)
-    climber = None
-
-    if user is None and form_user is not None and (
-            form_user.get('fname') is not None or form_user.get('gname') is not None):
-        return "{'error_code':'User with this email is known and they should login and register themselves'}", 401
-
-    if not error_code and firstname is not None and sex is not None and club is not None and email is not None:
-        #climber = competitionsEngine.get_climber_by_email(email)
-        name = firstname + " " + lastname
-
-        try:
-            if club not in competitionsEngine.clubs.values():
-                club = otherclub
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
-            competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               climber['club'], climber['category'])
-            comp = competitionsEngine.getCompetition(competitionId)
-            competitionName = comp['name']
-            #subheader_message = 'You have been registered! Thanks!'
-            return redirect(url_for('skala_api_app.getCompetition', competitionId=competitionId))
-
-        except ValueError:
-            error_code = email+' is already registered!'
-
-    ##   comp=None # this is to not show the list of climbers before registration
-
-    #competitions = competitionsEngine.getCompetitions()
-    email = session.get('email')
-    name = session.get('name')
-
-    if name is None:
-        name = ""
-
-    return comp
-
+    return None
 
 
 # Statistics for a competition

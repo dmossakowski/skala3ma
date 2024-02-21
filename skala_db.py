@@ -223,6 +223,7 @@ def get_competition(compId):
 
 
 def get_competitions_for_email(email):
+    email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
@@ -276,6 +277,7 @@ def get_user_by_email(email):
 
     if email is None:
         return None
+    email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
@@ -334,6 +336,7 @@ def upsert_user(user):
         cursor = db.cursor()
 
         if email is not None:
+            email = email.lower()
             existing_user = get_user_by_email(email)
             if existing_user is None:
                 _add_user(None, email, user)
@@ -345,7 +348,6 @@ def upsert_user(user):
         db.commit()
         db.close()
         sql_lock.release()
-        logging.info("done with user:"+str(email))
         return existing_user
 
 
@@ -353,6 +355,7 @@ def upsert_user(user):
 def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
+        email = email.lower()
         user = get_user_by_email(email)
         _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
@@ -377,6 +380,7 @@ def user_authenticated_fb(fid, name, email, picture):
 def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
+        email = email.lower()
         user = get_user_by_email(email)
         _common_user_validation(user)
         db = lite.connect(COMPETITIONS_DB)
@@ -522,6 +526,7 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
 def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
+    email = email.lower()
     user = get_user_by_email(email)
 
     if climberId is None:
@@ -560,6 +565,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
 
 
 def _add_user(climberId, email, climber):
+    email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     if climberId is None:
@@ -577,6 +583,7 @@ def _add_user(climberId, email, climber):
 def _update_user(climberId, email, climber):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
+    email = email.lower()
     if climberId is None:
         climberId = str(uuid.uuid4().hex)
         climber['id'] = climberId

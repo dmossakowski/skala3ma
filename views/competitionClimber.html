@@ -28,13 +28,23 @@
 	<div>
 		<!--style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
 	    {% include "skala3ma-menu.html" %}
-        <div class="container">
-		    <!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class=" text-left heading-section animate-box">
-						<br>
-						<h3>{{ reference_data['current_language'].register }} - {{ competition['name']}} - {{ competition['date']}}</h3>
-						<font color="red">{{ reference_data['current_language'][error_code] }}</font>
-						{% if climber is  none and not error_code|length %}
+        	<div class=" text-left heading-section">
+                <div class="container">
+            <div class="row">
+                <div class="col">
+                    <br>
+                    <h3> {{ competition['name']}} - {{ competition['date']}}</h3>
+                    <font color="red">{{ reference_data['current_language'][error_code] }}</font>
+                    <br><br>
+
+                </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+            
+                      
+                    
+					{% if enable_registration %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
@@ -96,18 +106,35 @@
 
 							<br>
 								
-                    <button class="btn btn-success btn-lg">{{ reference_data['current_language'].submit}}</button>
+                            <button class="btn btn-success btn-lg">{{ reference_data['current_language'].submit}}</button>
 
-					<br>
-
-
-					</form>
+                            <br>
 
 
-						{% else %}
-            <!-- climber is null here -->
-						{% endif %}
+                        </form>
+
+
+					{% else %}
+                        <!-- climber is null here -->
+                        {% if can_unregister is true %}
+                        {{ reference_data['current_language'].status}}: <b>{{ reference_data['current_language'].registered}}/{{ reference_data['current_language'].waitlist}}<br><br></b>
+                        <a href="/competitionDashboard/{{competitionId}}/unregister" class="btn btn-danger btn-lg"> {{ reference_data['current_language'].unregister}}</a>
+                        <br><br>
+                        {% endif %}
+                    
+
+         
+					{% endif %}
 		
+                </div>
+                <div class="col">
+                    
+                    <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
+									width="200"><br><br>
+                </div>
+                </div>
+            </div>
+        
 
 					</div>
 
@@ -121,6 +148,7 @@
 			<br>
 			Pour en savoir plus sur la manière dont nous protégeons vos données personnelles, veuillez consulter notre <a href="/privacy">Politique de Confidentialité</a>.
 		</div>
+        <br>
 	</div>
 
 {% endblock %}
