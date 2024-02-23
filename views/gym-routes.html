@@ -37,8 +37,8 @@
             /* Style for the modal dialog box */
             .modal-box {
                 background-color: #fff;
-                margin: 10% auto;
-                padding: 20px;
+                margin: 2% auto;
+                padding: 15px;
                 border: 1px solid #888;
                 width:max-content;
                 
@@ -527,7 +527,7 @@
           {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false,
             formatter:function(cell, formatterParams, onRendered){
-                return `<sup>${cell.getValue()} </sup>${cell.getRow().getData().routenum}`;
+                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`;
             },
         
         
@@ -575,8 +575,9 @@
               selectable: 1,
               responsiveLayout:"collapse",
               //responsiveLayout:"fitColumns",
+              responsiveLayout:"collapse",
               //movableColumns: true, 
-              responsiveLayoutCollapseStartOpen:false,
+              responsiveLayoutCollapseStartOpen:true,
               formatter:"responsiveCollapse", headerSort:false,
               rowFormatter:function(row){
                 if(row.getData().line % 2 == 0){

@@ -8,17 +8,21 @@ function getColorByBgColor(bgColor)
 
 
 function getColorSVG(cell, formatterParams, onRendered){ 
+    return getColorSVGWithColorModfier(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+}
     
-    var colorModifier = cell.getRow().getData().color_modifier;
+
+function getColorSVGWithColorModfier(color, colorModifier, width, height){    
+
           //console.log(colorModifier);
           
           // Check if the color modifier is 'marble' to apply the hatched pattern
     if (colorModifier === 'marble') {
-      opposite_color = (Number(`0x1${cell.getValue().slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
+      opposite_color = (Number(`0x1${color.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
       //console.log(opposite_color);
       //console.log(cell.getValue());
       highlight = '#BBBBBB'
-      stroke = getColorByBgColor(cell.getValue())
+      stroke = getColorByBgColor(color)
       //highlight = `#${opposite_color}`;
       svg7 = `<?xml version="1.0" encoding="utf-8"?>
 <svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
@@ -33,7 +37,7 @@ function getColorSVG(cell, formatterParams, onRendered){
             
       svg6 = `<?xml version="1.0" encoding="utf-8"?>
 <svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-<rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${cell.getValue()}; stroke: ${cell.getValue()};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
+<rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 77.193 91.531 C 77.193 109.778 102.147 123.635 117.499 111.965 C 123.743 107.219 129.691 93.485 127.26 85.532 C 126.25 82.23 121.835 74.307 124.162 70.827 C 127.742 65.475 139.972 61.215 143.302 68.738 C 156.537 98.636 125.931 136.604 94.093 130.521 C 86.765 129.121 80.617 124.785 75.817 119.177 C 73.229 116.153 71.497 111.402 67.746 109.575" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
@@ -52,15 +56,15 @@ function getColorSVG(cell, formatterParams, onRendered){
    
    
 
-      return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 0px solid ${cell.getValue()}; background-color: ${cell.getValue()}'> 
+      return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
         ${svg6}  </div>`
   } else {
     svg0 = `<?xml version="1.0" encoding="utf-8"?>
       <svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-      <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${cell.getValue()}; stroke: ${cell.getValue()};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
+      <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
       </svg>`
 
-    return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 0px solid ${cell.getValue()}; background-color: ${cell.getValue()}'> 
+    return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
       ${svg0} </div>`;   
   }
 }
