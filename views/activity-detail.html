@@ -290,11 +290,11 @@ function showModal() {
         {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVG(cell, formatterParams, onRendered);
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
             },
         
             formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVG(cell, formatterParams, onRendered);
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
             },
         },
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
@@ -553,7 +553,7 @@ function showModal() {
                     
                     <script>
                         
-                        document.write(''+getColorSVGWithColorModfier("{{route['color1']}}", '{{route['color_modifier']}}', '50px','25px')+' ');
+                        document.write(''+getColorSVGDiv("{{route['color1']}}", '{{route['color_modifier']}}', '50px','25px')+' ');
                       </script>
                 </td>
                 <td class="col-5">{{ route['name'] }}</td>

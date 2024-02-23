@@ -219,13 +219,13 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
                             )
     # define a Handler which writes INFO messages or higher to the sys.stderr
 
-    #console = logging.StreamHandler()
-    #console.setLevel(console_loglevel)
+    console = logging.StreamHandler()
+    console.setLevel(console_loglevel)
     # set a format which is simpler for console use
-    #formatter = logging.Formatter("%(asctime)s %(message)s")
-    #console.setFormatter(formatter)
+    formatter = logging.Formatter("%(asctime)s %(message)s")
+    console.setFormatter(formatter)
     # add the handler to the root logger
-    #logging.getLogger('').addHandler(console)
+    logging.getLogger('').addHandler(console)
     #global LOG
     #LOG = logging.getLogger(__name__)
 
