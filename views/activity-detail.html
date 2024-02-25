@@ -16,6 +16,8 @@
         /* Style for the modal dialog container */
         .modal-container {
             display: none;
+            justify-content: center;
+            
             position: fixed;
             z-index: 1023;
             left: 0;
@@ -28,13 +30,16 @@
 
         /* Style for the modal dialog box */
         .modal-box {
-            background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
+            background-color: hsl(0, 0%, 100%);
+            /*margin: 2%;*/
+            margin: auto;
+            padding: 15px;
             border: 1px solid #888;
-            width:max-content;
+            vertical-align: middle; 
+            /*width:max-content;*/
+            width:fit-content;
             
-            display: flex;
+            display:flex;
             
             justify-content: center;
             align-items: center;
@@ -167,7 +172,7 @@
 
     function showEditDiv(){
         mainModalMenuDiv.style.display='none'
-        editDiv.style.display='block';
+        //editDiv.style.display='block';
     }
 
     function editContent(){
@@ -277,7 +282,7 @@ function showModal() {
         {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
             formatter:function(cell, formatterParams, onRendered){
-                return `<sup>${cell.getValue()} </sup>${cell.getRow().getData().routenum}`;
+                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}</sup>`;
             },
         
         },
@@ -285,11 +290,11 @@ function showModal() {
         {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVG(cell, formatterParams, onRendered);
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
             },
         
             formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVG(cell, formatterParams, onRendered);
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
             },
         },
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
@@ -544,6 +549,13 @@ function showModal() {
                 <img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" width="30" height="30" alt="flashed">
                 {% endif %}</td>
                 <td>{{ route['grade'] }}</td>
+                <td>
+                    
+                    <script>
+                        
+                        document.write(''+getColorSVGDiv("{{route['color1']}}", '{{route['color_modifier']}}', '50px','25px')+' ');
+                      </script>
+                </td>
                 <td class="col-5">{{ route['name'] }}</td>
            
 		    

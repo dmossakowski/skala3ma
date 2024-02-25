@@ -7,21 +7,27 @@ function getColorByBgColor(bgColor)
 
 
 
-function getColorSVG(cell, formatterParams, onRendered){ 
     
-    var colorModifier = cell.getRow().getData().color_modifier;
+function getColorSVGDiv(color, colorModifier, width, height){
+    var svg = getColorSVG(color, colorModifier);
+    return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
+        ${svg}  </div>`
+}
+
+function getColorSVG(color, colorModifier){    
+
           //console.log(colorModifier);
-          
+    var svg = '';
+//<?xml version="1.0" encoding="utf-8"?>
           // Check if the color modifier is 'marble' to apply the hatched pattern
     if (colorModifier === 'marble') {
-      opposite_color = (Number(`0x1${cell.getValue().slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
+      opposite_color = (Number(`0x1${color.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
       //console.log(opposite_color);
       //console.log(cell.getValue());
       highlight = '#BBBBBB'
-      stroke = getColorByBgColor(cell.getValue())
+      stroke = getColorByBgColor(color)
       //highlight = `#${opposite_color}`;
-      svg7 = `<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
+      svg7 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 89.356 95.09 C 89.356 108.955 106.641 113.076 115.695 105.821 C 126.656 97.04 111.914 87.9 104.167 87.9" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke:  ${stroke};stroke-width: 2px;" d="M 86.947 116.437 C 98.057 117.836 113.652 124.371 123.771 115.331 C 125.942 113.392 128.06 110.785 129.227 108.139 C 131.696 102.543 129.928 80.932 142.53 87.458 C 143.867 88.151 146.589 89.002 147.206 90.515 C 148.291 93.172 147.025 97.397 146.774 100.092 C 144.919 120.029 128.823 130.623 109.235 131.419 C 102.731 131.684 86.304 135.168 86.304 124.901" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 87.823 142.115 C 107.248 142.115 128.331 145.17 142.095 127.487 C 144.61 124.256 148.385 119.479 149.903 115.807 C 153.547 106.99 154.512 82.316 169.919 85.906 C 173.268 86.686 172.87 94.508 172.87 96.802 C 172.87 108.01 166.384 119.819 160.658 129.102 C 145.292 154.013 110.251 164.021 84.421 152.245" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
@@ -31,9 +37,8 @@ function getColorSVG(cell, formatterParams, onRendered){
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 308.041 203.63 C 281.282 196.996 284.672 163.37 287.592 144.425 C 288.779 136.728 287.543 128.12 288.189 120.34 C 288.8 112.967 287.714 105.427 289 98.108 C 289.336 96.196 290.137 91.581 292.563 91.164 C 293.954 90.926 297.287 90.774 297.986 92.321 C 299.449 95.561 295.987 98.741 295.47 101.705 C 294.043 109.88 294.484 118.652 293.604 126.941 C 292.066 141.423 287.465 165.671 295.48 178.529 C 299.652 185.223 306.291 188.748 312.626 192.872" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 </svg>`
             
-      svg6 = `<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-<rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${cell.getValue()}; stroke: ${cell.getValue()};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
+      svg6 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
+<rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 77.193 91.531 C 77.193 109.778 102.147 123.635 117.499 111.965 C 123.743 107.219 129.691 93.485 127.26 85.532 C 126.25 82.23 121.835 74.307 124.162 70.827 C 127.742 65.475 139.972 61.215 143.302 68.738 C 156.537 98.636 125.931 136.604 94.093 130.521 C 86.765 129.121 80.617 124.785 75.817 119.177 C 73.229 116.153 71.497 111.402 67.746 109.575" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
 <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
@@ -52,16 +57,15 @@ function getColorSVG(cell, formatterParams, onRendered){
    
    
 
-      return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 0px solid ${cell.getValue()}; background-color: ${cell.getValue()}'> 
-        ${svg6}  </div>`
+      //return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
+        //${svg6}  </div>`
+    return svg6;
   } else {
-    svg0 = `<?xml version="1.0" encoding="utf-8"?>
-      <svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-      <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${cell.getValue()}; stroke: ${cell.getValue()};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
+    svg0 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
       </svg>`
+    return svg0;
 
-    return `<div style='padding: 0px; margin: 0px 0px 0px 0px; border: 0px solid ${cell.getValue()}; background-color: ${cell.getValue()}'> 
-      ${svg0} </div>`;   
   }
 }
 
