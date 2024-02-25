@@ -515,7 +515,7 @@
 
 
 
-<div class="container">  
+<div class="container-fluid">  
 
     
     <div id="tabulator-table"></div>
@@ -589,11 +589,11 @@
           {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
             },
         
             formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
             },
         },
 
