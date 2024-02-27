@@ -461,6 +461,7 @@ def get_activity(activity_id):
     
 
 
+# add a route to an activity
 @skala_api_app.post('/activity/<activity_id>')
 @login_required
 def add_activity_route(activity_id):
@@ -477,9 +478,11 @@ def add_activity_route(activity_id):
     route_id = data.get('route_id')
     note = data.get('note')
     route_finish_status = data.get('route_finish_status')
+    grade = data.get('grade')
+    user_grade = data.get('route-grade-user')
     route = competitionsEngine.get_route(routes_id, route_id)
     
-    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note)
+    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
@@ -1527,6 +1530,59 @@ def route_save(gymid, routesid):
     return json.dumps(routeset)
 
 
+
+
+
+@skala_api_app.route('/gym/<gymid>/<routesid>/rate', methods=['POST'])
+@login_required
+def route_rating(gymid, routesid):
+
+    data = request.get_json()
+    data = json.loads(data)
+
+    note = data.get('note_user')
+    route_finish_status = data.get('route_finish_status')
+    grade = data.get('grade_user')
+    user_grade = data.get('grade_user')
+    
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return redirect(url_for("skala_api_app.fsgtlogin"))
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    allroutes = all_routes.get(routesid)
+
+    routeset = allroutes.get('routes')
+    
+    today = datetime.today().date()
+    today = today.strftime('%Y-%m-%d')
+
+    route = None
+    for route in routeset:
+        if route['id'] == data['id']:
+            route = route
+            break
+
+
+    activities = activities_db.get_activities_by_date_by_user(today, user['id'])
+    activity = None
+    activity_id = None
+    if (len(activities) == 0):
+        activity_id = activities_db.add_activity(user, gym, 'Rating activity', today)
+    else:
+        activity = activities[0]
+        activity_id = activity.get('id')
+    #activity = activities_db.get_activity(activity_id)
+
+    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
+
+
+
+    
+    return json.dumps(allroutes)
 
 
 
