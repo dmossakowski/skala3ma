@@ -1540,7 +1540,7 @@ def route_rating(gymid, routesid):
     data = request.get_json()
     data = json.loads(data)
 
-    note = data.get('note_user')
+    note = data.get('notes_user')
     route_finish_status = data.get('route_finish_status')
     grade = data.get('grade_user')
     user_grade = data.get('grade_user')
@@ -1568,18 +1568,21 @@ def route_rating(gymid, routesid):
 
 
     activities = activities_db.get_activities_by_date_by_user(today, user['id'])
-    activity = None
+    
     activity_id = None
     if (len(activities) == 0):
         activity_id = activities_db.add_activity(user, gym, 'Rating activity', today)
     else:
-        activity = activities[0]
-        activity_id = activity.get('id')
+        for activity in activities:
+            if activity.get('gym_id') == gymid:
+                activity = activity
+                activity_id = activity.get('id')
+                break
+        if activity_id is None:
+            activity_id = activities_db.add_activity(user, gym, 'Rating activity', today)
     #activity = activities_db.get_activity(activity_id)
 
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
-
-
 
     
     return json.dumps(allroutes)

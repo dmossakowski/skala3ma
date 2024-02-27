@@ -192,7 +192,7 @@
 </div>
 <div class="col">
    
-    <input id='notes_user' name="notes_user" size="30" type="text" 
+    <input id='notes_user' name="notes_user" size="20" type="text" 
        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
 
@@ -209,7 +209,7 @@
 
                 <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
-                    <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">{{reference_data['current_language'].edit}}</button>&nbsp;
+                    <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
                     
                     {% if (user_can_edit_gym) %}
                     <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
