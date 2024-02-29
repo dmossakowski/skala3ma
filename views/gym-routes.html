@@ -209,12 +209,12 @@
 
                 <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
-                    <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
+                    <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
                     
                     {% if (user_can_edit_gym) %}
-                    <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
+                    <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
                     {% endif %}
-                    <button id='cancelbutton' type="button" class="btn btn-success" onclick="document.getElementById('modal').style.display='none';">{{reference_data['current_language'].close}}</button>
+                    <button id='cancelbutton' type="button" class="btn btn-success btn-lg" onclick="document.getElementById('modal').style.display='none';">{{reference_data['current_language'].close}}</button>
                 </div> 
                 </div>
 
