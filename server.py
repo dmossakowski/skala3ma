@@ -32,6 +32,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+GODMODE = os.getenv('GODMODE') == 'true'
 
 print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 
@@ -497,6 +498,7 @@ def facebook_auth():
     session['expires_at'] = token['expires_at']
     session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
     session['authsource'] = 'facebook'
+    session['godmode'] = GODMODE
     competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
@@ -562,6 +564,7 @@ def googleauth_reply():
     session['expires_at'] = token['expires_at']
     session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
     session['authsource'] = 'google'
+    session['godmode'] = GODMODE
     competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
 
     if session.get('wants_url') is not None:
