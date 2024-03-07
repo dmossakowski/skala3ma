@@ -192,23 +192,9 @@ def admin_required(fn):
     return decorated_function
 
 
-def competition_authentication_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and (session.get('name') == 'David Mossakowski'
-            or competitionsEngine.can_create_competition()):
-            now = int(datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("app_ui.fsgtlogin"))
-    return decorated_function
-
 
 @app_ui.get("/aa")
-def index():
+def index11():
     if session.get('username'):
         return '<a class="button" href="/login">logged in </a>'+session.get('username')
 
@@ -642,8 +628,8 @@ def privacy():
 
 
 
-@app_ui.route('/main')
-def main():
+@app_ui.route('/')
+def index():
     langs = competitionsEngine.reference_data['languages']
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
@@ -658,6 +644,11 @@ def main():
                            langpack=languages['en_US'],
                             **session
                            )
+
+
+@app_ui.route('/main')
+def main():
+    return redirect("/")
 
 
 @app_ui.route('/competitionDashboard')
@@ -680,13 +671,15 @@ def competitions_by_year(year):
     gym = request.args.get('gym')
     if not year.isdigit():
         year = datetime.now().year
-
+    can_create_competition = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        can_create_competition = competitionsEngine.can_create_competition(user)
     subheader_message = request.accept_languages
     langs = competitionsEngine.reference_data['languages']
     
     competitions3 = competitionsEngine.get_competitions_by_year(year)
-
+    
     return render_template('competitionDashboard.html',
                            subheader_message=subheader_message,
                            competitions=competitions3,
@@ -696,6 +689,7 @@ def competitions_by_year(year):
                            year=year,
                            reference_data=competitionsEngine.reference_data,
                            langpack=languages['en_US'],
+                           can_create_competition=can_create_competition,
                             **session
                            )
 
@@ -1251,6 +1245,9 @@ def downloadCompetitionCsv(competitionId):
             data.pop('id', None)
             data.pop('email', None)
             data.pop('name',None)
+            data.pop('routesClimbed2',None)
+
+            data.pop('AAAAAA',None)
 
             if (i in competition['climbers'][climberid]['routesClimbed']):
                 data['r' + str(i)] = 1
@@ -1457,11 +1454,12 @@ def gyms():
     category = request.args.get('category')
 
     gyms = competitionsEngine.get_gyms()
-
+    can_create_gym = False
     email = session.get('email')
     user = None
     if email is not None:
         user = competitionsEngine.get_user_by_email(email)
+        can_create_gym = competitionsEngine.can_create_gym(user)
     name = session.get('name')
 
     if name is None:
@@ -1474,6 +1472,7 @@ def gyms():
                            reference_data=competitionsEngine.reference_data,
                            logged_email=email,
                            logged_name=name,
+                           can_create_gym=can_create_gym,
                             **session)
 
 
@@ -1501,11 +1500,12 @@ def gym_routes_new(gym_id, routesid):
     gym = competitionsEngine.get_gym(gym_id)
     all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
     routes = all_routes.get(routesid)
-
+    can_create_gym = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
     user_can_edit_gym = False
     if user is not None:
         user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
         #activities = skala_api.get_activities()
 
 
@@ -1519,6 +1519,7 @@ def gym_routes_new(gym_id, routesid):
                            user=user,
                            reference_data=competitionsEngine.reference_data,
                            user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
                            )
 
 
@@ -1583,6 +1584,7 @@ def gym_save(gymid):
     permissioned_user = formdata['permissioned_user'][0]
 
     user = competitionsEngine.get_user_by_email(session['email'])
+    can_create_gyms = competitionsEngine.can_create_gym(user)
 
     gym = competitionsEngine.get_gym(gymid)
     if not competitionsEngine.can_edit_gym(user, gym):
@@ -1590,7 +1592,7 @@ def gym_save(gymid):
 
     routes = []
     for i, routeline1 in enumerate(routeline):
-        print (i)
+        #print (i)
         if routeid[i] == '0':
             routeid[i]=str(uuid.uuid4().hex)
         oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i],
@@ -1618,6 +1620,7 @@ def gym_save(gymid):
                            gym=gym,
                            routes=routes,
                            reference_data=competitionsEngine.reference_data,
+                           can_create_gyms=can_create_gyms,
                            )
 
 
@@ -1797,7 +1800,7 @@ def downloadRoutes(gym_id, routesid):
     header.pop('opendate')
     header.pop('notes')
     header.pop('openedby')
-
+    
     data = routes['routes']
     csv_writer.writerow(header)
     writer.writerow(header)
@@ -1814,6 +1817,7 @@ def downloadRoutes(gym_id, routesid):
         route.pop('opendate')
         route.pop('notes')
         route.pop('openedby')
+        
         csv_writer.writerow(route.values())
         writer.writerow(route.values())
         #rethtml+="<tr><td>"+route['routenum']+"</td><td bgcolor="+route['color1']+">&nbsp;&nbsp;&nbsp;</td><td>"+route['grade']+"</td></tr>"
@@ -1831,18 +1835,6 @@ def downloadRoutes(gym_id, routesid):
                            reference_data=competitionsEngine.reference_data,
                            )
 
-    #return rethtml
-
-    #return Response(
-    #    output.getvalue(),
-    #    mimetype="text/csv",
-    #    headers={"Content-disposition":
-    #                 "attachment; filename=routes.csv"})
-
-
-
-
-
 
 @app_ui.route('/gyms/<gymid>/edittest')
 def edit_test(gymid):
@@ -1850,10 +1842,6 @@ def edit_test(gymid):
 
     return render_template('tabletest.html',
                            reference_data=competitionsEngine.reference_data)
-
-
-def user_authenticated(id, username, email, picture):
-    competitionsEngine.user_authenticated(id, username, email, picture)
 
 
 @app_ui.route('/gyms/add', methods=['GET'])
@@ -1880,6 +1868,7 @@ def gyms_add_form():
 def gyms_add():
     user = competitionsEngine.get_user_by_email(session['email'])
 
+    can_create_gym = competitionsEngine.can_create_gym(user)
     formdata = request.form.to_dict(flat=False)
 
     args1 = request.args
@@ -1909,6 +1898,8 @@ def gyms_add():
     gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
     gym['routes'] = routes
     routes_id = routes['id']
+    user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+    
     #competitionsEngine.update_gym(gym_id, gym)
     #gym2 = competitionsEngine.get_gym(gym_id)
     #all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
@@ -1924,6 +1915,8 @@ def gyms_add():
                            routes=routes,
                            reference_data=competitionsEngine.reference_data,
                            logged_email=session['email'],
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
                             **session)
 
 

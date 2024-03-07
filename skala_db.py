@@ -443,13 +443,13 @@ def _generate_permissions():
 def has_permission_for_competition(competitionId, user):
     permissions = get_permissions(user)
     huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or session['name'] == 'David Mossakowski'
+    return competitionId in permissions['competitions'] or permissions['godmode'] == True
 
 
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
     huh = gym_id in permissions['gyms']
-    return gym_id in permissions['gyms'] or session['name'] == 'David Mossakowski'
+    return gym_id in permissions['gyms'] or permissions['godmode'] == True
 
 
 def add_user_permission(user, permission):
@@ -698,6 +698,11 @@ def get_all_routes_ids():
             #gyms[gym['id']] = gym
 
     db.close()
+    return routes
+
+
+def get_routes_by_id(routesid):
+    routes = _get_routes(routesid)
     return routes
 
 

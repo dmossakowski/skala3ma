@@ -124,7 +124,7 @@ import requests
 skala_api_app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['txt', 'png', 'jpg', 'jpeg', 'gif'])
 
 # skala_api_app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -188,35 +188,6 @@ def login_required(fn):
             session["wants_url"] = request.url
             return redirect(url_for("skala_api_app.fsgtlogin"))
     return decorated_function
-
-
-def admin_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and session.get('name') == 'David Mossakowski':
-            now = int(datetime.now().timestamp())
-            expiresAtLocaltime = session['expires_at_localtime']
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("skala_api_app.fsgtlogin"))
-    return decorated_function
-
-
-def competition_authentication_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and (session.get('name') == 'David Mossakowski'
-            or competitionsEngine.can_create_competition()):
-            now = int(datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("skala_api_app.fsgtlogin"))
-    return decorated_function
-
 
 
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
@@ -1525,8 +1496,6 @@ def route_save(gymid, routesid):
     competitionsEngine.upsert_routes(routesid, gymid, routeset)
 
     return json.dumps(routeset)
-
-
 
 
 

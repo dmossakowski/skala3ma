@@ -30,9 +30,7 @@
                     </select>
                     </h3>
 
-			    
-
-						{% if user is defined and user is not none and 'create_competition' in user['permissions']['general'] %}
+						{% if can_create_competition is true %}
 							<button type="button" class="btn btn-success btn-md" 
                                 onclick='location.href="/newCompetition"'>{{reference_data['current_language'].add}}</button>
 

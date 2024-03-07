@@ -141,7 +141,22 @@
 			 <td><i>  {{ reference_data['categories'][climber['category']] }}  </i></td>
 			 <td>{{ climber['routesClimbed']|length }}  </i></td>
 			 <td>{{ climber['score'] }}  </td>
+
 			        </tr>
+                    <!-- termporarily disable this -->
+                {% if (key == 'F' or key == 'M') and  climber['routesClimbed2'] and false %}
+                   
+
+                    <tr><td></td>
+                        <td  colspan="5">
+                            {% for route in  climber['routesClimbed2'] %}   
+                        {{ route['routenum'] }}: <b> {{ route['grade'] }}</b>
+                        {% endfor %}
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
              {% endfor %}
 
 

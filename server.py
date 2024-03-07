@@ -267,9 +267,9 @@ def update_token(name, token, refresh_token=None, access_token=None):
     return session['token']
 
 
-@app.route('/')
-def index():
-    return redirect("/main")
+#@app.route('/')
+#def index():
+#    return redirect("/main")
 
 
 @app.route('/login')
@@ -336,7 +336,7 @@ def logoutfb():
     _setUserSessionMsg('You have been logged out')
     #spotify.token
 
-    return redirect("/main")
+    return redirect("/")
 
 #@app.route('/authorize')
 #def authorize():
@@ -376,14 +376,10 @@ def spotify_authorized():
         session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
         session.dataLoadingProgressMsg = ''
 
-        #
-        # me = spotify.get('/v1/me')
-        #getPlaylists(session['oauth_token'], 'dmossakowski')
-
+       
         global authenticated
         authenticated = True
-            #print me.data
-
+       
         meProfile = getAllMeItems('')
 
         session['id'] = meProfile['id']
