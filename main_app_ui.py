@@ -1459,6 +1459,8 @@ def gyms():
     user = None
     if email is not None:
         user = competitionsEngine.get_user_by_email(email)
+
+    if user is not None:
         can_create_gym = competitionsEngine.can_create_gym(user)
     name = session.get('name')
 

@@ -91,7 +91,7 @@ You can also run the server using gunicorn:
 
 6. Using your favorite browser go to https://localhost:5000/
 
-7. The first user that logs in will be given all permissions to create gyms, competitions, etc. This user is assumed to be a full admin. This functionality is independent of the GODMODE setting in .env file. Setting GODMODE=true in .env file will make every user a full admin. This is what happens on [skala3ma-develop.render.com](https://skala3ma-develop.onrender.com/) site where we do beta tests.
+7. The first user that logs in will be given all permissions to create gyms, competitions, etc. This user is assumed to be a full admin. This functionality is independent of the GODMODE setting in .env file. Setting GODMODE=true in .env file will make every user a full admin. This is what happens on [skala3ma-develop.onrender.com](https://skala3ma-develop.onrender.com/) site where we do beta tests.
 
 8. The application starts completely empty so to do any tests you will need to: 
   - create a gym 
