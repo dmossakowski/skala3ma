@@ -1526,7 +1526,7 @@ def generate_dummy_routes(size):
     routesA = []
     for i in range(1, size+1):
         route_id = str(uuid.uuid4().hex)
-        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '-', 'route'+str(i), '', '', '')
+        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '?', 'route'+str(i), '', '', '')
         routesA.append(route)
 
     routes['routes'] = routesA
