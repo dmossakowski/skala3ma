@@ -146,7 +146,6 @@ competition_type_ado_fsgt = 1;
 competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
 
 
-
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
@@ -191,13 +190,16 @@ def update_competition_details(competition, name, date, routesid):
         routes = skala_db.get_routes_by_id(routesid)
 
         if (routes is None or len(routes)==0):
-            raise ValueError('Routes not found')
+            logging.error('Routes not found '+str(competition.get('id')))
+            return
+            #raise ValueError('Routes not found')
         
         competition['routes'] = routes.get('routes')
 
         try:
             setRoutesClimbed2(competition)
         except:
+            logging.error('error setting routes climbed2')
             pass
         
     skala_db._update_competition(competition['id'], competition)
@@ -760,13 +762,7 @@ def calculate_average_score(routes):
         return round(score_total / count * count ** 0.25, 2)
 
 
-
-
 lru_cache.DEBUG = True
-
-
-
-
 
 
 def init():
@@ -782,10 +778,12 @@ def init():
     #user_authenticated_fb("c2", "Mary J", "mary@j.com",
     #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-
     activities_db.init()
-    print('created ' + COMPETITIONS_DB)
 
+    for competition in skala_db.get_all_competitions().values():
+        _validate_or_upgrade_competition(competition)
+
+    print('created ' + COMPETITIONS_DB)
 
 
 #internal method.. not locked!!!
@@ -1242,45 +1240,11 @@ def can_create_gym(user):
     return False
 
 
-
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
 def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
-    user = get_user_by_email(email)
-
-    if climberId is None:
-        climberId = str(uuid.uuid4().hex)
-
-    newclimber = {}
-    newclimber['id'] = climberId
-    newclimber['name'] = name
-    newclimber['firstname'] = firstname
-    newclimber['lastname'] = lastname
-    newclimber['sex'] = sex
-    newclimber['club'] = club
-    newclimber['category'] = category
-
-    try:
-        sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-        if user is None:
-            _common_user_validation(newclimber)
-            skala_db._add_user(climberId, email, newclimber)
-            climber = newclimber
-            logging.info('added user id ' + str(email))
-        else:
-            user.update(newclimber)
-            skala_db._update_user(climberId, email, user)
-            logging.info('updated user id ' + str(email))
-
-    finally:
-        db.commit()
-        db.close()
-        sql_lock.release()
-        logging.info("done with user:"+str(name))
-        #return climber
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category)
 
 
 def update_gym_routes(gymid, routesid, jsondata):

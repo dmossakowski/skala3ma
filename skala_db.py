@@ -475,7 +475,6 @@ def add_user_permission(user, permission):
         return user
 
 
-
 # modify permission to edit specific competition to a user
 def modify_user_permissions_to_competition(user, competition_id, action="ADD"):
     return _modify_user_permissions(user, competition_id, 'competitions', action)
@@ -510,16 +509,12 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
         else:
             raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
         
-
     finally:
         db.commit()
         db.close()
         sql_lock.release()
         logging.info("done with user:"+str(user['email']))
         return user
-
-
-
 
 
 # this overwrites details from competition registration to the main user entry
@@ -563,7 +558,6 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
         #return climber
 
 
-
 def _add_user(climberId, email, climber):
     email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
@@ -584,19 +578,19 @@ def _update_user(climberId, email, climber):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     email = email.lower()
+
     if climberId is None:
-        climberId = str(uuid.uuid4().hex)
-        climber['id'] = climberId
-    cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
-                   [json.dumps(climber), str(email)])
+        if (climber.get('id') is None):
+            climberId = str(uuid.uuid4().hex)
+            climber['id'] = climberId
+        else:
+            climberId = climber['id']
+            
+    cursor.execute("UPDATE " + USERS_TABLE + " set id=?, jsondata=? where email =? ",
+                   [str(climberId), json.dumps(climber), str(email)])
     logging.info('updated user id ' + str(email))
     db.commit()
     db.close()
-
-
-
-
-
 
 
 def _get_gyms():

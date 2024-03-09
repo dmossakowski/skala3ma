@@ -264,7 +264,7 @@ function showModal() {
             // use the retrieved data here
             //console.log(data);
             routes=data.routes
-            renderTabulatorTable(routes);
+            renderGymRoutesTabulatorTable(routes);
               
     
         })
@@ -276,7 +276,7 @@ function showModal() {
     getData();
 
 
-    function renderTabulatorTable(routesA)
+    function renderGymRoutesTabulatorTable(routesA)
       {
         var columns = [
         {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
@@ -310,13 +310,13 @@ function showModal() {
               data: routesA ,
               layout:"fitDataStretch",
               //layout: "fitDataFill",
-              movableRows: false,
+              movableRows: true,
               selectable: 1,
               responsiveLayout:"collapse",
               //responsiveLayout:"fitColumns",
               //movableColumns: true, 
               responsiveLayoutCollapseStartOpen:false,
-              formatter:"responsiveCollapse", headerSort:false,
+              formatter:"responsiveCollapse", headerSort:true,
               rowFormatter:function(row){
                 if(row.getData().line % 2 == 0){
                     //row.getElement().style.backgroundColor = "#dddddd";
@@ -346,7 +346,7 @@ function showModal() {
           });
 
           table.on("rowClick", function(e, row){
-            routeDetail(row.getData());
+            gymRouteDetail(row.getData());
             
           });
 
@@ -361,8 +361,7 @@ function showModal() {
     
       var formData = {};
 
-      function routeDetail(data) {
-        	//console.log("routeDetail  ");
+      function gymRouteDetail(data) {
             resetFlashImage();
 
             //console.log(data);
@@ -588,7 +587,7 @@ function showModal() {
                     </tr>
              {% endfor %}
 
-                    <tr><td class="text-center" colspan="5">    
+                    <tr><td class="text-center" colspan="6">
                         <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
                     </td></tr>
          </tbody>

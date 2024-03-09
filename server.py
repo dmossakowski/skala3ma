@@ -79,13 +79,6 @@ from flask_login import (
 
 os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
 
-DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-
-print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
-
-if DATA_DIRECTORY is None:
-    DATA_DIRECTORY = os.getcwd()
-
 
 # Configuration
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", None)
@@ -153,17 +146,18 @@ def unauthorized():
 @login_manager.user_loader
 def load_user(user_id):
     return user_id
-    #return User.get(user_id)
 
 
-@app.before_first_request
 def init():
     print ('initializing server...')
 
+    #init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
+    #init_logging(console_loglevel=logging.DEBUG)
     r = random.randint(0, 10000)
     init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
     # init_logging(console_loglevel=logging.DEBUG)
 
+    
     if not os.path.exists(DATA_DIRECTORY):
         print("DATA_DIRECTORY does not exist... this will not end welll....")
 
@@ -231,8 +225,6 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     #LOG = logging.getLogger(__name__)
 
 
-init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
-#init_logging(console_loglevel=logging.DEBUG)
 
 
 
@@ -789,13 +781,17 @@ def privacy():
     return render_template('privacy.html')
 
 
+# this is not executed by gunicorn but only when running direclty by Python
 if __name__ == '__main__':
-    print('Executing main')
-    #init()
+    print('Executing server main')
+    init()
+
+    # setting debug=True is not needed with vscode
+    # after initial start the app server starts again with line:
+    #     Restarting with stat 
+    app.run(host='0.0.0.0', threaded=True, debug=False, ssl_context=('cert.pem', 'key.pem'))
 
 
-    #fetch_data()
-    app.run(host='0.0.0.0', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
 
 

@@ -2014,8 +2014,6 @@ def image_route0():
     return app_ui.send_static_file("images/fsgt-logo-me.png")
 
 
-
-
 @app_ui.route('/image/<img_id>')
 def image_route(img_id):
     #bytes_io = competitionsEngine.get_img(img_id)
@@ -2023,7 +2021,7 @@ def image_route(img_id):
 
     #return send_file(os.path.join(UPLOAD_FOLDER, img_id))
 
-    print('image_route', img_id)
+    #print('image_route', img_id)
     if (img_id is not None and os.path.exists(os.path.join(UPLOAD_FOLDER, img_id))):
         return send_from_directory(UPLOAD_FOLDER, img_id)
     else:
