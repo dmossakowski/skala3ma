@@ -227,7 +227,7 @@ def get_competitions_for_email(email):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
-    cursor.execute("SELECT DISTINCT json_extract(competitions.jsondata,'$.id') FROM competitions, json_tree(competitions.jsondata, '$.climbers') WHERE json_tree.key='email' AND json_tree.value=?;", [email])
+    cursor.execute("SELECT DISTINCT json_extract(competitions.jsondata,'$.id') FROM competitions, json_tree(competitions.jsondata, '$.climbers') WHERE json_tree.key='email' AND json_tree.value=? order by added_at desc", [email])
 
     # Extract the competition ids from the query results
     competition_ids = [row[0] for row in cursor.fetchall()]

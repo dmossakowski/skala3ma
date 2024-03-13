@@ -1182,7 +1182,6 @@ def get_myskala():
     all_competitions = []
     stats['personalstats']={}
     stats['personalstats']['all_grades'] = []
-    
     routes_climbed_count = 0
     
     for id in competition_ids:
@@ -1203,6 +1202,8 @@ def get_myskala():
             routes_climbed_count += len(climber['routesClimbed'] )
             grades_climbed = []
             for idx, route_num in enumerate(routes_climbed):
+                if route_num > len(routes):
+                    break
                 route = routes[route_num-1]
                 grade = route.get('grade')
                 points = round(climber['points_earned'][idx])
@@ -1223,7 +1224,6 @@ def get_myskala():
     
     stats['personalstats']['routes_climbed_count'] = routes_climbed_count
     stats['personalstats']['competition_routes_total'] = competition_routes_total
-
 
     stats['competitions'] = all_competitions
     stats['thursday'] = datetime.today().weekday() == 3
