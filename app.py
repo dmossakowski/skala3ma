@@ -1,11 +1,10 @@
 from gevent import monkey
-import gunicorn.app.base
+
+monkey.patch_all()
 
 from server import init
 import logging
 
-
-monkey.patch_all()
 
 log_level = 'debug'
 
