@@ -789,7 +789,7 @@ if __name__ == '__main__':
     # setting debug=True is not needed with vscode
     # after initial start the app server starts again with line:
     #     Restarting with stat 
-    app.run(host='0.0.0.0', threaded=True, debug=False, ssl_context=('cert.pem', 'key.pem'))
+    app.run(host='0.0.0.0', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
 
 
