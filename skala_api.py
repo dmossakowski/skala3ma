@@ -71,7 +71,7 @@ from authlib.integrations.flask_client import OAuthError
 
 languages = {}
 
-grades = ['1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
+grades = ['?', '1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
     
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
@@ -124,7 +124,7 @@ import requests
 skala_api_app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY,'uploads')
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['txt', 'png', 'jpg', 'jpeg', 'gif'])
 
 # skala_api_app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -188,35 +188,6 @@ def login_required(fn):
             session["wants_url"] = request.url
             return redirect(url_for("skala_api_app.fsgtlogin"))
     return decorated_function
-
-
-def admin_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and session.get('name') == 'David Mossakowski':
-            now = int(datetime.now().timestamp())
-            expiresAtLocaltime = session['expires_at_localtime']
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("skala_api_app.fsgtlogin"))
-    return decorated_function
-
-
-def competition_authentication_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and (session.get('name') == 'David Mossakowski'
-            or competitionsEngine.can_create_competition()):
-            now = int(datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("skala_api_app.fsgtlogin"))
-    return decorated_function
-
 
 
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
@@ -1211,7 +1182,6 @@ def get_myskala():
     all_competitions = []
     stats['personalstats']={}
     stats['personalstats']['all_grades'] = []
-    
     routes_climbed_count = 0
     
     for id in competition_ids:
@@ -1232,6 +1202,8 @@ def get_myskala():
             routes_climbed_count += len(climber['routesClimbed'] )
             grades_climbed = []
             for idx, route_num in enumerate(routes_climbed):
+                if route_num > len(routes):
+                    break
                 route = routes[route_num-1]
                 grade = route.get('grade')
                 points = round(climber['points_earned'][idx])
@@ -1252,7 +1224,6 @@ def get_myskala():
     
     stats['personalstats']['routes_climbed_count'] = routes_climbed_count
     stats['personalstats']['competition_routes_total'] = competition_routes_total
-
 
     stats['competitions'] = all_competitions
     stats['thursday'] = datetime.today().weekday() == 3
@@ -1525,8 +1496,6 @@ def route_save(gymid, routesid):
     competitionsEngine.upsert_routes(routesid, gymid, routeset)
 
     return json.dumps(routeset)
-
-
 
 
 

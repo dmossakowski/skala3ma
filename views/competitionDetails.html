@@ -53,18 +53,19 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
     				{% for climberId in competition['climbers'] %}
 
+      
 		 <tr><td>{{ loop.index }} </td>
 			<td>{{ competition['climbers'][climberId]['name'] }}</td>
 			<td> {{ competition['climbers'][climberId]['sex'] }}</td>
 			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
 			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
+            
+
 			 {%if (loop.index <= competition['max_participants']|int) %}
 			 <td><i>{{ reference_data['current_language'].registered }}</i></td>
 			 {% else %}
 			 <td><i>{{ reference_data['current_language'].waitlist }}</i></td>
 			 {% endif %}
-         
-
 
                     </tr>
              {% endfor %}
