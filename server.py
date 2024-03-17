@@ -232,15 +232,7 @@ def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
         if session != None and session.get('expires_at') is not None:
-            now = int(datetime.datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-
-            if expiresAtLocaltime < now:
-                session["wants_url"] = request.url
-                return redirect(url_for("login"))
-            else:
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
             return redirect(url_for("login"))
@@ -302,29 +294,6 @@ def logout():
     session['expires_in'] = None
     session['expires_at_localtime'] = None
     session['email'] = None
-    session.clear()
-    _setUserSessionMsg('You have been logged out')
-    spotify.token
-
-    return render_template('login.html',
-                           subheader_message="Logged out ",
-                           library={}, **session)
-
-
-@app.route('/logoutfb')
-def logoutfb():
-    logging.info("doing revoke")
-    session.pop('token', None)
-    session.pop('username', None)
-    session.pop('wants_url', None)
-    session.pop('access_token', None)
-    session['access_token'] = None
-    session['logged_in'] = False
-    session['refresh_token'] = None
-    session['expires_at'] = None
-    session['expires_in'] = None
-    session['expires_at_localtime'] = None
-
     session.clear()
     _setUserSessionMsg('You have been logged out')
     #spotify.token
