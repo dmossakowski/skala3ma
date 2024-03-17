@@ -41,6 +41,7 @@ from functools import lru_cache, reduce
 import logging
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+GODMODE = os.getenv('GODMODE') == "true"
 
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
@@ -145,7 +146,6 @@ competition_type_ado_fsgt = 1;
 competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
 
 
-
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
@@ -156,8 +156,15 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
+    routes = skala_db.get_routes_by_id(routesid)
     gym = skala_db.get_gym_by_routes_id(routesid)
 
+    if gym is None:
+        raise ValueError('Gym not found')
+    
+    if (routes is None or len(routes)==0):
+        raise ValueError('Routes not found')
+    
     if max_participants is None:
         max_participants=80
 
@@ -165,7 +172,8 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
                    "routesid": routesid, "status": "preopen", "climbers": {},
                    "max_participants": max_participants,
                    "results": copy.deepcopy(emptyResults),
-                   "competition_type":competition_type}
+                   "competition_type":competition_type,
+                   "routes": routes.get('routes')}
     # write this competition to db
     skala_db._add_competition(compId, competition);
 
@@ -175,7 +183,25 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
 def update_competition_details(competition, name, date, routesid):
     competition['name']=name
     competition['date'] = date
-    competition['routesid'] = routesid
+
+    # only update routes if it is different
+    if competition.get('routes') is None or competition.get('routesid') != routesid:
+        competition['routesid'] = routesid
+        routes = skala_db.get_routes_by_id(routesid)
+
+        if (routes is None or len(routes)==0):
+            logging.error('Routes not found '+str(competition.get('id')))
+            return
+            #raise ValueError('Routes not found')
+        
+        competition['routes'] = routes.get('routes')
+
+        try:
+            setRoutesClimbed2(competition)
+        except:
+            logging.error('error setting routes climbed2')
+            pass
+        
     skala_db._update_competition(competition['id'], competition)
 
 
@@ -213,7 +239,8 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
                 raise ValueError('User with email '+email+' already registered')
 
         climbers[climberId] = {"id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
-                               "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0 }
+                               "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0,
+                                "routesClimbed2":[], }
         #logging.info(competition)
 
         _update_competition(competitionId, competition)
@@ -269,8 +296,7 @@ def getFlatCompetition(competitionId):
 def getCompetition(competitionId):
     print("retreiving competition"+str(competitionId))
     return get_competition(competitionId)
-    #return comps[competitionId]
-
+ 
 
 def addRouteClimbed(competitionId, climberId, routeNumber):
     #print(comps)
@@ -292,6 +318,32 @@ def addRouteClimbed(competitionId, climberId, routeNumber):
     return comp
 
 
+# update each climber with routes they climbed
+# returns the competition
+# no db update
+def setRoutesClimbed2(competition):
+    if competition.get('routes') is None or competition.get('routesid') is None:
+        return competition
+    
+    for climber in competition['climbers']:
+        climber = competition['climbers'][climber]
+        climber['routesClimbed2'] = []
+     
+        if climber is None:
+            return
+        climber['routesClimbed2'] = []
+        for route in climber['routesClimbed']:
+            if competition.get('routes') is not None:
+                for route2 in competition['routes']:
+                    if str(route2.get('routenum')) == str(route):
+                        climber['routesClimbed2'].append(route2)
+
+    return competition
+    
+
+
+# update climber with a list of routes they climbed
+# the list is a list of route numbers so the lowest number is 1 (not 0)
 def setRoutesClimbed(competitionId, climberId, routeList):
     try:
         sql_lock.acquire()
@@ -321,8 +373,9 @@ def update_competition(competitionId, competition):
 # calculates points per route per sex
 # first loop counts how many times the route was climbed
 # second loop iterates over this same list but then does 1000/times the route was climbed
+# limited to 200 routes returned in an array
 def _getRouteRepeats(competitionId, sex, comp):
-    pointsPerRoute = [0 for i in range(100)]
+    pointsPerRoute = [0 for i in range(200)]
     for climber in comp['climbers']:
         if comp['climbers'][climber]['sex'] != sex:
             continue
@@ -343,6 +396,22 @@ def _getRouteRepeats(competitionId, sex, comp):
             pointsPerRoute[i]=1000/r
     #logging.info("points per route: ")
     #logging.info(pointsPerRoute)
+
+    return pointsPerRoute
+
+
+def getRouteRepeatsNoSex(comp):
+    pointsPerRoute = [0 for i in range(200)]
+    for climber in comp['climbers']:
+        routesClimbed = comp['climbers'][climber]['routesClimbed']
+        for r in routesClimbed:
+            pointsPerRoute[r]=pointsPerRoute[r]+1
+
+    for i, r in enumerate(pointsPerRoute):
+        if r == 0 :
+            pointsPerRoute[i]=1000
+        else:
+            pointsPerRoute[i]=1000/r
 
     return pointsPerRoute
 
@@ -499,7 +568,7 @@ def _calculatePointsPerClimber(competitionId, climberId, comp):
         routeRepeats = _getRouteRepeats(competitionId, "F", comp)
     else:
         logging.error(f"Invalid sex value found during calculation of points per climber: {sex}")  
-        return None;
+        return None
     points = 0
 
     # route climbed is an index into routeRepeats points calculated earlier
@@ -693,13 +762,7 @@ def calculate_average_score(routes):
         return round(score_total / count * count ** 0.25, 2)
 
 
-
-
 lru_cache.DEBUG = True
-
-
-
-
 
 
 def init():
@@ -715,10 +778,12 @@ def init():
     #user_authenticated_fb("c2", "Mary J", "mary@j.com",
     #                       "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10224632176365169&height=50&width=50&ext=1648837065&hash=AeTqQus7FdgHfkpseKk")
 
-
     activities_db.init()
-    print('created ' + COMPETITIONS_DB)
 
+    for competition in skala_db.get_all_competitions().values():
+        _validate_or_upgrade_competition(competition)
+
+    print('created ' + COMPETITIONS_DB)
 
 
 #internal method.. not locked!!!
@@ -787,6 +852,13 @@ def _validate_or_upgrade_competition(competition):
         competition['competition_type'] = competition_type_adult_fsgt
         needs_updating = True
 
+    if competition.get('routesid') is None:
+        gym = get_gym(competition['gym_id'])
+        competition['routesid'] = gym['routesid']
+
+    if competition.get('routes') is None:
+        update_competition_details(competition, competition['name'], competition['date'], competition['routesid'])
+        
     if needs_updating:
         update_competition(competition['id'], competition)
 
@@ -978,13 +1050,14 @@ def _common_user_validation(user):
 
 # returns base empty permissions dictionary
 # who can create new competition? gym admins?
+# if this is the first user who logs in then this user becomes the godmode user
 def get_permissions(user):
     if user is None:
         return _generate_permissions()
 
     if user.get('permissions') is None:
         all_users = get_all_user_emails()
-        if len(all_users)==0:
+        if len(all_users)==0 or GODMODE == True:
             user['permissions'] = {}
             user['permissions']['godmode'] = True
             user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
@@ -1009,7 +1082,7 @@ def _generate_permissions():
 def has_permission_for_competition(competitionId, user):
     permissions = get_permissions(user)
     huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or session['name'] in ['David Mossakowski']
+    return competitionId in permissions['competitions'] or permissions['godmode'] == True
 
 
 def add_user_permission_create_competition(user):
@@ -1029,7 +1102,7 @@ def add_user_permission_edit_competition(user):
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
     #huh = gym_id in permissions['gyms']
-    return gym_id in permissions['gyms'] or session['name'] in ['David Mossakowski'] or permissions['godmode'] == 'true'
+    return gym_id in permissions['gyms'] or permissions['godmode'] == True
 
 
 # modify permission to edit specific competition to a user
@@ -1050,20 +1123,22 @@ def remove_user_permissions_to_gym(user, gym_id):
 
 
 def can_create_competition(climber):
+    if climber is None:
+        return False
     permissions = climber.get('permissions')
-    if 'create_competition' in permissions['general']:
+    if 'create_competition' in permissions['general'] or permissions['godmode'] == True:
         return True
     return False
-    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
+    
 
 
 def can_edit_competition(climber, competition):
     permissions = climber.get('permissions')
-    if 'edit_competition' in permissions['general'] \
-        and competition['id'] in permissions['competitions']:
+    if permissions['godmode'] == True  \
+        or ('edit_competition' in permissions['general'] \
+        and competition['id'] in permissions['competitions']):
         return True
     return False
-    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 def competition_can_be_deleted(competition):
@@ -1083,7 +1158,6 @@ def competition_can_be_deleted(competition):
 # user has permission for the given competition
 def can_update_routes(user, competition):
     permissions = user.get('permissions')
-    #if user['email in'] in ['dmossakowski@gmail.com']
 
     if 'update_routes' in permissions['general'] \
             and competition['status'] in [competition_status_scoring, competition_status_inprogress]\
@@ -1150,65 +1224,27 @@ def can_unregister(user, competition):
     return False
 
 
-
-
-
 def can_edit_gym(user, gym):
     if user is None or gym is None: 
         return False
     permissions = user.get('permissions')
-    if gym['id'] in permissions['gyms'] or session['name'] in ['David Mossakowski']:
+    if gym['id'] in permissions['gyms'] or permissions['godmode'] == True:
         return True
     return False
-    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 def can_create_gym(user):
     permissions = user.get('permissions')
-    if 'create_gym' in permissions['general'] or session['name'] in ['David Mossakowski']:
+    if 'create_gym' in permissions['general'] or permissions['godmode'] == True:
         return True
     return False
-    #return climber is not None and climber['email'] in ['dmossakowski@gmail.com']
 
 
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
 def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
-    user = get_user_by_email(email)
-
-    if climberId is None:
-        climberId = str(uuid.uuid4().hex)
-
-    newclimber = {}
-    newclimber['id'] = climberId
-    newclimber['name'] = name
-    newclimber['firstname'] = firstname
-    newclimber['lastname'] = lastname
-    newclimber['sex'] = sex
-    newclimber['club'] = club
-    newclimber['category'] = category
-
-    try:
-        sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-        if user is None:
-            _common_user_validation(newclimber)
-            skala_db._add_user(climberId, email, newclimber)
-            climber = newclimber
-            logging.info('added user id ' + str(email))
-        else:
-            user.update(newclimber)
-            skala_db._update_user(climberId, email, user)
-            logging.info('updated user id ' + str(email))
-
-    finally:
-        db.commit()
-        db.close()
-        sql_lock.release()
-        logging.info("done with user:"+str(name))
-        #return climber
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category)
 
 
 def update_gym_routes(gymid, routesid, jsondata):
@@ -1454,7 +1490,7 @@ def generate_dummy_routes(size):
     routesA = []
     for i in range(1, size+1):
         route_id = str(uuid.uuid4().hex)
-        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '-', 'route'+str(i), '', '', '')
+        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '?', 'route'+str(i), '', '', '')
         routesA.append(route)
 
     routes['routes'] = routesA

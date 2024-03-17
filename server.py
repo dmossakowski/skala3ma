@@ -32,6 +32,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
+GODMODE = os.getenv('GODMODE') == 'true'
 
 print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 
@@ -77,13 +78,6 @@ from flask_login import (
 # export AUTHLIB_INSECURE_TRANSPORT=true
 
 os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "true"
-
-DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-
-print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
-
-if DATA_DIRECTORY is None:
-    DATA_DIRECTORY = os.getcwd()
 
 
 # Configuration
@@ -153,17 +147,18 @@ def unauthorized():
 @login_manager.user_loader
 def load_user(user_id):
     return user_id
-    #return User.get(user_id)
 
 
-@app.before_first_request
 def init():
     print ('initializing server...')
 
+    #init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
+    #init_logging(console_loglevel=logging.DEBUG)
     r = random.randint(0, 10000)
     init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
     # init_logging(console_loglevel=logging.DEBUG)
 
+    
     if not os.path.exists(DATA_DIRECTORY):
         print("DATA_DIRECTORY does not exist... this will not end welll....")
 
@@ -231,8 +226,6 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     #LOG = logging.getLogger(__name__)
 
 
-init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
-#init_logging(console_loglevel=logging.DEBUG)
 
 
 
@@ -240,15 +233,7 @@ def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
         if session != None and session.get('expires_at') is not None:
-            now = int(datetime.datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-
-            if expiresAtLocaltime < now:
-                session["wants_url"] = request.url
-                return redirect(url_for("login"))
-            else:
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
             return redirect(url_for("login"))
@@ -268,9 +253,9 @@ def update_token(name, token, refresh_token=None, access_token=None):
     return session['token']
 
 
-@app.route('/')
-def index():
-    return redirect("/main")
+#@app.route('/')
+#def index():
+#    return redirect("/main")
 
 
 @app.route('/login')
@@ -312,32 +297,9 @@ def logout():
     session['email'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
-    spotify.token
-
-    return render_template('login.html',
-                           subheader_message="Logged out ",
-                           library={}, **session)
-
-
-@app.route('/logoutfb')
-def logoutfb():
-    logging.info("doing revoke")
-    session.pop('token', None)
-    session.pop('username', None)
-    session.pop('wants_url', None)
-    session.pop('access_token', None)
-    session['access_token'] = None
-    session['logged_in'] = False
-    session['refresh_token'] = None
-    session['expires_at'] = None
-    session['expires_in'] = None
-    session['expires_at_localtime'] = None
-
-    session.clear()
-    _setUserSessionMsg('You have been logged out')
     #spotify.token
 
-    return redirect("/main")
+    return redirect("/")
 
 #@app.route('/authorize')
 #def authorize():
@@ -377,14 +339,10 @@ def spotify_authorized():
         session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
         session.dataLoadingProgressMsg = ''
 
-        #
-        # me = spotify.get('/v1/me')
-        #getPlaylists(session['oauth_token'], 'dmossakowski')
-
+       
         global authenticated
         authenticated = True
-            #print me.data
-
+       
         meProfile = getAllMeItems('')
 
         session['id'] = meProfile['id']
@@ -502,6 +460,7 @@ def facebook_auth():
     session['expires_at'] = token['expires_at']
     session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
     session['authsource'] = 'facebook'
+    session['godmode'] = GODMODE
     competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
@@ -567,6 +526,7 @@ def googleauth_reply():
     session['expires_at'] = token['expires_at']
     session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
     session['authsource'] = 'google'
+    session['godmode'] = GODMODE
     competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
 
     if session.get('wants_url') is not None:
@@ -791,13 +751,17 @@ def privacy():
     return render_template('privacy.html')
 
 
+# this is not executed by gunicorn but only when running direclty by Python
 if __name__ == '__main__':
-    print('Executing main')
-    #init()
+    print('Executing server main')
+    init()
 
-
-    #fetch_data()
+    # setting debug=True is not needed with vscode
+    # after initial start the app server starts again with line:
+    #     Restarting with stat 
     app.run(host='0.0.0.0', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+
+
 
 
 

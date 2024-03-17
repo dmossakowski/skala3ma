@@ -130,9 +130,8 @@
                 
 
 <!-- start user rating -->
-
-
-<div class="form-row row">
+                    
+<div id='route-rating-div' class="form-row row" style="display:none;">
 
     <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
     outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
@@ -147,7 +146,7 @@
        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
        font-size:1.6em; font-weight: bold; color: #40ad48">
-
+    <option value="?">?</option>
     <option value="1">1</option>
     <option value="2">2</option>
     <option value="3">3</option>
@@ -186,10 +185,8 @@
   
     </select>
 
- 
-    
-  
 </div>
+
 <div class="col">
    
     <input id='notes_user' name="notes_user" size="20" type="text" 
@@ -200,17 +197,19 @@
     
   
 </div>
+
 </div>
 
 
 <!-- end user rating-->
 
 
-
                 <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
+                    {% if user is not none %}
                     <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
-                    
+                    {% endif %}
+
                     {% if (user_can_edit_gym) %}
                     <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
                     {% endif %}
@@ -278,6 +277,7 @@
                         <div class="form-row">
                           <label for="grade">{{reference_data['current_language'].grade}}:</label>
                           <select id="grade" name="grade">
+                            <option value="?">?</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
@@ -364,6 +364,7 @@
             var editDiv = document.getElementById('editContent');
             var mainModalMenuDiv = document.getElementById('mainModalMenu');
             var modalBoxDiv = document.getElementById('modal-box');
+            var routeRatingDiv = document.getElementById('route-rating-div');
             var currentRow;
             var mod_type;
 
@@ -410,6 +411,16 @@
                 modal.style.display = "none";
             }
   
+        function showRatingUi(show)
+        {
+            if (show)
+            {
+                document.getElementById('route-rating-div').style.display='flex';
+            }else{
+                document.getElementById('route-rating-div').style.display='none';
+            }
+        }
+
   
         function addBefore(){
             mod_type='add_before';
@@ -589,7 +600,7 @@
     {% else %}
                 <h3>{{ reference_data['current_language'].gyms }} </h3>
 
-                {% if user is defined and user is not none and 'create_gym' in user['permissions']['general'] %}
+                {% if can_create_gym is true  %}
                     <button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
                             onclick='location.href="/gyms/add"'>{{reference_data['current_language'].add}}</button>
 
@@ -642,11 +653,24 @@
               // console.log(data);
               routes=data.routes
               renderTabulatorTable(routes);
-                
-      
           })
           .catch(error => console.error(error));
       
+          fetch(`/api1/user`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+              // console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    showRatingUi(true);
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
         }
       
         // Function to create a hatched pattern in color rendering when printing to pdf  

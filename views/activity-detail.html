@@ -136,7 +136,7 @@
                        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
                        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
                        font-size:1.6em; font-weight: bold; color: #40ad48">
-
+                    <option value="?">?</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -317,7 +317,7 @@ function showModal() {
             // use the retrieved data here
             //console.log(data);
             routes=data.routes
-            renderTabulatorTable(routes);
+            renderGymRoutesTabulatorTable(routes);
               
     
         })
@@ -329,7 +329,7 @@ function showModal() {
     getData();
 
 
-    function renderTabulatorTable(routesA)
+    function renderGymRoutesTabulatorTable(routesA)
       {
         var columns = [
         {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
@@ -363,13 +363,13 @@ function showModal() {
               data: routesA ,
               layout:"fitDataStretch",
               //layout: "fitDataFill",
-              movableRows: false,
+              movableRows: true,
               selectable: 1,
               responsiveLayout:"collapse",
               //responsiveLayout:"fitColumns",
               //movableColumns: true, 
               responsiveLayoutCollapseStartOpen:false,
-              formatter:"responsiveCollapse", headerSort:false,
+              formatter:"responsiveCollapse", headerSort:true,
               rowFormatter:function(row){
                 if(row.getData().line % 2 == 0){
                     //row.getElement().style.backgroundColor = "#dddddd";
@@ -399,7 +399,7 @@ function showModal() {
           });
 
           table.on("rowClick", function(e, row){
-            routeDetail(row.getData());
+            gymRouteDetail(row.getData());
             
           });
 
@@ -414,8 +414,7 @@ function showModal() {
     
       var formData = {};
 
-      function routeDetail(data) {
-        	//console.log("routeDetail  ");
+      function gymRouteDetail(data) {
             resetFlashImage();
 
             //console.log(data);
@@ -604,7 +603,7 @@ function showModal() {
              {% endfor %}
 
                     <tr><td class="text-center" colspan="7">    
-                        <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
+                         <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
                     </td></tr>
          </tbody>
      </table>
