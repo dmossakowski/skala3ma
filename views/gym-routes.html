@@ -38,11 +38,11 @@
             .modal-box {
                 background-color: #fff;
                 margin: 2% auto;
-                padding: 15px;
+                padding: 0px 15px 15px 15px;
                 border: 1px solid #888;
                 width:max-content;
                 
-                display: flex;
+                display: block;
                 
                 justify-content: center;
                 align-items: center;
@@ -53,31 +53,21 @@
     
             /* Style for the close button */
             .close-button {
-                position: absolute;
-                top: 20px;
-                right: 30px;
-                font-size: 30px;
+                position: relative;
+                padding: 0px 15px 0px 0px;
+                justify-content: right;
+                text-align: right;
+                
                 color: #aaa;
                 font-weight: bold;
-                cursor: pointer;
+                
             }
-        </style>
-    
-        
 
-
-        
-        <div id="modal" class="modal-container">
-            
-            <div id="modal-box" class="modal-box">
-               
-                <form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
-                    <style>
-                        .form-row-heading {
+            .form-row-heading {
                           display: flex;
                           justify-content: center;
                           align-items: baseline;
-                          margin: 10px;
+                          margin: 1px;
                           font-size: 20px;
                           color: #292424;
                           font-weight: bold;
@@ -87,13 +77,15 @@
                           display: flex;
                           justify-content: center;
                           align-items: center;
-                          margin: 10px;
+                          margin: 3px;
+                          
                         }
                       
                         .form-row label {
                           text-align: right;
+                          display: block;
                           margin-right: 6px;
-                          flex: 1;
+                          
                         }
                       
                         .form-row input,
@@ -101,13 +93,27 @@
                         .form-row textarea {
                           flex: 1;
                         }
-                      </style>
+        </style>
+    
+        
+        <div id="modal" class="modal-container">
 
+            <div id="modal-box" class="modal-box ">
+                <div class="row close-button row">
+                    <span  onclick="hideModal()">
+                    <i class="bi bi-x" style="font-size: 2rem; color: rgb(98, 92, 92);"></i>
+                    </span>
+                    {% if user is not none %}
+                    {% endif %}
+                </div> 
+            
+                
+            <div class="form-row row">
                 <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;">
+                    </div>
                     </div>
                
                 <div id="mainModalMenu">
-                    
                     <div onclick="hideModal()">
                     <div class="form-row-heading">
                         <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
@@ -130,7 +136,7 @@
                   <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
                   {% endif %}
                 </div>      
-               
+            </div>
 
 <!-- start user rating -->
                     
@@ -206,15 +212,6 @@
 <!-- end user rating-->
 
 
-                <div class="form-row">
-                    <span class="close-button" onclick="hideModal()">&times;</span>
-                    <!--i class="bi bi-x-circle-fill" style="font-size: 1.5rem; color: rgb(246, 21, 21);"></i-->
-                    {% if user is not none %}
-                    {% endif %}
-
-                    
-                </div> 
-                </div>
 
                     <div id="editContent" style="display: none">
 
@@ -338,7 +335,7 @@
                       
 
                   <div class="form-row">
-                    <span class="close-button" onclick="hideModal()">&times;</span>
+                    
                     
                     <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
@@ -350,7 +347,6 @@
                     </div>
                
                 </div>
-                </form>
                 
             </div>
             
@@ -376,6 +372,7 @@
             function editContent(){
                 mod_type='save'
                 showEditDiv();
+                showRatingUi(false);
                 return false;
             }
 
@@ -397,6 +394,7 @@
             // Function to display the modal dialog
             function showModal() {
                 resetFlashImage();
+                showRatingUi(true);
                 mainModalMenuDiv.style.display='block'
                 
                 editDiv.style.display='none';
