@@ -1510,7 +1510,6 @@ def route_rating(gymid, routesid):
     route_finish_status = data.get('route_finish_status')
     grade = data.get('grade_user')
     user_grade = data.get('grade_user')
-    
 
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -1534,7 +1533,8 @@ def route_rating(gymid, routesid):
 
     activities = activities_db.get_activities_by_date_by_user(today, user['id'])
     
-    rating_activity_name = 'Rating activity'
+    rating_activity_name = competitionsEngine.reference_data['current_language']['rating_activity_name']
+
     activity_id = None
     if (len(activities) == 0):
         activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)

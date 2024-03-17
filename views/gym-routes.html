@@ -660,7 +660,7 @@
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
-                console.log(data);
+                //console.log(data);
                 if (Object.keys(data).length === 0) {
                     // data is an empty object
                 }
@@ -834,7 +834,7 @@
           const notes = document.getElementById('notes').value;
           formData['notes'] = notes;
 
-            formData['routeFinishStatus'] = routeFinishStatus;
+            formData['route_finish_status'] = routeFinishStatus;
 
             const route_grade_user = document.getElementById('grade_user').value;
             formData['grade_user'] = route_grade_user;
