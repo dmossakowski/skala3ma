@@ -171,7 +171,8 @@
   "registration": "Rejestracja",
   "unregister": "Wypisz się",
   "rate": "Ratuj",
-
+  "rating_activity_name": "Ocena",
+  
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",

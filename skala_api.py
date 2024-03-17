@@ -738,8 +738,6 @@ def getCompetitionStats(competitionId):
 
 
 ### USER
-
-
 @skala_api_app.route('/user')
 def get_user():
     if session is None or session.get('email') is None:
@@ -747,12 +745,10 @@ def get_user():
     
     user = competitionsEngine.get_user_by_email(session['email'])
 
-    can_edit_gym = competitionsEngine.can_edit_gym(user)
-
+    if user is None:
+        return {}
+    
     return json.dumps(user)
-
-    climber = competitionsEngine.get_all_user_emails()
-    return json.dumps(climber)
 
 
 @skala_api_app.route('/user/email/<email>')
@@ -1536,12 +1532,12 @@ def route_rating(gymid, routesid):
             route = route
             break
 
-
     activities = activities_db.get_activities_by_date_by_user(today, user['id'])
     
+    rating_activity_name = 'Rating activity'
     activity_id = None
     if (len(activities) == 0):
-        activity_id = activities_db.add_activity(user, gym, 'Rating activity', today)
+        activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
     else:
         for activity in activities:
             if activity.get('gym_id') == gymid:
@@ -1549,7 +1545,7 @@ def route_rating(gymid, routesid):
                 activity_id = activity.get('id')
                 break
         if activity_id is None:
-            activity_id = activities_db.add_activity(user, gym, 'Rating activity', today)
+            activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
     #activity = activities_db.get_activity(activity_id)
 
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)

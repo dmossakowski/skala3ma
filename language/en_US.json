@@ -163,6 +163,7 @@
   "registration": "Registration",
   "unregister": "Unregister",
   "rate": "Rate",
+  "rating_activity_name": "Rating activity",
   
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
