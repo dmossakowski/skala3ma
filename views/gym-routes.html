@@ -103,11 +103,12 @@
                         }
                       </style>
 
-                <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
+                <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;">
+                    </div>
                
                 <div id="mainModalMenu">
                     
-                    <div  onclick="hideModal()">
+                    <div onclick="hideModal()">
                     <div class="form-row-heading">
                         <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
                     </div>
@@ -125,79 +126,80 @@
                 </div>
                 <div class="form-row">
                   <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
-
+                  {% if (user_can_edit_gym) %}
+                  <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
+                  {% endif %}
                 </div>      
-                
+               
 
 <!-- start user rating -->
                     
-<div id='route-rating-div' class="form-row row" style="display:none;">
+<div id='route-rating-div'  style="display:none;">
+    <br><br>
+    <div class="form-row row">
+        <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
+        <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
+        
+        </div>
+        <div class="col">
 
-    <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-    outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
-    <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
+        <select class="col form-select form-select-lg" id='grade_user' name="grade_user"  size="1" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
+        font-size:1.6em; font-weight: bold; color: #40ad48">
+        <option value="?">?</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4a">4a</option>
+        <option value="4b">4b</option>
+        <option value="4c">4c</option>
+        <option value="5a">5a</option>
+        <option value="5a+">5a+</option>
+        <option value="5b">5b</option>
+        <option value="5b+">5b+</option>
+        <option value="5c">5c</option>
+        <option value="5c+">5c+</option>
+        <option value="6a">6a</option>
+        <option value="6a+">6a+</option>
+        <option value="6b">6b</option>
+        <option value="6b+">6b+</option>
+        <option value="6c">6c</option>
+        <option value="6c+">6c+</option>
+        <option value="7a">7a</option>
+        <option value="7a+">7a+</option>
+        <option value="7b">7b</option>
+        <option value="7b+">7b+</option>
+        <option value="7c">7c</option>
+        <option value="7c+">7c+</option>
+        <option value="8a">8a</option>
+        <option value="8a+">8a+</option>
+        <option value="8b">8b</option>
+        <option value="8b+">8b+</option>
+        <option value="8c">8c</option>
+        <option value="8c+">8c+</option>
+        <option value="9a">9a</option>
+        <option value="9a+">9a+</option>
+        <option value="9b">9b</option>
+        <option value="9b+">9b+</option>
+        <option value="9c">9c</option>
     
-   
+        </select>
 
+        </div>
+
+        <div class="col">
+    
+        <input id='notes_user' name="notes_user" size="15" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
+    
+        </div>
     </div>
-    <div class="col">
-
-    <select class="col form-select form-select-lg" id='grade_user' name="grade_user"  size="1" type="text" 
-       style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-       outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
-       font-size:1.6em; font-weight: bold; color: #40ad48">
-    <option value="?">?</option>
-    <option value="1">1</option>
-    <option value="2">2</option>
-    <option value="3">3</option>
-    <option value="4a">4a</option>
-    <option value="4b">4b</option>
-    <option value="4c">4c</option>
-    <option value="5a">5a</option>
-    <option value="5a+">5a+</option>
-    <option value="5b">5b</option>
-    <option value="5b+">5b+</option>
-    <option value="5c">5c</option>
-    <option value="5c+">5c+</option>
-    <option value="6a">6a</option>
-    <option value="6a+">6a+</option>
-    <option value="6b">6b</option>
-    <option value="6b+">6b+</option>
-    <option value="6c">6c</option>
-    <option value="6c+">6c+</option>
-    <option value="7a">7a</option>
-    <option value="7a+">7a+</option>
-    <option value="7b">7b</option>
-    <option value="7b+">7b+</option>
-    <option value="7c">7c</option>
-    <option value="7c+">7c+</option>
-    <option value="8a">8a</option>
-    <option value="8a+">8a+</option>
-    <option value="8b">8b</option>
-    <option value="8b+">8b+</option>
-    <option value="8c">8c</option>
-    <option value="8c+">8c+</option>
-    <option value="9a">9a</option>
-    <option value="9a+">9a+</option>
-    <option value="9b">9b</option>
-    <option value="9b+">9b+</option>
-    <option value="9c">9c</option>
-  
-    </select>
-
-</div>
-
-<div class="col">
-   
-    <input id='notes_user' name="notes_user" size="20" type="text" 
-       style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-       outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
-
- 
-    
-  
-</div>
-
+    <div class="form-row row">
+        <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
+    </div>               
 </div>
 
 
@@ -206,14 +208,11 @@
 
                 <div class="form-row">
                     <span class="close-button" onclick="hideModal()">&times;</span>
+                    <!--i class="bi bi-x-circle-fill" style="font-size: 1.5rem; color: rgb(246, 21, 21);"></i-->
                     {% if user is not none %}
-                    <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
                     {% endif %}
 
-                    {% if (user_can_edit_gym) %}
-                    <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
-                    {% endif %}
-                    <button id='cancelbutton' type="button" class="btn btn-success btn-lg" onclick="document.getElementById('modal').style.display='none';">{{reference_data['current_language'].close}}</button>
+                    
                 </div> 
                 </div>
 
@@ -415,7 +414,7 @@
         {
             if (show)
             {
-                document.getElementById('route-rating-div').style.display='flex';
+                document.getElementById('route-rating-div').style.display='block';
             }else{
                 document.getElementById('route-rating-div').style.display='none';
             }
