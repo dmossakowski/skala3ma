@@ -293,7 +293,7 @@ def logout():
     session['expires_at'] = None
     session['expires_in'] = None
     session['expires_at_localtime'] = None
-
+    session['email'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
     #spotify.token
