@@ -232,15 +232,7 @@ def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
         if session != None and session.get('expires_at') is not None:
-            now = int(datetime.datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
-
-            if expiresAtLocaltime < now:
-                session["wants_url"] = request.url
-                return redirect(url_for("login"))
-            else:
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
             return redirect(url_for("login"))

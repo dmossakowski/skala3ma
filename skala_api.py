@@ -173,17 +173,12 @@ def login_required(fn):
     def decorated_function(*args, **kwargs):
         if session is not None and session.get('expires_at') is not None:
             now = int(datetime.now().timestamp())
+            #expiresAt = session['expires_at']
             expiresAtLocaltime = session['expires_at_localtime']
-
-            if expiresAtLocaltime < now:
-                session["wants_url"] = request.url
-                if session['authsource'] == 'facebook':
-                    return redirect(url_for("facebook"))
-                if session['authsource'] == 'google':
-                    return redirect(url_for("googleauth"))
-
-            else:
-                return fn(*args, **kwargs)
+            diff = expiresAtLocaltime - now
+            print (' diff '+str(diff/1000/60))
+        
+            return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
             return redirect(url_for("skala_api_app.fsgtlogin"))
@@ -325,7 +320,6 @@ def competition_admin_post(competition_id):
                            all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
                            id=id)
-
 
 
 @skala_api_app.get('/activities')
