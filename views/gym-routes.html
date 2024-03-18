@@ -95,6 +95,12 @@
                         }
         </style>
     
+
+
+    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';" style="display: none">
+        
+      </div>
+
         
         <div id="modal" class="modal-container">
 
@@ -103,8 +109,7 @@
                     <span  onclick="hideModal()">
                     <i class="bi bi-x" style="font-size: 2rem; color: rgb(98, 92, 92);"></i>
                     </span>
-                    {% if user is not none %}
-                    {% endif %}
+                    
                 </div> 
             
                 
@@ -116,7 +121,9 @@
                 <div id="mainModalMenu">
                     <div onclick="hideModal()">
                     <div class="form-row-heading">
-                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
+                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name">
+                            
+                        </div>
                     </div>
 
                 <div class="form-row-heading">
@@ -133,7 +140,8 @@
                 <div class="form-row">
                   <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
                   {% if (user_can_edit_gym) %}
-                  <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
+                  <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">
+                    <i class="bi bi-three-dots-vertical"></i>{{reference_data['current_language'].edit}}</button>&nbsp;
                   {% endif %}
                 </div>      
             </div>
@@ -199,12 +207,15 @@
     
         <input id='notes_user' name="notes_user" size="15" type="text" 
         style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
+        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;
+        font-weight: bold; color: #40ad48"/>
     
         </div>
     </div>
     <div class="form-row row">
-        <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">{{reference_data['current_language'].rate}}</button>&nbsp;
+        <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+            <i class="bi bi-send" style="font-size: 2rem; color: white;"></i>
+            </button>&nbsp;
     </div>               
 </div>
 
@@ -337,15 +348,15 @@
                   <div class="form-row">
                     
                     
-                    <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
+                    <button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
-                  <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}}</button>&nbsp;
-                  <button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button>
+                  <!--button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button-->
                     </div>    <div class="form-row">
                   <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
                   <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
-                    </div>
-               
+                    </div>    <div class="form-row"></div>
+                     <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
+                 </div>
                 </div>
                 
             </div>
@@ -362,6 +373,7 @@
             var routeRatingDiv = document.getElementById('route-rating-div');
             var currentRow;
             var mod_type;
+            var isLoggedIn = false;
 
 
             function showEditDiv(){
@@ -372,7 +384,7 @@
             function editContent(){
                 mod_type='save'
                 showEditDiv();
-                showRatingUi(false);
+                hideRatigngUi();
                 return false;
             }
 
@@ -394,7 +406,7 @@
             // Function to display the modal dialog
             function showModal() {
                 resetFlashImage();
-                showRatingUi(true);
+                showRatingUi();
                 mainModalMenuDiv.style.display='block'
                 
                 editDiv.style.display='none';
@@ -408,14 +420,19 @@
                 modal.style.display = "none";
             }
   
-        function showRatingUi(show)
+        function showRatingUi()
         {
-            if (show)
+            if (isLoggedIn)
             {
                 document.getElementById('route-rating-div').style.display='block';
             }else{
                 document.getElementById('route-rating-div').style.display='none';
             }
+        }
+
+        function hideRatigngUi()
+        {
+            document.getElementById('route-rating-div').style.display='none';
         }
 
   
@@ -539,7 +556,7 @@
             // this is a background on edit popup input field
             //document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('hidden_message').textContent='';
-
+          
             document.getElementById('grade_user').value = data.grade;
         }
 
@@ -662,7 +679,8 @@
                     // data is an empty object
                 }
                 else{
-                    showRatingUi(true);
+                    isLoggedIn = true;
+                    showRatingUi();
                 }
                 
             }                
@@ -944,7 +962,7 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Response:', data);
+                //console.log('Response:', data);
                 routes=data.routes
                 renderTabulatorTable(routes);
                 //table.replaceData(routes);
@@ -964,7 +982,7 @@
         function rateRoute(){
                 mod_type='rate'
                 var data = getFormData();
-                console.log('rating route '+mod_type)    
+                //console.log('rating route '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
             fetch('/api1/gym/{{gymid}}/{{routesid}}/rate', {
                 method: 'POST',
@@ -983,11 +1001,14 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Response:', data);
-                routes=data.routes
-                renderTabulatorTable(routes);
+                //console.log(data);
+                document.getElementById('alert-ribbon').innerHTML = '{{ reference_data['current_language']['rating_saved']}} - ' + data.starttime
+                document.getElementById('alert-ribbon').style.display = "block"
+                //document.getElementById('alert-ribbon').style.display='block';
                 //table.replaceData(routes);
                 hideModal()
+                //document.getElementById('thanksbox').style.display='block';
+                
       
             })
             .catch(error => {

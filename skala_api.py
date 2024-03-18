@@ -1514,8 +1514,8 @@ def route_rating(gymid, routesid):
     user = competitionsEngine.get_user_by_email(session['email'])
 
     gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("skala_api_app.fsgtlogin"))
+    #if not competitionsEngine.can_edit_gym(user, gym):
+    #    return redirect(url_for("skala_api_app.fsgtlogin"))
 
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     allroutes = all_routes.get(routesid)
@@ -1551,7 +1551,7 @@ def route_rating(gymid, routesid):
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
 
     
-    return json.dumps(allroutes)
+    return json.dumps(activity)
 
 
 

@@ -83,6 +83,7 @@
   "rank": "Classement",
   "edit": "Editer",
   "close": "Fermer",
+  "rating_saved": "Notation etait ajouté dans les activités du jour",
 
 
   "ranked_women": "Classement Femme",
@@ -166,7 +167,7 @@
   "competition_poster": "Affiche de competition",
   "registration": "Inscription",
   "unregister": "Se désinscrire",
-  "rate": "Rate",
+  "rate": "Note",
   "rating_activity_name": "Activité de notation",
   
   "error5314": "La mise à jour des voies n'est pas autorisée",

@@ -89,6 +89,21 @@ def get_activities_by_date_by_user(date, user_id):
     return _get_activities_by_date_by_user_id(date, user_id)
 
 
+def get_activities_by_gym_routes(gym_id, routes_id):
+    try:
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        result = cursor.execute("SELECT jsondata FROM " + activities_TABLE + " WHERE gym_id = ? AND routes_id = ?",
+                                [str(gym_id), str(routes_id)])
+        activities = []
+        if result is not None and result.arraysize > 0:
+            for row in result.fetchall():
+                activities.append(json.loads(row[0]))
+        return activities
+    finally:
+        db.close()
+
+
 # add an entry to an existing session
 def add_activity_entry(activity_id, route, status, note, user_grade):
     entry_id = str(uuid.uuid4().hex)
