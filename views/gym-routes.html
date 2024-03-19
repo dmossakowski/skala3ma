@@ -97,11 +97,15 @@
     
 
 
-    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';" style="display: none">
-        
-      </div>
 
+    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';"
+      style="display: none; position: fixed; top: 50%; left: 5%; transform: translate(-5%, -5%); z-index: 1000; width: 100%; 
+      background-color: #9ecab3; padding: 20px; border: 1px solid rgb(114, 114, 114);
+      font-size: 2em; font-style:bold; ">
         
+    </div>
+        
+
         <div id="modal" class="modal-container">
 
             <div id="modal-box" class="modal-box ">
@@ -1002,8 +1006,10 @@
             })
             .then(data => {
                 //console.log(data);
-                document.getElementById('alert-ribbon').innerHTML = '{{ reference_data['current_language']['rating_saved']}} - ' + data.starttime
-                document.getElementById('alert-ribbon').style.display = "block"
+                alertRibbon = document.getElementById('alert-ribbon')
+                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} - ' + data.starttime + '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
+                alertRibbon.style.display = "block"
+                //setTimeout(() => alertRibbon.style.display='none', 2500)
                 //document.getElementById('alert-ribbon').style.display='block';
                 //table.replaceData(routes);
                 hideModal()
