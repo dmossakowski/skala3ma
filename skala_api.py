@@ -468,11 +468,9 @@ def get_activities_by_user(user_id):
 
 
 
-@skala_api_app.get('/activity//gym/<gym_id>/routes/<routes_id>')
-@login_required
+@skala_api_app.get('/activity/gym/<gym_id>/routes/<routes_id>')
 def get_activities_by_gym_by_routes(gym_id, routes_id):
-    user = competitionsEngine.get_user_by_email(session['email'])
-
+   
     activities = activities_db.get_activities_by_gym_routes(gym_id, routes_id)
     if (activities is None or len(activities) == 0):
         return {"error":"activity not found"}   
