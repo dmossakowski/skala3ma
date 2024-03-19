@@ -78,7 +78,7 @@
                           justify-content: center;
                           align-items: center;
                           font-size: 18px;
-                          margin: 10px 4px 10px 4px;
+                          margin: 10px 6px 10px 6px;
                           
                         }
                       
@@ -591,15 +591,13 @@
 
         {% if gym is not none and gym is not undefined  %}
       
-                
         <div>
             <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
 
         </div>
         <div>
-                <h1  class="display-2"> {{ gym['name'] }}</h1>
+                <h1  class="display-2"> {{ gym['name'] }}</h1> 
                 
-                <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
                     <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
 
@@ -612,8 +610,8 @@
             </h1>
                 
                     
-                {{ gym['address'] }} <i class="icon-location"></i><br>
-                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
+                {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
             </div>
 
     {% else %}
@@ -659,6 +657,8 @@
     <script>
 
         var routes;
+        var activitiesRecorded = 0;
+        var usersRegistered = 0;
       
         function getData()
         {
@@ -686,6 +686,43 @@
                 else{
                     isLoggedIn = true;
                     showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+          fetch(`/api1/activity/gym/${gymid}/routes/${routeid}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    activitiesRecorded = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+
+          fetch(`/api1/gym/${gymid}/users`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    usersRegistered = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
                 }
                 
             }                

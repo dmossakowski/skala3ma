@@ -455,17 +455,33 @@ def add_activity_route(activity_id):
 def get_activities_by_user(user_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
-    activity = activities_db.get_activity(activity_id)
+    activity = activities_db.get_activities_by_gym_routes(activity_id)
     if (activity is None):
         return {"error":"activity not found"}   
     #a = Activity1(**data)
 
-    activities_db.delete_activity(activity_id)
+    
     # journey_id = user.get('journey_id')
     # calculate_activity_stats(activity)
     #journeys = activities_db.get_activities(user.get('id'))
     return {}
 
+
+
+@skala_api_app.get('/activity//gym/<gym_id>/routes/<routes_id>')
+@login_required
+def get_activities_by_gym_by_routes(gym_id, routes_id):
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    activities = activities_db.get_activities_by_gym_routes(gym_id, routes_id)
+    if (activities is None or len(activities) == 0):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+
+    # journey_id = user.get('journey_id')
+    # calculate_activity_stats(activity)
+    #journeys = activities_db.get_activities(user.get('id'))
+    return json.dumps(activities)
 
 
 @skala_api_app.route('/journey/<journey_id>', methods=['GET'])
@@ -759,8 +775,12 @@ def get_user_by_email(email):
     if climber is None:
         #return "{'error_code':'No such user'}", 400
         return {}
-
     return climber
+
+
+@skala_api_app.route('/gym/<gym_id>/users')
+def get_users_by_gym(gym_id):
+    return skala_db.get_users_by_gym_id(gym_id)
 
 
 @skala_api_app.route('/updateuser')
