@@ -100,8 +100,8 @@
 
 
     <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';"
-      style="display: none; position: fixed; top: 50%; left: 5%; transform: translate(-5%, -5%); z-index: 1000; width: 100%; 
-      background-color: #9ecab3; padding: 20px; border: 1px solid rgb(114, 114, 114);
+      style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80%; 
+      background-color: #f4f9f5; padding: 20px; border: 0px solid rgb(114, 114, 114);
       font-size: 2em; font-style:bold; ">
         
     </div>
@@ -150,11 +150,12 @@
                   {% endif %}
                 </div>      
             </div>
-
+            
 <!-- start user rating -->
                     
 <div id='route-rating-div'  style="display:none;">
     <br><br>
+    <h2>{{reference_data['current_language'].rating_activity_name}}</h2>
     <div class="form-row row">
         <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
         outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
@@ -214,13 +215,18 @@
         style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
         outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;
         font-weight: bold; color: #40ad48"/>
-    
+        <!--button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+          
+            <i class="bi bi-plus-circle" style="font-size: 3rem; color: white;"></i>
+            </button-->
+              <!--i class="bi bi-send" style="font-size: 3rem; color: white;"></i-->
+                 
+                   
         </div>
     </div>
     <div class="form-row row">
         <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
-            <i class="bi bi-send" style="font-size: 2rem; color: white;"></i>
-            </button>&nbsp;
+            <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].save}}</button>
     </div>               
 </div>
 
@@ -232,7 +238,7 @@
                     <div id="editContent" style="display: none">
 
                          <div class="form-row">
-                          <input type="hidden" id="id" name="id" value="">
+                          <input type="hidden" id="routeid" name="routeid" value="">
                           
                         </div>
                       
@@ -370,6 +376,10 @@
 
 
         <script>
+
+            
+            //let dept = params.get("dept"); // return sales
+
             // Get the modal dialog container
             var modal = document.getElementById("modal");
             var editDiv = document.getElementById('editContent');
@@ -456,7 +466,7 @@
         function clearModal(){
             document.getElementById('hidden_message').textContent='';
             const greenColor = '#aaffaa';
-            document.getElementById('id').value = '';
+            document.getElementById('routeid').value = '';
             if (mod_type == 'add_before'){
                 document.getElementById('routenum').value = currentRow.routenum-0.5;
             }else if (mod_type == 'add_after'){
@@ -518,12 +528,12 @@
         function routeDetail(data) {
         	//console.log("routeDetail.. "+data+" - ");
             currentRow=data;
-
+            console.log('routeId '+data.id);
             var hatchColor = data.color1;
             var backgroundColor = 'transparent'; // or any other color
             var hatchedBackground = `repeating-linear-gradient(45deg, ${hatchColor}, ${hatchColor} 15px, ${backgroundColor} 5px, ${backgroundColor} 20px)`;
             
-            document.getElementById('id').value = data.id;
+            document.getElementById('routeid').value = data.id;
             document.getElementById('routenum').value = data.routenum;
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
@@ -597,7 +607,7 @@
         </div>
         <div>
                 <h1  class="display-2"> {{ gym['name'] }}</h1> 
-                
+                <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
                     <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
 
@@ -660,12 +670,12 @@
         var activitiesRecorded = 0;
         var usersRegistered = 0;
       
-        function getData()
+        function fetchServerData()
         {
           const gymid = "{{gymid}}";
-          const routeid = "{{routesid}}";
+          const routeListId = "{{routesid}}";
       
-          fetch(`/api1/gym/${gymid}/${routeid}`)
+          fetch(`/api1/gym/${gymid}/${routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -692,7 +702,7 @@
           )
           .catch(error => console.error(error));
 
-          fetch(`/api1/activity/gym/${gymid}/routes/${routeid}`)
+          fetch(`/api1/activity/gym/${gymid}/routes/${routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -728,6 +738,10 @@
             }                
           )
           .catch(error => console.error(error));
+
+          
+
+
         }
       
         // Function to create a hatched pattern in color rendering when printing to pdf  
@@ -743,13 +757,16 @@
                 </svg>`;
         }
       
+    var table;
       function renderTabulatorTable(routesA)
       {
         var columns = [
+          {title: "id", visible:false, field: "id", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false,
             formatter:function(cell, formatterParams, onRendered){
-                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`;
+                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`
+                     //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
             },
         
         
@@ -775,7 +792,7 @@
           ];
       
           // Create the Tabulator table
-          var table = new Tabulator("#tabulator-table", {
+        table = new Tabulator("#tabulator-table", {
             printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
@@ -788,30 +805,40 @@
                 //dataTree:false, //do not include data tree in printed table
                 //formatCells:true, //show raw cell values without formatter
             },
+            //groupBy:"line",
+            //groupBy:"routenum",
+            groupHeader:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
 
-              columns: columns,
-              data: routesA ,
-              layout:"fitDataStretch",
-              //layout: "fitDataFill",
-              movableRows: false,
-              selectable: 1,
-              //responsiveLayout:"collapse",
-              //responsiveLayout:"fitColumns",
-              //responsiveLayout:"collapse",
-              //movableColumns: true, 
-              //responsiveLayoutCollapseStartOpen:true,
-              formatter:"responsiveCollapse", headerSort:false,
-              rowFormatter:function(row){
-                if(row.getData().line % 2 == 0){
-                    //row.getElement().style.backgroundColor = "#dddddd";
-                    //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
-                    row.getElement().style.backgroundColor = "#f1f1f1";
-                
-                }else{
-                    row.getElement().style.backgroundColor = "#ffffff";
-                
-                }
-                },
+                return value + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>"+
+                "<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='100'>";
+            },
+            columns: columns,
+            data: routesA ,
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
+            movableRows: false,
+            selectable: 1,
+            //responsiveLayout:"collapse",
+            //responsiveLayout:"fitColumns",
+            //responsiveLayout:"collapse",
+            //movableColumns: true, 
+            //responsiveLayoutCollapseStartOpen:true,
+            formatter:"responsiveCollapse", headerSort:false,
+            rowFormatter:function(row){
+            if(row.getData().line % 2 == 0){
+                //row.getElement().style.backgroundColor = "#dddddd";
+                //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
+                row.getElement().style.backgroundColor = "#f1f1f1";
+            
+            }else{
+                row.getElement().style.backgroundColor = "#ffffff";
+            
+            }
+            },
 
               /*rowContextMenu:[
               {
@@ -849,15 +876,16 @@
       }
       
       
-        getData();
+        fetchServerData();
         
         function getFormData() {
           const formData = {};
 
           
+          const routeid = document.getElementById('routeid').value;
+          console.log('getFormData routeid '+routeid);
           
-          const id = document.getElementById('id').value;
-          formData['id'] = id;
+          formData['id'] = routeid;
           
           const routenum = document.getElementById('routenum').value;
           formData['routenum'] = routenum;
@@ -902,11 +930,11 @@
           const jsonData = JSON.stringify(formData);
           
           return jsonData;
-          }
+        }
       
       
         function addRoute() {
-          const id = document.getElementById('id').value;
+          const id = document.getElementById('routeid').value;
           const routenum = parseInt(document.getElementById('routenum').value);
           const line = document.getElementById('line').value;
           const colorfr = document.getElementById('colorfr').value;
@@ -1045,7 +1073,8 @@
             .then(data => {
                 //console.log(data);
                 alertRibbon = document.getElementById('alert-ribbon')
-                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} - ' + data.starttime + '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
+                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} - ' + data.starttime + 
+                '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
                 alertRibbon.style.display = "block"
                 //setTimeout(() => alertRibbon.style.display='none', 2500)
                 //document.getElementById('alert-ribbon').style.display='block';

@@ -214,6 +214,10 @@
 
 <script>
 
+    let queryParams = new URLSearchParams(window.location.search);
+
+    let queryRouteid = queryParams.get("routeid"); // return john
+    console.log("queryRouteid: "+queryRouteid);
 
     // Get the modal dialog container
     var modal = document.getElementById("modal");
@@ -288,6 +292,7 @@ function showModal() {
     var gym_id;
     var routes;
     var activity;
+    var table;
       
       function getData()
       {
@@ -318,6 +323,7 @@ function showModal() {
             //console.log(data);
             routes=data.routes
             renderGymRoutesTabulatorTable(routes);
+            
               
     
         })
@@ -327,51 +333,51 @@ function showModal() {
     
 
     getData();
-
+    
 
     function renderGymRoutesTabulatorTable(routesA)
       {
         var columns = [
-        {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
-            formatter:function(cell, formatterParams, onRendered){
-                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}</sup>`;
+            {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+            {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
+                formatter:function(cell, formatterParams, onRendered){
+                    return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}</sup>`;
+                },
+            
             },
+            
+            {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+            "responsive": 0 , minWidth:10, 
+            formatter:function(cell, formatterParams, onRendered){ 
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                },
+            
+                formatterPrint:function(cell, formatterParams, onRendered){
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                },
+            },
+            {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+            {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+            {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+            {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+            {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+            ];
         
-        },
-         
-        {title: "{{ reference_data['current_language'].color }}", field: "color1", 
-           "responsive": 0 , minWidth:10, 
-           formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
-            },
-        
-            formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
-            },
-        },
-          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
-          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
-          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
-          ];
-      
           // Create the Tabulator table
-          var table = new Tabulator("#tabulator-table", {
-              columns: columns,
-              data: routesA ,
-              layout:"fitDataStretch",
-              //layout: "fitDataFill",
-              movableRows: true,
-              selectable: 1,
-              responsiveLayout:"collapse",
-              //responsiveLayout:"fitColumns",
-              //movableColumns: true, 
-              responsiveLayoutCollapseStartOpen:false,
-              formatter:"responsiveCollapse", headerSort:true,
-              rowFormatter:function(row){
-                if(row.getData().line % 2 == 0){
+        table = new Tabulator("#tabulator-table", {
+            columns: columns,
+            data: routesA ,
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
+            movableRows: true,
+            selectable: 1,
+            responsiveLayout:"collapse",
+            //responsiveLayout:"fitColumns",
+            //movableColumns: true, 
+            responsiveLayoutCollapseStartOpen:false,
+            formatter:"responsiveCollapse", headerSort:true,
+            rowFormatter:function(row){
+            if(row.getData().line % 2 == 0){
                     //row.getElement().style.backgroundColor = "#dddddd";
                     //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
                     row.getElement().style.backgroundColor = "#f1f1f1";
@@ -403,6 +409,10 @@ function showModal() {
             
           });
 
+          table.on("tableBuilt", function(){
+            checkAndOpenAddRouteActivity();
+          });
+
           if (currentRow !== undefined)
           {
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
@@ -410,6 +420,30 @@ function showModal() {
           }
       
       }
+
+      function checkAndOpenAddRouteActivity()
+      {
+        if (queryRouteid == undefined)
+        {
+            return;
+        }
+        console.log("checkAndOpenAddRouteActivity: "+queryRouteid);
+        
+        rows = table.searchRows("id", "=", queryRouteid);
+
+        if (rows == undefined || rows.length == 0)
+        {
+            return;
+        }
+        
+        console.log(rows);
+        console.log(rows[0]);
+        console.log(rows[0].getData());
+        showModal();
+        gymRouteDetail(rows[0].getData());
+
+
+      } 
       
     
       var formData = {};

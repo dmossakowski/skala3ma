@@ -1485,6 +1485,7 @@ def route_save(gymid, routesid):
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     routeset = all_routes.get(routesid)
 
+    logging.info("routesid: "+routedata['id'])
     routes = routeset.get('routes')
     if routedata['id'] is None or routedata['id'] == '':
         routedata['id'] = str(uuid.uuid4().hex)
@@ -1530,10 +1531,7 @@ def route_rating(gymid, routesid):
     user_grade = data.get('grade_user')
 
     user = competitionsEngine.get_user_by_email(session['email'])
-
     gym = competitionsEngine.get_gym(gymid)
-    #if not competitionsEngine.can_edit_gym(user, gym):
-    #    return redirect(url_for("skala_api_app.fsgtlogin"))
 
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     allroutes = all_routes.get(routesid)
