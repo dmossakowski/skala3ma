@@ -83,7 +83,7 @@
   "rank": "Classement",
   "edit": "Editer",
   "close": "Fermer",
-  "rating_saved": "Notation etait ajouté dans les activités du jour",
+  "rating_saved": "La cotation est ajoutée à l'activité du jour",
 
 
   "ranked_women": "Classement Femme",
@@ -168,8 +168,11 @@
   "registration": "Inscription",
   "unregister": "Se désinscrire",
   "rate": "Note",
-  "rating_activity_name": "Activité de notation",
+  "rating_activity_name": "Activité de la cotation",
+  "rating_activity_prompt": "Ajouter une activité (et proposer une cotation) ",
   
+
+
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",

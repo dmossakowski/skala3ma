@@ -519,6 +519,26 @@ def activity_detail(activity_id):
                            )
 
 
+@app_ui.route('/activities/dialog', methods=['GET'])
+#@login_required
+def activity_detail_dialog():
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+    activity = activity_engine.get_activity(activity_id)
+    gym = competitionsEngine.get_gym(activity['gym_id'])
+
+
+    return render_template('activity-detail.html',
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           activity=activity,
+                           routes=routes,
+                           gym=gym,
+                           today=date.today(),
+                           activity_id=activity_id,
+                           )
+ 
+
 @app_ui.route('/journey/add', methods=['POST'])
 @login_required
 def journey_add():

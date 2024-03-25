@@ -460,6 +460,8 @@ function showModal() {
             document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('mainModalMenu').style.display='block';
             //mainModalMenuDiv.style.display='block';
+
+
             document.getElementById('route-grade-user').value = data.grade; 
 
             formData = {};
@@ -606,7 +608,14 @@ function showModal() {
                
                 <td class="col-5">{{ route['name'] }}</td>
            
-                <td class="col-1"><i>{{ route['user_grade'] }} </i> </td>
+                <td class="col-1"><i>
+                    {% if route['grade'] != route['user_grade'] %}
+                    {{ route['user_grade'] }}
+                    {% endif %} 
+                </i> 
+                
+                
+                </td>
         <td class="col-5"><i> {{ route['note'] }}</i></td>
 			 <td>
                 <!--div style="box-sizing: border-box;outline-color: transparent;

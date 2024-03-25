@@ -173,6 +173,8 @@
   "unregister": "Wypisz się",
   "rate": "Ratuj",
   "rating_activity_name": "Ocena",
+  "rating_activity_prompt": "Dodaj wyczyn (zasugeruj ocenę)",
+  
   
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
