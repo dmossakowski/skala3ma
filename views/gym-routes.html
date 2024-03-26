@@ -40,7 +40,7 @@
                 margin: 2% auto;
                 padding: 0px 0px 15px 0px;
                 border: 1px solid #888;
-                width:max-content;
+                width:370px;
                 
                 display: block;
                 
@@ -72,18 +72,22 @@
                           color: #292424;
                           font-weight: bold;
                           vertical-align: bottom;
+                          
                         }
                         .form-row {
                           display: flex;
-                          justify-content: center;
+                          
                           align-items: center;
                           font-size: 18px;
                           margin: 10px 6px 10px 6px;
+                          /*word-wrap: break-word;*/
                           
                         }
                       
                         .form-row label {
-                          text-align: right;
+
+                          justify-content: left;
+                          text-align: left;
                           display: block;
                           margin-right: 6px;
                           
@@ -119,7 +123,7 @@
             
                 
             <div class="form-row row">
-                <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;">
+                <div id="hidden_message" class="form-row-heading" style=" font: bold 24px;color: red; align-content: center;">
                     </div>
                     </div>
                
@@ -138,15 +142,17 @@
                 <div class="form-row-heading">
                     <div id="route-openedby">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-opendate"></div>
                 </div>
-                <div class="form-row">
+                <div class="form-row-heading">
                     <div id="route-notes">&nbsp;&nbsp;&nbsp;</div>
                 </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row-heading">
                   <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
                   {% if (user_can_edit_gym) %}
                   <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">
                     <i class="bi bi-three-dots-vertical"></i>{{reference_data['current_language'].edit}}</button>&nbsp;
+                    <button id='closebutton' type="button" class="btn btn-success btn-lg" onclick="addBefore()">{{reference_data['current_language'].add_new_route}}</button>&nbsp;
+                  
                   {% endif %}
                 </div>      
             </div>
@@ -224,7 +230,7 @@
                    
         </div>
     </div>
-    <div class="form-row row">
+    <div class="form-row-heading row">
         <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
             <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].save}}</button>
     </div>               
@@ -341,7 +347,7 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}</label>
+                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}:</label>
                           <input type="text" id="openedby" name="openedby" value="">
                         </div>
                       
@@ -356,16 +362,17 @@
                         </div>
                       
 
-                  <div class="form-row">
+                  <div class="form-row-heading">
                     
                     
                     <button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
                   <!--button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button-->
-                    </div>    <div class="form-row">
+                    </div>    
+                    <!--div class="form-row-heading">
                   <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
                   <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
-                    </div>    <div class="form-row"></div>
+                    </div-->    <div class="form-row"></div>
                      <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
                  </div>
                 </div>
@@ -454,12 +461,14 @@
         function addBefore(){
             mod_type='add_before';
             clearModal();
+            hideRatigngUi();
             showEditDiv();
         }
 
         function addAfter(){
             mod_type='add_after';
             clearModal();
+            hideRatigngUi();
             showEditDiv();
         }
 
