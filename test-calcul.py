@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 def calculate_points(climbed_routes, weight_routes=1, weight_grades=1):
-    grades = ['1', '2', '3', '4a', '4b', '4c', '5a', '5b', '5c', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
+    grades = ['?','1', '2', '3', '4a', '4b', '4c', '5a', '5b', '5c', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
     mean = grades.index('7a')
     std_dev = 6 # adjust this to change the spread of the normal distribution
 
@@ -35,7 +35,7 @@ weight_grades = 1
 climbed_routes_list = []
 for i in range(10):
     num_routes = int(random.normalvariate(mean_routes, std_dev_routes))
-    climbed_routes = random.choices(['1', '2', '3', '4a', '4b', '4c', '5a', '5b', '5c', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c'], k=num_routes)
+    climbed_routes = random.choices(['?','1', '2', '3', '4a', '4b', '4c', '5a', '5b', '5c', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c'], k=num_routes)
     climbed_routes_list.append(climbed_routes)
 
 # calculate the points earned by each climber

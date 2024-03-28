@@ -295,6 +295,22 @@ def get_user_by_email(email):
     return user
 
 
+def get_users_by_gym_id(gym_id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where json_extract(jsondata, '$.gym_id')=? ;''', [gym_id])
+
+    users = []
+    if rows is not None and rows.arraysize > 0:
+        for row in rows.fetchall():
+            user = json.loads(row[0])
+            users.append(user)
+
+    return users
+
+
 def get_all_user_emails():
 
     db = lite.connect(COMPETITIONS_DB)

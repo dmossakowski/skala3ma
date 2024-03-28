@@ -38,11 +38,14 @@
             .modal-box {
                 background-color: #fff;
                 margin: 2% auto;
-                padding: 15px;
+                padding: 0px 0px 15px 0px;
                 border: 1px solid #888;
-                width:max-content;
-                
-                display: flex;
+                width:370px;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%); 
+                display: block;
                 
                 justify-content: center;
                 align-items: center;
@@ -53,47 +56,44 @@
     
             /* Style for the close button */
             .close-button {
-                position: absolute;
-                top: 20px;
-                right: 30px;
-                font-size: 30px;
+                position: relative;
+                padding: 0px 15px 0px 0px;
+                justify-content: right;
+                text-align: right;
+                
                 color: #aaa;
                 font-weight: bold;
-                cursor: pointer;
+                
             }
-        </style>
-    
-        
 
-
-        
-        <div id="modal" class="modal-container">
-            
-            <div id="modal-box" class="modal-box">
-               
-                <form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
-                    <style>
-                        .form-row-heading {
+            .form-row-heading {
                           display: flex;
                           justify-content: center;
                           align-items: baseline;
-                          margin: 10px;
+                          margin: 1px;
                           font-size: 20px;
                           color: #292424;
                           font-weight: bold;
                           vertical-align: bottom;
+                          
                         }
                         .form-row {
                           display: flex;
-                          justify-content: center;
+                          
                           align-items: center;
-                          margin: 10px;
+                          font-size: 18px;
+                          margin: 10px 6px 10px 6px;
+                          /*word-wrap: break-word;*/
+                          
                         }
                       
                         .form-row label {
-                          text-align: right;
+
+                          justify-content: left;
+                          text-align: left;
+                          display: block;
                           margin-right: 6px;
-                          flex: 1;
+                          
                         }
                       
                         .form-row input,
@@ -101,15 +101,41 @@
                         .form-row textarea {
                           flex: 1;
                         }
-                      </style>
+        </style>
+    
 
-                <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
+
+
+    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';"
+      style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80%; 
+      background-color: #f4f9f5; padding: 20px; border: 0px solid rgb(114, 114, 114);
+      font-size: 2em; font-style:bold; ">
+        
+    </div>
+        
+
+        <div id="modal" class="modal-container">
+
+            <div id="modal-box" class="modal-box ">
+                <div class="row close-button row">
+                    <span  onclick="hideModal()">
+                    <i class="bi bi-x" style="font-size: 2rem; color: rgb(98, 92, 92);"></i>
+                    </span>
+                    
+                </div> 
+            
+                
+            <div class="form-row row">
+                <div id="hidden_message" class="form-row-heading" style=" font: bold 24px;color: red; align-content: center;">
+                    </div>
+                    </div>
                
                 <div id="mainModalMenu">
-                    
-                    <div  onclick="hideModal()">
+                    <div onclick="hideModal()">
                     <div class="form-row-heading">
-                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
+                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name">
+                            
+                        </div>
                     </div>
 
                 <div class="form-row-heading">
@@ -119,29 +145,109 @@
                 <div class="form-row-heading">
                     <div id="route-openedby">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-opendate"></div>
                 </div>
-                <div class="form-row">
+                <div class="form-row-heading">
                     <div id="route-notes">&nbsp;&nbsp;&nbsp;</div>
                 </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row-heading">
                   <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
-
+                  {% if (user_can_edit_gym) %}
+                  <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">
+                    <i class="bi bi-three-dots-vertical"></i>{{reference_data['current_language'].edit}}</button>&nbsp;
+                    <button id='closebutton' type="button" class="btn btn-success btn-lg" onclick="addBefore()">{{reference_data['current_language'].add_new_route}}</button>&nbsp;
+                  
+                  {% endif %}
                 </div>      
-                
-                <div class="form-row">
-                    <span class="close-button" onclick="hideModal()">&times;</span>
+            </div>
+            
+<!-- start user rating -->
                     
-                    {% if (user_can_edit_gym) %}
-                    <button id='editbutton' type="button" class="btn btn-info btn-md" onclick="editContent();">{{reference_data['current_language'].edit}}</button>&nbsp;
-                    {% endif %}
-                    <button id='cancelbutton' type="button" class="btn btn-info" onclick="document.getElementById('modal').style.display='none';">{{reference_data['current_language'].close}}</button>
-                </div> 
-                </div>
+<div id='route-rating-div'  style="display:none;">
+    <br><br>
+    <h3>&nbsp; {{reference_data['current_language'].rating_activity_prompt}}&nbsp; </h3>
+    <div class="form-row row">
+        <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
+        <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
+        
+        </div>
+        <div class="col">
+
+        <select class="col form-select form-select-lg" id='grade_user' name="grade_user"  size="1" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
+        font-size:1.6em; font-weight: bold; color: #40ad48">
+        <option value="?">?</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4a">4a</option>
+        <option value="4b">4b</option>
+        <option value="4c">4c</option>
+        <option value="5a">5a</option>
+        <option value="5a+">5a+</option>
+        <option value="5b">5b</option>
+        <option value="5b+">5b+</option>
+        <option value="5c">5c</option>
+        <option value="5c+">5c+</option>
+        <option value="6a">6a</option>
+        <option value="6a+">6a+</option>
+        <option value="6b">6b</option>
+        <option value="6b+">6b+</option>
+        <option value="6c">6c</option>
+        <option value="6c+">6c+</option>
+        <option value="7a">7a</option>
+        <option value="7a+">7a+</option>
+        <option value="7b">7b</option>
+        <option value="7b+">7b+</option>
+        <option value="7c">7c</option>
+        <option value="7c+">7c+</option>
+        <option value="8a">8a</option>
+        <option value="8a+">8a+</option>
+        <option value="8b">8b</option>
+        <option value="8b+">8b+</option>
+        <option value="8c">8c</option>
+        <option value="8c+">8c+</option>
+        <option value="9a">9a</option>
+        <option value="9a+">9a+</option>
+        <option value="9b">9b</option>
+        <option value="9b+">9b+</option>
+        <option value="9c">9c</option>
+    
+        </select>
+
+        </div>
+
+        <div class="col">
+    
+        <input id='notes_user' name="notes_user" size="13" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;
+        font-weight: bold; color: #40ad48"/>
+        <!--button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+          
+            <i class="bi bi-plus-circle" style="font-size: 3rem; color: white;"></i>
+            </button-->
+              <!--i class="bi bi-send" style="font-size: 3rem; color: white;"></i-->
+                 
+                   
+        </div>
+    </div>
+    <div class="form-row-heading row">
+        <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+            <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].add_activity}}</button>
+    </div>               
+</div>
+
+
+<!-- end user rating-->
+
+
 
                     <div id="editContent" style="display: none">
 
                          <div class="form-row">
-                          <input type="hidden" id="id" name="id" value="">
+                          <input type="hidden" id="routeid" name="routeid" value="">
                           
                         </div>
                       
@@ -244,7 +350,7 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}</label>
+                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}:</label>
                           <input type="text" id="openedby" name="openedby" value="">
                         </div>
                       
@@ -258,20 +364,21 @@
                           <textarea id="notes" name="notes">très facile</textarea>  <!-- TODO revoir le texte ici ?-->
                         </div>
                       
-                  <div class="form-row">
-                    <span class="close-button" onclick="hideModal()">&times;</span>
+
+                  <div class="form-row-heading">
                     
-                    <button id='submitbutton' type="button" class="btn btn-info" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
+                    
+                    <button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
-                  <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}}</button>&nbsp;
-                  <button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button>
-                    </div>    <div class="form-row">
+                  <!--button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button-->
+                    </div>    
+                    <!--div class="form-row-heading">
                   <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
                   <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
-                    </div>
-               
+                    </div-->    <div class="form-row"></div>
+                     <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
+                 </div>
                 </div>
-                </form>
                 
             </div>
             
@@ -279,13 +386,19 @@
 
 
         <script>
+
+            
+            //let dept = params.get("dept"); // return sales
+
             // Get the modal dialog container
             var modal = document.getElementById("modal");
             var editDiv = document.getElementById('editContent');
             var mainModalMenuDiv = document.getElementById('mainModalMenu');
             var modalBoxDiv = document.getElementById('modal-box');
+            var routeRatingDiv = document.getElementById('route-rating-div');
             var currentRow;
             var mod_type;
+            var isLoggedIn = false;
 
 
             function showEditDiv(){
@@ -296,8 +409,12 @@
             function editContent(){
                 mod_type='save'
                 showEditDiv();
+                hideRatigngUi();
                 return false;
             }
+
+            
+
 
             function deleteContent(){
                 mod_type='delete'
@@ -313,10 +430,13 @@
 
             // Function to display the modal dialog
             function showModal() {
+                resetFlashImage();
+                showRatingUi();
                 mainModalMenuDiv.style.display='block'
                 
                 editDiv.style.display='none';
                 modal.style.display = "block";
+                
             }
     
             // Function to hide the modal dialog
@@ -325,23 +445,40 @@
                 modal.style.display = "none";
             }
   
+        function showRatingUi()
+        {
+            if (isLoggedIn)
+            {
+                document.getElementById('route-rating-div').style.display='block';
+            }else{
+                document.getElementById('route-rating-div').style.display='none';
+            }
+        }
+
+        function hideRatigngUi()
+        {
+            document.getElementById('route-rating-div').style.display='none';
+        }
+
   
         function addBefore(){
             mod_type='add_before';
             clearModal();
+            hideRatigngUi();
             showEditDiv();
         }
 
         function addAfter(){
             mod_type='add_after';
             clearModal();
+            hideRatigngUi();
             showEditDiv();
         }
 
         function clearModal(){
             document.getElementById('hidden_message').textContent='';
             const greenColor = '#aaffaa';
-            document.getElementById('id').value = '';
+            document.getElementById('routeid').value = '';
             if (mod_type == 'add_before'){
                 document.getElementById('routenum').value = currentRow.routenum-0.5;
             }else if (mod_type == 'add_after'){
@@ -403,12 +540,12 @@
         function routeDetail(data) {
         	//console.log("routeDetail.. "+data+" - ");
             currentRow=data;
-
+            console.log('routeId '+data.id);
             var hatchColor = data.color1;
             var backgroundColor = 'transparent'; // or any other color
             var hatchedBackground = `repeating-linear-gradient(45deg, ${hatchColor}, ${hatchColor} 15px, ${backgroundColor} 5px, ${backgroundColor} 20px)`;
             
-            document.getElementById('id').value = data.id;
+            document.getElementById('routeid').value = data.id;
             document.getElementById('routenum').value = data.routenum;
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
@@ -446,6 +583,8 @@
             // this is a background on edit popup input field
             //document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('hidden_message').textContent='';
+          
+            document.getElementById('grade_user').value = data.grade;
         }
 
         
@@ -474,14 +613,12 @@
 
         {% if gym is not none and gym is not undefined  %}
       
-                
         <div>
             <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
 
         </div>
         <div>
-                <h1  class="display-2"> {{ gym['name'] }}</h1>
-                
+                <h1  class="display-2"> {{ gym['name'] }}</h1> 
                 <h1>
                 <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
                     <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
@@ -495,8 +632,8 @@
             </h1>
                 
                     
-                {{ gym['address'] }} <i class="icon-location"></i><br>
-                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
+                {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
             </div>
 
     {% else %}
@@ -542,24 +679,81 @@
     <script>
 
         var routes;
+        var activitiesRecorded = 0;
+        var usersRegistered = 0;
       
-        function getData()
+        function fetchServerData()
         {
           const gymid = "{{gymid}}";
-          const routeid = "{{routesid}}";
+          const routeListId = "{{routesid}}";
       
-          fetch(`/api1/gym/${gymid}/${routeid}`)
+          fetch(`/api1/gym/${gymid}/${routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
               // console.log(data);
               routes=data.routes
               renderTabulatorTable(routes);
-                
-      
           })
           .catch(error => console.error(error));
       
+          fetch(`/api1/user`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    isLoggedIn = true;
+                    showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+          fetch(`/api1/activity/gym/${gymid}/routes/${routeListId}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    activitiesRecorded = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+
+          fetch(`/api1/gym/${gymid}/users`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    usersRegistered = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+          
+
+
         }
       
         // Function to create a hatched pattern in color rendering when printing to pdf  
@@ -575,13 +769,16 @@
                 </svg>`;
         }
       
+    var table;
       function renderTabulatorTable(routesA)
       {
         var columns = [
+          {title: "id", visible:false, field: "id", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
           {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false,
             formatter:function(cell, formatterParams, onRendered){
-                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`;
+                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`
+                     //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
             },
         
         
@@ -607,7 +804,7 @@
           ];
       
           // Create the Tabulator table
-          var table = new Tabulator("#tabulator-table", {
+        table = new Tabulator("#tabulator-table", {
             printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
@@ -620,30 +817,40 @@
                 //dataTree:false, //do not include data tree in printed table
                 //formatCells:true, //show raw cell values without formatter
             },
+            //groupBy:"line",
+            //groupBy:"routenum",
+            groupHeader:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
 
-              columns: columns,
-              data: routesA ,
-              layout:"fitDataStretch",
-              //layout: "fitDataFill",
-              movableRows: false,
-              selectable: 1,
-              //responsiveLayout:"collapse",
-              //responsiveLayout:"fitColumns",
-              //responsiveLayout:"collapse",
-              //movableColumns: true, 
-              //responsiveLayoutCollapseStartOpen:true,
-              formatter:"responsiveCollapse", headerSort:false,
-              rowFormatter:function(row){
-                if(row.getData().line % 2 == 0){
-                    //row.getElement().style.backgroundColor = "#dddddd";
-                    //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
-                    row.getElement().style.backgroundColor = "#f1f1f1";
-                
-                }else{
-                    row.getElement().style.backgroundColor = "#ffffff";
-                
-                }
-                },
+                return value + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>"+
+                "<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='100'>";
+            },
+            columns: columns,
+            data: routesA ,
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
+            movableRows: false,
+            selectable: 1,
+            //responsiveLayout:"collapse",
+            //responsiveLayout:"fitColumns",
+            //responsiveLayout:"collapse",
+            //movableColumns: true, 
+            //responsiveLayoutCollapseStartOpen:true,
+            formatter:"responsiveCollapse", headerSort:false,
+            rowFormatter:function(row){
+            if(row.getData().line % 2 == 0){
+                //row.getElement().style.backgroundColor = "#dddddd";
+                //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
+                row.getElement().style.backgroundColor = "#f1f1f1";
+            
+            }else{
+                row.getElement().style.backgroundColor = "#ffffff";
+            
+            }
+            },
 
               /*rowContextMenu:[
               {
@@ -681,15 +888,16 @@
       }
       
       
-        getData();
+        fetchServerData();
         
         function getFormData() {
           const formData = {};
 
           
+          const routeid = document.getElementById('routeid').value;
+          console.log('getFormData routeid '+routeid);
           
-          const id = document.getElementById('id').value;
-          formData['id'] = id;
+          formData['id'] = routeid;
           
           const routenum = document.getElementById('routenum').value;
           formData['routenum'] = routenum;
@@ -722,15 +930,23 @@
           
           const notes = document.getElementById('notes').value;
           formData['notes'] = notes;
+
+            formData['route_finish_status'] = routeFinishStatus;
+
+            const route_grade_user = document.getElementById('grade_user').value;
+            formData['grade_user'] = route_grade_user;
           
+            const notes_user = document.getElementById('notes_user').value;
+            formData['notes_user'] = notes_user;
+
           const jsonData = JSON.stringify(formData);
           
           return jsonData;
-          }
+        }
       
       
         function addRoute() {
-          const id = document.getElementById('id').value;
+          const id = document.getElementById('routeid').value;
           const routenum = parseInt(document.getElementById('routenum').value);
           const line = document.getElementById('line').value;
           const colorfr = document.getElementById('colorfr').value;
@@ -828,7 +1044,7 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Response:', data);
+                //console.log('Response:', data);
                 routes=data.routes
                 renderTabulatorTable(routes);
                 //table.replaceData(routes);
@@ -844,6 +1060,51 @@
             });
             }
 
+
+        function rateRoute(){
+                mod_type='rate'
+                var data = getFormData();
+                //console.log('rating route '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/rate', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    //console.log('error response',response.json)
+                    //console.log(response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                //console.log(data);
+                alertRibbon = document.getElementById('alert-ribbon')
+                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} ' + data.starttime + 
+                '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
+                alertRibbon.style.display = "block"
+                //setTimeout(() => alertRibbon.style.display='none', 2500)
+                //document.getElementById('alert-ribbon').style.display='block';
+                //table.replaceData(routes);
+                hideModal()
+                //document.getElementById('thanksbox').style.display='block';
+                
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+                return false;
+            }
 
       </script>
       

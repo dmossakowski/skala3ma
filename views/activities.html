@@ -389,22 +389,22 @@ function addActivityEntry(text)
 
     // Create a new activity-entry div
     var entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
+    entry.className = 'activity-entry-text col-2';
     entry.innerHTML = date;
     row.appendChild(entry);
 
     entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
+    entry.className = 'activity-entry-text col-3';
     entry.innerHTML = `<a href="/activities/${text.id}">`+ text.name+'</a>';
     row.appendChild(entry);
 
     entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
+    entry.className = 'activity-entry-text col-1';
     entry.innerHTML = `<a href="/activities/${text.id}">`+ text.routes.length+'</a>';
     row.appendChild(entry);
 
     entry = document.createElement('div');
-    entry.className = 'activity-entry-text col-6' ;
+    entry.className = 'activity-entry-text col-6';
     entry.innerHTML = text.gym_name;
     row.appendChild(entry);
 

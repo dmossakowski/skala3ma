@@ -60,7 +60,6 @@ import competitionsEngine
 #import locale
 import glob
 from flask import Flask
-#from flask_cors import CORS
 
 
 from flask_login import (
@@ -110,7 +109,6 @@ app.register_blueprint(skala_api_app)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
-#CORS(app)
 
 #from fastapi.middleware.wsgi import WSGIMiddleware
 

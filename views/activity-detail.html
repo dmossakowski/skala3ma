@@ -73,7 +73,7 @@
                       display: flex;
                       justify-content: center;
                       align-items: baseline;
-                      margin: 10px;
+                      margin: 2px;
                       font-size: 20px;
                       color: #292424;
                       font-weight: bold;
@@ -116,20 +116,72 @@
 
             <div class="form-row-heading">
                 <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
-                <div id="route-color1" >&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div style="font-size:20px;" id="route-grade"></div>
+                <div id="route-color1" >&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  
+                <div style="font-size:20px;" id="route-grade"></div>
             </div>
             </div>
             
-            <div class="form-row">
+            <div class="form-row row">
 
-                    <div id="toggle-flash-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-                    outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef ">
+                    <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+                    outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
                     <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
                     
                    
 
                     </div>
-                       <input id='notes' name="notes" size="30" type="text" 
+                    <div class="col">
+
+                    <select class="col form-select form-select-lg" id='route-grade-user' name="route-grade-user"  size="1" type="text" 
+                       style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+                       outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
+                       font-size:1.6em; font-weight: bold; color: #40ad48">
+                    <option value="?">?</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4a">4a</option>
+                    <option value="4b">4b</option>
+                    <option value="4c">4c</option>
+                    <option value="5a">5a</option>
+                    <option value="5a+">5a+</option>
+                    <option value="5b">5b</option>
+                    <option value="5b+">5b+</option>
+                    <option value="5c">5c</option>
+                    <option value="5c+">5c+</option>
+                    <option value="6a">6a</option>
+                    <option value="6a+">6a+</option>
+                    <option value="6b">6b</option>
+                    <option value="6b+">6b+</option>
+                    <option value="6c">6c</option>
+                    <option value="6c+">6c+</option>
+                    <option value="7a">7a</option>
+                    <option value="7a+">7a+</option>
+                    <option value="7b">7b</option>
+                    <option value="7b+">7b+</option>
+                    <option value="7c">7c</option>
+                    <option value="7c+">7c+</option>
+                    <option value="8a">8a</option>
+                    <option value="8a+">8a+</option>
+                    <option value="8b">8b</option>
+                    <option value="8b+">8b+</option>
+                    <option value="8c">8c</option>
+                    <option value="8c+">8c+</option>
+                    <option value="9a">9a</option>
+                    <option value="9a+">9a+</option>
+                    <option value="9b">9b</option>
+                    <option value="9b+">9b+</option>
+                    <option value="9c">9c</option>
+                  
+                    </select>
+
+                 
+                    
+                  
+                </div>
+                <div class="col">
+                   
+                    <input id='notes' name="notes" size="20" type="text" 
                        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
                        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
 
@@ -137,16 +189,17 @@
                     
                   
                 </div>
+                </div>
                 <div class="form-row">
              
-                        </div>
 
                         
             
 
-                        <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData('climbed');">Save</button>&nbsp;
+                    <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData('climbed');">Save</button>&nbsp;
                  
-                <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
+                    <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
+                    
             </div> 
             </div>
 
@@ -161,6 +214,10 @@
 
 <script>
 
+    let queryParams = new URLSearchParams(window.location.search);
+
+    let queryRouteid = queryParams.get("routeid"); // return john
+    console.log("queryRouteid: "+queryRouteid);
 
     // Get the modal dialog container
     var modal = document.getElementById("modal");
@@ -235,6 +292,7 @@ function showModal() {
     var gym_id;
     var routes;
     var activity;
+    var table;
       
       function getData()
       {
@@ -265,6 +323,7 @@ function showModal() {
             //console.log(data);
             routes=data.routes
             renderGymRoutesTabulatorTable(routes);
+            
               
     
         })
@@ -274,51 +333,51 @@ function showModal() {
     
 
     getData();
-
+    
 
     function renderGymRoutesTabulatorTable(routesA)
       {
         var columns = [
-        {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
-            formatter:function(cell, formatterParams, onRendered){
-                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}</sup>`;
+            {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+            {title: "{{ reference_data['current_language'].line }}", field: "line", "responsive": 0 , minWidth:2, width:60, headerVertical:false,
+                formatter:function(cell, formatterParams, onRendered){
+                    return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}</sup>`;
+                },
+            
             },
+            
+            {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+            "responsive": 0 , minWidth:10, 
+            formatter:function(cell, formatterParams, onRendered){ 
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                },
+            
+                formatterPrint:function(cell, formatterParams, onRendered){
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                },
+            },
+            {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+            {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+            {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+            {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+            {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+            ];
         
-        },
-         
-        {title: "{{ reference_data['current_language'].color }}", field: "color1", 
-           "responsive": 0 , minWidth:10, 
-           formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
-            },
-        
-            formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
-            },
-        },
-          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
-          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
-          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
-          ];
-      
           // Create the Tabulator table
-          var table = new Tabulator("#tabulator-table", {
-              columns: columns,
-              data: routesA ,
-              layout:"fitDataStretch",
-              //layout: "fitDataFill",
-              movableRows: true,
-              selectable: 1,
-              responsiveLayout:"collapse",
-              //responsiveLayout:"fitColumns",
-              //movableColumns: true, 
-              responsiveLayoutCollapseStartOpen:false,
-              formatter:"responsiveCollapse", headerSort:true,
-              rowFormatter:function(row){
-                if(row.getData().line % 2 == 0){
+        table = new Tabulator("#tabulator-table", {
+            columns: columns,
+            data: routesA ,
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
+            movableRows: true,
+            selectable: 1,
+            responsiveLayout:"collapse",
+            //responsiveLayout:"fitColumns",
+            //movableColumns: true, 
+            responsiveLayoutCollapseStartOpen:false,
+            formatter:"responsiveCollapse", headerSort:true,
+            rowFormatter:function(row){
+            if(row.getData().line % 2 == 0){
                     //row.getElement().style.backgroundColor = "#dddddd";
                     //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
                     row.getElement().style.backgroundColor = "#f1f1f1";
@@ -350,6 +409,10 @@ function showModal() {
             
           });
 
+          table.on("tableBuilt", function(){
+            checkAndOpenAddRouteActivity();
+          });
+
           if (currentRow !== undefined)
           {
             //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
@@ -357,6 +420,30 @@ function showModal() {
           }
       
       }
+
+      function checkAndOpenAddRouteActivity()
+      {
+        if (queryRouteid == undefined)
+        {
+            return;
+        }
+        console.log("checkAndOpenAddRouteActivity: "+queryRouteid);
+        
+        rows = table.searchRows("id", "=", queryRouteid);
+
+        if (rows == undefined || rows.length == 0)
+        {
+            return;
+        }
+        
+        console.log(rows);
+        console.log(rows[0]);
+        console.log(rows[0].getData());
+        showModal();
+        gymRouteDetail(rows[0].getData());
+
+
+      } 
       
     
       var formData = {};
@@ -373,6 +460,9 @@ function showModal() {
             document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('mainModalMenu').style.display='block';
             //mainModalMenuDiv.style.display='block';
+
+
+            document.getElementById('route-grade-user').value = data.grade; 
 
             formData = {};
             formData['route_id'] = data.id;
@@ -396,6 +486,8 @@ function showModal() {
         formData['route_finish_status'] = routeFinishStatus;
         formData['gym_id'] = "{{gym['id']}}";
         formData['routes_id'] = "{{routes['id']}}";
+        formData['route-grade'] = document.getElementById('route-grade').innerHTML;
+        formData['route-grade-user'] = document.getElementById('route-grade-user').value;
 
         fetch('/api1/activity/{{activity['id']}}', {
             method: 'POST',
@@ -440,49 +532,8 @@ function showModal() {
 
     }
 
-    // create an array with image names
-    var images = ["1398911_correct_mark_success_tick_valid_icon.png",        // success icon 2
-    "2682840_bolt_elictricity_light_lightning_storm_icon.png",   //flash icon 0
-    "4125784_confounded_confused_emoji_emotion_fail_icon.png",    // attempt icon 1
     
-];
-
-    var currentRouteStatusIconIndex = 0;
-    var routeFinishStatus;
-
-    function resetFlashImage()
-    {
-        //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
-        currentRouteStatusIconIndex = 0;
-        routeFinishStatus = 'climbed';
-        //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
-        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
-        
-    }
-
-    function toggleFlashImage()
-    {
-        //console.log("toggleFlashImage  "+ currentRouteStatusIconIndex);
-        
-        // advance to the next image index with every execution of this function
-        currentRouteStatusIconIndex = (++currentRouteStatusIconIndex ) % images.length;
-        // set the image source of oggle-flash-image to the image at the current index
-
-        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
-        // set routeFinishStatus to flashed, attempt or success based on the current index
-        if (currentRouteStatusIconIndex == 0)
-        {
-            routeFinishStatus = 'climbed';
-        }
-        else if (currentRouteStatusIconIndex == 1)
-        {
-            routeFinishStatus = 'flashed';
-        }
-        else if (currentRouteStatusIconIndex == 2)
-        {
-            routeFinishStatus = 'attempted';
-        }
-    }
+    
         
 </script>
 
@@ -546,19 +597,26 @@ function showModal() {
                 <img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" width="30" height="30" alt="attempted">
                 {% elif route['status'] == 'flashed' %}
                 <img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" width="30" height="30" alt="flashed">
-                {% endif %}</td>
-                <td>{{ route['grade'] }}</td>
+                {% endif %}
+            </td>
                 <td>
-                    
                     <script>
-                        
                         document.write(''+getColorSVGDiv("{{route['color1']}}", '{{route['color_modifier']}}', '50px','25px')+' ');
                       </script>
                 </td>
+                <td class="col-1">{{ route['grade'] }}  </td>
+               
                 <td class="col-5">{{ route['name'] }}</td>
            
-		    
-        <td class="col-5"><i>{{ route['note'] }}</i></td>
+                <td class="col-1"><i>
+                    {% if route['grade'] != route['user_grade'] %}
+                    {{ route['user_grade'] }}
+                    {% endif %} 
+                </i> 
+                
+                
+                </td>
+        <td class="col-5"><i> {{ route['note'] }}</i></td>
 			 <td>
                 <!--div style="box-sizing: border-box;outline-color: transparent;
                 outline-style:solid; padding: 5px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #d8303777 ">
@@ -587,8 +645,8 @@ function showModal() {
                     </tr>
              {% endfor %}
 
-                    <tr><td class="text-center" colspan="6">
-                        <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
+                    <tr><td class="text-center" colspan="7">    
+                         <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
                     </td></tr>
          </tbody>
      </table>

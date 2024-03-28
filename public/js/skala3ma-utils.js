@@ -69,3 +69,48 @@ function getColorSVG(color, colorModifier){
   }
 }
 
+
+    var currentRouteStatusIconIndex = 0;
+    var routeFinishStatus;
+
+    // create an array with image names
+    var images = ["1398911_correct_mark_success_tick_valid_icon.png",        // success icon 2
+    "2682840_bolt_elictricity_light_lightning_storm_icon.png",   //flash icon 0
+    "4125784_confounded_confused_emoji_emotion_fail_icon.png",    // attempt icon 1
+    ];
+
+
+
+    function resetFlashImage()
+    {
+        //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
+        currentRouteStatusIconIndex = 0;
+        routeFinishStatus = 'climbed';
+        //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
+        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
+        
+    }
+
+    function toggleFlashImage()
+    {
+        //console.log("toggleFlashImage  "+ currentRouteStatusIconIndex);
+        
+        // advance to the next image index with every execution of this function
+        currentRouteStatusIconIndex = (++currentRouteStatusIconIndex ) % images.length;
+        // set the image source of oggle-flash-image to the image at the current index
+
+        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
+        // set routeFinishStatus to flashed, attempt or success based on the current index
+        if (currentRouteStatusIconIndex == 0)
+        {
+            routeFinishStatus = 'climbed';
+        }
+        else if (currentRouteStatusIconIndex == 1)
+        {
+            routeFinishStatus = 'flashed';
+        }
+        else if (currentRouteStatusIconIndex == 2)
+        {
+            routeFinishStatus = 'attempted';
+        }
+    }

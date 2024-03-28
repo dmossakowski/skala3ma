@@ -252,6 +252,8 @@ def fsgtadmin():
                            id=id)
 
 
+
+
 @skala_api_app.route('/competition_admin/<competition_id>', methods=['POST'])
 @login_required
 def competition_admin_post(competition_id):
@@ -420,6 +422,7 @@ def get_activity(activity_id):
     
 
 
+# add a route to an activity
 @skala_api_app.post('/activity/<activity_id>')
 @login_required
 def add_activity_route(activity_id):
@@ -436,9 +439,11 @@ def add_activity_route(activity_id):
     route_id = data.get('route_id')
     note = data.get('note')
     route_finish_status = data.get('route_finish_status')
+    grade = data.get('grade')
+    user_grade = data.get('route-grade-user')
     route = competitionsEngine.get_route(routes_id, route_id)
     
-    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note)
+    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
@@ -450,17 +455,31 @@ def add_activity_route(activity_id):
 def get_activities_by_user(user_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
-    activity = activities_db.get_activity(activity_id)
+    activity = activities_db.get_activities_by_gym_routes(activity_id)
     if (activity is None):
         return {"error":"activity not found"}   
     #a = Activity1(**data)
 
-    activities_db.delete_activity(activity_id)
+    
     # journey_id = user.get('journey_id')
     # calculate_activity_stats(activity)
     #journeys = activities_db.get_activities(user.get('id'))
     return {}
 
+
+
+@skala_api_app.get('/activity/gym/<gym_id>/routes/<routes_id>')
+def get_activities_by_gym_by_routes(gym_id, routes_id):
+   
+    activities = activities_db.get_activities_by_gym_routes(gym_id, routes_id)
+    if (activities is None or len(activities) == 0):
+        return {"error":"activity not found"}   
+    #a = Activity1(**data)
+
+    # journey_id = user.get('journey_id')
+    # calculate_activity_stats(activity)
+    #journeys = activities_db.get_activities(user.get('id'))
+    return json.dumps(activities)
 
 
 @skala_api_app.route('/journey/<journey_id>', methods=['GET'])
@@ -733,12 +752,17 @@ def getCompetitionStats(competitionId):
 
 
 ### USER
-
-
 @skala_api_app.route('/user')
 def get_user():
-    climber = competitionsEngine.get_all_user_emails()
-    return json.dumps(climber)
+    if session is None or session.get('email') is None:
+        return {}
+    
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    if user is None:
+        return {}
+    
+    return json.dumps(user)
 
 
 @skala_api_app.route('/user/email/<email>')
@@ -749,8 +773,12 @@ def get_user_by_email(email):
     if climber is None:
         #return "{'error_code':'No such user'}", 400
         return {}
-
     return climber
+
+
+@skala_api_app.route('/gym/<gym_id>/users')
+def get_users_by_gym(gym_id):
+    return skala_db.get_users_by_gym_id(gym_id)
 
 
 @skala_api_app.route('/updateuser')
@@ -1457,6 +1485,7 @@ def route_save(gymid, routesid):
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     routeset = all_routes.get(routesid)
 
+    logging.info("routesid: "+routedata['id'])
     routes = routeset.get('routes')
     if routedata['id'] is None or routedata['id'] == '':
         routedata['id'] = str(uuid.uuid4().hex)
@@ -1484,6 +1513,61 @@ def route_save(gymid, routesid):
     competitionsEngine.upsert_routes(routesid, gymid, routeset)
 
     return json.dumps(routeset)
+
+
+
+
+
+@skala_api_app.route('/gym/<gymid>/<routesid>/rate', methods=['POST'])
+@login_required
+def route_rating(gymid, routesid):
+
+    data = request.get_json()
+    data = json.loads(data)
+
+    note = data.get('notes_user')
+    route_finish_status = data.get('route_finish_status')
+    grade = data.get('grade_user')
+    user_grade = data.get('grade_user')
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+    gym = competitionsEngine.get_gym(gymid)
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    allroutes = all_routes.get(routesid)
+
+    routeset = allroutes.get('routes')
+    
+    today = datetime.today().date()
+    today = today.strftime('%Y-%m-%d')
+
+    route = None
+    for route in routeset:
+        if route['id'] == data['id']:
+            route = route
+            break
+
+    activities = activities_db.get_activities_by_date_by_user(today, user['id'])
+    
+    rating_activity_name = competitionsEngine.reference_data['current_language']['rating_activity_name']
+
+    activity_id = None
+    if (len(activities) == 0):
+        activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
+    else:
+        for activity in activities:
+            if activity.get('gym_id') == gymid:
+                activity = activity
+                activity_id = activity.get('id')
+                break
+        if activity_id is None:
+            activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
+    #activity = activities_db.get_activity(activity_id)
+
+    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
+
+    
+    return json.dumps(activity)
 
 
 

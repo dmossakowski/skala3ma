@@ -85,15 +85,35 @@ def get_activity(session_id):
 def get_activities(user_id):
     return _get_activities_by_user_id(user_id)
 
+def get_activities_by_date_by_user(date, user_id):
+    return _get_activities_by_date_by_user_id(date, user_id)
+
+
+def get_activities_by_gym_routes(gym_id, routes_id):
+    try:
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        result = cursor.execute("SELECT jsondata FROM " + activities_TABLE + " WHERE gym_id = ? AND routes_id = ?",
+                                [str(gym_id), str(routes_id)])
+        activities = []
+        if result is not None and result.arraysize > 0:
+            for row in result.fetchall():
+                activities.append(json.loads(row[0]))
+        return activities
+    finally:
+        db.close()
+
 
 # add an entry to an existing session
-def add_activity_entry(activity_id, route, status, note):
+def add_activity_entry(activity_id, route, status, note, user_grade):
     entry_id = str(uuid.uuid4().hex)
 
     route_id = route.get('id')  
+    grade = route.get('grade')
 
     activity = get_activity(activity_id)
-    session_entry = {"id": entry_id, "route_id": route_id, "status": status, "note": note,
+    session_entry = {"id": entry_id, "route_id": route_id, "status": status, "note": note, 
+                     "grade": grade, "user_grade": user_grade,
                    }
     session_entry = {**route, **session_entry}
     activity.get('routes').append(session_entry)
@@ -237,6 +257,29 @@ def _get_activities_by_user_id(user_id):
         #logging.info("retrieved climbing session for user:"+str(session_id))
 
 
+def _get_activities_by_date_by_user_id(date, user_id):
+    try:
+        #sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        result = cursor.execute("select jsondata from " + activities_TABLE + " where user_id =? and added_at =? ",
+                       (str(user_id), date))
+        #result = result.fetchall()
+        activities=[]
+        if result is not None and result.arraysize > 0:
+            for row in result.fetchall():
+                # comp = row[0]
+                activities.append(json.loads(row[0]))
+                # gyms[gym['id']] = gym
+        return activities
+
+    finally:
+        db.commit()
+        db.close()
+        #sql_lock.release()
+        #logging.info("retrieved climbing session for user:"+str(session_id))
 
 
 

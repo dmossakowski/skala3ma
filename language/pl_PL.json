@@ -84,7 +84,9 @@
   "rank": "Ranga",
   "edit": "Edit",
   "close": "Close",
-
+  "rating_saved": "Ocena zapisana w wyczynach dnia ",
+  "add_new_route": "Dodaj nową drogę",
+ 
 
   "ranked_women": "Kobiety ranking",
   "ranked_men": "Mezczyzni ranking",
@@ -170,8 +172,11 @@
   "competition_poster": "Plakat zawodów",
   "registration": "Rejestracja",
   "unregister": "Wypisz się",
+  "rate": "Ratuj",
+  "rating_activity_name": "Ocena",
+  "rating_activity_prompt": "Dodaj wyczyn (zasugeruj ocenę)",
   
-
+  
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
