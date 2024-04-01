@@ -1,26 +1,24 @@
 					<!-- START #fh5co-menu-wrap -->
-					<div class="nav-header">
+					<div class="nav">
 
 {% if competition is defined %}
 
-						<ul class="sf-menu sf-menu2" id="fh5co-primary-menu">
+<ul class="nav justify-content-center ">
 <!-- li>{{ competition['name'] }}</li -->
 
-<li><a href="/competitionDetails/{{ competitionId}}" onClick="showModal()"><i class="bi bi-house-door-fill" ></i></a></li>
-										<li><a href="/competitionDashboard/{{ competitionId}}/register">{{ reference_data['current_language'].registration }}</a> </li>
+    <a href="/competitionDetails/{{ competitionId}}" onClick="showModal()" class="nav-link sf-menu2"><i class="bi bi-house-door-fill" ></i></a></li>
+					<a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link">{{ reference_data['current_language'].registration }}</a> </li>
 						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
-					<li><a href="/competitionRoutesEntry/{{ competitionId}}">{{ reference_data['current_language'].routes }}</a></li>
+					<a href="/competitionRoutesEntry/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].routes }}</a></li>
 
-							<li><a href="/competitionResults/{{ competitionId}}">{{ reference_data['current_language'].resultats }}</a></li>
+				<a href="/competitionResults/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].resultats }}</a></li>
 
-								<li><a href="/competitionStats/{{ competitionId}}">{{ reference_data['current_language'].statistics }}</a>
+					<a href="/competitionStats/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].statistics }}</a>
                                 
                                     <!--ul class="fh5co-sub-menu">
                                         <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
                                     </ul-->
                                 
-                                </li>
-
 
 						
 							<!-- <ul class="fh5co-sub-menu">
@@ -46,7 +44,7 @@
 
 {% if competition is defined and competition is not none %}
 
-							<li><a href="/competition_admin/{{competitionId}}">{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}</a></li>
+				<a href="/competition_admin/{{competitionId}}" class="nav-link">{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}</a></li>
 							{% endif %}
 						</ul>
 
