@@ -786,6 +786,25 @@ def init():
     print('created ' + COMPETITIONS_DB)
 
 
+    print("running user migrations - adding gymid to users...")
+    emails = get_all_user_emails()
+    for email in emails:
+        user = get_user_by_email(email)
+        if user is None:
+            print('no user found for email: '+str(email))
+            continue
+        if user.get('gymid') is None:
+            if user.get('club') is not None:
+                gym = skala_db.get_gym_by_gym_name(user['club'])
+                if gym is not None:
+                    user['gymid'] = gym['id']
+                    skala_db.upsert_user(user)
+                else:   
+                    print('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
+            #user['gymid'] = ''
+
+
+
 #internal method.. not locked!!!
 def _update_competition(compId, competition):
 

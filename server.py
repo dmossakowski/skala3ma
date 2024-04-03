@@ -196,6 +196,8 @@ def init():
     competitionsEngine.init()
 
 
+
+
 def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     """Set up logging to file and console."""
     if log_file is not None:
