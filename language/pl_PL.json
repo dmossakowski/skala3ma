@@ -83,7 +83,7 @@
   "routes_climbed": "Spięte drogi",
   "rank": "Ranga",
   "edit": "Edit",
-  "close": "Close",
+  "close": "Zamknij",
   "rating_saved": "Ocena zapisana w wyczynach dnia ",
   "add_new_route": "Dodaj nową drogę",
  
@@ -91,13 +91,13 @@
   "ranked_women": "Kobiety ranking",
   "ranked_men": "Mezczyzni ranking",
 
-  "make_copy": "Make copy",
+  "make_copy": "Skopiuj",
 
   "priviledged_user": "Priviledged user",
   "general_stat": "Allgemeine Statistiken",
   "new_visitor": "Neue Besucher",
   "new_user": "Neue Benutzer",
-  "country": "Länder",
+  "country": "Państwo",
   "country_list": {"germany": "Deutschland", "united_kingdom": "Britien", "russia": "Russland", "spain": "Spanien", "india": "Indien", "france": "Frankreich"},
   "date": "Dzień",
   "gym": "ścianka",
@@ -110,9 +110,10 @@
   "not_available": "Nie dostępne",
   "firstname": "Imię",
   "lastname": "Nazwisko",
-  "nickname": "Nickname ",
+  "nickname": "Ksywa",
   "email": "Email ",
-  "logout": "Logout",
+  "logout": "Wypisz się",
+  "login": "Wpisz się",
 
   "other_club_not_listed": "Sprecyzuj jeśli inny",
   "choose": "Wybierz",

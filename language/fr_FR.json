@@ -129,6 +129,7 @@
   "remove": "Supprimer",
   "action": "Action",
   "logout": "Se déconnecter",
+  "login": "Se connecter",
 
   "logged_in_as" : "Connecté en tant que ",
   "status": "Etat",
