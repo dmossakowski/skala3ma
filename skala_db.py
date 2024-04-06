@@ -590,6 +590,7 @@ def _add_user(climberId, email, climber):
     logging.info('added user id ' + str(email))
     db.commit()
     db.close()
+    return climber
 
 
 def _update_user(climberId, email, climber):
@@ -609,6 +610,7 @@ def _update_user(climberId, email, climber):
     logging.info('updated user id ' + str(email))
     db.commit()
     db.close()
+    return climber
 
 
 def _get_gyms():

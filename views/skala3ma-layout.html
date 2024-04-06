@@ -229,41 +229,30 @@
 
                   <ul class="navbar-nav ml-left">
 
-
-                        <a class="nav-link fs-4" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a>
-                    
-                        <a class="nav-link fs-4" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
-                        <a class="nav-link fs-4" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
-
-                            
-                
-                       
-
-
-
+                        <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                        <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                        <a class="nav-link fs-4 fw-medium" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
 
                     <li  class="nav-item dropdown dropdown">
-                        <a href="" class="nav-link dropdown-toggle fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="" class="nav-link dropdown-toggle fs-4 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-question-circle-fill" ></i> </a>
                         <ul class="dropdown-menu">
-                            <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="dropdown-item fs-4" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
-                            <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-4" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
-                            <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-4" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
-                            <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-4" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
+                            <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a></li>
+                            <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
+                            <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
+                            <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
                         </ul>
                     </li>
 
 
-
-
                     <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="nav-link dropdown-toggle fs-5 fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-translate" ></i></a>     
                         <ul class="dropdown-menu">
                     
-                            <li><a href="/language/fr_FR" class="dropdown-item fs-4"><span class="lang-lg lang-lbl" lang="fr"></a></li>
-                            <li><a href="/language/en_US" class="dropdown-item fs-4"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
-                            <li><a href="/language/pl_PL" class="dropdown-item fs-4"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
+                            <li><a href="/language/fr_FR" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a></li>
+                            <li><a href="/language/en_US" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
+                            <li><a href="/language/pl_PL" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
                             <!-- Ajoutez d'autres langues avec leurs liens href -->
                         </ul>
                     </li>
@@ -325,22 +314,22 @@
                 </a>
                     </a> 
                     <div class="dropdown-menu dropdown-menu-end">
-                        <a href="/user" class="dropdown-item">{{ reference_data['current_language'].myprofile }}</a>
+                        <a href="/user" class="dropdown-item fs-5 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
 
-                        <a href="/myresultats" class="dropdown-item">{{ reference_data['current_language'].my_resultats }}</a>
+                        <a href="/myresultats" class="dropdown-item fs-5">{{ reference_data['current_language'].my_resultats }}</a>
                           
                     
-                        <a href="/logout" class="dropdown-item">{{ reference_data['current_language'].logout }}</a>
+                        <a href="/logout" class="dropdown-item fs-5">{{ reference_data['current_language'].logout }}</a>
 
                         {% if session['godmode']  %}
-                        <a href="/competitionRawAdmin" class="dropdown-item">Admin</a></li>
+                        <a href="/competitionRawAdmin" class="dropdown-item fs-5">Admin</a></li>
 
                         {% endif %}
                     </div>
                 </li>
                 {% else %}
 
-                <li><a href="/loginchoice">Login
+                <li><a href="/loginchoice" class="nav-link fs-4">{{ reference_data['current_language'].login }}
                     </a>
                 </li>
                 {% endif %}
