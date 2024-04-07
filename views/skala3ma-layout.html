@@ -60,35 +60,8 @@
     
 	<!-- Superfish -->
 	<link rel="stylesheet" href="/public/css/superfish.css"/>
-	<!-- Flexslider  -->
-	<!--link rel="stylesheet" href="/public/css/flexslider.css"/-->
-	<!-- Magnific Popup -->
-	<!--link rel="stylesheet" href="/public/css/magnific-popup.css"/-->
-	<!-- Date Picker -->
-	<!--link rel="stylesheet" href="/public/css/bootstrap-datepicker.min.css"/-->
-	<!--link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.2/dist/bootstrap-table.min.css"/-->
-	<!--link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
-
-	<link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
-    -->
-
-
-	<!-- CS Select -->
-	<!--link rel="stylesheet" href="/public/css/cs-select.css"-->
-	<!--link rel="stylesheet" href="/public/css/cs-skin-border.css"-->
-	
 	
 
-	<!-- Modernizr JS -->
-	<!--script src="/public/js/modernizr-2.6.2.min.js"></script-->
-	<!-- FOR IE9 below -->
-	<!--[if lt IE 9]>
-	<script src="/public/js/respond.min.js"></script>
-	<![endif]-->
-	<!--script src="https://cdn.plot.ly/plotly-latest.min.js"></script-->
-    <!--script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script-->
 	<script src="https://accounts.google.com/gsi/client" async></script>
 
     <!--link href="/public/css/tabulator_simple.min.css" rel="stylesheet"-->
@@ -111,7 +84,6 @@
     data-itp_support="true"-->
 </div>
 <script>
-//https://stackoverflow.com/questions/9933619/html5-eventsource-listener-for-all-events
 
     /*function onSignIn(googleUser) {
         var profile = googleUser.getBasicProfile();
@@ -153,32 +125,6 @@
 
  }
 
-	//280503233781760
-  /*window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '368679864760074',
-      cookie     : true,
-      xfbml      : true,
-      version    : 'v10.0'
-    });
-
-    FB.AppEvents.logPageView();
-
-    FB.getLoginStatus(function(response) {
-    	statusChangeCallback(response);
-	});
-
-  };*/
-
-  /*
-  (function(d, s, id){
-     var js, fjs = d.getElementsByTagName(s)[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement(s); js.id = id;
-     js.src = "https://connect.facebook.net/en_US/sdk.js";
-     fjs.parentNode.insertBefore(js, fjs);
-   }(document, 'script', 'facebook-jssdk'));
-*/
 
 	function checkLoginState() {
   		FB.getLoginStatus(function(response) {
@@ -354,7 +300,7 @@
                 </li>
             {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-6">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-6 fw-semibold">{{ reference_data['current_language'].login }}
                 </a>
                 </li>
             {% endif %}
@@ -365,6 +311,7 @@
         
         </nav>
         
+
 
 	<div id="fh5co-wrapper">
 		<div id="fh5co-page">
