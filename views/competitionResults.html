@@ -67,11 +67,11 @@
                 {% for club in rankings['club'] %}
 
                 {% if loop.index == 1 %}
-                <tr style="background: #CFC">
+                <tr class="table-success" style="background: #CFC !important" bgcolor="#CFC">
                 {% elif loop.index == 2 %}
-                    <tr style="background: #AEA">
+                    <tr class="table-primary" style="background: #AEA">
                 {% elif loop.index == 3 %}
-                    <tr style="background: #9C9">
+                    <tr class="table-warning" style="background: #9C9">
                 {% else  %}
                     <tr >
                 {% endif  %}
@@ -126,11 +126,11 @@
     				{% for climber in rankings[key] %}
 
 		 {% if loop.index == 1 %}
-		 <tr style="background: #CFC">
+		 <tr class="table-success" style="background: #CFC">
 		{% elif loop.index == 2 %}
-			 <tr style="background: #AEA">
+			 <tr class="table-info" style="background: #AEA">
 		{% elif loop.index == 3 %}
-			 <tr style="background: #9C9">
+			 <tr class="table-primary" style="background: #9C9">
 		{% else  %}
 			 <tr >
 		{% endif  %}

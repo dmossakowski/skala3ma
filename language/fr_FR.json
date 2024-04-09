@@ -11,7 +11,7 @@
   "create_new": "Nouvelle compétition",
   "about": "À propos",
   "short_app_description": "Gérer les compétitions et les murs",
-  "app_welcome": "SKALA3MA - Application officielle des compétitions autrement de la FSGT",
+  "app_welcome": "Application officielle des compétitions autrement de la FSGT",
   "update_details": "Renseignez vos informations",
   "details_saved": "Vos informations sont sauvegardées",
   "all_fields_required": "Tous les champs sont requis",
@@ -129,6 +129,7 @@
   "remove": "Supprimer",
   "action": "Action",
   "logout": "Se déconnecter",
+  "login": "Se connecter",
 
   "logged_in_as" : "Connecté en tant que ",
   "status": "Etat",

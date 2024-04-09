@@ -11,7 +11,7 @@
   "create_new": "Create new",
   "about": "About",
   "short_app_description": "Manage competitions and gym routes. ",
-  "app_welcome": "SKALA3MA - Official app for FSGT competitions",
+  "app_welcome": "Official app for FSGT competitions",
   "update_details": "Update your details",
   "details_saved": "Your details were saved",
   "all_fields_required": "All fields are required",
@@ -105,6 +105,7 @@
   "nickname": "Nickname ",
   "email": "Email ",
   "logout": "Logout",
+  "login": "Login",
 
   "other_club_not_listed": "If other club, enter here",
   "choose": "Choose",

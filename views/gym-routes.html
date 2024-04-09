@@ -152,9 +152,9 @@
                 <div class="form-row-heading">
                   <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
                   {% if (user_can_edit_gym) %}
-                  <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="editContent();">
+                  <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="editContent();">
                     <i class="bi bi-three-dots-vertical"></i>{{reference_data['current_language'].edit}}</button>&nbsp;
-                    <button id='closebutton' type="button" class="btn btn-success btn-lg" onclick="addBefore()">{{reference_data['current_language'].add_new_route}}</button>&nbsp;
+                    <button id='closebutton' type="button" class="btn btn-success btn-md" onclick="addBefore()">{{reference_data['current_language'].add_new_route}}</button>&nbsp;
                   
                   {% endif %}
                 </div>      
@@ -163,8 +163,8 @@
 <!-- start user rating -->
                     
 <div id='route-rating-div'  style="display:none;">
-    <br><br>
-    <h3>&nbsp; {{reference_data['current_language'].rating_activity_prompt}}&nbsp; </h3>
+    <br><hr><br>
+    <h4>&nbsp; {{reference_data['current_language'].rating_activity_prompt}}&nbsp; </h4>
     <div class="form-row row">
         <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
         outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
@@ -233,8 +233,8 @@
                    
         </div>
     </div>
-    <div class="form-row-heading row">
-        <button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+    <div class="form-row-heading">
+        <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">
             <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].add_activity}}</button>
     </div>               
 </div>
@@ -365,18 +365,18 @@
                         </div>
                       
 
-                  <div class="form-row-heading">
+                  <div class="form-row-heading row">
                     
                     
-                    <button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
+                    <button id='submitbutton' type="button" class="btn btn-success btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
                   
                   <!--button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button-->
                     </div>    
                     <!--div class="form-row-heading">
                   <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
                   <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
-                    </div-->    <div class="form-row"></div>
-                     <button id='deletebutton' type="button" class="btn btn-danger" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
+                    </div-->    <div class="form-row row"></div>
+                     <button id='deletebutton' type="button" class="btn btn-danger btn-sm" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
                  </div>
                 </div>
                 
@@ -617,20 +617,19 @@
             <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
 
         </div>
-        <div>
+       
                 <h1  class="display-2"> {{ gym['name'] }}</h1> 
-                <h1>
-                <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
-                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
+            <div class=" large-icons">
+                <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench skala3ma-logo"></i></a>
+                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list skala3ma-logo"></i></a>
 
 
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2"></i></a>
-                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print"></i></a>
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2  skala3ma-logo"></i></a>
+                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print skala3ma-logo"></i></a>
             
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download"><i class="icon-download2"></i></a>
+                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download"><i class="icon-download2 skala3ma-logo"></i></a>
             
-            </h1>
-                
+            </div>
                     
                 {{ gym['address'] }} <!--i class="icon-location"></i--><br>
                 <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>

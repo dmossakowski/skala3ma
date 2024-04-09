@@ -786,6 +786,25 @@ def init():
     print('created ' + COMPETITIONS_DB)
 
 
+    print("running user migrations - adding gymid to users...")
+    emails = get_all_user_emails()
+    for email in emails:
+        user = get_user_by_email(email)
+        if user is None:
+            print('no user found for email: '+str(email))
+            continue
+        if user.get('gymid') is None:
+            if user.get('club') is not None:
+                gym = skala_db.get_gym_by_gym_name(user['club'])
+                if gym is not None:
+                    user['gymid'] = gym['id']
+                    skala_db.upsert_user(user)
+                else:   
+                    print('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
+            #user['gymid'] = ''
+
+
+
 #internal method.. not locked!!!
 def _update_competition(compId, competition):
 
@@ -998,14 +1017,15 @@ def user_authenticated_fb(fid, name, email, picture):
         cursor = db.cursor()
         if user is None:
             newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture }
-            skala_db._add_user(None, email, newuser)
             _common_user_validation(newuser)
+            user = skala_db._add_user(None, email, newuser)
             logging.info('added fb user id ' + str(email))
         else:
             u = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture}
             user.update(u)
-            skala_db._update_user(user['id'], email, user)
+            user = skala_db._update_user(user['id'], email, user)
             logging.info('updated user id ' + str(email))
+        return user
     finally:
         db.commit()
         db.close()
@@ -1024,13 +1044,14 @@ def user_authenticated_google(name, email, picture):
         if user is None:
             newuser = {'gname': name, 'email': email, 'gpictureurl': picture }
             _common_user_validation(newuser)
-            skala_db._add_user(None, email, newuser)
+            user = skala_db._add_user(None, email, newuser)
             logging.info('added google user id ' + str(email))
         else:
             u = {'gname': name, 'email': email, 'gpictureurl': picture}
             user.update(u)
-            skala_db._update_user(user['id'], email, user)
+            user = skala_db._update_user(user['id'], email, user)
             logging.info('updated google user id ' + str(email))
+        return user
     finally:
         db.commit()
         db.close()
@@ -1140,6 +1161,9 @@ def can_edit_competition(climber, competition):
         return True
     return False
 
+
+def is_god(user):
+    return user.get('permissions').get('godmode') == True
 
 def competition_can_be_deleted(competition):
     climbers = competition.get('climbers')

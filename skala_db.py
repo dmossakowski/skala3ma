@@ -292,6 +292,8 @@ def get_user_by_email(email):
     if user.get('email') is None:
         user['email'] = email
 
+    
+
     return user
 
 
@@ -588,6 +590,7 @@ def _add_user(climberId, email, climber):
     logging.info('added user id ' + str(email))
     db.commit()
     db.close()
+    return climber
 
 
 def _update_user(climberId, email, climber):
@@ -607,6 +610,7 @@ def _update_user(climberId, email, climber):
     logging.info('updated user id ' + str(email))
     db.commit()
     db.close()
+    return climber
 
 
 def _get_gyms():
@@ -688,6 +692,25 @@ def get_gym_by_routes_id(routesid):
 
 
     return None
+
+
+
+def get_gym_by_gym_name(gym_name):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''select jsondata  from gyms where lower(trim(json_extract(jsondata, '$.name'))) like lower(trim(?));''', [gym_name])
+
+    one = rows.fetchone()
+    db.close()
+    if one is not None and one[0] is not None:
+        return json.loads(one[0])
+
+
+    return None
+
+
 
 
 
