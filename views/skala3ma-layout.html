@@ -26,13 +26,24 @@
 	<meta name="twitter:card" content="" />
 	<meta name="google-signin-client_id" content="1079392294623-u40kg3ucvuuegahfcogdq9vhcbgu8ab2.apps.googleusercontent.com">
 
-
+    <style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 600,
+          'GRAD' 0,
+          'opsz' 64;
+          font-size: 44px;
+        }
+        </style>
 	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 	<link rel="shortcut icon" href="/public/images/favicon.png?v5"/>
 	<link rel="icon" href="/public/images/favicon.png?v5"/>
 
 
 	<link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700,300' rel='stylesheet' type='text/css'/>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 	<link rel="stylesheet" href="/public/css/languages.min.css"/>
 
@@ -59,7 +70,7 @@
     /-->
     
 	<!-- Superfish -->
-	<link rel="stylesheet" href="/public/css/superfish.css"/>
+	<!--link rel="stylesheet" href="/public/css/superfish.css"/-->
 	
 
 	<script src="https://accounts.google.com/gsi/client" async></script>
@@ -155,7 +166,6 @@
 
 
 
-
     <nav class="navbar navbar-expand-md bg-body-tertiary">
         <div class="container-fluid">
             <a class="skala3ma-logo navbar-brand " href="/">
@@ -170,7 +180,8 @@
             </button>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title skala3ma-logo" id="offcanvasNavbarLabel"><img src="/public/images/favicon.png" height="30"> SKALA3MA</h5>
+                    <h5 class="offcanvas-title skala3ma-logo" id="offcanvasNavbarLabel">
+                        <img src="/public/images/favicon.png" height="30"> SKALA3MA</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
                 <div class="offcanvas-body">
@@ -180,10 +191,38 @@
                 <div class="navbar-nav ml-auto d-md-none">
                 
                 <ul class="navbar-nav ml-left">
-
+                    <!-- 
                     <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+-->
+                               {% if session is defined and session['name'] is defined %}
+                 
+                    <a href="/user" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
+                        </a>
+                
+                    <a href="/user" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
+
+                    <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
+                    
+                    <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
+
+                    {% if session['godmode']  %}
+                    <a href="/competitionRawAdmin" class="nav-link fs-4">Admin</a></li>
+
+                    {% endif %}
+                
+                {% else %}
+
+                <li><a href="/loginchoice" class="nav-link fs-4">{{ reference_data['current_language'].login }}
+                    </a>
+                </li>
+                {% endif %}
+
+
+                <hr>
+
 
                 <li  class="nav-item dropdown dropdown">
                     <a href="" class="nav-link dropdown-toggle fs-4 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -209,37 +248,81 @@
                     </ul>
                 </li>
 
-                <hr>
-                {% if session is defined and session['name'] is defined %}
-                 
-                    <a href="/user" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
+
+            </div>
+                
+            </div>
+
+            </div>
+
+
+            <!-- section shown below md width - mobile menu-->
+            <div class=" fixed-bottom    ml-auto d-block d-md-none  " 
+            style="background: #000; color: #46cb86 ;  font-size: 16px">
+                
+            <div class=" container   text-center">
+              <div class="row">
+                  <div class="col">
+                    <a href="/activities" >
+                
+                    <span class="material-symbols-outlined" style="font-size: 44px;color: #46cb86 ">
+                        add_circle
+                        </span>
                         </a>
-                
-                    <a href="/user" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
-
-                    <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
+                   
                     
-                    <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
-
-                    {% if session['godmode']  %}
-                    <a href="/competitionRawAdmin" class="nav-link fs-4">Admin</a></li>
-
-                    {% endif %}
+                  </div>
+                  <div  class="col">
+                    <a href="/gyms" >
                 
-                {% else %}
-
-                <li><a href="/loginchoice" class="nav-link fs-4">{{ reference_data['current_language'].login }}
-                    </a>
-                </li>
-                {% endif %}
-            </div>
+                    <span class="material-symbols-outlined" style="font-size: 44px;color: #46cb86 ">
+                        elevation
+                        
+                        </span>
+                        </a>
+                    
+                  </div>
+                  <div class="col">
+                    <a href="/competitionDashboard" >
                 
-            </div>
+                    <span class="material-symbols-outlined" style="font-size: 44px;color: #46cb86 ">
+                        trophy
+                        </span>
+                        </a>    
+                  </div>
 
-            </div>
+                  <!--div class="dropup col">
+                    <a href="/user" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                
+                  <span class="material-symbols-outlined" style="font-size: 44px; color: #46cb86">
+                    account_circle
+                    </span></a>
+
+                    <ul class="dropdown-menu">
+                        <a href="/user" class="dropdown-item fs-7 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
+    
+                        <a href="/myresultats" class="dropdown-item fs-7">{{ reference_data['current_language'].my_resultats }}</a>
+                            
+                    
+                        <a href="/logout" class="dropdown-item fs-7">{{ reference_data['current_language'].logout }}</a>
+    
+                        {% if session['godmode']  %}
+                        <a href="/competitionRawAdmin" class="dropdown-item fs-7">Admin</a></li>
+    
+                        {% endif %}
+                    </ul>
 
 
+
+                    </div-->
+                </div>
+              </div>
+                   
+
+  
+                </div>
+
+                
             <!-- section shown above md width -- full screeen-->
             <div class="navbar-nav ml-auto d-none d-md-block">
             
@@ -247,30 +330,30 @@
 
             <ul class="navbar-nav ml-left">
 
-                <a class="nav-link fs-6 fw-semibold" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
-                <a class="nav-link fs-6 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
-                <a class="nav-link fs-6 fw-semibold" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+                <a class="nav-link fs-7 fw-semibold" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                <a class="nav-link fs-7 fw-semibold" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
 
                 <li  class="nav-item">
-                <a href="" class="nav-link dropdown-toggle fs-6 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a href="" class="nav-link dropdown-toggle fs-7 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-question-circle-fill" ></i> </a>
                 <div class="dropdown-menu dropdown-menu-end">
-                <a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="dropdown-item fs-6 fw-medium" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a>
-                <a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-6 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a>
-                <a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-6 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a>
-                <a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-6 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a>
+                <a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADULTE-2024.pdf" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a>
+                <a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a>
+                <a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a>
+                <a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a>
                 </div>
                 </li>
 
 
                 <li class="nav-item">
-                <a href="#" class="nav-link dropdown-toggle fs-6 fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a href="#" class="nav-link dropdown-toggle fs-7 fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-translate" ></i></a>     
                 <div class="dropdown-menu  dropdown-menu-end">
         
-                <a href="/language/fr_FR" class="dropdown-item fs-6 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
-                <a href="/language/en_US" class="dropdown-item fs-6 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
-                <a href="/language/pl_PL" class="dropdown-item fs-6  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
+                <a href="/language/fr_FR" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
+                <a href="/language/en_US" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
+                <a href="/language/pl_PL" class="dropdown-item fs-7  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
                 <!-- Ajoutez d'autres langues avec leurs liens href -->
                 </div>
                 </li>
@@ -285,22 +368,22 @@
                 
                 </a> 
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a href="/user" class="dropdown-item fs-6 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
+                    <a href="/user" class="dropdown-item fs-7 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
 
-                    <a href="/myresultats" class="dropdown-item fs-6">{{ reference_data['current_language'].my_resultats }}</a>
+                    <a href="/myresultats" class="dropdown-item fs-7">{{ reference_data['current_language'].my_resultats }}</a>
                         
                 
-                    <a href="/logout" class="dropdown-item fs-6">{{ reference_data['current_language'].logout }}</a>
+                    <a href="/logout" class="dropdown-item fs-7">{{ reference_data['current_language'].logout }}</a>
 
                     {% if session['godmode']  %}
-                    <a href="/competitionRawAdmin" class="dropdown-item fs-6">Admin</a></li>
+                    <a href="/competitionRawAdmin" class="dropdown-item fs-7">Admin</a></li>
 
                     {% endif %}
                 </div>
                 </li>
             {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-6 fw-semibold">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-7 fw-semibold">{{ reference_data['current_language'].login }}
                 </a>
                 </li>
             {% endif %}
