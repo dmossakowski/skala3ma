@@ -54,6 +54,9 @@ Minimum version of Python is 3.7. You will need to have either Google or Faceboo
 3. Enter Virtual Environment
 ```
   source .venv/bin/activate
+  
+  If on windows:
+  source .venv/scripts/activate
 ```
 
 4. Install the requirements
