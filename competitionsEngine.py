@@ -191,7 +191,7 @@ def update_competition_details(competition, name, date, routesid):
 
         if (routes is None or len(routes)==0):
             logging.error('Routes not found '+str(competition.get('id')))
-            return
+            return competition
             #raise ValueError('Routes not found')
         
         competition['routes'] = routes.get('routes')
@@ -203,6 +203,8 @@ def update_competition_details(competition, name, date, routesid):
             pass
         
     skala_db._update_competition(competition['id'], competition)
+
+    return competition
 
 
 # add or register climber to a competition
@@ -319,11 +321,13 @@ def addRouteClimbed(competitionId, climberId, routeNumber):
 
 
 # update each climber with routes they climbed
+# the routes array is made of up the same entries as routes in gym
+# routesClimbed2 is calculated from routes object set on competition (not from db based on routesid)
 # returns the competition
 # no db update
 def setRoutesClimbed2(competition):
     if competition.get('routes') is None or competition.get('routesid') is None:
-        return competition
+        raise ValueError('Routes on competition not found')
     
     for climber in competition['climbers']:
         climber = competition['climbers'][climber]

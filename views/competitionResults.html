@@ -42,8 +42,8 @@
 	</div>
 </div>
 
-<div class="container">
-    <div class="row row-bottom-padded-md">
+<div class="table-responsive">
+    <div class="row-bottom-padded-md">
 
         {% if rankings is not none and rankings is not undefined %}
 
@@ -96,7 +96,7 @@
 
         {% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
     </div>
-    <div class="row row-bottom-padded-md">
+    <div class="table-responsive">
         
         <h2 class="display-4">
         {% if key == '2F' %} {{ reference_data['current_language'].ranking_diament_women}} {% endif %}

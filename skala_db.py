@@ -302,7 +302,7 @@ def get_users_by_gym_id(gym_id):
     cursor = db.cursor()
     count = 0
     rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where json_extract(jsondata, '$.gym_id')=? ;''', [gym_id])
+        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where json_extract(jsondata, '$.gymid')=? ;''', [gym_id])
 
     users = []
     if rows is not None and rows.arraysize > 0:

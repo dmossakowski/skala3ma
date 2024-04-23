@@ -13,6 +13,7 @@
 
 		{% include "skala3ma-menu.html" %}
 
+        <!-- competitionClimberList.html -->
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="container">
                         <div class="text-center heading-section">
@@ -28,13 +29,11 @@
                     </div>
 
 
-<div class="container">
-	<div class="row row-bottom-padded-md">
 
 
 
 {% if climber is not none and climber is not undefined  %}
-<div class="container">
+<div class="container-flex">
 	<div class="row">
 				{{ reference_data['current_language'].name}} {{ climber['name'] }}
 	            ({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
@@ -44,9 +43,11 @@
 				{{ climber['routesClimbed'] }}
 
     </div>
-	<div class="row">
+</div>
+
+	<div class="table-responsive">
 			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
-            <table style="width:100%"><tr>
+            <table class="table"><tr>
 
 					{% for i in range(100) %}
                     <td style="width:10%">
@@ -79,7 +80,7 @@
 {% if competition is not none and competition is not undefined  %}
 
 <!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
-<div class="container-fluid">
+<div class="table-responsive">
 <table class="table thead-dark table-hover"  id="entrytable">
          <thead><tr>
          <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>

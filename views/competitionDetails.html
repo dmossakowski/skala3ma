@@ -13,25 +13,26 @@
    
 
 
-	<div name='bbb'>
-
 		{% include "skala3ma-menu.html" %}
 
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="text-center heading-section animate-box">
-						<br>
-				<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
-				<img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
-									width="65%"><br><br>
-						 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
-        | <a href="/gyms/{{competition['gym_id']}}/{{ competition['routesid']}}">  {{ reference_data['current_language'].routes }}</a>
-        |  {{ reference_data['current_language'].max_participants }} {{ competition['max_participants'] }}
-
-
+		<div class="container-fluid">	
+            <div class="h-100 p-5 bg-light border rounded-3 text-center">
+                <h1 class="display-5 fw-medium">{{competition['name'] }} </h1>
+                <h2 class="display-8 fw-medium"> {{ competition['date']}}</h2>
+                </div>	
+            <div class="row align-items-md-stretch">	
+           
+    <div class="col"> 
+        <div class="p-1 mb-2 text-center">
+        <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
+        width="65%" class=""><br><br>
+                        </div>
 					</div>
-
-		<div class="container">
-			<div class="row row-bottom-padded-md">
+            </div>
+        </div>
+        </div>
+		<div class="table-responsive ">
+			
 
 
 
@@ -41,7 +42,6 @@
 
 
 
-<div class="container-fluid">
 
 <table class="table thead-dark table-hover" >
          <thead><tr><th></th>
@@ -79,7 +79,6 @@
      </table>
 
 
-</div>
 
 
 
@@ -90,6 +89,5 @@
 		</div>
 		<!-- fh5co-blog-section -->
 
-	</div>
 
 {% endblock %}

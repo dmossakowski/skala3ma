@@ -778,7 +778,20 @@ def get_user_by_email(email):
 
 @skala_api_app.route('/gym/<gym_id>/users')
 def get_users_by_gym(gym_id):
-    return skala_db.get_users_by_gym_id(gym_id)
+    users=  skala_db.get_users_by_gym_id(gym_id)
+    # remove email and permissions from the response
+    for user in users:
+        user.pop('email', None)
+        user.pop('permissions', None)
+        user.pop('isgod',None)
+        if user.get('gpictureurl') is not None:
+            user['pictureurl'] = user.get('gpictureurl')
+        if user.get('fpictureurl') is not None:
+            user['pictureurl'] = user.get('fpictureurl')
+        if user.get('fpictureurl') is None and user.get('gpictureurl') is None:
+            user['pictureurl'] = '/public/images/sentiment_satisfied_FILL0_wght600_GRAD200_opsz48.png'
+
+    return users
 
 
 @skala_api_app.route('/updateuser')
@@ -1209,27 +1222,33 @@ def get_myskala():
         if routes is None:
             continue
         routes = routes.get('routes')
-        all_competitions.append(competition)
+        #all_competitions.append(competition)
 
         climber = competition.get('climbers').get(user['id'])
         competition['climber'] = climber
+        routes_climbed2 = {}
         if climber is not None:
-            routes_climbed = climber['routesClimbed']
-            routes_climbed_count += len(climber['routesClimbed'] )
-            grades_climbed = []
-            for idx, route_num in enumerate(routes_climbed):
-                if route_num > len(routes):
-                    break
-                route = routes[route_num-1]
+            
+            routes_climbed2=climber['routesClimbed2']
+            routes_climbed_count += len(climber['routesClimbed2'] )
+            #grades_climbed = []
+            for idx, route in enumerate(routes_climbed2):
+                route['competitionName'] = competition['name']
+                route['competitionDate'] = competition['date']
+                route['gym'] = competition['gym']
                 grade = route.get('grade')
                 points = round(climber['points_earned'][idx])
                 stats['personalstats']['all_grades'].append(route.get('grade'))
-                grades_climbed.append(' '+str(grade) + ' ('+str(points)+')')
-            competition['grades_climbed'] = grades_climbed
+                route['points'] = points
+                route['rank']  = climber['rank']
+                #grades_climbed.append(' '+str(grade) + ' ('+str(points)+')')
+            #competition['grades_climbed'] = grades_climbed
             competition['points_earned'] = climber['points_earned']
-            competition['rank']  = climber['rank']
+            competition['routesClimbed2'] = routes_climbed2
+            competition
         # clear unnecessary data for other
         competition.get('climbers').clear()
+        all_competitions.extend(routes_climbed2)
 
         competition_points_per_route = {}
         

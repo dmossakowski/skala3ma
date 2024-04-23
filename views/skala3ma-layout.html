@@ -3,12 +3,16 @@
 
 <html lang="en">
 	<head>
+
+  
+  
         <!--meta
   http-equiv="Content-Security-Policy-Report-Only"
   content="default-src 'self'; img-src https://*; child-src 'none';" /-->
 	<meta charset="utf-8"/>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 	<title>skala3ma</title>
+    <link rel="icon" type="image/x-icon" href="/public/images/favicon.png">
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 	<meta name="description" content="skala3ma" />
 	<meta name="keywords" content="python, spotify, scikit, flask, gevent, Jinja2, matplotlib, pandas, plotly" />
@@ -37,7 +41,7 @@
         }
         </style>
 	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-	<link rel="shortcut icon" href="/public/images/favicon.png?v5"/>
+	<link rel="shortcut icon" href="/public/images/favicon.png"/>
 	<link rel="icon" href="/public/images/favicon.png?v5"/>
 
 
@@ -331,8 +335,11 @@
             <ul class="navbar-nav ml-left">
 
                 <a class="nav-link fs-7 fw-semibold" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-7 fw-semibold" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+                &nbsp;&nbsp;&nbsp;
 
                 <li  class="nav-item">
                 <a href="" class="nav-link dropdown-toggle fs-7 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -392,22 +399,8 @@
         </div>
 
         
-        </nav>
+</nav>
         
-
-
-	<div id="fh5co-wrapper">
-		<div id="fh5co-page">
-
-		<header id="fh5co-header-section" style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/main-back.jpg);  background-size: cover;" >
-
-			<!-- class="sticky-bannera"  style="width: 100%"
-			linear-gradient(to left, rgba(255, 0, 0,0.5) 50%, rgba(235,245,255,0) 100%) -->
-
-			<div class="container">
-
-
-  			</header>
 
 
 						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
