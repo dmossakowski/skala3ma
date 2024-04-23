@@ -1,0 +1,1146 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+
+
+
+	{% if gym is not none and gym is not undefined  %}
+
+
+
+
+
+        <style>
+            /* Style for the modal dialog container */
+            .modal-container {
+                display: none;
+                position: fixed;
+                z-index: 1023;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.4);
+            }
+    
+            /* Style for the modal dialog box */
+            .modal-box {
+                background-color: #fff;
+                margin: 2% auto;
+                padding: 0px 0px 15px 0px;
+                border: 1px solid #888;
+                width:370px;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%); 
+                display: block;
+                
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-size: 14px;
+                color: #333;
+            }
+    
+            /* Style for the close button */
+            .close-button {
+                position: relative;
+                padding: 0px 15px 0px 0px;
+                justify-content: right;
+                text-align: right;
+                
+                color: #aaa;
+                font-weight: bold;
+                
+            }
+
+            .form-row-heading {
+                          display: flex;
+                          justify-content: center;
+                          align-items: baseline;
+                          margin: 1px;
+                          font-size: 20px;
+                          color: #292424;
+                          font-weight: bold;
+                          vertical-align: bottom;
+                          
+                        }
+                        .form-row {
+                          display: flex;
+                          
+                          align-items: center;
+                          font-size: 18px;
+                          margin: 10px 6px 10px 6px;
+                          /*word-wrap: break-word;*/
+                          
+                        }
+                      
+                        .form-row label {
+
+                          justify-content: left;
+                          text-align: left;
+                          display: block;
+                          margin-right: 6px;
+                          
+                        }
+                      
+                        .form-row input,
+                        .form-row select,
+                        .form-row textarea {
+                          flex: 1;
+                        }
+        </style>
+    
+
+
+
+    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';"
+      style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80%; 
+      background-color: #f4f9f5; padding: 20px; border: 0px solid rgb(114, 114, 114);
+      font-size: 2em; font-style:bold; ">
+        
+    </div>
+        
+
+        <div id="modal" class="modal-container">
+
+            <div id="modal-box" class="modal-box ">
+                <div class="row close-button row">
+                    <span  onclick="hideModal()">
+                    <i class="bi bi-x" style="font-size: 2rem; color: rgb(98, 92, 92);"></i>
+                    </span>
+                    
+                </div> 
+            
+                
+            <div class="form-row row">
+                <div id="hidden_message" class="form-row-heading" style=" font: bold 24px;color: red; align-content: center;">
+                    </div>
+                    </div>
+               
+                <div id="mainModalMenu">
+                    <div onclick="hideModal()">
+                    <div class="form-row-heading">
+                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name">
+                            
+                        </div>
+                    </div>
+
+                <div class="form-row-heading">
+                    <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
+                    <div id="route-color1">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-grade"></div>
+                </div>
+                <div class="form-row-heading">
+                    <div id="route-openedby">&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  <div id="route-opendate"></div>
+                </div>
+                <div class="form-row-heading">
+                    <div id="route-notes">&nbsp;&nbsp;&nbsp;</div>
+                </div>
+                </div>
+                <div class="form-row-heading">
+                  <!--button id='submitbutton' type="button" class="btn btn-info btn-lg" onclick="addActivityRoute()">I finished it</button-->
+                  {% if (user_can_edit_gym) %}
+                  <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="editContent();">
+                    <i class="bi bi-three-dots-vertical"></i>{{reference_data['current_language'].edit}}</button>&nbsp;
+                    <button id='closebutton' type="button" class="btn btn-success btn-md" onclick="addBefore()">{{reference_data['current_language'].add_new_route}}</button>&nbsp;
+                  
+                  {% endif %}
+                </div>      
+            </div>
+            
+<!-- start user rating -->
+                    
+<div id='route-rating-div'  style="display:none;">
+    <br><hr><br>
+    <h4>&nbsp; {{reference_data['current_language'].rating_activity_prompt}}&nbsp; </h4>
+    <div class="form-row row">
+        <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
+        <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
+        
+        </div>
+        <div class="col">
+
+        <select class="col form-select form-select-lg" id='grade_user' name="grade_user"  size="1" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
+        font-size:1.6em; font-weight: bold; color: #40ad48">
+        <option value="?">?</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4a">4a</option>
+        <option value="4b">4b</option>
+        <option value="4c">4c</option>
+        <option value="5a">5a</option>
+        <option value="5a+">5a+</option>
+        <option value="5b">5b</option>
+        <option value="5b+">5b+</option>
+        <option value="5c">5c</option>
+        <option value="5c+">5c+</option>
+        <option value="6a">6a</option>
+        <option value="6a+">6a+</option>
+        <option value="6b">6b</option>
+        <option value="6b+">6b+</option>
+        <option value="6c">6c</option>
+        <option value="6c+">6c+</option>
+        <option value="7a">7a</option>
+        <option value="7a+">7a+</option>
+        <option value="7b">7b</option>
+        <option value="7b+">7b+</option>
+        <option value="7c">7c</option>
+        <option value="7c+">7c+</option>
+        <option value="8a">8a</option>
+        <option value="8a+">8a+</option>
+        <option value="8b">8b</option>
+        <option value="8b+">8b+</option>
+        <option value="8c">8c</option>
+        <option value="8c+">8c+</option>
+        <option value="9a">9a</option>
+        <option value="9a+">9a+</option>
+        <option value="9b">9b</option>
+        <option value="9b+">9b+</option>
+        <option value="9c">9c</option>
+    
+        </select>
+
+        </div>
+
+        <div class="col">
+    
+        <input id='notes_user' name="notes_user" size="13" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;
+        font-weight: bold; color: #40ad48"/>
+        <!--button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
+          
+            <i class="bi bi-plus-circle" style="font-size: 3rem; color: white;"></i>
+            </button-->
+              <!--i class="bi bi-send" style="font-size: 3rem; color: white;"></i-->
+                 
+                   
+        </div>
+    </div>
+    <div class="form-row-heading">
+        <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">
+            <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].add_activity}}</button>
+    </div>               
+</div>
+
+
+<!-- end user rating-->
+
+
+
+                    <div id="editContent" style="display: none">
+
+                         <div class="form-row">
+                          <input type="hidden" id="routeid" name="routeid" value="">
+                          
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="routenum">{{reference_data['current_language'].route_num}}:</label>
+                          <input type="text" id="routenum" name="routenum" value="1">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="line">{{reference_data['current_language'].line}}:</label>
+                          <input type="text" id="line" name="line" value="1">
+                        </div>
+                      
+                        <div class="form-row">
+                          <input type="hidden" id="colorfr" name="colorfr" value="#2e8b57">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="color1">{{reference_data['current_language'].color}}</label>
+                          <input id="color1"  type="color"  
+                          style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px; "  >
+
+
+                    <!--script>document.write(''+getColorSVGDiv('#FF0000', 'solid', '80px', '15px')+'')
+                    
+                        document.getElementById('color1').style.backgroundImage="url("+getColorSVGDiv('#FF0000', 'solid', '80px', '15px')+")";
+                        
+                    
+                    </script-->
+                            </input>
+                          <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="color_modifier">{{reference_data['current_language'].color_modifier}}:</label>
+                          
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="color_modifier" id="color_modifier_solid" value="solid">
+                            <label class="form-check-label" for="color_modifier_solid">{{reference_data['current_language'].solid}}</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="color_modifier" id="color_modifier_marble" value="marble">
+                            <label class="form-check-label" for="color_modifier_marble">{{reference_data['current_language'].marble}}</label>
+                          </div>
+                          
+
+
+                          <!--select id="color_modifiermm" name="color_modifiermm">
+                            <option value="solid">{{reference_data['current_language'].solid}}</option>
+                            <option value="marble">{{reference_data['current_language'].marble}}</option> 
+                          </select-->
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="grade">{{reference_data['current_language'].grade}}:</label>
+                          <select id="grade" name="grade">
+                            <option value="?">?</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4a">4a</option>
+                            <option value="4b">4b</option>
+                            <option value="4c">4c</option>
+                            <option value="5a">5a</option>
+                            <option value="5a+">5a+</option>
+                            <option value="5b">5b</option>
+                            <option value="5b+">5b+</option>
+                            <option value="5c">5c</option>
+                            <option value="5c+">5c+</option>
+                            <option value="6a">6a</option>
+                            <option value="6a+">6a+</option>
+                            <option value="6b">6b</option>
+                            <option value="6b+">6b+</option>
+                            <option value="6c">6c</option>
+                            <option value="6c+">6c+</option>
+                            <option value="7a">7a</option>
+                            <option value="7a+">7a+</option>
+                            <option value="7b">7b</option>
+                            <option value="7b+">7b+</option>
+                            <option value="7c">7c</option>
+                            <option value="7c+">7c+</option>
+                            <option value="8a">8a</option>
+                            <option value="8a+">8a+</option>
+                            <option value="8b">8b</option>
+                            <option value="8b+">8b+</option>
+                            <option value="8c">8c</option>
+                            <option value="8c+">8c+</option>
+                            <option value="9a">9a</option>
+                            <option value="9a+">9a+</option>
+                            <option value="9b">9b</option>
+                            <option value="9b+">9b+</option>
+                            <option value="9c">9c</option>
+                          </select>
+                          
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="name">{{reference_data['current_language'].route_name}}:</label>
+                          <input type="text" id="name" name="name" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="openedby">{{reference_data['current_language'].route_opened_by}}:</label>
+                          <input type="text" id="openedby" name="openedby" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="opendate">{{reference_data['current_language'].route_opened_date}}:</label>
+                          <input type="date" id="opendate" name="opendate" value="">
+                        </div>
+                      
+                        <div class="form-row">
+                          <label for="notes">{{reference_data['current_language'].notes}}:</label>
+                          <textarea id="notes" name="notes">très facile</textarea>  <!-- TODO revoir le texte ici ?-->
+                        </div>
+                      
+
+                  <div class="form-row-heading row">
+                    
+                    
+                    <button id='submitbutton' type="button" class="btn btn-success btn-lg" onclick="saveLine()">{{reference_data['current_language'].save}}</button>&nbsp;
+                  
+                  <!--button id='cancelbutton' type="button" class="btn btn-info" onclick="hideModal()">{{reference_data['current_language'].cancel}}</button-->
+                    </div>    
+                    <!--div class="form-row-heading">
+                  <button id='closebutton' type="button" class="btn btn-info" onclick="addBefore()">{{reference_data['current_language'].add_before}}</button>&nbsp;
+                  <button id='submitbutton' type="button" class="btn btn-info" onclick="addAfter()">{{reference_data['current_language'].add_after}}</button>
+                    </div-->    <div class="form-row row"></div>
+                     <button id='deletebutton' type="button" class="btn btn-danger btn-sm" onclick="deleteContent()">{{reference_data['current_language'].remove}} {{reference_data['current_language'].route}}</button>
+                 </div>
+                </div>
+                
+            </div>
+            
+        </div>
+
+
+        <script>
+
+            
+            //let dept = params.get("dept"); // return sales
+
+            // Get the modal dialog container
+            var modal = document.getElementById("modal");
+            var editDiv = document.getElementById('editContent');
+            var mainModalMenuDiv = document.getElementById('mainModalMenu');
+            var modalBoxDiv = document.getElementById('modal-box');
+            var routeRatingDiv = document.getElementById('route-rating-div');
+            var currentRow;
+            var mod_type;
+            var isLoggedIn = false;
+
+
+            function showEditDiv(){
+                mainModalMenuDiv.style.display='none'
+                editDiv.style.display='block';
+            }
+
+            function editContent(){
+                mod_type='save'
+                showEditDiv();
+                hideRatigngUi();
+                return false;
+            }
+
+            
+
+
+            function deleteContent(){
+                mod_type='delete'
+                document.getElementById('routenum').value=-1
+                var data = getFormData();
+                
+                saveData(data)
+                //mainModalMenuDiv.style.display='none'
+                //editDiv.style.display='none';
+                //modal.style.display='none'
+                
+            }
+
+            // Function to display the modal dialog
+            function showModal() {
+                resetFlashImage();
+                showRatingUi();
+                mainModalMenuDiv.style.display='block'
+                
+                editDiv.style.display='none';
+                modal.style.display = "block";
+                
+            }
+    
+            // Function to hide the modal dialog
+            function hideModal() {
+
+                modal.style.display = "none";
+            }
+  
+        function showRatingUi()
+        {
+            if (isLoggedIn)
+            {
+                document.getElementById('route-rating-div').style.display='block';
+            }else{
+                document.getElementById('route-rating-div').style.display='none';
+            }
+        }
+
+        function hideRatigngUi()
+        {
+            document.getElementById('route-rating-div').style.display='none';
+        }
+
+  
+        function addBefore(){
+            mod_type='add_before';
+            clearModal();
+            hideRatigngUi();
+            showEditDiv();
+        }
+
+        function addAfter(){
+            mod_type='add_after';
+            clearModal();
+            hideRatigngUi();
+            showEditDiv();
+        }
+
+        function clearModal(){
+            document.getElementById('hidden_message').textContent='';
+            const greenColor = '#aaffaa';
+            document.getElementById('routeid').value = '';
+            if (mod_type == 'add_before'){
+                document.getElementById('routenum').value = currentRow.routenum-0.5;
+            }else if (mod_type == 'add_after'){
+                document.getElementById('routenum').value = parseInt(currentRow.routenum)+0.5;
+            }
+            document.getElementById('routenum').disabled = true;
+
+            document.getElementById('line').value = '';
+            document.getElementById('colorfr').value = '#aaffaa';
+            document.getElementById('color1').value = '#aaffaa';
+            //document.getElementById('color1').style.backgroundImage="url(data:image/svg+xml, "+getColorSVGDiv('#00FF00', 'solid', '80px', '15px')+")";
+                        
+            //document.getElementById('color1-display').style.backgroundColor = '#aaffaa';
+            //document.getElementById('color_modifier').value = 'solid';
+            setColorModifier('solid');
+            document.getElementById('grade').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('openedby').value = '';
+            document.getElementById('opendate').value = '';
+            document.getElementById('notes').value = '';
+
+            document.getElementById('route-color1').style.background = greenColor;
+           
+            document.getElementById('route-name').innerHTML =  '';
+            
+            document.getElementById('route-routenum').innerHTML =  '';
+            document.getElementById('route-grade').innerHTML =  '';
+            modalBoxDiv.style.border="5px solid "+greenColor;
+            //document.getElementById('color1').style.backgroundColor = greenColor;
+        
+        }
+
+
+        function setColorModifier(color_modifier){
+            if (color_modifier == 'solid'){
+                
+                document.getElementById('color_modifier_solid').checked = true;
+            }else{
+                document.getElementById('color_modifier_marble').checked = true;
+            }
+            //document.getElementById('color_modifier').value = color_modifier;
+            //document.getElementById('color_modifier').checked = data.color_modifier=='solid';
+            //document.getElementById('color_modifier').checked = data.color_modifier=='solid';
+            
+        }
+
+        function getColorModifierValue(){
+            color_modifier = ''
+            Array.from(  document.getElementsByName('color_modifier')   ).forEach((element,index) =>
+                {
+                       if (true === element.checked) {
+                        color_modifier= element.value;
+                    } 
+                });
+                return color_modifier;
+        }
+
+
+        function routeDetail(data) {
+        	//console.log("routeDetail.. "+data+" - ");
+            currentRow=data;
+            console.log('routeId '+data.id);
+            var hatchColor = data.color1;
+            var backgroundColor = 'transparent'; // or any other color
+            var hatchedBackground = `repeating-linear-gradient(45deg, ${hatchColor}, ${hatchColor} 15px, ${backgroundColor} 5px, ${backgroundColor} 20px)`;
+            
+            document.getElementById('routeid').value = data.id;
+            document.getElementById('routenum').value = data.routenum;
+            document.getElementById('line').value = data.line;
+            document.getElementById('colorfr').value = data.colorfr;
+            document.getElementById('color1').value = data.color1;
+            //const svgUrl = encodeURIComponent(getColorSVGDiv('#00FF00', 'solid', '80px', '15px'));
+            //document.getElementById('color1').style.backgroundImage="url(data:image/svg+xml, "+svgUrl+")";
+            
+            
+            //document.getElementById('color1-display').style.backgroundColor = data.color1;
+            //document.getElementById('color_modifier').value = data.color_modifier;
+            setColorModifier(data.color_modifier);
+            
+            document.getElementById('grade').value = data.grade;
+            document.getElementById('name').value = data.name;
+            document.getElementById('openedby').value = data.openedby;
+            document.getElementById('opendate').value = data.opendate;
+            document.getElementById('notes').value = data.notes;
+
+            if (data.color_modifier == 'marble') { 
+              document.getElementById('route-color1').style.background = hatchedBackground;
+            } else {
+              document.getElementById('route-color1').style.background = data.color1;
+            }
+
+//            document.getElementById('route-color1').style.background = data.color1;
+            document.getElementById('route-name').innerHTML = data.name;
+            document.getElementById('route-routenum').innerHTML = data.routenum;
+            document.getElementById('route-grade').innerHTML = data.grade;
+            modalBoxDiv.style.border="5px solid "+data.color1;
+            document.getElementById('route-openedby').innerHTML = data.openedby;
+            document.getElementById('route-opendate').innerHTML = data.opendate;
+            document.getElementById('route-notes').innerHTML = data.notes;
+            document.getElementById('route-line').innerHTML = data.line;
+            
+            // this is a background on edit popup input field
+            //document.getElementById('color1').style.backgroundColor = currentRow.color1;
+            document.getElementById('hidden_message').textContent='';
+          
+            document.getElementById('grade_user').value = data.grade;
+        }
+
+        
+        function colorChanged(tp){
+            var color = document.getElementById('color1').value;
+            //document.getElementById('route-color1').style.background = color;
+            
+            document.getElementById('color1').style.backgroundColor = color;
+            modalBoxDiv.style.border="5px solid "+color;
+            /*if (tp){
+                color.close();
+            }*/
+        } 
+
+        color1input = document.getElementById('color1');
+        color1input.addEventListener("input", colorChanged(0), false);
+        color1input.addEventListener("change", colorChanged(1), false);
+
+    </script>
+{%endif%}
+
+
+
+<div class="container-fluid">
+    <br>
+
+        {% if gym is not none and gym is not undefined  %}
+      
+        <div class="row">
+            <div class="col">
+                <div class="h-100 p-5 bg-light border rounded-3 text-center">
+                <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
+                <h1  class="display-2"> {{ gym['name'] }}</h1> 
+
+                <div class=" large-icons display-4">
+                    <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench skala3ma-logo"></i></a>
+                        <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list skala3ma-logo"></i></a>
+    
+    
+                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2  skala3ma-logo"></i></a>
+                    <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print skala3ma-logo"></i></a>
+                
+                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download"><i class="icon-download2 skala3ma-logo"></i></a>
+                
+                </div>
+                {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
+                </div>
+            </div>
+            </div>
+            <div class="row">
+            <div class="col">
+                <div class="h-100 p-5 bg-light border rounded-3">
+
+                   
+            </div>
+            </div>
+            <div class="col">
+            
+        </div>
+        </div>
+       
+                
+           
+                    
+               
+            </div>
+
+    {% else %}
+                <h3>{{ reference_data['current_language'].gyms }} </h3>
+
+                {% if can_create_gym is true  %}
+                    <button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
+                            onclick='location.href="/gyms/add"'>{{reference_data['current_language'].add}}</button>
+
+                {% endif %}
+        
+    {% endif %}
+    
+    
+</div>
+    
+
+
+
+<div class="container-fluid">  
+
+    
+    <div id="tabulator-table"></div>
+    {{ routes['name'] }}
+</div>
+
+<br><br>
+{% if gym is not none and gym is not undefined  %}
+
+
+
+
+	<!-- Trigger the modal with a button -->
+
+
+   
+
+
+
+
+
+
+    <script>
+
+        var routes;
+        var activitiesRecorded = 0;
+        var usersRegistered = 0;
+      
+        function fetchServerData()
+        {
+          const gymid = "{{gymid}}";
+          const routeListId = "{{routesid}}";
+      
+          fetch(`/api1/gym/${gymid}/${routeListId}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+              // console.log(data);
+              routes=data.routes
+              renderTabulatorTable(routes);
+          })
+          .catch(error => console.error(error));
+      
+          fetch(`/api1/user`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    isLoggedIn = true;
+                    showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+          fetch(`/api1/activity/gym/${gymid}/routes/${routeListId}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    activitiesRecorded = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+
+          fetch(`/api1/gym/${gymid}/users`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+                //console.log(data);
+                if (Object.keys(data).length === 0) {
+                    // data is an empty object
+                }
+                else{
+                    usersRegistered = Object.keys(data).length;
+                    //isLoggedIn = true;
+                    //showRatingUi();
+                }
+                
+            }                
+          )
+          .catch(error => console.error(error));
+
+          
+
+
+        }
+      
+        // Function to create a hatched pattern in color rendering when printing to pdf  
+        function createHatchedSVG(color, width = '100px', height = '20px') {
+              return `
+                <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="hatch-${color}" width="4" height="4" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="0" x2="0" y2="4" style="stroke:${color}; stroke-width:5" />
+                        </pattern>
+                    </defs>
+                    <rect width="${width}" height="${height}" fill="url(#hatch-${color})" />
+                </svg>`;
+        }
+      
+    var table;
+      function renderTabulatorTable(routesA)
+      {
+        var columns = [
+          {title: "id", visible:false, field: "id", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false,
+            formatter:function(cell, formatterParams, onRendered){
+                return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`
+                     //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
+            },
+        
+        
+        
+        },
+          {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+           "responsive": 0 , minWidth:10, 
+           formatter:function(cell, formatterParams, onRendered){ 
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+            },
+        
+            formatterPrint:function(cell, formatterParams, onRendered){
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+            },
+        },
+
+         
+          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+          ];
+      
+          // Create the Tabulator table
+        table = new Tabulator("#tabulator-table", {
+            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
+            printFooter:"<h3></h3>", // set footer content on printed table
+            printAsHtml:true,
+            //printStyled:true, //copy Tabulator styling to HTML table
+            printConfig:{
+                //columnHeaders:false, //do not include column headers in printed table
+                columnGroups:false, //do not include column groups in column headers for printed table
+                rowGroups:false, //do not include row groups in printed table
+                //columnCalcs:false, //do not include column calcs in printed table
+                //dataTree:false, //do not include data tree in printed table
+                //formatCells:true, //show raw cell values without formatter
+            },
+            //groupBy:"line",
+            //groupBy:"routenum",
+            groupHeader:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
+
+                return value + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>"+
+                "<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='100'>";
+            },
+            columns: columns,
+            data: routesA ,
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
+            movableRows: false,
+            selectable: 1,
+            //responsiveLayout:"collapse",
+            //responsiveLayout:"fitColumns",
+            //responsiveLayout:"collapse",
+            //movableColumns: true, 
+            //responsiveLayoutCollapseStartOpen:true,
+            formatter:"responsiveCollapse", headerSort:false,
+            rowFormatter:function(row){
+            if(row.getData().line % 2 == 0){
+                //row.getElement().style.backgroundColor = "#dddddd";
+                //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
+                row.getElement().style.backgroundColor = "#f1f1f1";
+            
+            }else{
+                row.getElement().style.backgroundColor = "#ffffff";
+            
+            }
+            },
+
+              /*rowContextMenu:[
+              {
+                label:"Edit Row",
+                action:function(e, row){
+                    row.delete();
+                }
+                },
+                {
+                    label:"Delete Row",
+                    action:function(e, row){
+                        row.delete();
+                    }
+                },
+            ]*/
+          });
+
+          table.on("rowClick", function(e, row){
+            routeDetail(row.getData());
+            showModal();
+            row.toggleSelect();
+          });
+
+          /*if (currentRow !== undefined)
+          {
+            //table.selectRow(Math.abs(parseInt(currentRow.routenum)));
+            table.selectRow(2);
+          }*/
+
+          document.getElementById("print-table").addEventListener("click", function(){
+            table.print(false, true);
+            });
+
+      
+      }
+      
+      
+        fetchServerData();
+        
+        function getFormData() {
+          const formData = {};
+
+          
+          const routeid = document.getElementById('routeid').value;
+          console.log('getFormData routeid '+routeid);
+          
+          formData['id'] = routeid;
+          
+          const routenum = document.getElementById('routenum').value;
+          formData['routenum'] = routenum;
+          
+          const line = document.getElementById('line').value;
+          formData['line'] = line;
+          
+          const colorfr = document.getElementById('colorfr').value;
+          formData['colorfr'] = colorfr;
+          
+          const color1 = document.getElementById('color1').value;
+          formData['color1'] = color1;
+          
+          //const colorModifier = document.getElementById('color_modifier').value;
+          const colorModifier = getColorModifierValue();
+          
+          formData['color_modifier'] = colorModifier;
+          
+          const grade = document.getElementById('grade').value;
+          formData['grade'] = grade;
+          
+          const name = document.getElementById('name').value;
+          formData['name'] = name;
+          
+          const openedBy = document.getElementById('openedby').value;
+          formData['openedby'] = openedBy;
+          
+          const openDate = document.getElementById('opendate').value;
+          formData['opendate'] = openDate;
+          
+          const notes = document.getElementById('notes').value;
+          formData['notes'] = notes;
+
+            formData['route_finish_status'] = routeFinishStatus;
+
+            const route_grade_user = document.getElementById('grade_user').value;
+            formData['grade_user'] = route_grade_user;
+          
+            const notes_user = document.getElementById('notes_user').value;
+            formData['notes_user'] = notes_user;
+
+          const jsonData = JSON.stringify(formData);
+          
+          return jsonData;
+        }
+      
+      
+        function addRoute() {
+          const id = document.getElementById('routeid').value;
+          const routenum = parseInt(document.getElementById('routenum').value);
+          const line = document.getElementById('line').value;
+          const colorfr = document.getElementById('colorfr').value;
+          const color1 = document.getElementById('color1').value;
+          const color_modifier = document.getElementById('color_modifier').value;
+          const grade = document.getElementById('grade').value;
+          const name = document.getElementById('name').value;
+          const openedby = document.getElementById('openedby').value;
+          const opendate = document.getElementById('opendate').value;
+          const notes = document.getElementById('notes').value;
+      
+          const route = {
+            id,
+            routenum,
+            line,
+            colorfr,
+            color1,
+            color_modifier,
+            grade,
+            name,
+            openedby,
+            opendate,
+            notes
+          };
+      
+          // insert the new route into the array
+          routes.splice(routenum, 0, route);
+      
+          console.log('Route added:', route);
+          console.log('Routes array:', routes);
+        }
+
+        function saveLine() {
+            var data = getFormData();
+            saveData(data)
+        }
+
+        function addActivityRoute() {
+            var data = getFormData();
+            //console.log('saving new route to activity '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/activity/{{gymid}}/{{routesid}}/saveone', {
+                mode: 'no-cors',
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.log('error response',response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                //return response.json();
+            })
+            .then(data => {
+                console.log('Response from saving route');
+                console.log(data)
+                //routes=data.routes
+                //renderTabulatorTable(routes);
+                //table.replaceData(routes);
+                hideModal()
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+          }
+
+
+        //mode: 'no-cors',
+        function saveData(data){
+            console.log('saving data '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/saveone', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    //console.log('error response',response.json)
+                    //console.log(response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                //console.log('Response:', data);
+                routes=data.routes
+                renderTabulatorTable(routes);
+                //table.replaceData(routes);
+                hideModal()
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+            }
+
+
+        function rateRoute(){
+                mod_type='rate'
+                var data = getFormData();
+                //console.log('rating route '+mod_type)    
+            //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/rate', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    //console.log('error response',response.json)
+                    //console.log(response.json)
+                    //return Promise.reject(response);
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                //console.log(data);
+                alertRibbon = document.getElementById('alert-ribbon')
+                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} ' + data.starttime + 
+                '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
+                alertRibbon.style.display = "block"
+                //setTimeout(() => alertRibbon.style.display='none', 2500)
+                //document.getElementById('alert-ribbon').style.display='block';
+                //table.replaceData(routes);
+                hideModal()
+                //document.getElementById('thanksbox').style.display='block';
+                
+      
+            })
+            .catch(error => {
+                console.error('catch error:', error);
+                document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
+                
+            });
+                return false;
+            }
+
+      </script>
+      
+      
+      
+
+
+
+</div>
+
+
+
+
+				{%endif %}
+
+
+
+			</div>
+		</div>
+
+	</div>
+{% endblock %}
