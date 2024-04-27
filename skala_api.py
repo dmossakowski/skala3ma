@@ -784,13 +784,15 @@ def get_users_by_gym(gym_id):
         user.pop('email', None)
         user.pop('permissions', None)
         user.pop('isgod',None)
-        if user.get('gpictureurl') is not None:
-            user['pictureurl'] = user.get('gpictureurl')
+        
         if user.get('fpictureurl') is not None:
             user['pictureurl'] = user.get('fpictureurl')
+        if user.get('gpictureurl') is not None:
+            user['pictureurl'] = user.get('gpictureurl')
         if user.get('fpictureurl') is None and user.get('gpictureurl') is None:
             user['pictureurl'] = '/public/images/sentiment_satisfied_FILL0_wght600_GRAD200_opsz48.png'
-
+        if user.get('firstname') is None:
+            user['firstname'] = user.get('name') 
     return users
 
 

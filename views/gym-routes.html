@@ -5,6 +5,8 @@
 
 {% block topcontent %}
 
+{% include "gym-menu.html" %}
+
 {% endblock %}
 
 
@@ -608,43 +610,37 @@
 
 
 
-<div class=" text-center  heading-section" style="border: 0px solid black; display:flexbox; align-items: center;">
-    <br><br>
+<div class=" container-flex " >
+    <div class="row">
 
-        {% if gym is not none and gym is not undefined  %}
       
-        <div>
-            <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
+        <div class="col text-end justify-content-end p-4">
+            <img src="/image/{{  gym.get('logo_img_id') }}"  height="150"/>
+            </div>
+            <div class="col justify-content-left align-items-center">
+       <br>
+                <h1  class="display-4"> {{ gym['name'] }}</h1> 
+                
+
+              
 
         </div>
-       
-                <h1  class="display-2"> {{ gym['name'] }}</h1> 
-            <div class=" large-icons">
-                <a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench skala3ma-logo"></i></a>
-                    <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list skala3ma-logo"></i></a>
+        <!--div class="col-sm-2 m-2">
+            <div class=" justify-content-left">
+                <a href="/gyms/{{gym['id']}}/{{routesid}}/edit" alt="{{gym['homepage']}}"><i class="icon-list skala3ma-logo"></i> Batch edit</a><br>
 
 
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2  skala3ma-logo"></i></a>
-                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print skala3ma-logo"></i></a>
+                <a href="/gyms/{{gym['id']}}/{{routesid}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2  skala3ma-logo"></i> Competition grid</a><br>
+                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print skala3ma-logo"></i> Printable view</a><br>
             
-                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download"><i class="icon-download2 skala3ma-logo"></i></a>
+                <a href="/gyms/{{gym['id']}}/{{routesid}}/routes_csv" alt="download"><i class="icon-download2 skala3ma-logo"></i> CSV download</a>
             
+              
+                    
             </div>
                     
-                {{ gym['address'] }} <!--i class="icon-location"></i--><br>
-                <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
-            </div>
-
-    {% else %}
-                <h3>{{ reference_data['current_language'].gyms }} </h3>
-
-                {% if can_create_gym is true  %}
-                    <button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
-                            onclick='location.href="/gyms/add"'>{{reference_data['current_language'].add}}</button>
-
-                {% endif %}
-        
-    {% endif %}
+        </div-->
+    </div>
     
     
 </div>
@@ -652,11 +648,75 @@
 
 
 
-<div class="container-fluid">  
+<div class="container-flex text-center justify-content-left">  
+    <div class="row">
+       <div class="col-1">
+            <label for="default_routes" class="col-form-label">{{ reference_data['current_language'].routes }}:</label>
+        </div>
+        <div class="col">
+            <select name="default_routes" class="form-select" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
+
+            {% for route in all_routes %}
+                <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
+            {% endfor %}
+
+            </select>
+        </div>
+    </div>
+
+
+    <div class="row">  
+        <div class="col m-2 bg-light border rounded-1">
+                <div class="row bg-body-secondary ">
+                <div class="col text-start"> {{ routes['name'] }}</div>
+                <div class="col">
+
+                    <nav class="navbar navbar-expand-md p-0 ">
+                        <div class="container-fluid ">
+                          <a class="navbar-brand" href="#"> </a>
+                          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                          </button>
+                          <div class="collapse navbar-collapse justify-content-end" id="navbarTogglerDemo02">
+                            <ul class="navbar-nav  text-nowrap ">
+                             
+                              <li class="nav-item">
+                               
+                                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}" class="nav-link active p-1">
+                                    <i class="icon-list"></i> Batch edit</a>
+                              </li>
+                              <li class="nav-item">
+                               
+                                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1">
+                                    <i class="icon-grid2 "></i> Competition tiles</a>
+                              </li>
+                              <li class="nav-item">
+                               
+                                <a href="#" id="print-table" alt="{{gym['homepage']}}" class="nav-link active p-1">
+                                    <i class="icon-print"></i> Printable view</a>
+                              </li>
+                              <li class="nav-item">
+                              <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download" class="nav-link active p-1">
+                                <i class="icon-download2"></i> Download CSV</a>
+                                </li>
+                            </ul>
+                           
+                          </div>
+                        </div>
+                      </nav>
+                   
+                    
+                </div>
+            </div>
+            <div class="col">
 
     
-    <div id="tabulator-table"></div>
-    {{ routes['name'] }}
+                <div id="tabulator-table"></div>
+                {{ routes['name'] }}
+            </div>
+        </div>
+
+
 </div>
 
 <br><br>
@@ -1118,47 +1178,6 @@
 
 
 				{%endif %}
-
-{% if gyms is not none  %}
-
-
-
-
-
-					{% for gymid in gyms %}
-
-                    
-					<div class=" col-lg-6 ">
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
-							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
-							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
-						>
-							<a href="gyms/{{ gymid }}">
-							<div class="blog-text">
-								<div class="prod-title">aaaa
-
-									<img src="/image/{{  gyms.get(gymid).get('logo_img_id') }}"  
-									height="130">
-
-									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
-
-									<br><br>
-									<h4>{{ gyms[gymid]['name'] }}</h4>
-
-								</div>
-							</div>
-								</a>
-						</div>
-					</div>
-
-					 {% endfor %}
-
-
-
-
-
-{% endif %}
 
 
 
