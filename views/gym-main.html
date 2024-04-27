@@ -6,6 +6,9 @@
 {% block topcontent %}
 
 {% include "gym-menu.html" %}
+                                    
+    
+
 
 {% endblock %}
 
@@ -610,65 +613,50 @@
 
 
 
-<div class=" container-flex " >
-    <div class="row">
+<div class="container-fluid">
+    
 
-      
-        <div class="col text-end justify-content-end p-4">
-            <img src="/image/{{  gym.get('logo_img_id') }}"  height="150"/>
-            </div>
-            <div class="col justify-content-left align-items-center">
-       <br>
-                <h1  class="display-4"> {{ gym['name'] }}</h1> 
+    
+    <div class="row">
+        <div class="col m-2 bg-light border rounded-1">
+            <div class="row bg-body-secondary">
+            <div class="col text-start">About</div>
+            <div class="col text-end"> <a href="/gyms/{{gym['id']}}/edit" title="Edit"><span alt="alttext" class="icon-wrench "></span></a></div>
+        </div>
+            <div class="h-100 p-4 mb-3  text-center">
                 
 
-              
+            <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
+            <h1  class="display-3"> {{ gym['name'] }}</h1> 
 
-        </div>
-        <!--div class="col-sm-2 m-2">
-            <div class=" justify-content-left">
-                <a href="/gyms/{{gym['id']}}/{{routesid}}/edit" alt="{{gym['homepage']}}"><i class="icon-list skala3ma-logo"></i> Batch edit</a><br>
-
-
-                <a href="/gyms/{{gym['id']}}/{{routesid}}/download" alt="{{gym['homepage']}}"><i class="icon-grid2  skala3ma-logo"></i> Competition grid</a><br>
-                <a href="#" id="print-table" alt="{{gym['homepage']}}"><i class="icon-print skala3ma-logo"></i> Printable view</a><br>
-            
-                <a href="/gyms/{{gym['id']}}/{{routesid}}/routes_csv" alt="download"><i class="icon-download2 skala3ma-logo"></i> CSV download</a>
-            
-              
-                    
+            {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+            <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
             </div>
-                    
-        </div-->
+        </div>
     </div>
-    
-    
-</div>
-    
-
-
-
-<div class="container-flex text-center justify-content-left">  
     <div class="row">
-       <div class="col-1">
-            <label for="default_routes" class="col-form-label">{{ reference_data['current_language'].routes }}:</label>
+        <div class="col m-2 bg-light border rounded-1">
+            <div class="row bg-body-secondary">
+            <div class="col text-start">Climbers</div>
+            <div class="col text-end"> </div>
         </div>
-        <div class="col">
-            <select name="default_routes" class="form-select" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
-
-            {% for route in all_routes %}
-                <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
-            {% endfor %}
-
-            </select>
+        <div class="col" id="users-div-col">
+            <div class="h-100 pt-2 mt-2  " id="users-div">
+                
+            </div>
         </div>
+       
     </div>
+    </div>
+       
+                
+           
 
 
     <div class="row">  
         <div class="col m-2 bg-light border rounded-1">
                 <div class="row bg-body-secondary ">
-                <div class="col text-start"> {{ routes['name'] }}</div>
+                <div class="col text-start">Default routes</div>
                 <div class="col">
 
                     <nav class="navbar navbar-expand-md p-0 ">
@@ -704,6 +692,14 @@
                           </div>
                         </div>
                       </nav>
+
+
+                    
+
+
+                    
+                   
+                
                    
                     
                 </div>
@@ -716,13 +712,10 @@
             </div>
         </div>
 
+    </div>
+<br><br>
 
 </div>
-
-<br><br>
-{% if gym is not none and gym is not undefined  %}
-
-
 
 
 	<!-- Trigger the modal with a button -->
@@ -745,6 +738,19 @@
         {
           const gymid = "{{gymid}}";
           const routeListId = "{{routesid}}";
+
+          fetch(`/api1/gym/${gymid}`)
+          .then(response => response.json())
+          .then(data => {
+              // use the retrieved data here
+            console.log(data);
+            // set the gym-name span from data name param
+            document.getElementById('gym_name').textContent = data.name;
+
+
+              
+          })
+          .catch(error => console.error(error));
       
           fetch(`/api1/gym/${gymid}/${routeListId}`)
           .then(response => response.json())
@@ -799,9 +805,32 @@
                 //console.log(data);
                 if (Object.keys(data).length === 0) {
                     // data is an empty object
+                    // remove div called users-div
+                    var usersDiv = document.getElementById('users-div-col');
+                    usersDiv.remove();
                 }
                 else{
                     usersRegistered = Object.keys(data).length;
+                    usersDiv = document.getElementById('users-div');
+                    // create div element
+                    //var div = document.createElement('div');
+                    // loop over usersRegistered and create a div for each user
+                    for (var i = 0; i < usersRegistered; i++) {
+                        //console.log(data[i]);
+                        var user = data[i];
+                        var userDiv = document.createElement('div');
+                        // set class col on userDiv
+                        userDiv.className = 'd-inline-flex focus-ring py-1 ms-1 mb-1 px-2 text-decoration-none border rounded-2';
+                        userDiv.innerHTML = user['firstname']+'  &nbsp;';
+                        // add pictureurl from user to div as an image
+                        var img = document.createElement('img');
+                        img.src = user['pictureurl'];
+                        img.width = 30;
+                        
+                        // add the image to the div
+                        userDiv.appendChild(img);
+                        usersDiv.appendChild(userDiv);
+                    }
                     //isLoggedIn = true;
                     //showRatingUi();
                 }
@@ -1171,19 +1200,4 @@
       
 
 
-
-</div>
-
-
-
-
-				{%endif %}
-
-
-
-
-			</div>
-		</div>
-
-	</div>
 {% endblock %}

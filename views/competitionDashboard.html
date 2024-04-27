@@ -11,14 +11,21 @@
 
 	{% block secondarycontent %}
 
-	<div name='bbb'>
+	<div  class="text-center heading-section ">
 
 		{% include "skala3ma-menu.html" %}
 
-			<div class="text-center heading-section">
-						<br>
+        <div class=" fh5co-blog border-0 "    >
+						
 				
 				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
+                        {% if can_create_competition is true %}
+							
+                                <a href="/newCompetition" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+
+						{% endif %}
+                        
+                        <br>
 					<select 
                         style="width:200px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
 						name="competition_year">
@@ -30,27 +37,24 @@
                     </select>
                     </h3>
 
-						{% if can_create_competition is true %}
-							<button type="button" class="btn btn-success btn-md" 
-                                onclick='location.href="/newCompetition"'>{{reference_data['current_language'].add}}</button>
-
-						{% endif %}
+						
 
 			</div>
+            </div>
 
-		<div class="container">
-		<div class="row row-bottom-padded-md">
+		<div class="container-fluid">
+		<div class="row   ">
+           
+			{% for competitionId in competitions %}
 
-					{% for competitionId in competitions %}
+                <div class="col-md-3">
+                    <div class=" fh5co-blog border-011"  saatyle="width: 10rem;"  >
 
-
-<div class=" col-lg-3 " >
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog text-center">
+						<div id='albumArt{{ loop.index }}' class="text-center">
 
 							<a href="/competitionDetails/{{ competitionId }}">
 							<div class="blog-text" >
-								<div class="AAprod-title">
+								<div >
 									<h3>{{ competitions[competitionId]['name'] }}<br>
 										{{ competitions[competitionId]['date'] }}</h3>
 
@@ -60,11 +64,11 @@
 
                                     </span>
 									<br>
-									<img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" width="200"><br><br>
+									<img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" ><br><br>
 									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
 										{% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
 										<span class="posted_by"><i class="icon-thumbs-up"></i>
- {{ reference_data['current_language'].registered }}</span>
+                                                {{ reference_data['current_language'].registered }}</span>
 										{% endif %}
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
@@ -74,10 +78,10 @@
 								</a>
 						</div>
 					</div>
+                </div>
+			{% endfor %}
 
-					 {% endfor %}
-
-				</div>
+		</div>
 
 
 

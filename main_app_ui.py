@@ -1492,12 +1492,33 @@ def gym_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
     #gym['routesid']='abc1'
 
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    
+    #routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
     routes_dict = competitionsEngine.get_routes_by_gym_id(gymid)
-
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
+     
     #routes1 = competitionsEngine.get_routes(gym['routesid'])
     routes = routes_dict.get(gym['routesid'])
     routesid = gym['routesid']
-    return redirect(f'/gyms/{gymid}/{routesid}')
+    return render_template('gym-main.html',
+                           gymid=gymid,
+                           routesid=routesid,
+                           gyms=None,
+                           gym=gym,
+                           routes=None,
+                           all_routes=all_routes,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
+                           )
 
 
 
@@ -1530,6 +1551,9 @@ def gym_routes_new(gym_id, routesid):
                            user_can_edit_gym=user_can_edit_gym,
                            can_create_gym=can_create_gym,
                            )
+
+
+
 
 
 
@@ -1569,10 +1593,11 @@ def gym_edit(gymid):
                            )
 
 
-
+# NOT USED MOST LIKELY
 @app_ui.route('/gyms/<gymid>/edit', methods=['POST'])
 @login_required
 def gym_save(gymid):
+    raise ValueError("Not implemented")
     formdata = request.form.to_dict(flat=False)
 
     args1 = request.args
@@ -1643,7 +1668,7 @@ def gym_routes_edit(gym_id, routesid):
     routes = all_routes.get(routesid)
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
-    return render_template('skala-routes-edit.html',
+    return render_template('gym-routes-batch-edit.html',
                            gymid=gym_id,
                            gyms=None,
                            gym=gym,
@@ -1651,6 +1676,38 @@ def gym_routes_edit(gym_id, routesid):
                            all_routes=all_routes,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
+                           )
+
+
+
+
+@app_ui.route('/gyms/<gymid>/climbers')
+def gym_climbers_by_id(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    #gym['routesid']='abc1'
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    
+    #routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    routes_dict = competitionsEngine.get_routes_by_gym_id(gymid)
+
+    #routes1 = competitionsEngine.get_routes(gym['routesid'])
+    routes = routes_dict.get(gym['routesid'])
+    routesid = gym['routesid']
+    return render_template('gym-climbers.html',
+                           gymid=gymid,
+                           routesid=routesid,
+                           gyms=None,
+                           gym=gym,
+                           routes=None,
+                           all_routes=all_routes,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
                            )
 
 

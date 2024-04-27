@@ -6,10 +6,14 @@
 <ul class="nav justify-content-center ">
 <!-- li>{{ competition['name'] }}</li -->
 
-    <a href="/competitionDetails/{{ competitionId}}" onClick="showModal()" class="nav-link sf-menu2"><i class="bi bi-house-door-fill" ></i></a></li>
+    <a href="/competitionDetails/{{ competitionId}}"  class="nav-link sf-menu2"><i class="bi bi-house-door-fill" ></i>
+        {{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</a></li>
+
 					<a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link">{{ reference_data['current_language'].registration }}</a> </li>
 						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
-					<a href="/competitionRoutesEntry/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].routes }}</a></li>
+					<a href="/competitionRoutesEntry/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a></li>
+
+                    <a href="/gyms/{{competition['gym_id']}}/{{ competition['routesid']}}" class="nav-link sf-menu2">  {{ reference_data['current_language'].routes }}</a>
 
 				<a href="/competitionResults/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].resultats }}</a></li>
 
@@ -44,7 +48,7 @@
 
 {% if competition is defined and competition is not none %}
 
-				<a href="/competition_admin/{{competitionId}}" class="nav-link">{{ reference_data['current_language'].competition_status }}:  {{ reference_data['current_language']['competition_status_'~competition['status']] }}</a></li>
+				<a href="/competition_admin/{{competitionId}}" class="nav-link">Admin</a></li>
 							{% endif %}
 						</ul>
 

@@ -18,7 +18,7 @@
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class=" text-left heading-section">
 						<br>
-						<h3>{{ competition['name'] }} - {{ subheader_message }}
+						<h3> {{ subheader_message }}
                         </h3>
 
 					</div>
@@ -27,50 +27,43 @@
 
 {% if routes is not none and routes is not undefined  %}
 
-<div class="container">
 
+<div class="container">
 
 <form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}" method="post">
 <h2><input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
 
-<table class="table thead-dark table-hover" id="my_table_id"
->
-         <thead><tr>
-         <th >{{ reference_data['current_language'].line }}</th>
-         <th >{{ reference_data['current_language'].route_num }}</th>
-         <th >{{ reference_data['current_language'].grade }}</th>
-         <th >{{ reference_data['current_language'].name }}</th>
-         <th >{{ reference_data['current_language'].climbed }}</th>
-
-
-         </tr>
-         </thead>
-    <tbody>
+<div class="row">
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
-		 <tr onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;">
-			 <td>{{ route['line'] }} </td>
-			 <td  align="center"
-				  style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
-				  rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
-				 <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
-				</b></td>
-			 <td><i>{{route['grade'] }}</i></td>
-			 <td> {{ route['name'] }}</td>
+		 
+         <div class="col-3" style="width: 9rem; padding-bottom: 40px" 
+         onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;">
+			  <font style="text-shadow: 0px 0px 4px white; font-size: 2.4rem"><b>{{ route['routenum'] }}</b> </font>  
+              
+                <input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
+                              onclick="event.stopPropagation();" style="width: 2rem; height: 2rem;"
+                       {% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
+                       >
+                   
+            
+            
+              <div  align="center"
+				  style="border-color:black; :1px; background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
+				    {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
+                  
 
-			 <td>				<input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
-									   onclick="event.stopPropagation();"
-								{% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
-								>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				</b>
+			
+			
+                            </div>
 
-			 </td>
+			 
 
-		 </tr></a>
+            </div>
              {% endfor %}
 
-
-         </tbody>
-     </table>
 
 </form>
 
@@ -90,7 +83,7 @@
 					{% for gymid in gyms %}
 
 
-					<div class=" col-md-2 ">
+					<div class=" col-md-2 ">IS THIS USED???
 
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
 							 onmouseover="playPreview('trackPreview{{ loop.index }}')"

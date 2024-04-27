@@ -9,12 +9,9 @@
 
 	{% block secondarycontent %}
 
-	<div name='bbb'>
+	<!--div class="container" name='bbb'-->
 
-		<!--   % include "myskala-menu.html" %--> 
-
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="text-center heading-section">
+			<div class="text-center heading-section">
 						<br>
 				<h3>{{ reference_data['current_language'].my_resultats}}</h3>
 					
@@ -25,34 +22,28 @@
           
                 
 			<div class="row">
-                <div id="chartbox"></div>
-                <div id="chartbox2"></div>
+                <div class='col' id="chartbox"></div>
+                <div class='col' id="chartbox2"></div>
               
                    
              
-            <!--div class="expo-box row">
-                Routes climbed: <label id="routes_climbed_count"></label><br>
-                Competitions attended: <label id="competitions_count"></label-->
+           
                 
             </div>
+        </div>
+            
             
 
-<div id="tabulator-table"></div>
+    <div id="tabulator-table"></div>
 
 
-<div class="container-fluid">
-
-
-</div>
-
-<br>
 
 
 			</div>
 		</div>
-		<!-- fh5co-blog-section -->
+		
+        
 
-	</div>
 
 <script>
 
@@ -214,10 +205,10 @@ function processData(fullresponse)
       
 
 		var routes = []
-		for (routeid in fullresponse['routedata'])
-		{
-			routes.push(fullresponse['routedata'][routeid]['grade']+' - '+fullresponse['routedata'][routeid]['routenum']);
-		}
+		//for (routeid in fullresponse['routedata'])
+		//{
+		//	routes.push(fullresponse['routedata'][routeid]['grade']+' - '+fullresponse['routedata'][routeid]['routenum']);
+		//}
         
         //document.querySelector("#routes_climbed_count").innerHTML = fulldata['personalstats']['routes_climbed_count']
         //document.querySelector("#competitions_count").innerHTML = fulldata['personalstats']['competitions_count']
@@ -228,11 +219,17 @@ function processData(fullresponse)
     function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "{{ reference_data['current_language'].name}}", field: "name"},
-          {title: "{{ reference_data['current_language'].date}}", field: "date", width: 110},
-          {title: "{{ reference_data['current_language'].club}}", field: "gym"},
+        {title: "{{ reference_data['current_language'].competitions}}", field: "competitionName", headerFilter:"input"},
+          
+          {title: "{{ reference_data['current_language'].date}}", field: "competitionDate", width: 110},
+          {title: "{{ reference_data['current_language'].club}}", field: "gym", headerFilter:"input"},
           {title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100},
-          {title: "{{ reference_data['current_language'].grades_points}}", field: "grades_climbed", formatter:"textarea"},
+         
+          {title:"{{ reference_data['current_language'].route_num}}", field:"routenum"},
+           //{title:"Line", field:"line"},
+           {title:"{{ reference_data['current_language'].grade}}", field:"grade", headerFilter:"input"},
+           {title:"{{ reference_data['current_language'].points}}", field:"points"},
+            {title:"{{ reference_data['current_language'].name}}", field:"name"},
           ];
       
           // Create the Tabulator table
@@ -243,8 +240,11 @@ function processData(fullresponse)
               layout:"fitColumns",
               movableRows: false,
               selectable: false,
-              responsiveLayout:"collapse",
+              //responsiveLayout:"collapse",
               resizableRows:false,
+              //virtualDomBuffer:600, //set virtual DOM buffer to 300px
+
+
               //movableColumns: true, 
 
               /*rowContextMenu:[
@@ -263,7 +263,8 @@ function processData(fullresponse)
             ]*/
           });
 
-       
+         
+          
       }
       
 

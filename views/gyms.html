@@ -75,10 +75,10 @@ NOT USED
 
     <div>
 		<div class="text-center heading-section">
-			<br><br>
+			<br>
 
 			    {% if gym is not none and gym is not undefined  %}
-
+                        not used
 						<img src="/image/{{ gym.get('logo_img_id') }}" width="150" >
 
 						<font size="+5"> {{ gym['name'] }}</font>
@@ -93,23 +93,29 @@ NOT USED
 						<a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
 
 					{% else %}
-						<h3>{{ reference_data['current_language'].gyms }} </h3>
+						<h3>{{ reference_data['current_language'].gyms }} 
 
 						{% if can_create_gym is true %}
-							<button type="button" class="btn btn-success btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="121"
-									onclick='location.href="/gyms/add"'>{{reference_data['current_language'].add}}</button>
-
+                        <a href="/gyms/add" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+							
 						{% endif %}
+                    </h3>
+                        {% if can_create_competition is true %}
+							
+                        
+
+                {% endif %}
 				{% endif %}
 		</div>
     </div>
 
 
-	<div class="container">
-		<div class="row row-bottom-padded-md">
+	<div class="container-fluid">
+		
+		<div class="row   g-4 ">
 
             {% if gym is not none and gym is not undefined  %}
-
+ NOT USED!!!!!
 
                 <table class="table thead-dark table-hover" id="my_table_id"
                     data-url="data/url.json"
@@ -161,7 +167,9 @@ NOT USED
                 {% for gymid in gyms %}
 
 
-					<div class=" col-md-2 ">
+                <div class="col d-flex justify-content-center align-items-center">
+                    <div class=" fh5co-blog border-0"  style="width: 16rem;"  >
+
 
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog"
 							 onmouseover="undefined"
@@ -169,7 +177,7 @@ NOT USED
 							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
 								<div class="text-center">
-								    <img src="/image/{{  gyms.get(gymid).get('logo_img_id') }}" width="200px">
+								    <img src="/image/{{  gyms.get(gymid).get('logo_img_id') }}" >
 									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
 									<br><br>
 									<h3 class="display-2">{{ gyms[gymid]['name'] }}</h3>
@@ -179,6 +187,8 @@ NOT USED
 							</a>
 						</div>
 					</div>
+                    </div>
+                    
 
 				{% endfor %}
 
