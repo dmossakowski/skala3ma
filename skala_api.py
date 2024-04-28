@@ -337,7 +337,7 @@ def calculate_activities_stats(activities):
     today = datetime.today().date()
     stats  = {}
     # Create a dictionary with dates 30 days back from today as keys and 0 as initial values
-    routes_done = {(today - timedelta(days=i)).strftime('%Y-%m-%d'): 0 for i in range(30, -1, -1)}
+    routes_done = {(today - timedelta(days=i)).strftime('%Y-%m-%d'): 0 for i in range(180, -1, -1)}
 
     for activity in activities:
         if activity.get('date') is None:

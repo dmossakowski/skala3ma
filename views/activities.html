@@ -498,6 +498,11 @@ function addActivityEntry(text)
 
         dateChartOptions.series[0].data= stats['routes_done']
         dateChartOptions.xaxis.categories= stats['dates']
+        dateChartOptions.xaxis.tickAmount = 9
+        dateChartOptions.xaxis.labels = {
+    'rotate': 0
+  
+}
         
         var datesChart = new ApexCharts(document.getElementById("activitiesChart"), dateChartOptions);
         datesChart.render();
