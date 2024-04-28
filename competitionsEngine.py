@@ -202,6 +202,7 @@ def update_competition_details(competition, name, date, routesid):
             logging.error('error setting routes climbed2')
             pass
         
+
     skala_db._update_competition(competition['id'], competition)
 
     return competition
@@ -787,15 +788,15 @@ def init():
     for competition in skala_db.get_all_competitions().values():
         _validate_or_upgrade_competition(competition)
 
-    print('created ' + COMPETITIONS_DB)
+    logging.info('created ' + COMPETITIONS_DB)
 
 
-    print("running user migrations - adding gymid to users...")
+    logging.info("running user migrations - adding gymid to users...")
     emails = get_all_user_emails()
     for email in emails:
         user = get_user_by_email(email)
         if user is None:
-            print('no user found for email: '+str(email))
+            logging.info('no user found for email: '+str(email))
             continue
         if user.get('gymid') is None:
             if user.get('club') is not None:
@@ -804,7 +805,7 @@ def init():
                     user['gymid'] = gym['id']
                     skala_db.upsert_user(user)
                 else:   
-                    print('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
+                    logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
             #user['gymid'] = ''
 
 
@@ -852,11 +853,12 @@ def get_competition(compId):
         return None
     else:
         competition = json.loads(one[0])
-        competition = _validate_or_upgrade_competition(competition)
+        #competition = _validate_or_upgrade_competition(competition)
         return competition
 
 
 # this method is for migrating competitions to new format when available
+# it is called from init method so on every start of the server
 def _validate_or_upgrade_competition(competition):
 
     needs_updating = False
@@ -882,6 +884,11 @@ def _validate_or_upgrade_competition(competition):
     if competition.get('routes') is None:
         update_competition_details(competition, competition['name'], competition['date'], competition['routesid'])
         
+    empty_routes_count = sum(1 for climber in competition['climbers'].values() if not climber.get('routesClimbed2'))
+    if empty_routes_count == len(competition['climbers']) and competition.get('routes') is not None:
+        competition = setRoutesClimbed2(competition)
+        needs_updating = True
+    
     if needs_updating:
         update_competition(competition['id'], competition)
 
