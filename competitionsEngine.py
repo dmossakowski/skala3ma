@@ -30,6 +30,8 @@ import csv
 
 import requests
 
+from CalculationStrategy import CalculationStrategy
+from CalculationStrategyFsgt0 import CalculationStrategyFsgt0, CalculationStrategyFsgt1
 import skala_db
 import activities_db
 
@@ -59,7 +61,6 @@ GYM_TABLE = "gyms"
 #comps = {}
 #climbers = {}
 
-emptyResults = {"M":{ "0":[], "1":[], "2":[]}, "F":{"0":[], "1":[], "2":[] }}
 
 colors = { 'Vert':'#2E8B57',
 'Vert marbré':'#2E8B57',
@@ -140,11 +141,10 @@ user_roles = ["none", "judge", "competitor", "admin"]
 
 supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
 
-competition_type_adult_fsgt = 0;
-competition_type_ado_fsgt = 1;
+competition_type_adult_fsgt = 0
+competition_type_ado_fsgt = 1
 
 competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
-
 
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
@@ -171,8 +171,10 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
     competition = {"id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
                    "routesid": routesid, "status": "preopen", "climbers": {},
                    "max_participants": max_participants,
-                   "results": copy.deepcopy(emptyResults),
+                   "results": copy.deepcopy(CalculationStrategy.emptyResults),
+                   "calc_type": CalculationStrategy.calc_type_fsgt1,
                    "competition_type":competition_type,
+                   "status" : competition_status_created,
                    "routes": routes.get('routes')}
     # write this competition to db
     skala_db._add_competition(compId, competition);
@@ -375,88 +377,34 @@ def update_competition(competitionId, competition):
 
 
 
-# calculates points per route per sex
-# first loop counts how many times the route was climbed
-# second loop iterates over this same list but then does 1000/times the route was climbed
-# limited to 200 routes returned in an array
-def _getRouteRepeats(competitionId, sex, comp):
-    pointsPerRoute = [0 for i in range(200)]
-    for climber in comp['climbers']:
-        if comp['climbers'][climber]['sex'] != sex:
-            continue
-        #print(climber)
-        routesClimbed = comp['climbers'][climber]['routesClimbed']
-        #print(comp['climbers'][climber]['sex'])
-        #print(routesClimbed)
-        for r in routesClimbed:
-            pointsPerRoute[r]=pointsPerRoute[r]+1
-
-    #logging.info("route repeats: ")
-    #logging.info(pointsPerRoute)
-
-    for i, r in enumerate(pointsPerRoute):
-        if r == 0 :
-            pointsPerRoute[i]=1000
-        else:
-            pointsPerRoute[i]=1000/r
-    #logging.info("points per route: ")
-    #logging.info(pointsPerRoute)
-
-    return pointsPerRoute
-
-
-def getRouteRepeatsNoSex(comp):
-    pointsPerRoute = [0 for i in range(200)]
-    for climber in comp['climbers']:
-        routesClimbed = comp['climbers'][climber]['routesClimbed']
-        for r in routesClimbed:
-            pointsPerRoute[r]=pointsPerRoute[r]+1
-
-    for i, r in enumerate(pointsPerRoute):
-        if r == 0 :
-            pointsPerRoute[i]=1000
-        else:
-            pointsPerRoute[i]=1000/r
-
-    return pointsPerRoute
-
-
 def get_route_repeats(sex, comp):
-    return _getRouteRepeats(None, sex, comp)
+    if comp['calc_type'] == CalculationStrategy.calc_type_fsgt0:
+        return CalculationStrategyFsgt0._getRouteRepeats(None, sex, comp)
+    else:
+        return CalculationStrategyFsgt1._getRouteRepeats(None, sex, comp)
 
 
 def recalculate(competitionId, comp=None):
     #logging.info('calculating...')
-
     try:
         sql_lock.acquire()
         if comp is None:
             comp = get_competition(competitionId)
             if comp is None:
                 return
-        comp['results'] = copy.deepcopy(emptyResults)
-        for climberId in comp['climbers']:
-            comp = _calculatePointsPerClimber(competitionId,climberId, comp)
+        
+        # Choose the strategy based on the calculationType
+        if comp['calc_type'] == CalculationStrategy.calc_type_fsgt0:
+            strategy = CalculationStrategyFsgt0()
+        elif comp['calc_type'] == 1:
+            strategy = CalculationStrategyFsgt1()
+        elif comp['calc_type'] == 'ffme0':
+            strategy = CalculationStrategyFfme0()
+        else:
+            raise ValueError("Invalid calculationType")
 
-        #rank climbers
-        for climberId in comp['climbers']:
-            try:
-                climbersex = comp['climbers'][climberId]['sex']
-                climbercat = str(comp['climbers'][climberId]['category'])
-
-                comp['climbers'][climberId]['rank'] = comp['results'][climbersex][climbercat].index(comp['climbers'][climberId]['score'])+1
-            except ValueError:
-                comp['climbers'][climberId]['rank'] = -1
-
-        results = comp['results']
-        for sex in results:
-            for cat in results[sex]:
-                pointsA = results[sex][cat]
-                if len(pointsA) == 0:
-                    continue
-                #pointsA.sort()
-                #pointsA = results[sex][cat].sort()
-                #results[sex][cat] = pointsA.sort()
+        # Use the strategy to recalculate the competition
+        strategy.recalculate(comp)
         if comp is None:
             comp = _update_competition(competitionId, comp)
     finally:
@@ -479,6 +427,7 @@ def get_sorted_rankings(competition):
     rankings['0M'] = []
     rankings['1M'] = []
     rankings['2M'] = []
+    rankings['A'] = []
     #rankings['club'] = []
 
     # scratch first
@@ -495,15 +444,17 @@ def get_sorted_rankings(competition):
                                         or acc if competition['climbers'][c]['club'] not in acc else acc,
                    competition.get('climbers'), {})
 
-    #clubs = reduce(lambda acc, c: acc.append(competition['climbers'][c]['club'])
-    #                              or acc if competition['climbers'][c]['club'] not in acc else acc,
-    #               competition.get('climbers'), [])
+    # do not generate rankings for all users together for the fsgt0 calculation
+    # because in fsgt0 points for each route are divided separately by men and woman
+    # so it does not make sense to rank them together
+    if (competition.get('calc_type') != CalculationStrategy.calc_type_fsgt0):
+        for itemid in sorted(competition.get('climbers'),
+                         key=lambda k: (competition.get('climbers')[k]['score']),
+                         reverse=True):
+            climber = competition.get('climbers').get(itemid)
+            rankings['A'].append(climber)
 
-    #clubs2 = set(clubs)
 
-    #print(str(len(clubs)))
-    #print(clubs)
-    #b = a[0]
     for itemid in sorted(competition.get('climbers'),
                          key=lambda k: (competition.get('climbers')[k]['sex'], competition.get('climbers')[k]['score']),
                          reverse=True):
@@ -557,47 +508,6 @@ def get_sorted_rankings(competition):
 
     rankings['club']=sortedclubs
     return rankings
-
-
-
-# for a climber it takes routes climbed array, regenerates points for route repeats
-#
-def _calculatePointsPerClimber(competitionId, climberId, comp):
-    routesClimbed = comp['climbers'][climberId]['routesClimbed']
-    pointsEarned = []
-    sex = comp['climbers'][climberId]['sex']
-
-    if sex == "M":
-        routeRepeats = _getRouteRepeats(competitionId, "M", comp)
-    elif sex == "F":
-        routeRepeats = _getRouteRepeats(competitionId, "F", comp)
-    else:
-        logging.error(f"Invalid sex value found during calculation of points per climber: {sex}")  
-        return None
-    points = 0
-
-    # route climbed is an index into routeRepeats points calculated earlier
-    for i, v in enumerate(routesClimbed):
-        points += routeRepeats[v]
-        pointsEarned.append(routeRepeats[v])
-        #logging.info(str(climberId) + " route="+str(v) + " - route points=" + str(routeRepeats[v]) + " total points=" + str(points))
-
-    comp['climbers'][climberId]['points_earned'] = pointsEarned
-    points = round(points)
-    comp['climbers'][climberId]['score'] = points
-    climbersex = comp['climbers'][climberId]['sex']
-    climbercat = str(comp['climbers'][climberId]['category'])
-    pointsA = comp['results'][climbersex][climbercat]
-    pointsA.append(points)
-    pointsA.sort(reverse=True)
-    comp['climbers'][climberId]['rank'] = pointsA.index(points)
-    #(comp['results'][climbersex][climbercat]).append(points)
-
-    #logging.info("results " + str(climbersex)+str(climbercat)+ " add "+str(points))
-    return comp
-
-
-
 
 
 def calculate_score(grades):
@@ -853,7 +763,6 @@ def get_competition(compId):
         return None
     else:
         competition = json.loads(one[0])
-        #competition = _validate_or_upgrade_competition(competition)
         return competition
 
 
@@ -875,6 +784,11 @@ def _validate_or_upgrade_competition(competition):
 
     if competition.get('competition_type') is None:
         competition['competition_type'] = competition_type_adult_fsgt
+        needs_updating = True
+
+
+    if competition.get('calc_type') is None:
+        competition['calc_type'] = CalculationStrategy.calc_type_fsgt0
         needs_updating = True
 
     if competition.get('routesid') is None:
