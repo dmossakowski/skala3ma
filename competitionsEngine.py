@@ -31,7 +31,7 @@ import csv
 import requests
 
 from CalculationStrategy import CalculationStrategy
-from CalculationStrategyFsgt0 import CalculationStrategyFsgt0, CalculationStrategyFsgt1
+from CalculationStrategyFsgt import CalculationStrategyFsgt0, CalculationStrategyFsgt1
 import skala_db
 import activities_db
 
