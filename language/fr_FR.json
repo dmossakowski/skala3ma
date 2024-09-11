@@ -55,6 +55,7 @@
   "ranking_senior_men": "Classement Senior Homme",
   "ranking_scratch_women": "Classement Scratch Femme",
   "ranking_scratch_men": "Classement Scratch Homme",
+  "ranking_scratch_all": "Classement Scratch Tous",
   "ranking": "Classement",
   "full_name": "Nom",
   "points": "Points",
@@ -172,7 +173,7 @@
   "rate": "Note",
   "rating_activity_name": "Activité de la cotation",
   "rating_activity_prompt": "Ajouter une activité (et proposer une cotation) ",
-  
+  "app_development": "Développement de l'application",
 
 
   "error5314": "La mise à jour des voies n'est pas autorisée",

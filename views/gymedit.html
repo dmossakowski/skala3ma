@@ -113,6 +113,10 @@ function deleteRow(id) {
             <label for="address">{{ reference_data['current_language'].address }}:</label><br>
             <input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
 							<br><br>
+            <label for="lat">Latitude, longitude</label><br>
+            <input name="lat" id="lat"  value="{{ gym['lat'] }}" size="40"/>
+            <input name="lon" id="lon"  value="{{ gym['lon'] }}" size="40"/>
+							<br><br>
 
 
             <label for="file1">Logo (max 4MB):<br>

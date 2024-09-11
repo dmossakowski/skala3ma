@@ -3,13 +3,7 @@
 
 <html lang="en">
 	<head>
-
-  
-  
-        <!--meta
-  http-equiv="Content-Security-Policy-Report-Only"
-  content="default-src 'self'; img-src https://*; child-src 'none';" /-->
-	<meta charset="utf-8"/>
+    <meta charset="utf-8"/>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 	<title>skala3ma</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicon.png">
@@ -17,13 +11,6 @@
 	<meta name="description" content="skala3ma" />
 	<meta name="keywords" content="python, spotify, scikit, flask, gevent, Jinja2, matplotlib, pandas, plotly" />
 
-		<!-- bootstrap lib: https://mdbootstrap.com/docs/standard/getting-started/faq/ -->
-	<!-- Bootstrap CSS -->
-		<!--
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"/>
--->
-
-  	<!-- Facebook and Twitter integration -->
 	<meta name="twitter:title" content="" />
 	<meta name="twitter:image" content="" />
 	<meta name="twitter:url" content="" />
@@ -40,7 +27,6 @@
           font-size: 44px;
         }
         </style>
-	<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 	<link rel="shortcut icon" href="/public/images/favicon.png"/>
 	<link rel="icon" href="/public/images/favicon.png?v5"/>
 
@@ -51,8 +37,6 @@
 
 	<link rel="stylesheet" href="/public/css/languages.min.css"/>
 
-	<!-- Animate.css -->
-	<!--link rel="stylesheet" href="/public/css/animate.css"/-->
 	<!-- Icomoon Icon Fonts-->
 	<link rel="stylesheet" href="/public/css/icomoon.css"/>
 	<!-- Bootstrap  -->
@@ -68,14 +52,6 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!--link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-    /-->
-    
-	<!-- Superfish -->
-	<!--link rel="stylesheet" href="/public/css/superfish.css"/-->
-	
 
 	<script src="https://accounts.google.com/gsi/client" async></script>
 
@@ -90,6 +66,9 @@
 	<script src="/public/js/skala3ma-utils.js"></script>
 
     <link rel="stylesheet" href="/public/css/style.css">
+
+    <link rel="stylesheet" href="/public/js/leaflet/leaflet.css" />
+    <script src="/public/js/leaflet/leaflet.js"></script>
 
 
     <!--div id="g_id_onload"
@@ -149,8 +128,6 @@
 
 	function statusChangeCallback(response)
 	{
-		//console.log('layout.html statusChangeCallback');
-		//console.log(response)
 		if (response.status=="connected")
 		{
 			//console.log(' is connected boy')
@@ -236,6 +213,8 @@
                         <li><a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a></li>
                         <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a></li>
                         <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a></li>
+                        <li><a href="https://github.com/dmossakowski/skala3ma" class="dropdown-item fs-4 fw-medium" target="_blank">{{ reference_data['current_language'].app_development }}</a></li>
+                    
                     </ul>
                 </li>
 
@@ -349,7 +328,9 @@
                 <a href="https://idf.fsgt.org/wp-content/uploads/2023/10/reglement-Contest-et-challenge-IdF-ADO-2024.pdf" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a>
                 <a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a>
                 <a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a>
-                </div>
+                <a href="https://github.com/dmossakowski/skala3ma" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].app_development }}</a>
+                       
+            </div>
                 </li>
 
 
@@ -400,13 +381,7 @@
 
         
 </nav>
-        
-
-
-						<!--div id="progressMessages" class="badge col-xs-pull-3 text-center code pre"-->
-		            	<!-- div id="progressMessages" class="text-center text-muted small samp pre"><font color="white">Welcome</font></div> -->
-	                	<!-- end:header-top -->
-
+    
 
 
 				 {% block topcontent %} {% endblock %}
@@ -425,9 +400,11 @@
 					<div class="row row-bottom-padded-md">
 						<div class="col-md-5">
 							<h3 class="section-title"> <img src="/public/images/favicon.png" height="30">  {{ reference_data['current_language'].about }} skala3ma</h3>
-							<p>{{ reference_data['current_language'].short_app_description }}</p>
-							<p><a href="mailto:competitions-autrement@listes.montagne.fsgt.org?subject=Skala3ma%20Question%20contest%20IDF">{{ reference_data['current_language'].contact_email }}</a>
-							</p>
+							<p>{{ reference_data['current_language'].app_welcome }} <br>{{ reference_data['current_language'].short_app_description }}</p>
+							<p><a href="mailto:competitions-autrement@listes.montagne.fsgt.org?subject=Skala3ma%20Question%20contest%20IDF"><i class="icon-email"></i> {{ reference_data['current_language'].contact_email }}</a>
+							
+                               
+                            </p>
 						</div>
 
 
@@ -436,36 +413,33 @@
 							<ul>
 
 							{% if username is defined %}
-								<a href="/privacy">{{ reference_data['current_language'].privacy_notice }}</a>
-								<li><a href="/logout">{{ reference_data['current_language'].logout }}</a></li>
+								<li><a href="/privacy">{{ reference_data['current_language'].privacy_notice }}</a></li>
+                                <li><a href="/logout">{{ reference_data['current_language'].logout }}</a></li>
 							{% endif %}
-
-								<li><a href="https://www.facebook.com/skala3ma">Facebook page</a></li>
-
+                                <br>
+								<li><a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i> Facebook page</a></li>
+                                <li><a href="https://github.com/dmossakowski/skala3ma"><i class="icon-github"></i> GitHub</a></li>
 							</ul>
 
 						</div>
 						<div  class="col-md-2">
 							<!-- http://usrz.github.io/bootstrap-languages/ -->
 							<h3 class="section-title">Languages</h3>
-							<a href="/language/fr_FR"><span class="lang-lg lang-lbl" lang="fr"></span></a> 
-							<a href="/language/en_US"><span class="lang-lg lang-lbl" lang="en"></span></a> 
-							<a href="/language/pl_PL"><span class="lang-lg lang-lbl" lang="pl"></span></a>
+							<a href="/language/fr_FR" style="color: white"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
+							<a href="/language/en_US" style="color: white"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
+							<a href="/language/pl_PL" style="color: white"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
 
-                            <!--div id="fb-login-button" class="fb-login-button" data-width="" data-size="small" data-button-type="login_with"
-                            data-layout="default" data-auto-logout-link="false" data-use-continue-as="false"></div-->
                             <br><br>
 						</div>
 
 						<div class="row">
 							<div class="col-md-12">
-								<p class="fh5co-social-icons">
-									<a href="https://github.com/dmossakowski/skala3ma"><i class="icon-github"></i></a>
-									<a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i></a>
-									<!--a href="#"><i class="icon-dribbble2"></i></a>
-									<a href="#"><i class="icon-youtube"></i></a-->
-								</p>
-								<p>Template copyright 2016 Free Html5 <a href="#">Module</a>. All Rights Reserved. <br>Made with <i class="icon-heart3"></i> by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a> /
+								
+                                <p>Mapping data by <a href="https://www.openstreetmap.org/" target="_blank">https://www.openstreetmap.org/</a>. 
+                                    <br>    
+								Initial template by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a>. 
+                                    
+                                    <br>Made with <i class="icon-heart3"></i> by davidski
 							</div>
 						</div>
 					</div>
@@ -478,42 +452,8 @@
 	
 
 	</div>
-	<!-- END fh5co-page -->
 
 	</div>
-	<!-- END fh5co-wrapper -->
-
-	<!-- jQuery -->
-
-
-	<!--script src="/public/js/jquery.min.js"></script-->
-	<script src=
-"https://code.jquery.com/jquery-3.3.1.min.js">
-  </script>
-	<!-- jQuery Easing -->
-	<!--script src="/public/js/jquery.easing.1.3.js"></script-->
-	<!-- Bootstrap -->
-	<script src="/public/js/bootstrap.min.js"></script>
-    <!--script src="/public/js/b"></script-->
-	<!-- Waypoints -->
-	<script src="/public/js/jquery.waypoints.min.js"></script>
-	<!--script src="/public/js/sticky.js"></script-->
-	<!-- Superfish -->
-	<!--script src="/public/js/hoverIntent.js"></script>
-	<script src="/public/js/superfish.js"></script-->
-	<!-- Flexslider -->
-	<!--script src="/public/js/jquery.flexslider-min.js"></script-->
-	<!-- Date Picker -->
-	<!--script src="/public/js/bootstrap-datepicker.min.js"></script-->
-	<!--script src="/public/js/bootstrap-table.min.js"></script-->
-		<!--script src="/public/js/bootstrap-table-filter-control.min.js"></script-->
-	<!-- CS Select -->
-	<script src="/public/js/classie.js"></script>
-	<script src="/public/js/selectFx.js"></script>
-
-	
-	<!-- Main JS -->
-	<!--script src="/public/js/main.js"></script-->
 
 
 	</body>

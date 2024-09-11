@@ -94,7 +94,7 @@
 
 
 
-        {% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M'] %}
+        {% for key in ['2F', '1F', '0F', '2M', '1M', '0M', 'F', 'M', 'A'] if rankings[key]|length > 0 %}
     </div>
     <div class="table-responsive">
         
@@ -107,6 +107,7 @@
         {% if key == '0M' %} {{ reference_data['current_language'].ranking_senior_men}} {% endif %}
         {% if key == 'M' %} {{ reference_data['current_language'].ranking_scratch_men}} {% endif %}
         {% if key == 'F' %} {{ reference_data['current_language'].ranking_scratch_women}}  {% endif %}
+        {% if key == 'A' %} {{ reference_data['current_language'].ranking_scratch_all}} {% endif %}
 
         </h2>
 
