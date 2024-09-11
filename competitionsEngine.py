@@ -1299,6 +1299,22 @@ def get_gym_json(gymid, routesid, name, added_by, logo_img_id, homepage, address
                'added_by': added_by, 'routes': routesA}
     return gymjson
 
+def update_gym_coordinates(gymJson, lat, lon):
+    # ensure that lat and lon are valid numbers
+    if lat is None or lon is None:
+        return gymJson
+    
+    # test lat and lon to be valid numbers 
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except ValueError:
+        logging.info('lat or lon are not valid numbers lat='+str(lat)+' lon='+str(lon))
+        return gymJson
+
+    gymJson['lat'] = lat
+    gymJson['lon'] = lon
+    return gymJson
 
 def _get_route_dict(routeid, routenum, line, color1, color_modifier, grade, name, openedby, opendate, notes):
     oneline = {}

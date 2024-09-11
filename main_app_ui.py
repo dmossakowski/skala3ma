@@ -1986,6 +1986,8 @@ def gyms_add():
                             **session)
 
 
+
+# Main method for updating gym data 
 @app_ui.route('/gyms/<gym_id>/update', methods=['POST'])
 @login_required
 def gyms_update(gym_id):
@@ -2025,6 +2027,8 @@ def gyms_update(gym_id):
     url = formdata['url'][0]
     organization = formdata['organization'][0]
     permissioned_user = request.form.get('permissioned_user')
+    lat = formdata['lat'][0]
+    lon = formdata['lon'][0]
 
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
@@ -2048,6 +2052,8 @@ def gyms_update(gym_id):
 
     #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)
+    competitionsEngine.update_gym_coordinates(gym_json, lat, lon)
+    # 20240911 - this line is not clear as to what it does actually - some comments would be welcome here from the author
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 

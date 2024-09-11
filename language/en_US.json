@@ -11,7 +11,7 @@
   "create_new": "Create new",
   "about": "About",
   "short_app_description": "Manage competitions and gym routes. ",
-  "app_welcome": "Official app for FSGT competitions",
+  "app_welcome": "FSGT Mountain and Climbing section official app",
   "update_details": "Update your details",
   "details_saved": "Your details were saved",
   "all_fields_required": "All fields are required",
@@ -169,7 +169,8 @@
   "rate": "Rate",
   "rating_activity_name": "Rating activity",
   "rating_activity_prompt": "Add an activity (suggest new rating)",
-  
+  "app_development": "App development",
+
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
   "error5316": "User with this email is known and they should login and register themselves",

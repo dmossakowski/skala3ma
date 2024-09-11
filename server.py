@@ -39,7 +39,7 @@ print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
 elif not os.path.exists(DATA_DIRECTORY):
-    print("DATA_DIRECTORY does not exist. Creating it"+str(DATA_DIRECTORY))
+    print("DATA_DIRECTORY '"+str(DATA_DIRECTORY)+"' does not exist. Creating it...'")
     os.makedirs(DATA_DIRECTORY)
 
 from flask import Flask, redirect, url_for, session, Request, request, render_template, send_file, jsonify, Response, \

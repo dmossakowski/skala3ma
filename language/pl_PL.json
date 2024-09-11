@@ -11,7 +11,7 @@
   "create_new": "Dodaj",
   "about": "O",
   "short_app_description": "Róbta co chceta... ",
-  "app_welcome": "Oficjalna apka zawodów FSGT",
+  "app_welcome": "Oficjalna apka zawodów FSGT sekcja górska i wspinaczkowa",
   "update_details": "O tobie",
   "details_saved": "Your details were saved",
   "all_fields_required": "All fields are required",
@@ -177,7 +177,7 @@
   "rate": "Ratuj",
   "rating_activity_name": "Ocena",
   "rating_activity_prompt": "Dodaj wyczyn (zasugeruj ocenę)",
-  
+  "app_development": "Programowanie aplikacji",
   
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
