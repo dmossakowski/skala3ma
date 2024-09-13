@@ -235,8 +235,6 @@ def get_competitions_for_email(email):
     return competition_ids
 
 
-
-
 def get_all_competitions():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
