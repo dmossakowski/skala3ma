@@ -308,6 +308,21 @@ def fsgtadmin():
                            id=id)
 
 
+@app_ui.route('/adminv2', methods=['GET'])
+@login_required
+@admin_required
+def adminv2():
+    edittype = request.args.get('edittype')
+    id = request.args.get('id')
+    action = request.args.get('action')
+    jsondata = request.args.get('jsondata')
+    jsonobject = None
+
+    return render_template('adminv2.html',
+                           reference_data=competitionsEngine.reference_data
+                           )
+
+
 @app_ui.route('/competition_admin/<competition_id>', methods=['GET'])
 #, summary='returns competitionAdmin.html', 
  #           responses={"default": {"description": "Render template competitionAdmin.html"}})

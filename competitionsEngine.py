@@ -700,7 +700,6 @@ def init():
 
     logging.info('created ' + COMPETITIONS_DB)
 
-
     logging.info("running user migrations - adding gymid to users...")
     emails = get_all_user_emails()
     for email in emails:
@@ -714,8 +713,21 @@ def init():
                 if gym is not None:
                     user['gymid'] = gym['id']
                     skala_db.upsert_user(user)
-                else:   
+                elif user.get('club') == 'ROC 14':
+                    user['gymid'] = '005d3b0d78b5477db673f6424b0fbeba'
+                    skala_db.upsert_user(user)
+                elif user.get('club') == 'Entente Sportive de Nanterre':
+                    user['gymid'] = '1'
+                    skala_db.upsert_user(user)
+                elif user.get('club') == 'ESC XV':
+                    user['gymid'] = '591a28aa8e924d25a3c9c0cc6a0c883f'
+                    skala_db.upsert_user(user)
+                elif user.get('club') == 'US Ivry':
+                    user['gymid'] = '8b797c6675934ad197b15d6f7950c8e2'
+                    skala_db.upsert_user(user)
+                else:    
                     logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
+            
             #user['gymid'] = ''
 
 
@@ -1085,6 +1097,14 @@ def can_edit_competition(climber, competition):
         and competition['id'] in permissions['competitions']):
         return True
     return False
+
+
+def can_edit_users(user):
+    if user is None:
+        return False
+    permissions = user.get('permissions')
+    if permissions['godmode'] == True:
+        return True
 
 
 def is_god(user):

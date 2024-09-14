@@ -179,6 +179,24 @@ def login_required(fn):
     return decorated_function
 
 
+def admin_required(fn):
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None:
+            user = competitionsEngine.get_user_by_email(session['email'])
+            if user is not None:
+                permissions = user.get('permissions')
+                if 'create_gym' in permissions['general'] or permissions['godmode'] == True:
+                    return fn(*args, **kwargs)
+ 
+                if session.get('name') == 'David Mossakowski' or session.get('name') == 'Sebastiao Correia':
+                    return fn(*args, **kwargs)
+        else:
+            session["wants_url"] = request.url
+            return redirect(url_for("app_ui.fsgtlogin"))
+    return decorated_function
+
+
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
 def testapi():
     return {"code": 0, "message": "ok"}
@@ -765,9 +783,27 @@ def get_user():
     return json.dumps(user)
 
 
-@skala_api_app.route('/user/email/<email>')
-def get_user_by_email(email):
+@skala_api_app.route('/user/email')  
+@admin_required
+def get_users():
+    if session is None or session.get('email') is None:
+        return {}
+    
+    user = competitionsEngine.get_user_by_email(session['email'])
+    
+    if user is None:
+        return {}
 
+    if competitionsEngine.can_edit_users(user):
+        users = skala_db.get_all_user_emails()
+        return json.dumps(users)
+    
+    return json.dumps(user)
+
+
+@skala_api_app.route('/user/email/<email>')
+@admin_required
+def get_user_by_email(email):
     climber = competitionsEngine.get_user_by_email(email)
 
     if climber is None:
