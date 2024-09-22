@@ -25,9 +25,6 @@
 	{% block secondarycontent %}
 
 	<div class="container-fluid">
-		<!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
-
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
 						<br>
 						<h3>{{ reference_data['current_language'].create_new }} </h3>
@@ -39,45 +36,62 @@
 				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
 
 						{% else %}
-        <form action="/newCompetition" method="post" enctype="multipart/form-data">
-			<label for="name">{{ reference_data['current_language'].nazwa }}:</label><br> <input name="name" size="40" /><br><br>
-			<label for="date">{{ reference_data['current_language'].date }}:</label> <br><input name="date" size="30" type="date"/><br><br>
 
-			<label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label> <br><input name="max_participants" size="30" type="number" value="80"/><br><br>
+                        
+                        <div class="container">
+                            <form action="/newCompetition" method="post" enctype="multipart/form-data">
+                                <div class="row">
+                                    <!-- Left Column -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="name" name="name" placeholder="Name" size="40">
+                                            <label for="name">{{ reference_data['current_language'].nazwa }}:</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="date" class="form-control" id="date" name="date" placeholder="Date" size="30">
+                                            <label for="date">{{ reference_data['current_language'].date }}:</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="number" class="form-control" id="max_participants" name="max_participants" placeholder="Max Participants" size="30" value="80">
+                                            <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="file1" class="form-label">Logo (max 4MB):</label>
+                                            <input class="form-control-file" type="file" name="file1" id="file1">
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <select class="form-control" id="routes" name="routes">
+                                                {% for club in clubs %}
+                                                <option value="{{ club['routesid'] }}">{{ club['gymname'] }} - {{ club['routesname'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
+                                        </div>
+                                    </div>
+                                    <!-- Right Column -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000">
 
-			<label for="file1">Logo (max 4MB):</label><br>
-            <input type="file" name="file1" id="file1"><br>
-	<!--label for="club">{{ reference_data['current_language'].gym }}:</label><br><select name="gym" id="club">
-							<option value="--" size="20" >--</option>
-							{% for club in reference_data['clubs'] %}
+                                            </textarea>
+                                            <label for="topmessage">{{ reference_data['current_language'].Instructions }}:</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Submit Button Row -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        
 
-							<option value="{{reference_data['clubs'][club]}}" size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-
-							</select>
-							<br><br-->
-
-	        <label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
-	        <br><select name="routes" id="routes">
-                
-                {% for club in clubs %}
-
-                <option value="{{club['routesid']}}" size="20" >{{club['gymname']}} - {{club['routesname']}} </option>
-                {% endfor %}
-
-			</select>
-			<br><br>
-
-
-<button >{{ reference_data['current_language'].submit }}</button>
-					</form>
 
 						{% endif %}
-
-
 					</div>
-
-
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 

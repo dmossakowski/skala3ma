@@ -11,6 +11,67 @@
 
 	{% block secondarycontent %}
 
+
+    <script src='/public/js/index.global.min.js'></script>
+    <script>
+//initialView: 'listYear',
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+  
+            headerToolbar: {
+    center: 'dayGridMonth,timeGridFourDay' // buttons for switching between views
+  },
+  views: {
+    timeGridFourDay: {
+      type: 'dayGrid',
+      duration: { month: 4 },
+      buttonText: '4 day'
+    }
+  },
+
+  events: [
+    {
+      title: 'Meeting',
+      start: '2024-08-12T14:30:00',
+      extendedProps: {
+        status: 'done'
+      }
+    },
+    {
+      title: 'Birthday Party',
+      start: '2024-08-13T07:00:00',
+      backgroundColor: 'green',
+      borderColor: 'green'
+    }
+  ],
+  eventDidMount: function(info) {
+    if (info.event.extendedProps.status === 'done') {
+
+      // Change background color of row
+      info.el.style.backgroundColor = 'green';
+
+      // Change color of dot marker
+      var dotEl = info.el.getElementsByClassName('fc-event-dot')[0];
+      if (dotEl) {
+        dotEl.style.backgroundColor = 'white';
+      }
+    }
+  }
+
+});
+
+
+        //calendar.render();
+      });
+
+
+
+    </script>
+
 	<div  class="text-center heading-section ">
 
 		{% include "skala3ma-menu.html" %}
@@ -43,8 +104,13 @@
 			</div>
             </div>
 
+           
+
+
 		<div class="container-fluid">
-		<div class="row   ">
+		<div class="row">
+
+            <div id='calendar'></div>
            
 			{% for competitionId in competitions %}
 
@@ -59,7 +125,6 @@
 									<h3>{{ competitions[competitionId]['name'] }}<br>
 										{{ competitions[competitionId]['date'] }}</h3>
 
-                                      
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}<br>
                                     <!--    {{ reference_data['current_language']['competition_type_'~competitions[competitionId]['competition_type']] }}-->
 
@@ -73,10 +138,9 @@
 										{% endif %}
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
-
 								</div>
 							</div>
-								</a>
+							</a>
 						</div>
 					</div>
                 </div>

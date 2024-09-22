@@ -106,63 +106,67 @@ function deleteRow(id) {
 
 	    <form action="/gyms/{{gym['id']}}/update" method="POST" enctype="multipart/form-data">
 
-
+            <div class="form-group">
 			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
-			<input name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br><br>
+			<input class="form-control" name="gymName" size="40" id="gymName" type="text" value="{{ gym['name'] }}"/><br>
 
             <label for="address">{{ reference_data['current_language'].address }}:</label><br>
-            <input name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
-							<br><br>
-            <label for="lat">Latitude, longitude</label><br>
-            <input name="lat" id="lat"  value="{{ gym['lat'] }}" size="40"/>
-            <input name="lon" id="lon"  value="{{ gym['lon'] }}" size="40"/>
-							<br><br>
+            <input class="form-control" name="address" id="address" type="address"  value="{{ gym['address'] }}" size="80"/>
+            <br>
+
+            
+
+
+            <br>
+            <label for="lat">Latitude, longitude</label>
+            <div class="row">
+                <div class="col">
+                    <input class="form-control" name="lat" id="lat" value="{{ gym['lat'] }}" size="40"/>
+                </div>
+                <div class="col">
+                    <input class="form-control" name="lon" id="lon" value="{{ gym['lon'] }}" size="40"/>
+                </div>
+            </div>				<br>
 
 
             <label for="file1">Logo (max 4MB):<br>
                 <img src="/image/{{ gym.get('logo_img_id') }}" width="100"></label>
-                    <input type="file" name="file1" id="file1"><br>
+                    <input class="form-control" type="file" name="file1" id="file1"><br>
 
             <label for="url">{{ reference_data['current_language'].link }}:</label><br>
-                <input name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
-                                    <br><br>
+                <input class="form-control" name="url" id="url" type="url" size="80" value="{{ gym['homepage'] }}" />
+                                    <br>
 
 
             <label for="organization">{{ reference_data['current_language'].organization }}:</label><br>
-            <input name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
-                                    <br><br>
+            <input class="form-control" name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
+                                    <br>
 
+           
+                <label for="default_routes">{{ reference_data['current_language'].routes }}</label>
+                <select class="form-control" name="default_routes" id="default_routes">
+                    {% for route in all_routes %}
+                        <option value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}>
+                            {{all_routes[route]['name']}}
+                        </option>
+                    {% endfor %}
+                </select>
+           
+                <br>
 
-            <label for="default_routes">{{ reference_data['current_language'].routes }}</label> 
-            <br>
-            <select name="default_routes" id="default_routes">
-
-            {% for route in all_routes %}
-                <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
-
-            {% endfor %}
-
-
-            </select>
-
-            <br><br>
-            <label for="permissioned_user">{{ reference_data['current_language'].authorized_user}}:</label>
-            <br>
-            <select name="permissioned_user" id="permissioned_user">
-                                <option value="choose" size="20" ></option>
-
-            {% for email in user_list %}
-
-                                <option value="{{email}}" size="20" >{{email}}</option>
-            {% endfor %}
-
-                                </select>&nbsp;&nbsp;&nbsp;&nbsp;
+                <!-- Input field for look-ahead search -->
+                <div class="form-group">
+                    <label for="user-search"> {{ reference_data['current_language'].authorized_user}} </label>
+                    <input type="text" class="form-control" id="user-search" placeholder="Search for users...">
+                    <div id="suggestions" class="list-group mt-2"></div>
+                </div>
+            </div>
 
 
 
-                <br><br>
 
 
+               
 
 
             <button name=save value="Save" class="btn btn-success btn-lg">{{ reference_data['current_language'].save}}</button>
@@ -173,11 +177,68 @@ function deleteRow(id) {
 
     </div>
 
+
+  
     <br><br>
-
-
-
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userSearch = document.getElementById('user-search');
+            const suggestions = document.getElementById('suggestions');
+    
+            userSearch.addEventListener('input', function() {
+                const query = userSearch.value;
+    
+                if (query.length < 1) {
+                    suggestions.innerHTML = '';
+                    userSearch.dataset.userId = '';
+                    return;
+                }
+    
+                fetch('/api1/gym/{{gymid}}/users')
+                    .then(response => response.json())
+                    .then(data => {
+                        const filteredUsers = data.filter(user => {
+                            const fullName = `${user.firstname} ${user.lastname}`.toLowerCase();
+                            return fullName.includes(query.toLowerCase());
+                        });
+    
+                        suggestions.innerHTML = '';
+                        filteredUsers.forEach(user => {
+                            const suggestionItem = document.createElement('a');
+                            suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+                            suggestionItem.href = '#';
+                            suggestionItem.innerHTML = `
+                                <div class="media">
+                                    <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
+                                    <div class="media-body">
+                                        <h5 class="mt-0">${user.firstname} ${user.lastname}</h5>
+                                    </div>
+                                </div>
+                            `;
+                            suggestionItem.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                userSearch.value = `${user.firstname} ${user.lastname}`;
+                                userSearch.dataset.userId = user.id;
+                                suggestions.innerHTML = '';
+                            });
+                            suggestions.appendChild(suggestionItem);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching users:', error));
+            });
+    
+            // Ensure the user ID is included in the form submission
+            const form = userSearch.closest('form');
+            form.addEventListener('submit', function(event) {
+                const userIdInput = document.createElement('input');
+                userIdInput.type = 'hidden';
+                userIdInput.name = 'permissioned_user_id';
+                userIdInput.value = userSearch.dataset.userId || '';
+                form.appendChild(userIdInput);
+            });
+        });
+    </script>
+<br><br><br><br><br><br><br><br><br><br>
 
 
 </div>

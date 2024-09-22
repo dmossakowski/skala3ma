@@ -182,6 +182,10 @@ def admin_required(fn):
 
 @app_ui.get("/aa")
 def index11():
+
+
+
+    
     if session.get('username'):
         return '<a class="button" href="/login">logged in </a>'+session.get('username')
 
@@ -198,7 +202,17 @@ def index11():
         return '<a class="button" href="/login">Google Login</a>'
 
 
+@app_ui.route('/sendmail')
+def send_simple_message():
+    ret = requests.post(
+        "https://api.eu.mailgun.net/v3/mg.skala3ma.com/messages",
+        auth=("api", "b18fc6aa07d05cd062c4c097d9dcc8d9-7a3af442-29dda358"),
+        data={"from": "bob mob <do-not-reply@skala3ma.com>",
+            "to": ["dmossakowski@gmail.com"],
+            "subject": "account registration",
+            "text": "Need to test this new account registration email"})
 
+    return 'mail sent'+ret.reason+' '+ret.text
 
 
 @app_ui.route('/competitionRawAdmin', methods=['GET'])
@@ -371,6 +385,8 @@ def competition_admin_post(competition_id):
     action = request.form.get('action')
     competition_status = request.form.get('competition_status')
 
+    instructions = request.form.get('instructions')
+
     jsondata = request.form.get('jsondata')
     comp = {}
     jsonobject = None
@@ -380,6 +396,8 @@ def competition_admin_post(competition_id):
         file1 = request.files['file1']
         if file1.filename is not None and len(file1.filename) > 0:
             imgfilename = competition_id
+            # this needs a fix for SVG files.. currently they will not be displayed
+            # the fix is to img field to each competition.. currently we retrieve the image as a file
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 
@@ -445,7 +463,7 @@ def competition_admin_post(competition_id):
                 competition['gym']=gym['name']
         competition['max_participants']=max_participants
 
-        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes)
+        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes, instructions)
 
 
     if delete_competition_button is not None:
@@ -485,11 +503,19 @@ def fsgtadminedit(edittype):
                            reference_data=competitionsEngine.reference_data)
 
 
+# for some reason I added a case here to go to the home page
+# no idea why
 @app_ui.route('/loginchoice')
-def fsgtlogin():
+def fsgtlogin(error=None):    
     return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data
-                           )
+                           reference_data=competitionsEngine.reference_data,
+                           error=error
+                        )
+                           
+
+
+
+
 
 
 
@@ -769,6 +795,7 @@ def new_competition_post():
     routesid = request.form.get('routes')
     competition_type = request.form.get('competition_type')
     max_participants = request.form.get('max_participants')
+    instructions = request.form.get('instructions')
 
     comp = {}
     competitionId = None
@@ -779,7 +806,7 @@ def new_competition_post():
 
     if name is not None and date is not None and routesid is not None and max_participants is not None:
         competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
-                                                          competition_type=competition_type)
+                                                          competition_type=competition_type, instructions=instructions)
         # now if an image was provided, save it under the competition id
         # there is only one main image allowed per competition for now
         # any new image will overwrite the previous one
@@ -925,7 +952,7 @@ def get_user():
 
     climber = competitionsEngine.get_user_by_email(session.get('email'))
 
-    subheader_message = request.args.get('update_details')
+    #subheader_message = request.args.get('update_details')
 
     email = session.get('email')
     name = session.get('name')
@@ -934,12 +961,12 @@ def get_user():
         name = ""
 
     return render_template('climber.html',
-                           subheader_message=subheader_message,
+                           #subheader_message=subheader_message,
                            competitionId=None,
                            climber=climber,
                            reference_data=competitionsEngine.reference_data,
                            logged_email=email,
-                           logged_name=name,
+                           logged_name=email,
                             **session)
 
 
@@ -958,7 +985,10 @@ def update_user():
     nick = request.args.get('nick')
     email = request.args.get('email')
     sex = request.args.get('sex')
-    club = request.args.get('club')
+    clubid = request.args.get('club')
+    if clubid is not None:
+        clubid = int(clubid)
+    club = competitionsEngine.reference_data['clubs'].get(clubid)
     category = request.args.get('category')
 
     subheader_message = request.args.get('update_details')
@@ -966,7 +996,14 @@ def update_user():
     email = session.get('email')
     name = session.get('name')
 
-    if firstname is None or sex is None or club is None or email is None:
+    climber['firstname'] = firstname
+    climber['lastname'] = lastname
+    climber['fullname'] = fullname
+    climber['nick'] = nick
+    climber['email'] = email
+    climber['sex'] = sex    
+
+    if firstname is None or nick is None or sex is None or club is None or email is None:
         #subheader_message = "Update"
 
         return render_template('climber.html',
@@ -1591,11 +1628,23 @@ def gym_data(gymid):
 @app_ui.route('/gyms/<gymid>/edit', methods=['GET'])
 @login_required
 def gym_edit(gymid):
+    
+
     gym = competitionsEngine.get_gym(gymid)
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     routes = all_routes.get(gym['routesid'])
     user = competitionsEngine.get_user_by_email(session.get('email'))
     user_list = competitionsEngine.get_all_user_emails()
+
+
+    if not competitionsEngine.has_permission_for_gym(gymid, user):
+        return render_template('competitionNoPermission.html',
+                               error_code="error5315",
+                               competitionId=None,
+                               gyms=gyms,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
+
     return render_template('gymedit.html',
                            gymid=gymid,
                            gyms=None,
@@ -1683,6 +1732,17 @@ def gym_routes_edit(gym_id, routesid):
     routes = all_routes.get(routesid)
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
+
+
+    if not competitionsEngine.has_permission_for_gym(gym_id, user):
+        return render_template('competitionNoPermission.html',
+                               error_code="error5315",
+                               competitionId=None,
+                               gyms=gyms,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
+
+
     return render_template('gym-routes-batch-edit.html',
                            gymid=gym_id,
                            gyms=None,
@@ -2033,6 +2093,10 @@ def gyms_update(gym_id):
         if len(file1.filename) > 0:
             #random = str(uuid.uuid4().hex)
             imgfilename = gym_id
+            #if 'image/svg' in file1.mimetype:
+             #   imgfilename += '.svg'
+             # the function sending files was modified to recognise svg files
+             # it's an ugly fix but it works
             imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
             file1.save(imgpath)
 
@@ -2041,7 +2105,7 @@ def gyms_update(gym_id):
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-    permissioned_user = request.form.get('permissioned_user')
+    permissioned_user_id = request.form.get('permissioned_user_id')
     lat = formdata['lat'][0]
     lon = formdata['lon'][0]
 
@@ -2060,8 +2124,8 @@ def gyms_update(gym_id):
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']
 
-    if len(permissioned_user)>2:
-        newuser = competitionsEngine.get_user_by_email(permissioned_user)
+    if len(permissioned_user_id)>2:
+        newuser = competitionsEngine.get_user(permissioned_user_id)
         if newuser is not None:
             competitionsEngine.add_user_permissions_to_gym(newuser, gym_id)
 
@@ -2098,6 +2162,15 @@ def image_route0():
     #return app_ui.send_static_file("images/favicon.png")
     return app_ui.send_static_file("images/fsgt-logo-me.png")
 
+def is_svg(file_path):
+    """Check if the file content indicates it is an SVG."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read(1024)  # Read the first 1KB of the file
+            return '<svg' in content or content.strip().startswith('<?xml')
+    except Exception as e:
+        return False
+
 
 @app_ui.route('/image/<img_id>')
 def image_route(img_id):
@@ -2108,7 +2181,16 @@ def image_route(img_id):
 
     #print('image_route', img_id)
     if (img_id is not None and os.path.exists(os.path.join(UPLOAD_FOLDER, img_id))):
-        return send_from_directory(UPLOAD_FOLDER, img_id)
+        is_svg_file = is_svg(os.path.join(UPLOAD_FOLDER, img_id))
+
+        if is_svg_file:
+            mime_type = 'image/svg+xml'
+        else:
+            mime_type = None
+            
+            #mime_type = 'application/octet-stream'  # Default MIME type
+        
+        return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)
     else:
         #return app_ui.send_static_file("images/favicon.png")
         return app_ui.send_static_file("images/fsgt-logo-me.png")

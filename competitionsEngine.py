@@ -35,6 +35,8 @@ from CalculationStrategyFsgt import CalculationStrategyFsgt0, CalculationStrateg
 import skala_db
 import activities_db
 
+from src.User import User
+
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
@@ -152,7 +154,7 @@ reference_data = {"categories":categories, "categories_ado":categories_ado,
                   "competition_types":competition_types}
 
 # called from main_app_ui
-def addCompetition(compId, name, date, routesid, max_participants, competition_type):
+def addCompetition(compId, name, date, routesid, max_participants, competition_type, instructions):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -168,6 +170,9 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
     if max_participants is None:
         max_participants=80
 
+    #sanitized_instruction = re.sub(r'[^\w\s]', '', instruction)
+
+   
     competition = {"id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
                    "routesid": routesid, "status": "preopen", "climbers": {},
                    "max_participants": max_participants,
@@ -175,16 +180,18 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
                    "calc_type": CalculationStrategy.calc_type_fsgt1,
                    "competition_type":competition_type,
                    "status" : competition_status_created,
-                   "routes": routes.get('routes')}
+                   "routes": routes.get('routes'),
+                   "instructions": instructions}
     # write this competition to db
     skala_db._add_competition(compId, competition);
 
     return compId
 
 
-def update_competition_details(competition, name, date, routesid):
+def update_competition_details(competition, name, date, routesid, instructions):
     competition['name']=name
     competition['date'] = date
+    competition['instructions'] = instructions
 
     # only update routes if it is different
     if competition.get('routes') is None or competition.get('routesid') != routesid:
@@ -808,7 +815,7 @@ def _validate_or_upgrade_competition(competition):
         competition['routesid'] = gym['routesid']
 
     if competition.get('routes') is None:
-        update_competition_details(competition, competition['name'], competition['date'], competition['routesid'])
+        update_competition_details(competition, competition['name'], competition['date'], competition['routesid'], competition.get('instructions'))
         
     empty_routes_count = sum(1 for climber in competition['climbers'].values() if not climber.get('routesClimbed2'))
     if empty_routes_count == len(competition['climbers']) and competition.get('routes') is not None:
@@ -898,8 +905,15 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
         fullname = ""
         if firstname is not None and lastname is not None:
             fullname = firstname+" "+lastname
+
         newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
                       'sex': sex, 'club': club, 'category': category}
+        
+        if club is not None:
+            gym = skala_db.get_gym_by_gym_name(club)
+            if gym is not None:
+                newclimber['gymid'] = gym.get('id')
+
         email = climber['email']
         email = email.lower()
         db = lite.connect(COMPETITIONS_DB)
@@ -996,6 +1010,61 @@ def user_authenticated_google(name, email, picture):
         logging.info("done with user:"+str(email))
 
 
+# this function is used to set or update password  
+# it's also called each time a user authenticates using username/password
+# this is so that the user is up to date (format, permissions, etc)
+def user_authenticated(email, password):
+    try:
+        sql_lock.acquire()
+        user = get_user_by_email(email)
+        email = email.lower()
+        
+        _common_user_validation(user)
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        if user is None:
+            newuser = {'email': email, 'password': password, }
+            _common_user_validation(newuser)
+            user = skala_db._add_user(None, email, newuser)
+            logging.info('added google user id ' + str(email))
+        else:
+            u = {'email': email, 'password': password}
+            user.update(u)
+            user = skala_db._update_user(user['id'], email, user)
+            logging.info('update normal user ' + str(email))
+        return user
+    finally:
+       
+        sql_lock.release()
+        
+
+# this function is used to confirm a user and write them to the db
+# the only way that this can be called if a user clicked on a confirmation link
+# which means that the user has a valid email
+def confirm_user(email):
+    try:
+        sql_lock.acquire()
+        user = get_user_by_email(email)
+        if user is not None and user.get('is_confirmed') == True:
+            return user
+        
+        
+        _common_user_validation(user)
+        
+        if user is None:
+            newuser = {'email': email, 'is_confirmed': True}
+            _common_user_validation(newuser)
+            user = skala_db._add_user(None, email, newuser)
+            logging.info('added confirmed user email' + str(email))
+        
+        
+            #logging.info('normal user is confirmed ' + str(email))
+        return user
+    finally:
+        sql_lock.release()
+
+
+
 def _common_user_validation(user):
     if user is None:
         return
@@ -1005,13 +1074,19 @@ def _common_user_validation(user):
         permissions = get_permissions(user)
         user['permissions'] = permissions
 
+    is_confirmed = user.get('is_confirmed')
+    if is_confirmed is None:
+        user['is_confirmed'] = False
+    if user.get('gpictureurl') is not None or user.get('fpictureurl') is not None:
+        user['is_confirmed'] = True
+
 
 # returns base empty permissions dictionary
 # who can create new competition? gym admins?
 # if this is the first user who logs in then this user becomes the godmode user
 def get_permissions(user):
     if user is None:
-        return _generate_permissions()
+        return User.generate_permissions()
 
     if user.get('permissions') is None:
         all_users = get_all_user_emails()
@@ -1022,19 +1097,11 @@ def get_permissions(user):
             user['permissions']['competitions'] = ['abc','def','ghi']
             user['permissions']['gyms'] = ['1']
         else:
-            user['permissions'] = _generate_permissions()
+            user['permissions'] = User.generate_permissions()
 
     return user['permissions']
 
 
-def _generate_permissions():
-    return {
-        "godmode": False,
-        "general": [], # crud_competition crud_gym
-        "users":[''],
-        "competitions":['abc','def'], # everyone has ability to modify these test competitions
-        "gyms":[] # contains gym ids
-            }
 
 
 def has_permission_for_competition(competitionId, user):

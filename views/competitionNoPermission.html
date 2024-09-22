@@ -14,43 +14,22 @@
 	<div >{% include "skala3ma-menu.html" %}
 
 
-		{% if session is defined and session['name'] is defined %}
-
+	
 
 <div align="center">
 	<br><br>
-<br><br>
+<br>
 
-		<h3>You don't have a permission to do that</h3>
-	{{ reference_data['current_language'][error_code] }}
+    <img src="/public/images/no-access.png" width="200">
+    <br><br>
+
+        <h3>{{ reference_data['current_language'][error_code] }}</h3>
+
+		You don't have a permission to do that
 <br><br>
 <br><br>
 
 </div>
 
-{% else %}
-
-
-<div align="center">
-	<br><br>
-	<a href="/google"><img id="googlelogin"
-            src="/public/images/googlelogin.jpeg" height="60"
-            alt="Facebook"></a>
-
-	<br><br>
-	<br><br>
-	<a href="/facebook/"><img id="facebooklogin	"
-            src="/public/images/facebooklogin.png" height="60"
-            alt="Facebook">
-         </a>
-
-
-	<br><br>
-	<br><br>
-	<br><br>
-	<br><br>
-</div>
-
-         {% endif %}
 
 {% endblock %}

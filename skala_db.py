@@ -7,6 +7,7 @@ import random
 from datetime import datetime, date, timedelta
 import time
 from io import BytesIO
+from src import User
 
 #    Copyright (C) 2023 David Mossakowski
 #
@@ -432,10 +433,10 @@ def _common_user_validation(user):
 # who can create new competition? gym admins?
 def get_permissions(user):
     if user is None:
-        return _generate_permissions()
+        return User.generate_permissions()
 
     if user.get('permissions') is None:
-        user['permissions'] = _generate_permissions()
+        user['permissions'] = User.generate_permissions()
 
     if user.get('email') == 'dmossakowski@gmail.com':
         user['permissions']['godmode'] = True
@@ -446,14 +447,6 @@ def get_permissions(user):
     return user['permissions']
 
 
-def _generate_permissions():
-    return {
-        "godmode": False,
-        "general": [], # crud_competition crud_gym
-        "users":[''],
-        "competitions":['abc','def'], # everyone has ability to modify these test competitions
-        "gyms":[] # contains gym ids
-            }
 
 
 def has_permission_for_competition(competitionId, user):
@@ -475,7 +468,7 @@ def add_user_permission(user, permission):
         cursor = db.cursor()
         permissions = user.get('permissions')
         if permissions is None:
-            permissions = _generate_permissions()
+            permissions = User.generate_permissions()
             user['permissions'] = permissions
 
         if permission not in permissions['general']:
@@ -508,7 +501,7 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
         cursor = db.cursor()
         permissions = user.get('permissions')
         if permissions is None:
-            permissions = _generate_permissions()
+            permissions = User.generate_permissions()
             user['permissions'] = permissions
 
         if action == "ADD":

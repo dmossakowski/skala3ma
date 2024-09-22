@@ -10,66 +10,93 @@
 
 	{% block secondarycontent %}
 
-	<div  staaayle="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
-
+	
+    <div class="container">
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
-						<br>
+					<div class="row text-left heading-section animate-box">
+						
 						<h3>{{reference_data['current_language'].update_details}} </h3>
-						<font color="red">{{ error_message }}</font><br><br>
+						<font color="red">{{ error_message }}</font>
+                        <font color="darkgreen"><b>{{ subheader_message }}</b></font><br>
 						{% if climber is not none  %}
 
 						<form action="/updateuser">
-							<label >{{reference_data['current_language'].logged_in_as}}:</label><br> {{logged_name}}<br><br>
-							<!--label for="fullname">Full name:</label><br> <input id="fullname" name="fullname" size="40" value="{{climber['fullname']}}"/><br><br-->
-							<label for="firstname">{{reference_data['current_language'].firstname}}:</label><br> <input id="firstname" name="firstname" size="40" value="{{climber['firstname']}}"/><br><br>
-							<label for="lastname">{{reference_data['current_language'].lastname}}:</label><br> <input id="lastname" name="lastname" size="40" value="{{climber['lastname']}}"/><br><br>
-
-							<label for="nick">{{reference_data['current_language'].nickname}}:</label><br> <input id="nick" name="nick" size="40" value="{{climber['nick']}}"/><br><br>
+                            
+                            <div class="form-floating">
+                                <input type="text" class="form-control mb-2" name="firstname" id="firstname" value="{{climber['firstname']}}">
+                                <label for="firstname">{{reference_data['current_language'].firstname}}</label>
+                            </div>
+                          
+						
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="lastname" name="lastname" value="{{climber['lastname']}}">
+                                <label for="lastname">{{reference_data['current_language'].lastname}}</label>
+                            </div>
+                            
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="nick" name="nick" value="{{climber['nick']}}">
+                                <label for="nick">{{reference_data['current_language'].nickname}}</label>
+                            </div>
 
 							{% if climber['email'] is none %}
-							<label for="email">Email:</label><br> <input id="email" name="email" size="40" /><br><br>
-							{% else %}
-							<label for="email">{{reference_data['current_language'].email}}:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
-							{% endif %}
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="email" name="email" size="40">
+                                    <label for="email">Email:</label>
+                                </div>
+                            {% else %}
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="email" name="email" value="{{logged_email}}" readonly>
+                                    <label for="email">{{reference_data['current_language'].email}}</label>
+                                </div>
+                            
+                            {% endif %}
+
+                            <div class="form-floating mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
+                                <label class="form-check-label" for="F">{{reference_data['current_language'].woman}}</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
+                                <label class="form-check-label" for="M">{{reference_data['current_language'].man}}</label>
+                            </div>
+                        </div>
+
+							
+
+                            <div class="form-floating mb-3">
+                                <select class="form-select" name="category" id="category">
+                                    {% for category in reference_data['categories'] %}
+                                        <option value="{{category}}" size="20" {% if (category|string == climber['category']) %}selected{% endif %}>
+                                            {{reference_data['categories'][category]}}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <label for="category">{{reference_data['current_language'].category}}</label>
+                            </div>
 
 
-							<input type="radio" id="F" value="F" name="sex" {% if climber['sex']=='F'%}checked{%endif%}>
-							<label for="F">{{reference_data['current_language'].woman}}</label>
-							<input type="radio" id="M" value="M" name="sex" {% if climber['sex']=='M'%}checked{%endif%}>
-							<label for="M">{{reference_data['current_language'].man}}</label>
-							<br>
-							<br>
+                            <div class="form-floating mb-3">
+                                <select class="form-select" name="club" id="club">
+                                    <option value="--" size="20">{{reference_data['current_language'].choose}}</option>
+                                    {% for club in reference_data['clubs'] %}
+                                        <option value="{{ club }}" {% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %} size="20">
+                                            {{reference_data['clubs'][club]}}
+                                        </option>
+                                    {% endfor %}
+                                    <option value="other" size="20">{{reference_data['current_language'].other}}</option>
+                                </select>
+                                <label for="club">{{reference_data['current_language'].club}}</label>
+                            </div>
 
-							<label for="category">{{reference_data['current_language'].category}}:</label><br><select name="category" id="category">
-							{% for category in reference_data['categories'] %}
+							<div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="otherclub" name="otherclub" size="40">
+                                <label for="otherclub">Si autre club non répertorié lequel:</label>
+                            </div>
 
-							<option value="{{category}}" size="20"
-							{% if (category|string  == climber['category']) %}selected{% endif %}
-
-							>{{reference_data['categories'][category]}}</option>
-							{% endfor %}
-						</select><br><br>
-
-							<label for="club">{{reference_data['current_language'].club}}:</label><br><select name="club" id="club">
-							<option value="--" size="20" >{{reference_data['current_language'].choose}}</option>
-							{% for club in reference_data['clubs'] %}
-
-							{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
-							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %}
-									size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-							<option value="other" size="20" >{{reference_data['current_language'].other}}</option>
-
-
-							</select>
-							<br><br>
-
-							<label for="otherclub">Si autre club non répertorié lequel:</label><br> <input id="otherclub" name="otherclub" size="40" /><br><br>
-
-
-<button >{{reference_data['current_language'].submit}}</button>
+                            <button type="submit" class="btn btn-primary">
+                                {{reference_data['current_language'].submit}}
+                            </button>
 					</form>
 <br>
 

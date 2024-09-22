@@ -38,7 +38,16 @@
     <br>
     <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
 	<input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
-	
+	<div class="col-md-6">
+        <div class="form-floating mb-3">
+            <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000">
+                {{ competition['instructions'] }}
+            </textarea>
+            <label for="topmessage">{{ reference_data['current_language'].Instructions }}:</label>
+        </div>
+    </div>
+
+   
 
 	<button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
     <button name="delete_competition_button" value="delete_competition_button" class="btn btn-danger btn-sm">{{ reference_data['current_language'].delete_competition}}</button>
@@ -57,6 +66,10 @@
 
 
 	<button name="update_status" value="update_status" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+
+
+    
+
 
 
     <br><br>
