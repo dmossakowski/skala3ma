@@ -70,6 +70,9 @@ from flask_login import (
     logout_user,
 )
 
+from flask_bcrypt import Bcrypt
+from itsdangerous import URLSafeTimedSerializer
+
 #from flask_openapi3 import OpenAPI, Info, Tag
 
 # https://docs.authlib.org/en/latest/flask/2/index.html#flask-oauth2-server
@@ -89,6 +92,7 @@ GOOGLE_DISCOVERY_URL = (
 FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
+SMTP_API_KEY = os.getenv("SMTP_API_KEY")
 
 # workaround to hardcoded limit in Request class
 # https://stackoverflow.com/questions/77949949/413-request-entity-too-large-flask-werkzeug-gunicorn-max-content-length
@@ -109,6 +113,8 @@ app.register_blueprint(skala_api_app)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
+
+bcrypt = Bcrypt(app)
 
 #from fastapi.middleware.wsgi import WSGIMiddleware
 
@@ -257,6 +263,14 @@ def update_token(name, token, refresh_token=None, access_token=None):
 #    return redirect("/main")
 
 
+@app.errorhandler(404)
+@app.errorhandler(500)
+
+def page_not_found(e):
+    # You can render a custom 404 template or return a simple message
+    return render_template('404.html', reference_data=competitionsEngine.reference_data,), 404
+
+
 @app.route('/login')
 def login():
     logging.info ("doing login "+str(request.referrer)+" client_id "+str(SPOTIFY_APP_ID))
@@ -287,6 +301,7 @@ def logout():
     session.pop('username', None)
     session.pop('wants_url', None)
     session.pop('access_token', None)
+    session.pop('email', None)
     session['access_token'] = None
     session['logged_in'] = False
     session['refresh_token'] = None
@@ -543,52 +558,285 @@ def googleauth_reply():
 
 
 
+# first service to be called
+# if email found and password matches then log the user in
+@app.route('/email_login', methods=['POST'])
+def email_login():
+    f = request.form
+    print(request.form)
+    email = request.form.get('email')
+    password = request.form.get('password')
+    error=None
+
+    if not email or not password:
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='User does not exist or wrong password.')
+                        
+    
+    user = competitionsEngine.get_user_by_email(email)
+
+    if user is None:
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error='User does not exist or wrong password. ')
+    
+    if user.get('password') is None:
+        error='You must set your password. '
+        return render_template('change_password.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error=error)
+
+    if user.get('is_confirmed') is not None and user.get('is_confirmed') == False:
+        error='User not confirmed. Please check your email for confirmation link'
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error=error)
+    
+    if user.get('fpictureurl') is not None or user.get('gpictureurl') is not None:
+        error='User is registered with Google or Facebook. Please click the appropriate button to login'
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error=error)
+    
+
+    if bcrypt.check_password_hash(user.get('password'), password):
+        session['username'] = user.get('email')
+        session['email']=user.get('email')
+        session['picture']='/public/images/favicon.png'
+        session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24))
+        #session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+        session['authsource'] = 'self'
+        session['name'] = user.get('email')
+        
+        if competitionsEngine.is_god(user) or GODMODE:
+            session['godmode'] = True   
+        return render_template('competitionDashboard.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error=error)
+    
+
+    else:
+        error="Invalid user or password"
+
+    return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           error=error)
 
 
-@app.route('/datadownload')
-@login_required
-def downloadData():
 
-    #dataAgeS = analyze.getUpdateDtStr(_getDataPath())
-    #dataAge = analyze.getUpdateDt(_getDataPath())
-    #maxAge = dataAge + 15 * 60 # one hour
-    #currentTime = time.time()
-    #newt = datetime.datetime.fromtimestamp(maxAge).strftime('%c')
-    #if maxAge > currentTime:
-     #   return "Your data was last loaded on " + dataAgeS
+@app.route('/register', methods=['GET'])
+def register_with_email():
+    return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data
+                           )
 
-    #return dataAgeS+" loading <br>"+newt
-    #print(" datadownload")
-    library = _retrieveSpotifyData(session)
 
-    @copy_current_request_context
-    def handle_sub_view(session):
-        with app.test_request_context():
-            from flask import request
-            logging.info(" starting new thread "+str(session.get('username')))
-            #request = req
-            logging.info(request.url)
-            # Do Expensive work
-            _retrieveSpotifyData(session)
+# the user wants to register so send the confirmation email
+# or the user needs to reset the password
+@app.route('/register', methods=['POST'])
+def register():
+    f = request.form
+    print(request.form)
+    email = request.form.get('email')
 
-    #threading.Thread(target=handle_sub_view, args=(session,)).start()
+    if not email:
+        return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Email is required',
+                           email=email)
+    email = email.lower()
+    
+    user = competitionsEngine.get_user_by_email(email)
 
-    #with app.app_context():
-    #
-    #    global exporting_threads#
+    if user is not None and user.get('is_confirmed') == False:
+        send_registration_email(email)
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Please check your email for confirmation link',
+                           email=email)
+   
 
-        #thread_id = random.randint(0, 10000)
-    #    thread_id =1
-    #    exporting_threads[thread_id] = ExportingThread()
-    #    exporting_threads[thread_id].start()
+    if user is not None and user.get('is_confirmed') == True:
+        send_password_reset_email(email)
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Link to reset password sent to email',)
+    
 
-    #return 'task id: #%s' % thread_id
+    
+    ## send email to confirm registration
+    send_registration_email(email)
 
-    return "All data retrieved"
-    #return render_template('index.html', sortedA=library.get('playlists'),
-    #                       subheader_message="Playlists retrieved with track count "+str(len(library['tracks'])),
-    #                       library=library,
-    #                        **session)
+    return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Please check your email for confirmation link',
+                           email=email)
+    
+
+
+@app.route('/forgot_password')
+def forgot_password():
+
+    if session.get('email') is None:
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error="Login first to change your password",
+                           email=session.get('email'))
+    
+    return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data,
+                           action='forgot_password'
+                           )
+
+
+# this endpoint only gets two passwords from change_passsword.html
+# the user must already be confirmed which means that their email is valid and they are in the database
+# they would also then have the email put in their session
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    email = session.get('email')
+    if email is None:
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Please login first')
+
+    password = request.form.get('password')
+    password2 = request.form.get('password2')
+    email = email.lower()
+
+    if not email or not password or not password2 or password != password2 or len(password) < 6:
+        return render_template('change_password.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Invalid parameters, passwords do not match or password too short',
+                           email=email)
+                        
+    user = competitionsEngine.get_user_by_email(email)
+
+    if user is None:
+        return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error=None)
+    
+
+    password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    user = competitionsEngine.user_authenticated(email, password)
+    
+    
+    return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Please login again with your new password',
+                           email=email)
+    
+   
+
+def send_registration_email(email):
+    token = generate_token(email)
+    confirm_url = url_for('confirm_email', type='register', token=token, _external=True)
+  
+    email_subject = competitionsEngine.reference_data['current_language']['registration_email_subject']
+    email_text = render_template('registration-email.html', 
+                                 reference_data=competitionsEngine.reference_data,
+                                 confirm_url=confirm_url,
+                                 email=email)
+    
+    ret = requests.post(
+        "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
+        auth=("api", SMTP_API_KEY),
+        data={"from": "SKALA3MA Admin <do-not-reply@skala3ma.com>",
+            "to": [email],
+            "subject": email_subject,
+            "text": "Thanks for registering. Copy and paste this link in your browser: "+confirm_url+"" ,
+            "html": email_text
+            })
+            
+    return 'mail sent'+ret.reason+' '+ret.text
+
+
+def send_password_reset_email(email):
+    token = generate_token(email)
+    confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
+    email_subject = competitionsEngine.reference_data['current_language']['reset_password_email_subject']
+    email_link_text = competitionsEngine.reference_data['current_language']['reset_password_email_text1']
+    
+    email_text = """<img src='https://skala3ma.com/public/images/favicon.png' width="35">
+            <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+
+            <br><br>
+            <a href='"""+confirm_url+"""'>
+            """+email_link_text+"""
+           </a>.
+            <br><br> 
+    """
+
+    ret = requests.post(
+        "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
+        auth=("api", SMTP_API_KEY),
+        data={"from": "SKALA3MA <do-not-reply@skala3ma.com>",
+            "to": [email],
+            "subject": email_subject,
+            "text": "Need to test this new account registration email "+confirm_url+" ",
+            "html": email_text
+            })
+    
+    return 'mail sent'+ret.reason+' '+ret.text
+    #return confirm_url
+
+
+def generate_token(email):
+    serializer = URLSafeTimedSerializer(os.getenv("SECRET_KEY"))
+    return serializer.dumps(email, salt=os.getenv("SECURITY_PASSWORD_SALT"))
+
+
+def confirm_token(token, expiration=3600):
+    serializer = URLSafeTimedSerializer(os.getenv("SECRET_KEY"))
+    try:
+        email = serializer.loads(
+            token, salt=os.getenv('SECURITY_PASSWORD_SALT'), max_age=expiration
+        )
+        return email
+    except Exception as e:
+        print(e)
+        return False
+    
+
+# this path is called when the user clicks the confirmation link in the email
+# we will add the user to the db here because the mail is confirmed
+# we add the email to the session so that we match it with the password change request
+@app.route("/confirm/<type>/<token>", methods=["GET"])
+def confirm_email(type, token):
+    
+    email = confirm_token(token)
+
+    if email is False:
+        return render_template('register.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='Invalid or expired token. ')
+    
+    user = competitionsEngine.get_user_by_email(email)
+
+    if user is not None and user.get('is_confirmed') == True and type == 'register':
+        return render_template('competitionLogin.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error='User already confirmed. Please login. ')
+
+    user = competitionsEngine.confirm_user(email)
+
+    session['username'] = user.get('email')
+    session['email']=user.get('email')
+    session['access_token'] = token
+
+   
+    return render_template('change_password.html',
+                           reference_data=competitionsEngine.reference_data,
+                           error=None,)
 
 
 

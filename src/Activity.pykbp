@@ -12,6 +12,11 @@ class Activity:
         return self.name + " " + self.mur + " " + self.start + " " + self.end
 
     def to_json():
+        activity = {"id": activity_id, "gym_id": gym_id, "routes_id": routes_id, "starttime": date, "name": name, 
+        "gym_name": gym.get('name'), 
+            "routes": []
+               }
+
         activity = {"id": activity_id, "gym_id": gym_id, "routes_id": routes_id, "description": description, "routes": [],
         }
     

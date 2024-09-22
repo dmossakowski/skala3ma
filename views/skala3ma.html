@@ -43,9 +43,10 @@
     <div class="row" >
 	        
         <script>
-            var map = L.map('map').setView([48.90, 2.342014], 11);
+            var map = L.map('map').setView([48.885, 2.39], 11);
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
+            zoomSnap: 0,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
@@ -53,33 +54,15 @@
         var LeafIcon = L.Icon.extend({
             options: {
             shadowUrl: '',
-            iconSize:     [70, 70],
-            shadowSize:   [38, 38],
+            iconSize:     [70, ],
+            shadowSize:   [130, ],
             iconAnchor:   [1, 70],
-            shadowAnchor: [4, 62],
+            shadowAnchor: [6, 75],
             popupAnchor:  [35, -70]
         }
 });
 
 
-    /*
-        var marker = L.marker([48.885579, 2.209220],{icon: greenIcon}).bindPopup("<b><a href=/gyms/1>NANTERRE grimpe</a></b><br>22 Rue de Suresnes, 92000 Nanterre").openPopup().addTo(map);
-        var marker = L.marker([48.892718, 2.397163],{icon: redIcon}).bindPopup("<b><a href=/gyms/22215c916cef4da29bed1325523d2296>CIMES 19</a></b><br>22 Rue de Suresnes, 92000 Nanterre").openPopup().addTo(map);
-        var marker = L.marker([48.904770, 2.593916],{icon: chelleIcon}).bindPopup("<b><a href=/gyms/8f2cdd69e09b46e79ee13d1ac3969fe0>Chelles Grimpe</a></b><br>Gymnase Georges Cousin 84 Avenue Claude Bernard 77500 Chelles").openPopup().addTo(map);
-        var marker = L.marker([48.816017, 2.534591],{icon: fsgtIcon}).bindPopup("<b><a href=/gyms/ca09c1dab6c04bb7b8e224bd9344d4c9>RSCC ESCALADE MONTAGNE RANDONNEE</a></b><br>Gymnase Paul Emile Victor rue du Professeur Paul Milliez 94500 Champigny").openPopup().addTo(map);
-        var marker = L.marker([48.966759, 2.571509],{icon: fsgtIcon}).bindPopup("<b><a href=/gyms/7169c4fda37b4969a44192556313aa2f>Grimpe Tremblay Dégaine</a></b><br>Gymnase Toussaint Louverture 117 route des petits ponts 93 Tremblay en France").openPopup().addTo(map);
-        
-        var marker = L.marker([48.803000, 2.407615],{icon: quatreplusIcon}).bindPopup("<b><a href=/gyms/506767e605404f2795c32beead6bd0f3>Quatre +</a></b><br>Gymnase du Port-à-l'Anglais, 22 Rue Charles Fourier, 94400 Vitry-sur-Seine").openPopup().addTo(map);
-        var marker = L.marker([48.827156, 2.336048],{icon: fsgtIcon}).bindPopup("<b><a href=/gyms/Roc14</b><br>11 ter Rue d'Alésia, 75014 Paris").openPopup().addTo(map);
-        var marker = L.marker([48.814832, 2.399630],{icon: ivryIcon}).bindPopup("<b><a href=/gyms/US Ivry - Orme au Chat</b><br>28, boulevard de Brandebourg, 94200 IVRY-SUR-SEINE").openPopup().addTo(map);
-        var marker = L.marker([48.784799, 2.359958],{icon: fsgtIcon}).bindPopup("<b><a href=/gyms/Villejuif Altitude</b><br>Halle des sports Colette Bessons, Avenue Karl Marx, 94800 Villejuif").openPopup().addTo(map);
-        
-        var marker = L.marker([48.973281, 2.366733],{icon: aspIcon}).bindPopup("<b><a href=/gyms/AS Pierrefitte</b><br>Palais des Sports Pierre Machon | 156, bd, Jean-Mermoz, 93380, Pierrefitte-sur-Seine").openPopup().addTo(map);
-        
-        var marker = L.marker([48.875533, 2.353164],{icon: cps10Icon}).bindPopup("<b><a href=/gyms/Faites le Mur - CPS10</b><br>Centre sportif Marie Paradis - 2 Rue Léon Schwartzenberg, 75010 Paris").openPopup().addTo(map);
-        var marker = L.marker([48.827769, 2.293922],{icon: esc15Icon}).bindPopup("<b><a href=/gyms/591a28aa8e924d25a3c9c0cc6a0c883f>ESC15</a></b><br>Gymnase de la Plaine - 13 Rue du Général Guillaumat, 75015 Paris").openPopup().addTo(map);
-        var marker = L.marker([48.820490, 2.364804],{icon: fsgtIcon}).bindPopup("<b><a href=/gyms/Grimpe 13</b><br>4bis avenue de Choisy, 75013 Paris").openPopup().addTo(map);
-        */
         
             var gyms;
 
@@ -109,7 +92,14 @@ function processGyms(gyms)
             console.log(img.src+' - '+img.naturalHeight, img.naturalWidth) // Error: undefined is not an object
         };
      
-        var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id,iconSize: [,65]});
+        var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id,iconSize: [,95], 
+            //shadowUrl: '/public/images/safeimagekit-brushed-alum.png', shadowSize: [,95]}
+
+            //shadowUrl: '/public/images/gray-square-button-hi.png', shadowSize: [,75]
+        }
+
+            
+        );
         var lat = gyms[i].lat;
         var lon = gyms[i].lon;
         if (lat == null || lon == null)
@@ -120,6 +110,7 @@ function processGyms(gyms)
     
         var marker = L.marker([lat,lon],{icon: icon})
         .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);
+
         
         console.log(gyms[i].name);
     }	  

@@ -170,7 +170,20 @@
   "rating_activity_name": "Rating activity",
   "rating_activity_prompt": "Add an activity (suggest new rating)",
   "app_development": "App development",
-
+  "password": "Password",
+  "not_registered": "Not registered?",
+  "register_now": "Register now",
+  "forgot_password": "Forgot password?",
+  "send_it": "Send it",
+  "hello": "Hello",
+  "registration_email_text1": "Thanks for registering. Please confirm your email address by ",
+  "registration_email_text2": "clicking here",
+  "registration_email_text3": "Thanks!",
+  "registration_email_subject": "Registration confirmation",
+  "reset_password_email_subject": "Reset password confirmation",
+  "reset_password_email_text1": "Click here to reset your password",
+  "Instructions": "Instructions",
+  
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
   "error5316": "User with this email is known and they should login and register themselves",
@@ -181,4 +194,5 @@
 
 
   "last": "Last"
+  
 }

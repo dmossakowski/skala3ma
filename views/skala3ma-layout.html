@@ -177,7 +177,7 @@
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
 -->
-                               {% if session is defined and session['name'] is defined %}
+                               {% if session is defined and session['expires_at'] is defined %}
                  
                     <a href="/user" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
@@ -348,7 +348,7 @@
                 </li>
 
             
-            {% if session is defined and session['name'] is defined %}
+            {% if session is defined and session['expires_at'] is defined %}
 
                 <li  class="nav-item">
                 <a href="/user" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">

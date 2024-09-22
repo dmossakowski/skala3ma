@@ -25,7 +25,6 @@ import csv
 from functools import wraps
 from dataclasses import dataclass
 
-
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, jsonify, Response, \
     stream_with_context, copy_current_request_context, g
 
@@ -287,6 +286,7 @@ def competition_admin_post(competition_id):
     id = request.form.get('id')
     action = request.form.get('action')
     competition_status = request.form.get('competition_status')
+    instructions = request.form.get('instructions')
 
     jsondata = request.form.get('jsondata')
     comp = {}
@@ -320,7 +320,8 @@ def competition_admin_post(competition_id):
         competition_name = request.form.get('competition_name')
         competition_date = request.form.get('competition_date')
         competition_routes = request.form.get('competition_routes')
-        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes)
+        
+        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes, instructions)
 
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
@@ -818,7 +819,7 @@ def get_users_by_gym(gym_id):
     # remove email and permissions from the response
     for user in users:
         user.pop('email', None)
-        user.pop('permissions', None)
+        #user.pop('permissions', None)
         user.pop('isgod',None)
         
         if user.get('fpictureurl') is not None:
@@ -1850,10 +1851,10 @@ def gyms_update(gym_id):
 
 
 
+# this doesn't work so well... there is a main_app_ui version that works better
 @skala_api_app.route('/image/<img_id>')
 def image_route(img_id):
     #bytes_io = competitionsEngine.get_img(img_id)
     #return send_file(bytes_io, mimetype='image/png')
 
-    #return send_file(os.path.join(UPLOAD_FOLDER, img_id))
-    return send_from_directory(UPLOAD_FOLDER, img_id)
+    return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)

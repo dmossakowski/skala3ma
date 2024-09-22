@@ -174,8 +174,21 @@
   "rating_activity_name": "Activité de la cotation",
   "rating_activity_prompt": "Ajouter une activité (et proposer une cotation) ",
   "app_development": "Développement de l'application",
-
-
+  "password": "Password",
+  "not_registered": "Not registered?",
+  "register_now": "Register now",
+  "forgot_password": "Forgot password?",
+  "send_it": "Enchaîne.e",
+  "hello": "Bonjour",
+  "registration_email_text1": "Merci pour votre inscription. Merci de confirmer votre adresse email en ",
+  "registration_email_text2": "cliquant ici",
+  "registration_email_text3": "A+",
+  "registration_email_subject": "Confirmation d'inscription",
+  "reset_password_email_subject": "Réinitialisation du mot de passe",
+  "reset_password_email_text1": "Cliquez ici pour réinitialiser votre mot de passe",
+  "Instructions": "Instructions",
+  
+  
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
