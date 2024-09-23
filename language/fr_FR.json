@@ -174,10 +174,10 @@
   "rating_activity_name": "Activité de la cotation",
   "rating_activity_prompt": "Ajouter une activité (et proposer une cotation) ",
   "app_development": "Développement de l'application",
-  "password": "Password",
-  "not_registered": "Not registered?",
-  "register_now": "Register now",
-  "forgot_password": "Forgot password?",
+  "password": "Mot de passe",
+  "not_registered": "Pas encore inscrit.e ?",
+  "register_now": "Inscrivez-vous",
+  "forgot_password": "Mot de passe oublié ?",
   "send_it": "Enchaîne.e",
   "hello": "Bonjour",
   "registration_email_text1": "Merci pour votre inscription. Merci de confirmer votre adresse email en ",
@@ -196,6 +196,20 @@
   "error5322": "L'état de la compétition ne permet pas de nouvelles inscriptions",
   "error5323": "Nombre maximal d'inscriptions atteint",
   "error5324": "Choose a valid gym",
+
+
+  "Please_check_your_email_for_confirmation_link": "Veuillez vérifier votre e-mail pour le lien de confirmation",
+  "Invalid_username_or_password": "Nom d'utilisateur ou mot de passe invalide",
+  "User_does_not_exist_or_wrong_password": "L'utilisateur n'existe pas ou mot de passe incorrect",
+  "You_must_set_your_password": "Vous devez définir votre mot de passe",
+  "User_not_confirmed_Please_check_your_email_for_confirmation_link": "Utilisateur non confirmé. Veuillez vérifier votre e-mail pour le lien de confirmation",
+  "User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login": "L'utilisateur est enregistré avec Google ou Facebook. Veuillez cliquer sur le bouton approprié pour vous connecter",
+  "Email_is_required": "L'e-mail est requis",
+  "Link_to_reset_password_sent_to_email": "Lien pour réinitialiser le mot de passe envoyé par e-mail",
+  "Login_first_to_change_your_password": "Connectez-vous d'abord pour changer votre mot de passe",
+  "Please_login_first": "Veuillez vous connecter d'abord",
+  "Invalid_parameters_passwords_do_not_match_or_password_too_short": "Paramètres invalides, les mots de passe ne correspondent pas ou le mot de passe est trop court",
+  "Please_login_again_with_your_new_password": "Veuillez vous reconnecter avec votre nouveau mot de passe",
 
 
   "last": "Last"

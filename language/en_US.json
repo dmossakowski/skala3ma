@@ -193,6 +193,21 @@
   "error5324": "Choose a valid gym",
 
 
+"Please_check_your_email_for_confirmation_link": "Please check your email for the confirmation link",
+"Invalid_username_or_password": "Invalid username or password",
+"User_does_not_exist_or_wrong_password": "User does not exist or wrong password.",
+"You_must_set_your_password": "You must set your password.",
+"User_not_confirmed_Please_check_your_email_for_confirmation_link": "User not confirmed. Please check your email for confirmation link",
+"User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login": "User is registered with Google or Facebook. Please click the appropriate button to login",
+"Email_is_required": "Email is required",
+"Link_to_reset_password_sent_to_email": "Link to reset password sent to email",
+"Login_first_to_change_your_password": "Login first to change your password",
+"Please_login_first": "Please login first",
+"Invalid_parameters_passwords_do_not_match_or_password_too_short": "Invalid parameters, passwords do not match or password too short",
+"Please_login_again_with_your_new_password": "Please login again with your new password",
+
+
+
   "last": "Last"
   
 }

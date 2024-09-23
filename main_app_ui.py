@@ -202,18 +202,6 @@ def index11():
         return '<a class="button" href="/login">Google Login</a>'
 
 
-@app_ui.route('/sendmail')
-def send_simple_message():
-    ret = requests.post(
-        "https://api.eu.mailgun.net/v3/mg.skala3ma.com/messages",
-        auth=("api", "b18fc6aa07d05cd062c4c097d9dcc8d9-7a3af442-29dda358"),
-        data={"from": "bob mob <do-not-reply@skala3ma.com>",
-            "to": ["dmossakowski@gmail.com"],
-            "subject": "account registration",
-            "text": "Need to test this new account registration email"})
-
-    return 'mail sent'+ret.reason+' '+ret.text
-
 
 @app_ui.route('/competitionRawAdmin', methods=['GET'])
 @login_required
