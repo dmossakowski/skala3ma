@@ -566,42 +566,41 @@ def email_login():
     print(request.form)
     email = request.form.get('email')
     password = request.form.get('password')
-    error=None
+    error = None
 
     if not email or not password:
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='User does not exist or wrong password.')
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('User_does_not_exist_or_wrong_password'))
                         
-    
     user = competitionsEngine.get_user_by_email(email)
 
     if user is None:
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error='User does not exist or wrong password. ')
+                               reference_data=competitionsEngine.reference_data,
+                               email=email,
+                               error=get_translation('User_does_not_exist_or_wrong_password'))
     
     if user.get('password') is None:
-        error='You must set your password. '
+        error = get_translation('You_must_set_your_password')
         return render_template('change_password.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error=error)
+                               reference_data=competitionsEngine.reference_data,
+                               email=email,
+                               error=error)
 
     if user.get('is_confirmed') is not None and user.get('is_confirmed') == False:
-        error='User not confirmed. Please check your email for confirmation link'
+        error = get_translation('User_not_confirmed_Please_check_your_email_for_confirmation_link')
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error=error)
+                               reference_data=competitionsEngine.reference_data,
+                               email=email,
+                               error=error)
     
     if user.get('fpictureurl') is not None or user.get('gpictureurl') is not None:
-        error='User is registered with Google or Facebook. Please click the appropriate button to login'
+        error = get_translation('User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login')
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error=error)
+                               reference_data=competitionsEngine.reference_data,
+                               email=email,
+                               error=error)
     
 
     if bcrypt.check_password_hash(user.get('password'), password):
@@ -620,15 +619,13 @@ def email_login():
                            email=email,
                            error=error)
     
-
     else:
-        error="Invalid user or password"
+        error=get_translation('User_does_not_exist_or_wrong_password')
 
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data,
                            email=email,
                            error=error)
-
 
 
 @app.route('/register', methods=['GET'])
@@ -642,15 +639,12 @@ def register_with_email():
 # or the user needs to reset the password
 @app.route('/register', methods=['POST'])
 def register():
-    f = request.form
-    print(request.form)
     email = request.form.get('email')
-
     if not email:
         return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='Email is required',
-                           email=email)
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('Email_is_required'),
+                               email=email)
     email = email.lower()
     
     user = competitionsEngine.get_user_by_email(email)
@@ -658,42 +652,36 @@ def register():
     if user is not None and user.get('is_confirmed') == False:
         send_registration_email(email)
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='Please check your email for confirmation link',
-                           email=email)
-   
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('Please_check_your_email_for_confirmation_link'),
+                               email=email)
 
     if user is not None and user.get('is_confirmed') == True:
         send_password_reset_email(email)
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='Link to reset password sent to email',)
-    
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('Link_to_reset_password_sent_to_email'))
 
-    
     ## send email to confirm registration
     send_registration_email(email)
 
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
-                           error='Please check your email for confirmation link',
+                           error=get_translation('Please_check_your_email_for_confirmation_link'),
                            email=email)
-    
 
 
 @app.route('/forgot_password')
 def forgot_password():
-
     if session.get('email') is None:
         return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error="Login first to change your password",
-                           email=session.get('email'))
-    
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('Login_first_to_change_your_password'),
+                               email=session.get('email'))
+
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
-                           action='forgot_password'
-                           )
+                           action='forgot_password')
 
 
 # this endpoint only gets two passwords from change_passsword.html
@@ -714,7 +702,7 @@ def change_password():
     if not email or not password or not password2 or password != password2 or len(password) < 6:
         return render_template('change_password.html',
                            reference_data=competitionsEngine.reference_data,
-                           error='Invalid parameters, passwords do not match or password too short',
+                           error=get_translation('Invalid_parameters_passwords_do_not_match_or_password_too_short'),
                            email=email)
                         
     user = competitionsEngine.get_user_by_email(email)
@@ -732,7 +720,7 @@ def change_password():
     
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data,
-                           error='Please login again with your new password',
+                           error=get_translation('Please_login_again_with_your_new_password'),
                            email=email)
     
    
@@ -833,18 +821,18 @@ def confirm_email(type, token):
     session['email']=user.get('email')
     session['access_token'] = token
 
-   
     return render_template('change_password.html',
                            reference_data=competitionsEngine.reference_data,
                            error=None,)
 
 
+def get_translation(key):
+    if key in competitionsEngine.reference_data['current_language']:
+        return competitionsEngine.reference_data['current_language'][key]
+    else:
+        return key  # or return a default message like "Translation not found"
 
-
-
-
-
-
+    
 def _getGlobalKey(msgtype = ''):
     key = msgtype + 'backgroundMsg'
     if (session.get('id')):
