@@ -3,7 +3,7 @@
 {% block topcontent %}
 
 <style>
-    #map { height: 490px; width: 100%; }
+    #map { height: 540px; width: 100%; }
 </style>
 
 <div style="background:  linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.75) ), url(/public/images/main-back.jpg); height: auto; background-repeat: no-repeat;
@@ -54,10 +54,10 @@
         var LeafIcon = L.Icon.extend({
             options: {
             shadowUrl: '',
-            iconSize:     [70, ],
-            shadowSize:   [130, ],
+            
+            shadowSize:   [250, 250],
             iconAnchor:   [1, 70],
-            shadowAnchor: [6, 75],
+            
             popupAnchor:  [35, -70]
         }
 });
@@ -79,40 +79,44 @@ function getData()
     })
     .catch(error => console.error(error));
     
-
 }
 
 function processGyms(gyms)
 {
-    for (var i = 0; i < gyms.length; i++) {
+    for (let i = 0; i < gyms.length; i++) {
      
-        var img = new Image();
+        let img = new Image();
+        let height = 0;
+        let width = 0;
         img.src = '/image/'+gyms[i].logo_img_id;
+
         img.onload = function() {
-            console.log(img.src+' - '+img.naturalHeight, img.naturalWidth) // Error: undefined is not an object
-        };
-     
-        var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id,iconSize: [,95], 
-            //shadowUrl: '/public/images/safeimagekit-brushed-alum.png', shadowSize: [,95]}
-
-            //shadowUrl: '/public/images/gray-square-button-hi.png', shadowSize: [,75]
-        }
-
             
-        );
-        var lat = gyms[i].lat;
-        var lon = gyms[i].lon;
-        if (lat == null || lon == null)
-        {
-            lat = 48.935;
-            lon = 1.900000+i/17;
-        }
-    
-        var marker = L.marker([lat,lon],{icon: icon})
-        .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);
+            height = img.naturalHeight;
+            width = img.naturalWidth;
+            let proportionalWidth = (95 / height) * width; // Calculate proportional width
+     
+            //console.log(gyms[i].name+" - "+img.naturalWidth+ " "+img.naturalHeight+" "+proportionalWidth+ ":"+95) // Error: undefined is not an object
+            
+            var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id,iconSize: [proportionalWidth, 95], 
+                shadowUrl: '/public/images/white-dot.png', shadowSize: [proportionalWidth*2.7 , 250], 
+                shadowAnchor: [proportionalWidth-10, 140],
+                
+            })
 
+            var lat = gyms[i].lat;
+            var lon = gyms[i].lon;
+            if (lat == null || lon == null)
+            {
+                lat = 48.935;
+                lon = 1.900000+i/17;
+            }
         
-        console.log(gyms[i].name);
+            var marker = L.marker([lat,lon],{icon: icon})
+            .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);   
+            
+        };
+        
     }	  
 }	
     getData();
