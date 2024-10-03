@@ -611,12 +611,11 @@ def email_login():
         session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24))
         #session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
         session['authsource'] = 'self'
-        session['name'] = user.get('email')
         
         if competitionsEngine.is_god(user) or GODMODE:
             session['godmode'] = True   
         
-        if user.get('club') is None or user.get('club').strip() == '' or user.get('name') is None or user.get('name').strip() == '':
+        if user.get('club') is None or user.get('club').strip() == '' or user.get('firstname') is None or user.get('firstname').strip() == '':
             return render_template('climber.html',
                            reference_data=competitionsEngine.reference_data,
                            email=email,
