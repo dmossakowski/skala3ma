@@ -191,7 +191,12 @@
   "reset_password_email_subject": "Potwierdzenie resetu hasła",
   "reset_password_email_text1": "Kliknij ",
   "Instructions": "Instrukcje",
-  
+  "Admin": "Admin",
+  "edit_competition": "Aktualizuj zawody",
+  "create_competition": "Stwórz zawody",
+  "update_routes": "Aktualizuj drogi",
+  "create_gym": "Dodaj klub",
+  "dob": "Data urodzenia",
   
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
@@ -200,6 +205,7 @@
   "error5322": "Rejestracja na te zawody jest niemożliwa",
   "error5323": "Osiągnięto maksymalną liczbę zawodników",
   "error5324": "Choose a valid gym",
+  "error5325": "Nie mamy kategorie dla tego wieku",
 
 
   "Please_check_your_email_for_confirmation_link": "Proszę sprawdzić swoją skrzynkę e-mail, aby potwierdzić link",

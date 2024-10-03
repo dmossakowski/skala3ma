@@ -187,7 +187,12 @@
   "reset_password_email_subject": "Réinitialisation du mot de passe",
   "reset_password_email_text1": "Cliquez ici pour réinitialiser votre mot de passe",
   "Instructions": "Instructions",
-  
+  "Admin": "Admin",
+  "edit_competition": "Modifier la compétition",
+  "create_competition": "Créer une compétition",
+  "update_routes": "Mettre à jour les voies",
+  "create_gym": "Créer un mur",
+  "dob": "Date de naissance",
   
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
@@ -196,6 +201,7 @@
   "error5322": "L'état de la compétition ne permet pas de nouvelles inscriptions",
   "error5323": "Nombre maximal d'inscriptions atteint",
   "error5324": "Choose a valid gym",
+  "error5325": "L'age n'est pas valide",
 
 
   "Please_check_your_email_for_confirmation_link": "Veuillez vérifier votre e-mail pour le lien de confirmation",

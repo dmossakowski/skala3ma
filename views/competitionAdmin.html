@@ -26,6 +26,9 @@
 <form action="/competition_admin/{{competition['id']}}" method="POST" enctype="multipart/form-data">
 
     
+    <div class="card mb-3 border-dark">
+        <div class="card-body">
+  
 	<label for="competition_name">{{ reference_data['current_language'].nazwa }}:</label>
 	<input name="competition_name" size="40" value="{{competition['name']}}" id="competition_name"/>
 	<input name="competition_date" size="30" type="date" id="competition_date" value="{{competition['date']}}"/>
@@ -46,13 +49,18 @@
             <label for="topmessage">{{ reference_data['current_language'].Instructions }}:</label>
         </div>
     </div>
-
-   
-
+    </div>
+    <div class="card-footer">
 	<button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
     <button name="delete_competition_button" value="delete_competition_button" class="btn btn-danger btn-sm">{{ reference_data['current_language'].delete_competition}}</button>
-	<br><br>
+	
+</div>
+</div>
 
+<br><br>
+
+<div class="card mb-3 border-dark">
+    <div class="card-body">
 
 	<label for="competition_status">{{ reference_data['current_language'].competition_status}}:</label>
 	<select name="competition_status" id="competition_status">
@@ -64,39 +72,49 @@
 
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;
 
-
+    </div><div class="card-footer">
 	<button name="update_status" value="update_status" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
-
+    </div></div>    
 
     
 
 
 
     <br><br>
-	<label for="permissioned_user">{{ reference_data['current_language'].priviledged_user}}:</label>
-	<select name="permissioned_user" id="permissioned_user">
-							<option value="" size="20" ></option>
-
-		{% for email in user_list %}
-
-							<option value="{{email}}" size="20" >{{email}}</option>
-	{% endfor %}
-
-							</select>&nbsp;&nbsp;&nbsp;&nbsp;
-
-
+    <div class="card mb-3 border-dark">
+        <div class="card-body">
+            <!-- Input field for look-ahead search -->
+            <div class="form-group">
+                <label for="user-search"> {{ reference_data['current_language'].authorized_user}} </label>
+                <input type="text" class="form-control" id="user-search" name="user-search" placeholder="..">
+                <input type="hidden" id="userId" name="userId">
+                <div id="suggestions" class="list-group mt-2"></div>
+            </div>
+        </div><div class="card-footer">
 	<button name="permission_admin_user" value="permission_admin_user" class="btn btn-primary btn-sm">{{ reference_data['current_language'].addadminuser}}</button>
-
 	&nbsp;&nbsp;
 	<button name="permission_scorer_user" value="permission_scorer_user" class="btn btn-primary btn-sm">{{ reference_data['current_language'].addscoreruser}}</button>
+</div></div>
+    <br>
 <br>
-<br>
+
+
+<div class="card mb-3 border-dark">
+    <div class="card-body">
+
     <label for="file1">{{ reference_data['current_language'].competition_poster}} (max 4MB)
     <img src="/image/{{ competition['id'] }}"  width="200" name="compet"></label> &nbsp;&nbsp;&nbsp;&nbsp;
-    <button name="change_poster_button" value="change_poster_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+   
+   
      <input type="file" name="file1" id="file1" style="display:visible"/>
+   
+    </div><div class="card-footer">
+        <button name="change_poster_button" value="change_poster_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+   
+    
+    </div></div>
+<br><br><br>
 
-<br>
 
 <!-- display editable fields for unclosed competitions only -->
 {% if competition['status'] < 4 %} 
@@ -169,6 +187,7 @@
 
 
 </form>
+<br><br>
 
 
 
@@ -228,5 +247,10 @@
 
 </div>
 
+<script>
+       
+    // Add DOMContentLoaded event listener using the named function
+    document.addEventListener('DOMContentLoaded', loadUserLookAhead());
+ </script>
 
 {% endblock %}

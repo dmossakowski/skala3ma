@@ -114,3 +114,66 @@ function getColorSVG(color, colorModifier){
             routeFinishStatus = 'attempted';
         }
     }
+
+
+
+       /**
+     * Function to handle the DOMContentLoaded event.
+     * 
+     * Requirements for functioning properly:
+     * - The HTML must include an input element with the id 'user-search'.
+     * - The HTML must include a container element with the id 'suggestions' to display the search results.
+     * - The server must have an endpoint '/api1/users/search' that accepts a query parameter 'q' and returns a JSON array of user objects.
+     * - Each user object should have the following fields: firstname, lastname, nick, gpictureurl, fpictureurl, club, and id.
+     */
+       function loadUserLookAhead() {
+        const userSearch = document.getElementById('user-search');
+        const suggestions = document.getElementById('suggestions');
+        const userIdField = document.getElementById('userId');
+
+        // Named function to handle user input
+        function handleUserInput() {
+            const query = userSearch.value;
+
+            if (query.length < 1) {
+                suggestions.innerHTML = '';
+                userSearch.dataset.userId = '';
+                return;
+            }
+
+            fetch('/api1/users/search?q=' + query)
+                .then(response => response.json())
+                .then(data => {
+
+                    suggestions.innerHTML = '';
+                    data.forEach(user => {
+                        const suggestionItem = document.createElement('a');
+                        suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+                        suggestionItem.href = '#';
+
+                        const nick = user.nick ? `<i>(${user.nick})</i>` : '';
+
+                        suggestionItem.innerHTML = `
+                            <div class="media">
+                                <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
+                                <div class="media-body">
+                                    <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
+                                </div>
+                            </div>
+                        `;
+                        suggestionItem.addEventListener('click', function(event) {
+                            event.preventDefault();
+                            userSearch.value = `${user.firstname} ${user.lastname}`;
+                            userSearch.dataset.userId = user.id;
+                            userIdField.value = user.id;
+                            suggestions.innerHTML = '';
+                        });
+                        suggestions.appendChild(suggestionItem);
+                    });
+                })
+                .catch(error => console.error('Error fetching users:', error));
+        }
+
+        // Add event listener using the named function
+        userSearch.addEventListener('input', handleUserInput);
+    }

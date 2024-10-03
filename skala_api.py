@@ -167,15 +167,23 @@ def set_language(language=None):
     return language
 
 
+def is_logged_in():
+    if session is not None and session.get('expires_at') is not None:
+        return True
+    else:
+        session["wants_url"] = request.url
+        return False
+
+
 def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if session is not None and session.get('expires_at') is not None:
+        if is_logged_in():
             return fn(*args, **kwargs)
         else:
-            session["wants_url"] = request.url
             return redirect(url_for("skala_api_app.fsgtlogin"))
     return decorated_function
+
 
 
 def admin_required(fn):
@@ -624,7 +632,10 @@ def getCompetitionDashboard():
 
 @skala_api_app.route('/competition/<competition_id>')
 def get_competition_by_id(competition_id):
-    return competitionsEngine.getCompetition(competition_id)
+    competition = competitionsEngine.getCompetition(competition_id)
+    if competition is None:
+        return {"error": "competition not found"}
+    return competition
 
 
 @skala_api_app.route('/competition/year/<year>')
@@ -834,6 +845,34 @@ def get_users_by_gym(gym_id):
     return users
 
 
+
+@skala_api_app.route('/users/search/')
+def get_all_users():
+    search_string = request.args.get('q')
+    if search_string is None or len(search_string) < 2 or not search_string.isalnum():
+        return []
+
+    users=  skala_db.search_all_users(search_string=search_string)
+    # remove email and permissions from the response
+    for user in users:
+        user.pop('email', None)
+        #user.pop('permissions', None)
+        user.pop('isgod',None)
+        
+        if user.get('fpictureurl') is not None:
+            user['pictureurl'] = user.get('fpictureurl')
+        if user.get('gpictureurl') is not None:
+            user['pictureurl'] = user.get('gpictureurl')
+        if user.get('fpictureurl') is None and user.get('gpictureurl') is None:
+            #user['pictureurl'] = '/public/images/sentiment_satisfied_FILL0_wght600_GRAD200_opsz48.png'
+            user['pictureurl'] = '/public/images/favicon.png'
+        if user.get('firstname') is None:
+            user['firstname'] = user.get('name') 
+    #json.dumps(users)
+    return json.dumps(users)
+
+
+
 @skala_api_app.route('/updateuser')
 def update_user():
     if session.get('email') is None:
@@ -890,7 +929,6 @@ def update_user():
 
 
 ## RESULTS
-
 
 @skala_api_app.route('/competition_results/<competitionId>')
 #@login_required
@@ -1453,16 +1491,23 @@ def gyms():
     return gyms
 
 
-@skala_api_app.route('/gyms')
-def gyms_list():
-    gyms = competitionsEngine.get_gyms()
+@skala_api_app.route('/gyms/<field>/<value>')
+def gyms_list(field=None, value=None):
+
+    if field == 'status':
+        s = competitionsEngine.reference_data.get('gym_status').get(value)
+        gyms = competitionsEngine.get_gyms(status=s)
+    #gyms = competitionsEngine.get_gyms()
 
     newgyms = []
     for gymid in gyms:
-        newgyms.append(gyms.get(gymid))
+        gym = gyms.get(gymid)
+        
+        if 'added_by' in gym:
+            gym['added_by'] = gym['added_by'].split('@')[0]  # Remove part after @
+        newgyms.append(gym)
 
     return json.dumps(newgyms)
-
 
 
 @skala_api_app.route('/gym/<gymid>')
@@ -1839,16 +1884,13 @@ def gyms_update(gym_id):
         if newuser is not None:
             competitionsEngine.add_user_permissions_to_gym(newuser, gym_id)
 
-    #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
+    
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)
+
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 
     return
-
-
-
-
 
 
 # this doesn't work so well... there is a main_app_ui version that works better

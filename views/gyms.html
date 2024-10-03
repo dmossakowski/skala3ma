@@ -30,42 +30,7 @@ $(document).ready(function () {
 });
 </script-->
 
-	{% if gym is not none and gym is not undefined  %}
-NOT USED
-<!-- Modal -->
-<div id="myModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-body">
-         	<form action="/gyms/{{gym['id']}}/{{routes['id']}}/edit" enctype="multipart/form-data"  method="POST">
-				<h4 id="openedby"></h4>
-				<h4 id="remarks"></h4>
-			</form>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-    <script type="text/javascript">
-
-        function routeDetail(openedby, openeddate, remarks) {
-        	console.log("details.."+openedby+" "+remarks);
-        	var openedbyStr = "Opened by <b>" + openedby +"</b> ("+openeddate+")";
-            var remarksStr = " " + remarks;
-            $("#openedby").html(openedbyStr);
-            $("#remarks").html(remarksStr);
-        }
-
-    </script>
-{%endif%}
-
+	
 
 
 
@@ -99,72 +64,94 @@ NOT USED
                         <a href="/gyms/add" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
 							
 						{% endif %}
-                    </h3>
+                        </h3>
                         {% if can_create_competition is true %}
 							
                         
 
-                {% endif %}
+                        {% endif %}
 				{% endif %}
 		</div>
     </div>
 
 
-	<div class="container-fluid">
-		
-		<div class="row   g-4 ">
+    <div class="container">
+        <div class="row text-center">
 
-            {% if gym is not none and gym is not undefined  %}
- NOT USED!!!!!
+        {% if home_gym is not none and home_gym is not undefined  %}
+       
+            <h1>Favorite gym</h1>
 
-                <table class="table thead-dark table-hover" id="my_table_id"
-                    data-url="data/url.json"
-                    data-id-field="id"
-                    data-editable-emptytext="Default empty text."
-                    data-editable-url="/my/editable/update/path">
-                        <thead><tr>
-                        <th data-width="250" data-field="line" data-filter-control="input">
-                            <!--a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a-->
-                            {{ reference_data['current_language'].line }}</th>
-                        <th data-field="artist" data-filter-control="input">#</th>
-                        <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
-                        <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
-                        <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
-                        <!--th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th-->
-                        </tr>
-                        </thead>
-                    <tbody>
-                        {# here we iterate over every item in our list which we will pass from bar() #}
-                        {% for route in routes['routes'] %}
-
-                        <tr onclick="routeDetail('{{ route['openedby'] }}','{{ route['opendate'] }}',' {{ route['notes'] }}'); $('#showmodal').modal('show'); return false;"
-                        data-toggle="modal" data-target="#myModal"  data-remarks="sit down"
-                        ><td>{{ route['line'] }} </td>
-                            <td  align="center"
-                                style="background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
-                                rgba(200,200,200,0.2),  {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
-                                <font style="text-shadow: 0px 0px 3px white;"><b>{{ route['routenum'] }}</b> </font>
-                                </b></td>
-                            <td><i>{{route['grade'] }}</i><br></td>
-                            <td> {{ route['name'] }}</td>
-                            <td> {{ route['openedby'] }}</td>
-                            <!--td> {{ route['opendate'] }}</td-->
-                        </tr>
-                        {% endfor %}
-
-                        </tbody>
-                    </table>
-
-
+            <div class="col d-flex justify-content-center align-items-center">
+                
+                <div class=" fh5co-blog border-0 text-center"  style="width: 10rem;"  >
+                   
+                    <div id='home_gym' class="fh5co-blog">       
+                        <a href="gyms/{{ home_gym['id'] }}">
+                        <div class="blog-text">
+                            <div class="text-center">
+                                <img src="/image/{{  home_gym['logo_img_id'] }}" >
+                                <span class="posted_by">{{ home_gym['date'] }}</span>
+                                <br><br>    
+                                <h3 class="display-2">{{ home_gym['name'] }}</h3>
+                            </div>
+                        </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
             
 
 
+		{%endif %}
 
 
-			{%endif %}
 
-            {% if gyms is not none  %}
-                {% for gymid in gyms %}
+        {% if permissioned_gyms is not none and permissioned_gyms is not undefined %}
+            
+                    <h1>Permisioned gyms</h1>
+            {% for gymid in permissioned_gyms %}
+
+
+                <div class="col d-flex justify-content-center align-items-center">
+                    <div class=" fh5co-blog border-0 text-center"  style="width: 10rem;"  >
+                       
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog"
+							 onmouseover="undefined"
+							 onmouseleave="undefined">       
+							<a href="gyms/{{ gymid }}">
+							<div class="blog-text">
+								<div class="text-center">
+								    <img src="/image/{{  permissioned_gyms[gymid].get('logo_img_id') }}" >
+									<span class="posted_by">{{ permissioned_gyms[gymid]['date'] }}</span>
+									<br><br>
+									<h3 class="display-2">{{ permissioned_gyms[gymid]['name'] }}</h3>
+
+								</div>
+							</div>
+							</a>
+						</div>
+					</div>
+                </div>
+
+			{% endfor %}
+
+        {% endif %}
+
+
+
+
+        {% if gyms is not none  %}
+           
+		
+
+            {% if home_gym is not none or permissioned_gyms is not none  %}
+            <h1>Other gyms</h1>
+            {% endif %}
+                <div class="row   g-4 ">
+        
+            {% for gymid in gyms %}
 
 
                 <div class="col d-flex justify-content-center align-items-center">
@@ -187,19 +174,20 @@ NOT USED
 							</a>
 						</div>
 					</div>
-                    </div>
+                 </div>
                     
-
-				{% endfor %}
-
-            {% endif %}
-
-
+            
+			{% endfor %}
+        </div>
+        {% endif %}
 
 
-		</div>
+
+
+		
 
 	</div>
+</div>
 
 
 {% endblock %}

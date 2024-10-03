@@ -573,6 +573,7 @@ def email_login():
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('User_does_not_exist_or_wrong_password'))
                         
+    email = email.lower()
     user = competitionsEngine.get_user_by_email(email)
 
     if user is None:
@@ -614,6 +615,15 @@ def email_login():
         
         if competitionsEngine.is_god(user) or GODMODE:
             session['godmode'] = True   
+        
+        if user.get('club') is None or user.get('club').strip() == '' or user.get('name') is None or user.get('name').strip() == '':
+            return render_template('climber.html',
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           climber=user,
+                           logged_email=email,
+                           error=error)
+
         return render_template('competitionDashboard.html',
                            reference_data=competitionsEngine.reference_data,
                            email=email,
@@ -622,10 +632,12 @@ def email_login():
     else:
         error=get_translation('User_does_not_exist_or_wrong_password')
 
+    
     return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data,
                            email=email,
                            error=error)
+
 
 
 @app.route('/register', methods=['GET'])
@@ -673,11 +685,11 @@ def register():
 
 @app.route('/forgot_password')
 def forgot_password():
-    if session.get('email') is None:
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Login_first_to_change_your_password'),
-                               email=session.get('email'))
+    #if session.get('email') is None:
+     #   return render_template('competitionLogin.html',
+      #                         reference_data=competitionsEngine.reference_data,
+       #                        error=get_translation('Login_first_to_change_your_password'),
+        #                       email=session.get('email'))
 
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,

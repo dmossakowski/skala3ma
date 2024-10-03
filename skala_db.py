@@ -4,10 +4,10 @@ import json
 import os
 import glob
 import random
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 import time
 from io import BytesIO
-from src import User
+from src.User import User
 
 #    Copyright (C) 2023 David Mossakowski
 #
@@ -326,6 +326,57 @@ def get_all_user_emails():
     return emails
 
 
+def get_all_users():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''SELECT id, jsondata FROM ''' + USERS_TABLE )
+
+    users = []
+    if rows is not None and rows.arraysize > 0:
+        for row in rows.fetchall():
+            user = json.loads(row[1])
+            users.append(user)
+
+    return users
+
+
+def search_all_users(search_string):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    
+    query = '''
+    SELECT jsondata FROM ''' + USERS_TABLE + '''
+    WHERE lower(trim(json_extract(jsondata, '$.fullname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.firstname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.lastname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.nick'))) LIKE lower(trim(?))
+    LIMIT 10;
+    '''
+
+    query = '''
+    SELECT jsondata FROM ''' + USERS_TABLE + '''
+    WHERE (lower(trim(json_extract(jsondata, '$.fullname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.firstname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.lastname'))) LIKE lower(trim(?))
+    OR lower(trim(json_extract(jsondata, '$.nick'))) LIKE lower(trim(?)))
+    AND json_extract(jsondata, '$.is_confirmed') = true
+    LIMIT 10;
+    '''
+    
+    search_pattern = f'%{search_string}%'
+    rows = cursor.execute(query, [search_pattern, search_pattern, search_pattern, search_pattern])
+    
+    users = []
+    if rows is not None:
+        for row in rows.fetchall():
+            user = json.loads(row[0])
+            users.append(user)
+    
+    return users
+
+
 def get_all_competition_ids():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -529,7 +580,7 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
     email = email.lower()
     user = get_user_by_email(email)
 
@@ -543,7 +594,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
     newclimber['lastname'] = lastname
     newclimber['sex'] = sex
     newclimber['club'] = club
-    newclimber['category'] = category
+    newclimber['dob'] = dob
 
     try:
         sql_lock.acquire()
@@ -574,6 +625,7 @@ def _add_user(climberId, email, climber):
     if climberId is None:
         climberId = str(uuid.uuid4().hex)
         climber['id'] = climberId
+        climber['created_on'] = datetime.now(timezone.utc).isoformat()
     cursor.execute("INSERT  INTO " + USERS_TABLE +
                    "(id, email, jsondata, added_at) " +
                    " values (?, ?, ?, datetime('now')) ",
@@ -604,7 +656,7 @@ def _update_user(climberId, email, climber):
     return climber
 
 
-def _get_gyms():
+def _get_gyms(status=None):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
@@ -616,7 +668,8 @@ def _get_gyms():
         for row in rows.fetchall():
             #comp = row[0]
             gym = json.loads(row[0])
-            gyms[gym['id']] = gym
+            if status is None or gym.get('status') == status:
+                gyms[gym['id']] = gym
 
     db.close()
     #for gymid in gyms:
@@ -644,6 +697,31 @@ def _get_gym(gymid):
     #routes = _get_routes(gym['routesid'])
     #gym['routes'] = routes
     return gym
+
+
+def _get_gyms_by_ids(gym_ids, status=None):
+    gyms = {}
+    if not gym_ids:
+        return gyms
+
+    placeholders = ','.join(['?'] * len(gym_ids))
+    query = f'SELECT id, jsondata FROM {GYM_TABLE} WHERE id IN ({placeholders})'
+
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, gym_ids)
+        rows = cursor.fetchall()
+        for row in rows:
+            gym_id, jsondata = row
+            gym = json.loads(jsondata)
+            if status is None or gym.get('status') == status:
+                gyms[gym_id] = gym
+    finally:
+        db.close()
+
+    return gyms
+
 
 
 # should gym_id be added to ouput?
@@ -877,6 +955,83 @@ def get_image(img_id):
 
     bytes_io = BytesIO(image_bytes)
     return bytes_io
+
+
+
+
+#migration and one time use methods
+
+    
+
+def update_gym_data(reference_data):
+    # Connect to the database
+    conn = lite.connect(COMPETITIONS_DB)
+    cursor = conn.cursor()
+
+    # Retrieve all gyms from the GYM_TABLE
+    cursor.execute('''SELECT id, jsondata FROM ''' + GYM_TABLE + ''' ;''')
+    gyms = cursor.fetchall()
+
+    for gym in gyms:
+        gym_id, jsondata = gym
+        gym_data = json.loads(jsondata)
+
+        if 'added_by' in gym_data:
+            email = gym_data['added_by']
+
+            # Retrieve the user ID corresponding to the email address
+            cursor.execute('''SELECT id FROM ''' + USERS_TABLE + ''' WHERE email = ?''', (email,))
+            user = cursor.fetchone()
+
+            if user is not None:
+                user_id = user[0]
+
+                # Update the added_by field with the user ID
+                gym_data['added_by'] = user_id
+
+                # Convert the updated gym data back to JSON
+                updated_jsondata = json.dumps(gym_data)
+
+                # Update the jsondata field in the GYM_TABLE
+                cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
+
+
+        if 'status' not in gym_data:
+            gym_data['status'] = reference_data.get('gym_status').get('confirmed')
+
+            # Convert the updated gym data back to JSON
+            updated_jsondata = json.dumps(gym_data)
+
+            # Update the jsondata field in the GYM_TABLE
+            cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
+    # Commit the changes and close the connection
+    conn.commit()
+    conn.close()
+
+
+def update_users_data():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    
+    # Fetch all users
+    cursor.execute(f'SELECT id, jsondata FROM {USERS_TABLE}')
+    users = cursor.fetchall()
+    
+    for user_id, jsondata in users:
+        user = json.loads(jsondata)
+        
+        # Check if any of the specified fields are not empty
+        if user.get('fpictureurl') or user.get('gpictureurl') or user.get('fname') or user.get('fid') or user.get('gname'):
+            user['is_confirmed'] = True
+            
+            # Update the user data in the database
+            updated_jsondata = json.dumps(user)
+            cursor.execute(f'UPDATE {USERS_TABLE} SET jsondata = ? WHERE id = ?', (updated_jsondata, user_id))
+    
+    # Commit the changes
+    db.commit()
+    db.close()
+
 
 
 if __name__ == '__main__':

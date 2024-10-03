@@ -158,6 +158,7 @@ function deleteRow(id) {
                 <div class="form-group">
                     <label for="user-search"> {{ reference_data['current_language'].authorized_user}} </label>
                     <input type="text" class="form-control" id="user-search" placeholder="Search for users...">
+                    <input type="hidden" id="userId" name="userId">
                     <div id="suggestions" class="list-group mt-2"></div>
                 </div>
             </div>
@@ -181,63 +182,10 @@ function deleteRow(id) {
   
     <br><br>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userSearch = document.getElementById('user-search');
-            const suggestions = document.getElementById('suggestions');
-    
-            userSearch.addEventListener('input', function() {
-                const query = userSearch.value;
-    
-                if (query.length < 1) {
-                    suggestions.innerHTML = '';
-                    userSearch.dataset.userId = '';
-                    return;
-                }
-    
-                fetch('/api1/gym/{{gymid}}/users')
-                    .then(response => response.json())
-                    .then(data => {
-                        const filteredUsers = data.filter(user => {
-                            const fullName = `${user.firstname} ${user.lastname}`.toLowerCase();
-                            return fullName.includes(query.toLowerCase());
-                        });
-    
-                        suggestions.innerHTML = '';
-                        filteredUsers.forEach(user => {
-                            const suggestionItem = document.createElement('a');
-                            suggestionItem.classList.add('list-group-item', 'list-group-item-action');
-                            suggestionItem.href = '#';
-                            suggestionItem.innerHTML = `
-                                <div class="media">
-                                    <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
-                                    <div class="media-body">
-                                        <h5 class="mt-0">${user.firstname} ${user.lastname}</h5>
-                                    </div>
-                                </div>
-                            `;
-                            suggestionItem.addEventListener('click', function(event) {
-                                event.preventDefault();
-                                userSearch.value = `${user.firstname} ${user.lastname}`;
-                                userSearch.dataset.userId = user.id;
-                                suggestions.innerHTML = '';
-                            });
-                            suggestions.appendChild(suggestionItem);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching users:', error));
-            });
-    
-            // Ensure the user ID is included in the form submission
-            const form = userSearch.closest('form');
-            form.addEventListener('submit', function(event) {
-                const userIdInput = document.createElement('input');
-                userIdInput.type = 'hidden';
-                userIdInput.name = 'permissioned_user_id';
-                userIdInput.value = userSearch.dataset.userId || '';
-                form.appendChild(userIdInput);
-            });
-        });
-    </script>
+       
+   // Add DOMContentLoaded event listener using the named function
+   document.addEventListener('DOMContentLoaded', loadUserLookAhead());
+</script>
 <br><br><br><br><br><br><br><br><br><br>
 
 
