@@ -1560,7 +1560,9 @@ def gyms():
     club = request.args.get('club')
     category = request.args.get('category')
 
-    gyms = competitionsEngine.get_gyms(status=competitionsEngine.reference_data.get('gym_status').get('confirmed'))
+    ## for future usage to only show confirmed gyms
+    #gyms = competitionsEngine.get_gyms(status=competitionsEngine.reference_data.get('gym_status').get('confirmed'))
+    gyms = competitionsEngine.get_gyms()
     
     can_create_gym = False
     email = session.get('email')
