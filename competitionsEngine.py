@@ -148,10 +148,12 @@ competition_type_ado_fsgt = 1
 
 competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
 
+gym_status = {"created":0, "open":1, "confirmed":2, "contested":3, "defunct":4}
+
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
-                  "competition_types":competition_types}
+                  "competition_types":competition_types, "gym_status":gym_status}
 
 # called from main_app_ui
 def addCompetition(compId, name, date, routesid, max_participants, competition_type, instructions):
@@ -218,7 +220,7 @@ def update_competition_details(competition, name, date, routesid, instructions):
 
 
 # add or register climber to a competition
-def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category=0):
+def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category):
     logging.info("adding climber "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
@@ -735,7 +737,11 @@ def init():
                 else:    
                     logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
             
+    
             #user['gymid'] = ''
+    skala_db.update_gym_data(reference_data)
+    skala_db.update_users_data()
+
 
 
 
@@ -899,7 +905,36 @@ def get_all_competition_ids():
     return skala_db.get_all_competition_ids()
 
 
-def user_self_update(climber, name, firstname, lastname, nick, sex, club, category):
+def get_category_from_dob(dob):
+        if dob is None:
+            return -1
+        dob = datetime.strptime(dob, "%Y-%m-%d")
+        # Calculate the age
+        today = datetime.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+        # Determine the category based on age
+        if 17 <= age <= 49:
+            return 0
+        elif 50 <= age <= 64:
+            return 1
+        elif age >= 65:
+            return 2
+        elif 12 <= age <= 13:
+            return 0
+        elif 14 <= age <= 15:
+            return 1
+        elif 16 <= age <= 17:
+            return 2
+        else:
+            return -1  # Return -1 if age does not fit any category
+
+
+
+def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
+    if climber is None:
+        raise ValueError("Climber cannot be None")
+
     try:
         sql_lock.acquire()
         fullname = ""
@@ -907,14 +942,16 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, catego
             fullname = firstname+" "+lastname
 
         newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
-                      'sex': sex, 'club': club, 'category': category}
+                      'sex': sex, 'club': club, 'dob': dob}
         
         if club is not None:
             gym = skala_db.get_gym_by_gym_name(club)
             if gym is not None:
                 newclimber['gymid'] = gym.get('id')
+            else:
+                climber.pop('gymid', None)
 
-        email = climber['email']
+        email = climber.get('email')
         email = email.lower()
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
@@ -1237,7 +1274,7 @@ def is_registered(user, competition):
     if user is not None:
         climbers = competition['climbers']
         for cid in climbers:
-            if climbers.get(cid).get('email').lower()==user['email'].lower():
+            if climbers.get(cid).get('id')==user['id']:
                 return True
 
     return False
@@ -1279,8 +1316,8 @@ def can_create_gym(user):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category):
-    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, category)
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob)
 
 
 def update_gym_routes(gymid, routesid, jsondata):
@@ -1306,17 +1343,26 @@ def get_gym(gymid):
         return gym
 
 
-def get_gyms():
+def get_gyms(status=None):
     gyms = None
     try:
         sql_lock.acquire()
-        gyms = skala_db._get_gyms()
+        gyms = skala_db._get_gyms(status)
     finally:
         sql_lock.release()
         logging.info("retrieved all gyms  ")
         return gyms
 
 
+def get_gyms_by_ids(ids):
+    gyms = None
+    try:
+        sql_lock.acquire()
+        gyms = skala_db._get_gyms_by_ids(ids)
+    finally:
+        sql_lock.release()
+        logging.info("retrieved gyms by ids: " + str(ids))
+    return gyms
 
 
 def get_routes(routesid):
@@ -1355,8 +1401,8 @@ def add_gym(user, gymid, routesid, name, logo_img_id=None, homepage=None, addres
     if gymid is None:
         gymid = str(uuid.uuid4().hex)
 
-    gymjson = get_gym_json(gymid, routesid, name, user['email'], logo_img_id, homepage, address, organization, routesA)
-
+    gymjson = get_gym_json(gymid, routesid, name, user['id'], logo_img_id, homepage, address, organization, routesA)
+    update_gym_status(gymjson, reference_data.get('gym_status').get('created'))
     skala_db._add_gym(gymid, routesid, gymjson)
 
     gym_permissions = user['permissions']['gyms']
@@ -1402,6 +1448,14 @@ def update_gym_coordinates(gymJson, lat, lon):
     gymJson['lat'] = lat
     gymJson['lon'] = lon
     return gymJson
+
+
+def update_gym_status(gymJson, status):
+    if status is None:
+        return gymJson
+    gymJson['status'] = status
+    return gymJson
+
 
 def _get_route_dict(routeid, routenum, line, color1, color_modifier, grade, name, openedby, opendate, notes):
     oneline = {}

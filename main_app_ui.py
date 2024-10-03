@@ -20,6 +20,7 @@ import glob
 import random
 import uuid
 from datetime import datetime, date, time, timedelta
+from src.User import User
 import competitionsEngine
 import csv
 from functools import wraps
@@ -155,7 +156,7 @@ def set_language(language=None):
 def login_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if session != None and session.get('expires_at') is not None:
+        if skala_api.is_logged_in():
             return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
@@ -374,6 +375,7 @@ def competition_admin_post(competition_id):
     competition_status = request.form.get('competition_status')
 
     instructions = request.form.get('instructions')
+    user_id = request.form.get('userId')
 
     jsondata = request.form.get('jsondata')
     comp = {}
@@ -405,13 +407,13 @@ def competition_admin_post(competition_id):
     # remove climber from a competition
 
     if permission_admin_user is not None:
-        user2 = competitionsEngine.get_user_by_email(permissioned_user)
+        user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_edit_competition(user2)
 
 
     if permission_scorer_user is not None:
-        user2 = competitionsEngine.get_user_by_email(permissioned_user)
+        user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_update_routes(user2)
 
@@ -835,7 +837,8 @@ def addCompetitionClimber(competitionId):
     club = request.args.get('club')
     otherclub = request.args.get('otherclub')
     category = request.args.get('category')
-
+    dob = request.args.get('dob')
+    
     comp = competitionsEngine.getCompetition(competitionId)
     user = competitionsEngine.get_user_by_email(useremail)
     climber_id = str(uuid.uuid4().hex)
@@ -861,17 +864,26 @@ def addCompetitionClimber(competitionId):
     is_form_user_registered = competitionsEngine.is_registered(form_user, comp)
     if is_form_user_registered:
         error_code = "error5321"
+
+    if dob is not None:
+        category = competitionsEngine.get_category_from_dob(dob)   
+        if category == -1:
+            error_code = "error5325"
+
     
     if not error_code and not is_registered and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
+        
+        
+
 
         try:
             if club not in competitionsEngine.clubs.values():
                 club = otherclub
             climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
             competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               climber['club'], climber['category'])
+                                                               climber['club'],  dob)
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'
@@ -974,10 +986,22 @@ def update_user():
     email = request.args.get('email')
     sex = request.args.get('sex')
     clubid = request.args.get('club')
-    if clubid is not None:
+    dob = request.args.get('dob')
+
+    if clubid is not None and clubid.isnumeric():
         clubid = int(clubid)
-    club = competitionsEngine.reference_data['clubs'].get(clubid)
-    category = request.args.get('category')
+        club = competitionsEngine.reference_data['clubs'].get(clubid)
+    elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
+        club = request.args.get('otherclub').strip()
+    else:
+        club = None
+
+    error_message = []
+    categoryold = request.args.get('category')
+
+    category = competitionsEngine.get_category_from_dob(dob)
+    if category == -1:
+        error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
 
     subheader_message = request.args.get('update_details')
 
@@ -990,13 +1014,16 @@ def update_user():
     climber['nick'] = nick
     climber['email'] = email
     climber['sex'] = sex    
+    climber['dob'] = dob
 
     if firstname is None or nick is None or sex is None or club is None or email is None:
+        error_message.append(" All fields are required")
         #subheader_message = "Update"
 
+    if error_message is not None and len(error_message) > 0:
+        error_message_str = '. '.join(error_message) + '.'
         return render_template('climber.html',
-                               error_message = "All fields are required",
-                               subheader_message=subheader_message,
+                               error_message = error_message_str,
                                competitionId=None,
                                climber=climber,
                                reference_data=competitionsEngine.reference_data,
@@ -1005,8 +1032,9 @@ def update_user():
                                **session)
 
     else:
-        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, category)
-        subheader_message = 'Your details were saved'
+        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, dob)
+        subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
+
 
     if name is None:
         name = ""
@@ -1040,6 +1068,39 @@ def myskala():
                            **session)
 
 
+
+@app_ui.route('/mygyms')
+@login_required
+def get_mygyms():
+    if session.get('email') is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               reference_data=competitionsEngine.reference_data,
+                               subheader_message="No user found",
+                               **session)
+
+    climber = competitionsEngine.get_user_by_email(session.get('email'))
+    user = User.from_dict(climber)
+    ids = user.get_permissions('gyms')
+    
+    homegym = competitionsEngine.get_gym(user.get_home_gym())
+    
+    gyms = competitionsEngine.get_gyms_by_ids(ids)
+
+    email = session.get('email')
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    return render_template('gyms.html',
+                           #subheader_message=subheader_message,
+                           competitionId=None,
+                           climber=climber,
+                           gyms=gyms,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=email,
+                            **session)
 
 
 @app_ui.route('/competitionDetails/<competitionId>')
@@ -1280,7 +1341,13 @@ def downloadCompetitionCsv(competitionId):
         data['grades'] = ""
         grades = []
         for routenum in competition['climbers'][climberid]['routesClimbed']:
-            grades.append(routes[routenum-1]['grade'])
+            if 0 < routenum <= len(routes):
+                grades.append(routes[routenum-1]['grade'])
+            else:
+                # Handle the case where routenum is out of bounds
+                grades.append("N/A")
+                print(f"Warning: routenum {routenum} is out of bounds for the routes list.")
+                        
         
         #data['grades'] = data['grades']+ routes[routenum-1]['grade'] + " "
         #grades.append(routes[routenum-1]['grad e'])
@@ -1500,12 +1567,34 @@ def gyms():
     club = request.args.get('club')
     category = request.args.get('category')
 
+    ## for future usage to only show confirmed gyms
+    #gyms = competitionsEngine.get_gyms(status=competitionsEngine.reference_data.get('gym_status').get('confirmed'))
     gyms = competitionsEngine.get_gyms()
+    
     can_create_gym = False
     email = session.get('email')
     user = None
+    home_gym = None
+    permissioned_gyms = None
     if email is not None:
         user = competitionsEngine.get_user_by_email(email)
+        if user is None: # this happens when switching between dev and prod servers
+            session.clear()
+            return redirect("/")
+        u = User.from_dict(user)
+        home_gym = u.get_home_gym()
+        if home_gym is not None:
+            home_gym = competitionsEngine.get_gym(home_gym)
+        permissioned_gyms = competitionsEngine.get_gyms_by_ids(u.get_permissions('gyms'))
+
+        # Remove gyms already present in home_gym or permissioned_gyms
+        if home_gym and home_gym.get('id') in gyms:
+            del gyms[home_gym['id']]
+            
+        if permissioned_gyms:
+            for gym_id in permissioned_gyms.keys():
+                if gym_id in gyms:
+                    del gyms[gym_id]
 
     if user is not None:
         can_create_gym = competitionsEngine.can_create_gym(user)
@@ -1513,6 +1602,9 @@ def gyms():
 
     if name is None:
         name = ""
+
+    if not permissioned_gyms:
+        permissioned_gyms = None
 
     return render_template('gyms.html',
                            competitionId=None,
@@ -1522,6 +1614,8 @@ def gyms():
                            logged_email=email,
                            logged_name=name,
                            can_create_gym=can_create_gym,
+                           home_gym=home_gym,
+                           permissioned_gyms=permissioned_gyms,
                             **session)
 
 
@@ -2093,7 +2187,7 @@ def gyms_update(gym_id):
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-    permissioned_user_id = request.form.get('permissioned_user_id')
+    permissioned_user_id = request.form.get('userId')
     lat = formdata['lat'][0]
     lon = formdata['lon'][0]
 
@@ -2120,7 +2214,7 @@ def gyms_update(gym_id):
     #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)
     competitionsEngine.update_gym_coordinates(gym_json, lat, lon)
-    # 20240911 - this line is not clear as to what it does actually - some comments would be welcome here from the author
+    # the following takes values from gym_json which are not None and applies them to gym
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 

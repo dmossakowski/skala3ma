@@ -183,6 +183,14 @@
   "reset_password_email_subject": "Reset password confirmation",
   "reset_password_email_text1": "Click here to reset your password",
   "Instructions": "Instructions",
+  "Admin": "Admin",
+  "edit_competition": "Edit competition",
+  "create_competition": "Create competition",
+  "update_routes": "Update routes in a competition",
+  "create_gym": "Create gym",
+  "dob": "Date of birth",
+
+
   
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
@@ -191,7 +199,7 @@
   "error5322": "Current competition status does not allow new registrations",
   "error5323": "Maximum registrations reached",
   "error5324": "Choose a valid gym",
-
+  "error5325": "No suitable category was found for your age",
 
 "Please_check_your_email_for_confirmation_link": "Please check your email for the confirmation link",
 "Invalid_username_or_password": "Invalid username or password",

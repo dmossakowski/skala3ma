@@ -14,10 +14,12 @@
     <div class="container">
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="row text-left heading-section animate-box">
-						
+					<div class="col-md-8  text-center heading-section animate-box">
+
 						<h3>{{reference_data['current_language'].update_details}} </h3>
 						<font color="red">{{ error_message }}</font>
                         <font color="darkgreen"><b>{{ subheader_message }}</b></font><br>
+                        <br>
 						{% if climber is not none  %}
 
 						<form action="/updateuser">
@@ -61,24 +63,19 @@
                                 <label class="form-check-label" for="M">{{reference_data['current_language'].man}}</label>
                             </div>
                         </div>
+                        {{dob}}
+                        <div class="form-floating">
+                            
+                            <input class="form-control mb-3" id="dob" name="dob" type="date" value="{{climber['dob']}}" required />
+                            <label for="dob">{{ reference_data['current_language'].dob}}</label>
+                        </div><br>
 
-							
 
-                            <div class="form-floating mb-3">
-                                <select class="form-select" name="category" id="category">
-                                    {% for category in reference_data['categories'] %}
-                                        <option value="{{category}}" size="20" {% if (category|string == climber['category']) %}selected{% endif %}>
-                                            {{reference_data['categories'][category]}}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                <label for="category">{{reference_data['current_language'].category}}</label>
-                            </div>
 
 
                             <div class="form-floating mb-3">
                                 <select class="form-select" name="club" id="club">
-                                    <option value="--" size="20">{{reference_data['current_language'].choose}}</option>
+                                    <option value="other" size="20">{{reference_data['current_language'].choose}} /{{reference_data['current_language'].other}} </option>
                                     {% for club in reference_data['clubs'] %}
                                         <option value="{{ club }}" {% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %} size="20">
                                             {{reference_data['clubs'][club]}}
@@ -99,6 +96,135 @@
                             </button>
 					</form>
 <br>
+
+    </div><div class="col  heading-section animate-box">
+                  
+
+    
+                <div class="row">
+                    <div class="col m-2 ">
+                    <div id="permissions_box" class="bg-light border rounded-1">
+                        <div class="row bg-body-secondary">
+                        
+                            <div class="col text-start">   <i class="bi bi-shield-shaded"></i>  Permissions</div>
+                        </div>
+
+                        <div class="h-100 p-4 mb-3 ">
+                            
+        
+                            <!-- General and Godmode Permissions -->
+                        <div class="permissions-section" id="general-permissions">
+            
+                        <div id="general-permissions-list"></div>
+            
+                        </div>
+        <br>
+
+                <!-- Gym Permissions -->
+                <div class="permissions-section">
+                   
+                    <div class="gym-permissions" id="gym-permissions-list"></div>
+                </div>
+                <br>
+                <!-- Competition Permissions -->
+                <div class="permissions-section">
+                   
+                    <div id="competition-permissions-list"></div>
+                </div>
+
+
+                                </div>
+                               
+                            </div>
+                        </div>
+
+            </div>
+    </div>
+
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api1/user')
+                .then(response => response.json())
+                .then(data => {
+                    const permissions = data.permissions;
+
+                    // Mapping for Jinja lookups
+                    const permissionLookup = {
+                        'edit_competition': "<i class='bi bi-lock'></i> {{reference_data['current_language'].edit_competition}} ",
+                        'create_competition': "<i class='bi bi-lock'></i> {{reference_data['current_language'].create_competition}} ",
+                        'update_routes': "<i class='bi bi-lock'></i> {{reference_data['current_language'].update_routes}}  ",
+                        'create_gym': "<i class='bi bi-lock'></i> {{reference_data['current_language'].create_gym}}  "
+                    };
+
+                    // General Permissions
+                    const generalPermissionsList = document.getElementById('general-permissions-list');
+                    // Godmode Permissions
+                    if (permissions.godmode) {
+                        const div = document.createElement('div');
+                        div.innerHTML = "<i class='bi bi-lock'></i> Admin";
+                        generalPermissionsList.appendChild(div);
+                        
+                    }
+                    permissions.general.forEach(permission => {
+                        const div = document.createElement('div');
+                        div.innerHTML = permissionLookup[permission] || permission;
+                        generalPermissionsList.appendChild(div);
+                    });
+                    if (permissions.general.length === 0) {
+                        perm_box = document.getElementById('permissions_box');
+                        perm_box.style.display = 'none';
+                        
+                    }
+
+                    
+
+                    // Gym Permissions
+                    const gymPermissionsList = document.getElementById('gym-permissions-list');
+                    permissions.gyms.forEach(gymId => {
+                        fetch(`/api1/gym/${gymId}`)
+                            .then(response => response.json())
+                            .then(gym => {
+                                if (gym.id == undefined) {
+                                    return;
+                                }
+                                const div = document.createElement('div');
+                                div.className = 'gym-permission';
+                                div.innerHTML = `<img src="/image/${gym.logo_img_id}" alt="Gym Icon" class="gym-icon" width="30">
+                                    <a href="/gyms/${gym.id}">${gym.name}</a>`;
+            
+                                gymPermissionsList.appendChild(div);
+                            });
+                    });
+            
+                    // Competition Permissions
+                    if (permissions.competitions && permissions.competitions.length > 0) {
+        
+                        const competitionPermissionsList = document.getElementById('competition-permissions-list');
+                        const competitionPromises = permissions.competitions.map(competitionId => 
+                            fetch(`/api1/competition/${competitionId}`).then(response => response.json())
+                        );
+
+                        Promise.all(competitionPromises).then(competitions => {
+                            competitions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            competitions.forEach(competition => {
+                                const div = document.createElement('div');
+                                if (competition.id != undefined) {
+                                    
+                                
+                                    div.innerHTML = `<img src="/public/images/favicon.png" alt="Competition Icon" class="competition-icon" width="30">
+                            <a href="/competitionDetails/${competition.id}">${competition.name} - ${competition.date}</a>`;
+            
+                                    competitionPermissionsList.appendChild(div);
+                                }
+                            });
+                        });
+                    }
+                });
+        });
+    </script>
 
 						{% else %}
 <a href="/competitionDashboard/{{competitionId}}">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>

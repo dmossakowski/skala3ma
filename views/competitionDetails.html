@@ -67,32 +67,41 @@
 
          </tr>
          </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for climberId in competition['climbers'] %}
+        
+         <tbody>
+            {% for climberId in competition['climbers'] %}
+                {% set is_waitlisted = loop.index > competition['max_participants']|int %}
+                <tr class="{% if is_waitlisted %}waitlisted{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ competition['climbers'][climberId]['name'] }}</td>
+                    <td>{{ competition['climbers'][climberId]['sex'] }}</td>
+                    <td><i>{{ competition['climbers'][climberId]['club'] }}</i></td>
+                    <td><i>{{ reference_data['categories'][competition['climbers'][climberId]['category']] }}</i></td>
+                    <td><i>
+                        {% if is_waitlisted %}
+                            {{ reference_data['current_language'].waitlist }}
+                        {% else %}
+                            {{ reference_data['current_language'].registered }}
+                        {% endif %}
+                    </i></td>
+                </tr>
+            {% endfor %}
+        </tbody>
 
-      
-		 <tr><td>{{ loop.index }} </td>
-			<td>{{ competition['climbers'][climberId]['name'] }}</td>
-			<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>{{reference_data['categories'][ competition['climbers'][climberId]['category']] }}</i></td>
-            
-
-			 {%if (loop.index <= competition['max_participants']|int) %}
-			 <td><i>{{ reference_data['current_language'].registered }}</i></td>
-			 {% else %}
-			 <td><i>{{ reference_data['current_language'].waitlist }}</i></td>
-			 {% endif %}
-
-                    </tr>
-             {% endfor %}
-
-
-         </tbody>
+   
      </table>
 
-
+     <style>
+        .waitlisted {
+            background: rgb(255, 149, 87);
+            color: rgb(25, 6, 6);
+            
+        }
+        .waitlisted td {
+        background: rgb(249, 156, 102) !important;
+        color: rgb(25, 6, 6) !important;
+    }
+    </style>
 
 
 

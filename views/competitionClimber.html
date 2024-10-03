@@ -34,7 +34,7 @@
                     <br>
                     <h3> {{ competition['name']}} - {{ competition['date']}}</h3>
                     <font color="red">{{ reference_data['current_language'][error_code] }}</font>
-                    <br><br>
+                    <br>
 
                 </div>
             </div>
@@ -48,45 +48,56 @@
 					{% if enable_registration %}
 
 						<form action="/competitionDashboard/{{competitionId}}/register">
+                            <div class="form-floating">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
-							<label for="firstname">{{ reference_data['current_language'].firstname}}</label><br> <input id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br><br>
-							<label for="lastname">{{ reference_data['current_language'].lastname}}</label><br> <input id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br><br>
-
+							<input class="form-control mb-2" id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br>
+                            <label for="firstname">{{ reference_data['current_language'].firstname}}</label>
+                            </div>
+                            <div class="form-floating">
+                            <input class="form-control mb-2" id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br>
+                            <label for="lastname">{{ reference_data['current_language'].lastname}}</label>
+                            
+                        </div>
+                        <!--
+                        {% if climber['email'] is none or logged_email is none %}
+                        <label for="email">Email:</label><br> <input id="email" name="email" size="40" required /><br><br>
+                                                                                {% else %}
+                        <label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
+                                                                                {% endif %}
+-->
+                            <div class="form-floating">
+                             
 							{% if climber['email'] is none or logged_email is none %}
-							<label for="email">Email:</label><br> <input id="email" name="email" size="40" required /><br><br>
+                            <input  class="form-control mb-2" name="email" id="email" size="40">
+                        
+                           
 							{% else %}
-							<label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
+                            <input  class="form-control mb-2" id="email" name="email" size="40" value="{{logged_email}}" readonly />
 							{% endif %}
 
+                            
+                                  <label for="email">Email</label>
+                            </div><br>
 
+                            <div class="form-floating">
+                            
+                            <input class="form-control mb-3" id="dob" name="dob" type="date" value="{{user['dob']}}" required />
+                            <label for="dob">{{ reference_data['current_language'].dob}}</label>
+                        </div>
+                    
 							<input type="radio" id="F" value="F" name="sex" {% if user['sex']=='F'%}checked{%endif%} required>
 							<label for="F">{{ reference_data['current_language'].women}}</label>
 							<input type="radio" id="M" value="M" name="sex" {% if user['sex']=='M'%}checked{%endif%} required>
 							<label for="M">{{ reference_data['current_language'].men}}</label>
+                                
 
+						
+                        
+                        <br>
 
-							<br>
-							<br>
-							<label for="category">{{ reference_data['current_language'].category}}:</label><br>
-							<select name="category" id="category">
-							{% for category in reference_data['categories'] %}
+                        <div class="form-floating">
 							
-							<!-- Print the current category value in the loop and the user's category for debugging -->
-							<p>Loop Category: {{ category }}</p>
-							<p>User Category: {{ user['category'] }}</p>
-							
-							<option value={{category}} size="20"
-								{% if (category|string == user['category']|string) %}selected  
-								{{ "Selected category: " ~ category }} 
-								{% endif %}
-							>{{reference_data['categories'][category]}}</option>
-	
-							
-							
-							{% endfor %}
-						</select><br><br>
-
-							<label for="club">{{ reference_data['current_language'].club}}:</label><br><select name="club" id="club">
+                            <select class="form-control mb-2" name="club" id="club">
 							<option value="--" size="20" >{{ reference_data['current_language'].choose}}</option>
 							{% for club in reference_data['clubs'] %}
 
@@ -99,17 +110,19 @@
 
 
 							</select>
-							<br><br>
+                            <label for="club">{{ reference_data['current_language'].club}}:</label>
+                            </div>
+							<br>
 
 							<!--label for="otherclub">{{ reference_data['current_language'].other_club_not_listed}}:</label><br> 
 								<input id="otherclub" name="otherclub" size="40" /><br><br-->
 
 
-							<br>
+							
 								
                             <button class="btn btn-success btn-lg">{{ reference_data['current_language'].submit}}</button>
 
-                            <br>
+                            <br><br>
 
 
                         </form>

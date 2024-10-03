@@ -1,9 +1,6 @@
 class User:
     def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid):
-        self.fid = fid
-        self.fname = fname
         self.email = email
-        self.fpictureurl = fpictureurl
         self.role = role
         self.isgod = isgod
         self.id = id
@@ -12,14 +9,32 @@ class User:
         self.sex = sex
         self.club = club
         self.category = category
-        self.gname = gname
-        self.gpictureurl = gpictureurl
         self.firstname = firstname
         self.lastname = lastname
         self.permissions = permissions
         self.name = name
         self.gymid = gymid
 
+
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            email=data.get('email', ''),
+            role=data.get('role', ''),
+            isgod=data.get('isgod', False),
+            id=data.get('id', ''),
+            fullname=data.get('fullname', ''),
+            nick=data.get('nick', ''),
+            sex=data.get('sex', ''),
+            club=data.get('club', ''),
+            category=data.get('category', ''),
+            firstname=data.get('firstname', ''),
+            lastname=data.get('lastname', ''),
+            permissions=data.get('permissions', {}),
+            name=data.get('name', ''),
+            gymid=data.get('gymid', '')
+        )
 
     def __str__(self):
         return self.fid+" "+self.fname + " " + self.email + " " + self.fpictureurl + " " + self.role + " " + self.isgod + " " + self.id + " " + self.fullname + " " + self.nick + " "
@@ -39,3 +54,10 @@ class User:
         }
     
     
+    def get_permissions(self, type=None):
+        return self.permissions.get(type, [])
+    
+    def get_home_gym(self):
+        if not self.gymid:
+            return None
+        return self.gymid
