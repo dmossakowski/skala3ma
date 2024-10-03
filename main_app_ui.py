@@ -1578,6 +1578,9 @@ def gyms():
     permissioned_gyms = None
     if email is not None:
         user = competitionsEngine.get_user_by_email(email)
+        if user is None: # this happens when switching between dev and prod servers
+            session.clear()
+            return redirect("/")
         u = User.from_dict(user)
         home_gym = u.get_home_gym()
         if home_gym is not None:
