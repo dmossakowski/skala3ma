@@ -1341,7 +1341,13 @@ def downloadCompetitionCsv(competitionId):
         data['grades'] = ""
         grades = []
         for routenum in competition['climbers'][climberid]['routesClimbed']:
-            grades.append(routes[routenum-1]['grade'])
+            if 0 < routenum <= len(routes):
+                grades.append(routes[routenum-1]['grade'])
+            else:
+                # Handle the case where routenum is out of bounds
+                grades.append("N/A")
+                print(f"Warning: routenum {routenum} is out of bounds for the routes list.")
+                        
         
         #data['grades'] = data['grades']+ routes[routenum-1]['grade'] + " "
         #grades.append(routes[routenum-1]['grad e'])
