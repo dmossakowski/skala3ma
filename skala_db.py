@@ -345,15 +345,6 @@ def get_all_users():
 def search_all_users(search_string):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
-    
-    query = '''
-    SELECT jsondata FROM ''' + USERS_TABLE + '''
-    WHERE lower(trim(json_extract(jsondata, '$.fullname'))) LIKE lower(trim(?))
-    OR lower(trim(json_extract(jsondata, '$.firstname'))) LIKE lower(trim(?))
-    OR lower(trim(json_extract(jsondata, '$.lastname'))) LIKE lower(trim(?))
-    OR lower(trim(json_extract(jsondata, '$.nick'))) LIKE lower(trim(?))
-    LIMIT 10;
-    '''
 
     query = '''
     SELECT jsondata FROM ''' + USERS_TABLE + '''

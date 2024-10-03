@@ -1033,7 +1033,8 @@ def update_user():
 
     else:
         climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, dob)
-        subheader_message = 'Your details were saved'
+        subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
+
 
     if name is None:
         name = ""
