@@ -1,0 +1,389 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+    {% include "competitions-menu.html" %}
+
+
+
+    <!-- Bootstrap Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+       
+        <div class="modal-body">
+          <div id="eventModalBody" class="event-content">
+            <!-- Event content will be injected here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <script src='/public/js/index.global.min.js'></script>
+    <script>
+        //initialView: 'listYear',
+    var langugae = 'fr';
+    document.addEventListener('DOMContentLoaded', function() {
+        //console.log(FullCalendar);
+        
+        var calendarEl = document.getElementById('calendar');
+        
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            plugins: FullCalendar.globalPlugins, //.[FullCalendar.multimonth],
+
+            locales: ['fr' , 'en', 'pl'],
+            locale: langugae,
+            //initialView: 'multiMonthYear',
+            //initialView: 'listYear',
+            initialView: 'multiMonthFourMonth',
+            initialDate: '2024-09-01',
+            firstDay: 1,
+            
+            headerToolbar: {
+                right: 'prev,next',
+            center: 'customYearButton,customFourDayButton',
+            //center: 'multiMonthFourMonth,timeGridFourDay', // buttons for switching between views
+            //right: 'dayGridWeek,dayGridDay,dayGridYear,dayGridMonth,multiMonthWeekends'
+            //right: 'customMonthButton,customFourDayButton,customYearButton' // custom buttons for switching between views
+     
+        },
+        customButtons: {
+        customMonthButton: {
+          text: '', // Leave text empty
+          icon: 'bi bi-calendar-month', // Bootstrap icon for month view
+          click: function() {
+            calendar.changeView('dayGridMonth');
+          }
+        },
+        customFourDayButton: {
+          text: '', // Leave text empty
+          icon: 'bi bi-list-ul', // Bootstrap icon for 4-day view
+          click: function() {
+            calendar.changeView('timeGridFourDay');
+          }
+        },
+        customYearButton: {
+          text: '', // Leave text empty
+          icon: 'bi bi-calendar3', // Bootstrap icon for year view
+          click: function() {
+            calendar.changeView('multiMonthFourMonth');
+          }
+        }
+      },
+        views: {
+            timeGridFourDay: {
+                type: 'list',
+                duration: { month: 12 },
+                buttonText: 'List',
+                listDayFormat: { month: 'long', day: 'numeric', year: 'numeric' },
+                listDaySideFormat: { month: 'long',      year: 'numeric' },
+                eventContent: function(info) {
+                    return {html: `<div class="event-content">
+              
+              <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="80">
+                        <br><br>
+              
+              <h2><a href="/competitionDetails/${info.event.extendedProps.id}" >${info.event.title}</a></h2>
+              <p>  ${info.event.extendedProps.gym}</p>
+              
+                </div>`};
+
+                    
+                },
+            },
+            multiMonthFourMonth: {
+                type: 'multiMonth',
+                multiMonthMaxColumns: 2 ,
+                buttonText: '<i class="bi bi-calendar3"></i>',
+                duration: { months: 12 },
+                
+                dayHeaders: false,
+                eventContent: function(arg) {
+                    //console.log(arg);
+                    let italicEl = document.createElement('div')
+                    italicEl.classList.add('fc-event-title');
+                    italicEl.id = 'competitionEvent';
+
+                    if (arg.event.extendedProps.status) {
+                        //italicEl.innerHTML = arg.event.extendedProps.name+'<br>'+arg.event.extendedProps.gym
+                        italicEl.innerHTML = arg.event.extendedProps.gym
+                    } else {
+                        italicEl.innerHTML = 'normal event'
+                    }
+                    var dotEl = document.getElementsByClassName('fc-daygrid-event-dot')[0];
+                    
+                    if (dotEl) {
+                        dotEl.style.backgroundColor = 'blue';
+                        dotEl.style.borderColor = 'blue';
+                    }
+
+                    let arrayOfDomNodes = [ italicEl ]
+                    arg.event.extendedProps.el1 = italicEl;
+                    return { domNodes: arrayOfDomNodes }
+                    //return true
+            },
+            
+            
+        },
+        multiMonthFourMonthList: { //not useful because left title just says sunday sunday sunday
+            type: 'listWeek',
+            multiMonthMaxColumns: 2 ,
+            duration: { months: 24 }
+            },
+        multiMonthWeekends: {
+            type: 'multiMonth',
+            multiMonthMaxColumns: 4,
+            hiddenDays: [ 1, 2, 3, 4, 5 ],
+            duration: { months: 24 },
+            
+        }
+        },
+        eventMouseEnter: function(info) {
+        // Find the element with id competitionEvent nested in info.el
+        /*var competitionEventEl = info.el.querySelector('#competitionEvent');
+        if (competitionEventEl) {
+          // Remove the fc-event-title class on mouse enter
+          competitionEventEl.classList.remove('fc-event-title');
+          competitionEventEl.innerHTML='<span style="font-size: 18px">'+info.event.extendedProps.name +'<br>'+info.event.extendedProps.gym+'</span>';
+          competitionEventEl.style.zIndex = '1000';
+        }*/
+      },
+      eventMouseLeave: function(info) {
+        // Find the element with id competitionEvent nested in info.el
+        /*var competitionEventEl = info.el.querySelector('#competitionEvent');
+        if (competitionEventEl) {
+          // Add the fc-event-title class on mouse leave
+          competitionEventEl.classList.add('fc-event-title');
+          competitionEventEl.innerHTML=info.event.extendedProps.gym;
+        }*/
+      },
+        eventClick: function(info) {
+            //console.log('event type is '+calendar.view.type);
+            if (calendar.view.type !== 'multiMonthFourMonth') {
+             return; // Allow the default action to proceed
+            }
+
+            info.jsEvent.preventDefault(); // Prevent the browser from navigating to the event URL
+
+            // Populate the modal with event content
+            var eventContent = `
+            <div class="event-content">
+                <a href="/competitionDetails/${info.event.extendedProps.id}" >
+                    <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="280">
+                <br><br>
+                <h2>${info.event.title} </h2></a>
+                 <h3> ${info.event.extendedProps.gym}</h3>
+                
+            </div>
+            `;
+            document.getElementById('eventModalBody').innerHTML = eventContent;
+
+            // Show the modal
+            var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+            eventModal.show();
+      },
+        
+        /*events: 
+        {
+        url: '/api1/competition/list',
+        color: 'lightGray',   // an option!
+        textColor: 'black' // an option!
+        }
+        ,*/
+
+        events: function(info, successCallback, failureCallback) {
+        fetch('/api1/competition/list')
+          .then(response => response.json())
+          .then(data => {
+            if (data.length > 0) {
+                                // Set the global language variable based on the first event's language field
+                                language = data[0].language;
+                                //console.log('language is '+language);
+                                
+                                calendar.setOption('locale', language); // Update the calendar locale
+                            }
+            //const events = data.map(event => ({
+               
+              //title: event.name,
+              //start: event.date + "T11:00:00",
+              //end: event.date + "T15:59:59",
+              //extendedProps: event,
+              //url: '/competitionDetails/' + event.gym_id
+            //})
+            //);
+            //console.log(data);
+            successCallback(data);
+          })
+          .catch(error => {
+            failureCallback(error);
+          });
+      },
+
+
+        /*eventDataTransform: function(eventData) {
+            //console.log(eventData);
+        eventData.title = eventData.name;
+        eventData.gym = eventData.gym;
+        return eventData;
+        },*/
+        /*eventClick: function(info) {
+            info.jsEvent.preventDefault(); // don't let the browser navigate
+
+            if (info.event.url) {
+                window.open(info.event.url);
+            } else {
+                window.open(info.event.id);
+            }
+        },*/
+
+       
+
+        /*eventContent: function(arg) {
+            let italicEl = document.createElement('i')
+
+            if (arg.event.extendedProps.isUrgent) {
+                italicEl.innerHTML = 'urgent event'
+            } else {
+                italicEl.innerHTML = 'normal event'
+            }
+
+            let arrayOfDomNodes = [ italicEl ]
+            return { domNodes: arrayOfDomNodes }
+            },*/
+
+        /*eventDidMount: function(info) {
+            //if (info.event.extendedProps.status !== '1') {
+
+            // Change background color of row
+            //info.el.style.backgroundColor = 'green';
+
+            // Change color of dot marker
+            let italicEl = document.createElement('i')
+
+            if (info.event.extendedProps.id !== undefined) {
+                italicEl.innerHTML = info.event.extendedProps.id
+            } else {
+                italicEl.innerHTML = 'no id'
+            }
+            let arrayOfDomNodes = [ italicEl ]
+            return { domNodes: arrayOfDomNodes }
+
+            var dotEl = info.el.getElementsByClassName('fc-event-dot')[0];
+            if (dotEl) {
+                dotEl.style.backgroundColor = 'blue';
+            }
+
+            
+            ///}
+        },*/
+        /*eventClassNames: function(arg) {
+            if (arg.event.extendedProps.id !== undefined) {
+                console.log("returning wideCell")
+                return [ 'wideCell11' ]
+            } 
+        },*/
+        /*titleFormat: { // will produce something like "Tuesday, September 18, 2018"
+            month: 'numeric',
+            year: 'numeric'
+        }*/
+
+});
+
+
+        calendar.render();
+      });
+
+      /*events2:[
+    {
+      title: 'Meeting',
+      start: '2024-10-12T14:30:00',
+      extendedProps: {
+        status: 'done'
+      }
+    },
+    {
+      title: 'Birthday Party',
+      start: '2024-10-13T07:00:00',
+      backgroundColor: 'green',
+      borderColor: 'green'
+    }
+  ],*/
+
+    </script>
+
+    <style>
+        .wideCell {
+            background-color: rgb(96, 193, 31);
+            width: 100px;
+            font-size: 15px;
+        }
+    </style>
+
+	<div  class="text-center heading-section ">
+
+		{% include "skala3ma-menu.html" %}
+
+        <div class=" fh5co-blog border-0 "    >
+						
+				
+				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
+                        {% if can_create_competition is true %}
+							
+                                <a href="/newCompetition" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+
+						{% endif %}
+                        
+                        
+					<!--select 
+                        style="width:200px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
+						name="competition_year">
+						<option name="2024" value="2024" {% if year=="2024" %} selected {%endif %}>2024-2025</option>	
+						<option name="2023" value="2023" {% if year=="2023" %} selected {%endif %}>2023-2024</option>
+						<option name="2022" value="2022" {% if year=="2022" %} selected {%endif %}>2022-2023</option>
+						<option name="2021" value="2021" {% if year=="2021" %} selected {%endif %}>2021-2022</option>
+	
+                    </select-->
+                    </h3>
+
+						
+
+			</div>
+            </div>
+
+           
+
+
+		<div class="container-fluid">
+            <div class="row">
+
+                <div id='calendar'></div>
+            
+                
+
+            </div>
+
+
+
+
+		</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+<br><br>
+{% endblock %}

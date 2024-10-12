@@ -689,6 +689,27 @@ def main():
     return redirect("/")
 
 
+@app_ui.route('/competitionCalendar')
+def getCompetitionCalendar():
+
+    username = session.get('username')
+    
+    can_create_competition = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        can_create_competition = competitionsEngine.can_create_competition(user)
+    
+    langs = competitionsEngine.reference_data['languages']
+    return render_template('competitionCalendar.html',
+                           session=session,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           langpack=languages['en_US'],
+                           can_create_competition=can_create_competition,
+                            **session
+                           )
+
+
 @app_ui.route('/competitionDashboard')
 def getCompetitionDashboard():
     # select season year depending on current month;

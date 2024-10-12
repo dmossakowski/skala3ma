@@ -853,9 +853,9 @@
       function renderTabulatorTable(routesA)
       {
         var columns = [
-          {title: "id", visible:false, field: "id", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
+          {title: "id", visible:false, field: "id", "responsive": 0 , resizable: false, minWidth:2, width:60, headerVertical:false},
           {title: "{{ reference_data['current_language'].route_num}}", visible:false, field: "routenum", "responsive": 0 , minWidth:2, width:60, headerVertical:false},
-          {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false,
+          {title: "#", field: "line", "responsive": 0 , minWidth:2, width:70, headerVertical:false, resizable:false,
             formatter:function(cell, formatterParams, onRendered){
                 return `${cell.getValue()} <sup>${cell.getRow().getData().routenum}<sup>`
                      //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
@@ -877,10 +877,10 @@
 
          
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
-          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
+          {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 0 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
-          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 3},
+          {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 5 , formatter:"plaintext"}
           ];
       
           // Create the Tabulator table
@@ -910,11 +910,13 @@
             },
             columns: columns,
             data: routesA ,
-            layout:"fitDataStretch",
-            //layout: "fitDataFill",
+            //layout:"fitDataStretch",
+            layout: "fitDataFill",
+            //layout: "fitColumns",
             movableRows: false,
             selectable: 1,
             //responsiveLayout:"collapse",
+            responsiveLayout:"hide",
             //responsiveLayout:"fitColumns",
             //responsiveLayout:"collapse",
             //movableColumns: true, 

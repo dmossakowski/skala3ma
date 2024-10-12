@@ -625,9 +625,29 @@ def journey_session_remove(journey_id, route_id):
     return {}
 
 
-@skala_api_app.route('/competition')
+@skala_api_app.route('/competition/list')
 def getCompetitionDashboard():
-    return competitionsEngine.getCompetitions()
+    comps = competitionsEngine.getCompetitions()
+    compsreturnd = []
+    # for each competition remove object climbers
+    for compid in comps:
+        c={}
+        comps[compid]['climbers'] = None
+        comps[compid]['routes'] = None
+        c['title'] = comps[compid]['name'] 
+        c['id'] = comps[compid]['gym_id']
+        c['start'] = comps[compid]['date']+ "T11:00:00"
+        c['end'] = comps[compid]['date']+ "T15:59:59"
+        c['extendedProps'] = comps[compid]
+        c['url'] = '/competitionDetails/'+compid
+
+        # Extract the first two characters of the language code
+        language = session.get('language', 'fr')[:2]
+        c['language'] = language
+
+        
+        compsreturnd.append(c)
+    return json.dumps(compsreturnd)
 
 
 @skala_api_app.route('/competition/<competition_id>')
