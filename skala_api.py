@@ -154,7 +154,7 @@ def x(*args, **kwargs):
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
         session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-        print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+        print ("api setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
         langpack = competitionsEngine.reference_data['languages'][session['language']]
         competitionsEngine.reference_data['current_language'] = langpack
 
@@ -162,7 +162,7 @@ def x(*args, **kwargs):
 @skala_api_app.route('/api/language/<language>')
 def set_language(language=None):
     session['language'] = language
-
+    logging.debug('api setting language requested to '+str(language))
     langpack = competitionsEngine.reference_data['languages'][language]
     competitionsEngine.reference_data['current_language'] = langpack
 
@@ -631,6 +631,7 @@ def journey_session_remove(journey_id, route_id):
 def getCompetitionDashboard():
     comps = competitionsEngine.getCompetitions()
     compsreturnd = []
+    language = session.get('language', 'fr')[:2]
     # for each competition remove object climbers
     for compid in comps:
         c={}
@@ -644,12 +645,9 @@ def getCompetitionDashboard():
         c['extendedProps'] = comps[compid]
         c['url'] = '/competitionDetails/'+compid
 
-        # Extract the first two characters of the language code
-        language = session.get('language', 'fr')[:2]
         c['language'] = language
-
-        
         compsreturnd.append(c)
+    logging.debug('setting language of competitions to '+str(language))
     return json.dumps(compsreturnd)
 
 

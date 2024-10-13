@@ -133,27 +133,12 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 @app_ui.before_request
 def x(*args, **kwargs):
-    if not session.get('language'):
-        #kk = competitionsEngine.supported_languages.keys()
-        language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-        if (language is not None):
-            session['language'] = language
-            print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
-            langpack = competitionsEngine.reference_data['languages'][language]
-            competitionsEngine.reference_data['current_language'] = langpack
-        ##return redirect('/en' + request.full_path)
-
+    skala_api.x(*args, **kwargs)
+    
 
 @app_ui.route('/language/<language>')
 def set_language(language=None):
-    session['language'] = language
-
-    #competitionsEngine.reference_data['current_language'] = session['language']
-
-    langpack = competitionsEngine.reference_data['languages'][language]
-    competitionsEngine.reference_data['current_language'] = langpack
-
-    return redirect('/')
+    skala_api.set_language(language)
     #return redirect(url_for('getCompetitionDashboard'))
 
 
@@ -688,7 +673,7 @@ def index():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=language,
+                           #langpack=language,
                             **session
                            )
 
@@ -756,7 +741,7 @@ def competitions_by_year(year):
                            user=user,
                            year=year,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=languages['en_US'],
+                           #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
                             **session
                            )
