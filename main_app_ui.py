@@ -135,10 +135,12 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 def x(*args, **kwargs):
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
-        session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-        print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
-        langpack = competitionsEngine.reference_data['languages'][session['language']]
-        competitionsEngine.reference_data['current_language'] = langpack
+        language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+        if (language is not None):
+            session['language'] = language
+            print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+            langpack = competitionsEngine.reference_data['languages'][language]
+            competitionsEngine.reference_data['current_language'] = langpack
         ##return redirect('/en' + request.full_path)
 
 
