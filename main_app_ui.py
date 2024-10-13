@@ -137,6 +137,8 @@ def x(*args, **kwargs):
         #kk = competitionsEngine.supported_languages.keys()
         session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
         print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+        langpack = competitionsEngine.reference_data['languages'][session['language']]
+        competitionsEngine.reference_data['current_language'] = langpack
         ##return redirect('/en' + request.full_path)
 
 
@@ -670,6 +672,11 @@ def privacy():
 def index():
     langs = competitionsEngine.reference_data['languages']
 
+    language = session.get('language')
+    if language is None:
+        language = 'fr_FR'
+        session['language'] = language
+
     user = competitionsEngine.get_user_by_email(session.get('email'))
     competitions= competitionsEngine.getCompetitions()
 
@@ -679,7 +686,7 @@ def index():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=languages['en_US'],
+                           langpack=language,
                             **session
                            )
 
@@ -704,7 +711,7 @@ def getCompetitionCalendar():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=languages['en_US'],
+                           #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
                             **session
                            )

@@ -211,6 +211,7 @@ def init():
             languages[lang_code] = json.loads(file.read())
 
     competitionsEngine.reference_data['languages'] = languages
+    # this sets up the initial language of the app
     langpack = competitionsEngine.reference_data['languages']['fr_FR']
     competitionsEngine.reference_data['current_language'] = langpack
 

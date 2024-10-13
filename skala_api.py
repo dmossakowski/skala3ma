@@ -155,6 +155,8 @@ def x(*args, **kwargs):
         #kk = competitionsEngine.supported_languages.keys()
         session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
         print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+        langpack = competitionsEngine.reference_data['languages'][session['language']]
+        competitionsEngine.reference_data['current_language'] = langpack
 
 
 @skala_api_app.route('/api/language/<language>')
