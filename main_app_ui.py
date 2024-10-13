@@ -139,7 +139,15 @@ def x(*args, **kwargs):
 @app_ui.route('/language/<language>')
 def set_language(language=None):
     skala_api.set_language(language)
-    #return redirect(url_for('getCompetitionDashboard'))
+    
+    # Get the origin of the request from the Referer header
+    origin = request.headers.get('Referer')
+    
+    # Redirect to the origin if it's not None, otherwise redirect to the home page
+    if origin:
+        return redirect(origin)
+    else:
+        return redirect("/")
 
 
 def login_required(fn):
