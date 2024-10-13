@@ -133,11 +133,11 @@
                     italicEl.classList.add('fc-event-title');
                     italicEl.id = 'competitionEvent';
 
-                    if (arg.event.extendedProps.status) {
+                    if (arg.event.extendedProps.gym) {
                         //italicEl.innerHTML = arg.event.extendedProps.name+'<br>'+arg.event.extendedProps.gym
                         italicEl.innerHTML = arg.event.extendedProps.gym
                     } else {
-                        italicEl.innerHTML = 'normal event'
+                        italicEl.innerHTML = '???'
                     }
                     var dotEl = document.getElementsByClassName('fc-daygrid-event-dot')[0];
                     

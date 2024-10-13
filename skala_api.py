@@ -636,8 +636,9 @@ def getCompetitionDashboard():
         comps[compid]['routes'] = None
         c['title'] = comps[compid]['name'] 
         c['id'] = comps[compid]['gym_id']
-        c['start'] = comps[compid]['date']+ "T11:00:00"
-        c['end'] = comps[compid]['date']+ "T15:59:59"
+        #c['start'] = comps[compid]['date']+ "T11:00:00"
+        #c['end'] = comps[compid]['date']+ "T15:59:59"
+        c['date'] = comps[compid]['date']
         c['extendedProps'] = comps[compid]
         c['url'] = '/competitionDetails/'+compid
 
