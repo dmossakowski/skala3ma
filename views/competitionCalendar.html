@@ -14,7 +14,13 @@
 
     {% include "competitions-menu.html" %}
 
+    <style>
+        :root {
+          --fc-button-border-color: #44C662;
+          --fc-button-bg-color: #44C662;
 
+        }
+      </style>
 
     <!-- Bootstrap Modal -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
@@ -40,23 +46,31 @@
     var langugae = 'fr';
     document.addEventListener('DOMContentLoaded', function() {
         //console.log(FullCalendar);
-        
+        function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      // Get the 'view' query parameter
+      const initialView = getQueryParam('view') || 'multiMonthFourMonth';
+
         var calendarEl = document.getElementById('calendar');
         
         var calendar = new FullCalendar.Calendar(calendarEl, {
+            themeSystem: 'bootstrap',
             plugins: FullCalendar.globalPlugins, //.[FullCalendar.multimonth],
 
             locales: ['fr' , 'en', 'pl'],
             locale: langugae,
             //initialView: 'multiMonthYear',
             //initialView: 'listYear',
-            initialView: 'multiMonthFourMonth',
+            initialView: initialView,
             initialDate: '2024-09-01',
             firstDay: 1,
             
             headerToolbar: {
                 right: 'prev,next',
-            center: 'customYearButton,customFourDayButton',
+            //center: 'customYearButton,customFourDayButton',
             //center: 'multiMonthFourMonth,timeGridFourDay', // buttons for switching between views
             //right: 'dayGridWeek,dayGridDay,dayGridYear,dayGridMonth,multiMonthWeekends'
             //right: 'customMonthButton,customFourDayButton,customYearButton' // custom buttons for switching between views
@@ -162,16 +176,16 @@
           competitionEventEl.innerHTML='<span style="font-size: 18px">'+info.event.extendedProps.name +'<br>'+info.event.extendedProps.gym+'</span>';
           competitionEventEl.style.zIndex = '1000';
         }*/
-      },
-      eventMouseLeave: function(info) {
-        // Find the element with id competitionEvent nested in info.el
-        /*var competitionEventEl = info.el.querySelector('#competitionEvent');
-        if (competitionEventEl) {
-          // Add the fc-event-title class on mouse leave
-          competitionEventEl.classList.add('fc-event-title');
-          competitionEventEl.innerHTML=info.event.extendedProps.gym;
-        }*/
-      },
+        },
+        eventMouseLeave: function(info) {
+            // Find the element with id competitionEvent nested in info.el
+            /*var competitionEventEl = info.el.querySelector('#competitionEvent');
+            if (competitionEventEl) {
+            // Add the fc-event-title class on mouse leave
+            competitionEventEl.classList.add('fc-event-title');
+            competitionEventEl.innerHTML=info.event.extendedProps.gym;
+            }*/
+        },
         eventClick: function(info) {
             //console.log('event type is '+calendar.view.type);
             if (calendar.view.type !== 'multiMonthFourMonth') {
@@ -196,7 +210,7 @@
             // Show the modal
             var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
             eventModal.show();
-      },
+        },
         
         /*events: 
         {
@@ -302,11 +316,11 @@
             year: 'numeric'
         }*/
 
-});
+    });
 
 
         calendar.render();
-      });
+    });
 
       /*events2:[
     {
@@ -344,7 +358,7 @@
 				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
                         {% if can_create_competition is true %}
 							
-                                <a href="/newCompetition" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
+                                <a href="/newCompetition" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #44C662;"></i></a>
 
 						{% endif %}
                         

@@ -1611,7 +1611,11 @@ def gyms():
         # Remove gyms already present in home_gym or permissioned_gyms
         if home_gym and home_gym.get('id') in gyms:
             del gyms[home_gym['id']]
-            
+
+        if home_gym and home_gym.get('id') in permissioned_gyms:
+            del permissioned_gyms[home_gym['id']]
+
+        # remove permissioned gyms from rest of gyms    
         if permissioned_gyms:
             for gym_id in permissioned_gyms.keys():
                 if gym_id in gyms:

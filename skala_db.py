@@ -659,7 +659,7 @@ def _get_gyms(status=None):
         for row in rows.fetchall():
             #comp = row[0]
             gym = json.loads(row[0])
-            if status is None or gym.get('status') == status:
+            if status is None or gym.get('status') >= status:
                 gyms[gym['id']] = gym
 
     db.close()

@@ -1402,7 +1402,7 @@ def add_gym(user, gymid, routesid, name, logo_img_id=None, homepage=None, addres
         gymid = str(uuid.uuid4().hex)
 
     gymjson = get_gym_json(gymid, routesid, name, user['id'], logo_img_id, homepage, address, organization, routesA)
-    update_gym_status(gymjson, reference_data.get('gym_status').get('created'))
+    update_gym_status(gymjson, reference_data.get('gym_status').get('comfirmed'))
     skala_db._add_gym(gymid, routesid, gymjson)
 
     gym_permissions = user['permissions']['gyms']

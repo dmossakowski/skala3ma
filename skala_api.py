@@ -1511,8 +1511,13 @@ def gyms():
     return gyms
 
 
-@skala_api_app.route('/gyms/<field>/<value>')
+@skala_api_app.route('/gyms')
 def gyms_list(field=None, value=None):
+    return gyms_list_by_field('status', 'created')
+
+
+@skala_api_app.route('/gyms/<field>/<value>')
+def gyms_list_by_field(field=None, value=None):
 
     if field == 'status':
         s = competitionsEngine.reference_data.get('gym_status').get(value)
