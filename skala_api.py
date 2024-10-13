@@ -153,7 +153,10 @@ class Activity1(BaseModel):
 def x(*args, **kwargs):
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
-        session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+        language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+        if language is None:
+            language = 'fr_FR'
+        session['language'] = language
         print ("api setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
         langpack = competitionsEngine.reference_data['languages'][session['language']]
         competitionsEngine.reference_data['current_language'] = langpack
@@ -161,6 +164,8 @@ def x(*args, **kwargs):
 
 @skala_api_app.route('/api/language/<language>')
 def set_language(language=None):
+    if language is None:
+        language = 'fr_FR'
     session['language'] = language
     logging.debug('api setting language requested to '+str(language))
     langpack = competitionsEngine.reference_data['languages'][language]
