@@ -174,6 +174,14 @@ def set_language(language=None):
     return language
 
 
+@skala_api_app.route('/language')
+def get_language():
+    if not session.get('language'):
+        return json.dumps({'language': 'fr_FR'})
+    else:
+        return json.dumps({'language': session['language']})
+
+
 def is_logged_in():
     if session is not None and session.get('expires_at') is not None:
         return True
@@ -817,6 +825,8 @@ def get_user():
 
     if user is None:
         return {}
+    
+
     
     return json.dumps(user)
 

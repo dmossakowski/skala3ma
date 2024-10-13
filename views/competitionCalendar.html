@@ -44,7 +44,14 @@
     <script src='/public/js/index.global.min.js'></script>
     <script>
         //initialView: 'listYear',
-    var langugae = 'fr';
+    
+    var languages = ['fr' , 'en', 'pl'];
+    var language = "{{ session['language'] }}".slice(0,2);
+    if (!languages.includes(language)) {
+        language = 'fr';
+    }
+   
+
     document.addEventListener('DOMContentLoaded', function() {
         //console.log(FullCalendar);
         function getQueryParam(param) {
@@ -61,8 +68,8 @@
             themeSystem: 'bootstrap',
             plugins: FullCalendar.globalPlugins, //.[FullCalendar.multimonth],
 
-            locales: ['fr' , 'en', 'pl'],
-            locale: langugae,
+            locales: languages,
+            locale: language,
             //initialView: 'multiMonthYear',
             //initialView: 'listYear',
             initialView: initialView,
@@ -216,35 +223,14 @@
             return ':|';
         },
         
-        /*events: 
-        {
-        url: '/api1/competition/list',
-        color: 'lightGray',   // an option!
-        textColor: 'black' // an option!
-        }
-        ,*/
+       
 
         events: function(info, successCallback, failureCallback) {
         fetch('/api1/competition/list')
           .then(response => response.json())
           .then(data => {
-            if (data.length > 0) {
-                                // Set the global language variable based on the first event's language field
-                                language = data[0].language;
-                                //console.log('language is '+language);
-                                
-                                calendar.setOption('locale', language); // Update the calendar locale
-                            }
-            //const events = data.map(event => ({
-               
-              //title: event.name,
-              //start: event.date + "T11:00:00",
-              //end: event.date + "T15:59:59",
-              //extendedProps: event,
-              //url: '/competitionDetails/' + event.gym_id
-            //})
-            //);
-            //console.log(data);
+           
+           
             successCallback(data);
           })
           .catch(error => {
@@ -253,72 +239,8 @@
       },
 
 
-        /*eventDataTransform: function(eventData) {
-            //console.log(eventData);
-        eventData.title = eventData.name;
-        eventData.gym = eventData.gym;
-        return eventData;
-        },*/
-        /*eventClick: function(info) {
-            info.jsEvent.preventDefault(); // don't let the browser navigate
-
-            if (info.event.url) {
-                window.open(info.event.url);
-            } else {
-                window.open(info.event.id);
-            }
-        },*/
 
        
-
-        /*eventContent: function(arg) {
-            let italicEl = document.createElement('i')
-
-            if (arg.event.extendedProps.isUrgent) {
-                italicEl.innerHTML = 'urgent event'
-            } else {
-                italicEl.innerHTML = 'normal event'
-            }
-
-            let arrayOfDomNodes = [ italicEl ]
-            return { domNodes: arrayOfDomNodes }
-            },*/
-
-        /*eventDidMount: function(info) {
-            //if (info.event.extendedProps.status !== '1') {
-
-            // Change background color of row
-            //info.el.style.backgroundColor = 'green';
-
-            // Change color of dot marker
-            let italicEl = document.createElement('i')
-
-            if (info.event.extendedProps.id !== undefined) {
-                italicEl.innerHTML = info.event.extendedProps.id
-            } else {
-                italicEl.innerHTML = 'no id'
-            }
-            let arrayOfDomNodes = [ italicEl ]
-            return { domNodes: arrayOfDomNodes }
-
-            var dotEl = info.el.getElementsByClassName('fc-event-dot')[0];
-            if (dotEl) {
-                dotEl.style.backgroundColor = 'blue';
-            }
-
-            
-            ///}
-        },*/
-        /*eventClassNames: function(arg) {
-            if (arg.event.extendedProps.id !== undefined) {
-                console.log("returning wideCell")
-                return [ 'wideCell11' ]
-            } 
-        },*/
-        /*titleFormat: { // will produce something like "Tuesday, September 18, 2018"
-            month: 'numeric',
-            year: 'numeric'
-        }*/
 
     });
 
