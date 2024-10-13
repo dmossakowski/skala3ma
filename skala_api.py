@@ -1525,6 +1525,10 @@ def gyms_list_by_field(field=None, value=None):
     #gyms = competitionsEngine.get_gyms()
 
     newgyms = []
+
+    if gyms is None:
+        return json.dumps(newgyms)
+    
     for gymid in gyms:
         gym = gyms.get(gymid)
         
