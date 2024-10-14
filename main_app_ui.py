@@ -694,14 +694,14 @@ def main():
 @app_ui.route('/competitionCalendar')
 def getCompetitionCalendar():
 
-    username = session.get('username')
-    
+    #username = session.get('username')
+    logging.info('language:' + str(session.get('language')))
     can_create_competition = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is not None:
         can_create_competition = competitionsEngine.can_create_competition(user)
     
-    langs = competitionsEngine.reference_data['languages']
+    #langs = competitionsEngine.reference_data['languages']
     return render_template('competitionCalendar.html',
                            session=session,
                            user=user,
