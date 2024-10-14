@@ -157,7 +157,7 @@ def x(*args, **kwargs):
         if language is None:
             language = 'fr_FR'
         session['language'] = language
-        print ("api setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+        logging.debug ("api setting language to accept_languages="+str(request.accept_languages)+" session language="+str(session['language']))
         langpack = competitionsEngine.reference_data['languages'][session['language']]
         competitionsEngine.reference_data['current_language'] = langpack
 
@@ -658,9 +658,8 @@ def getCompetitionDashboard():
         c['extendedProps'] = comps[compid]
         c['url'] = '/competitionDetails/'+compid
 
-        c['language'] = language
         compsreturnd.append(c)
-    logging.debug('setting language of competitions to '+str(language))
+    logging.debug('setting language of competitions to '+str(language)+' session language='+str(session.get('language')))
     return json.dumps(compsreturnd)
 
 

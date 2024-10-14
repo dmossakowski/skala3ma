@@ -696,8 +696,7 @@ def main():
 def getCompetitionCalendar():
 
     #username = session.get('username')
-    logging.info('competitionCalendar language:' + str(session.get('language')
-                                                       + ' engine lang'+ str(competitionsEngine.reference_data['current_language'])))
+    logging.info('competitionCalendar language:' + str(session.get('language')))
     can_create_competition = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is not None:
