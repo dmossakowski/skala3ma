@@ -138,6 +138,9 @@ limiter = Limiter(
 genres = {"test": "1"}
 authenticated = False
 
+# language set before any other request comes in
+startup_language='fr_FR'
+
 session_dataLoadingProgressMsg = 'dataLoadingProgressMsg'
 
 gdata = {}

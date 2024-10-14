@@ -40,13 +40,13 @@
     </div>
   </div>
 
-
     <script src='/public/js/index.global.min.js'></script>
     <script>
         //initialView: 'listYear',
     
     var languages = ['fr' , 'en', 'pl'];
     var language = "{{ session['language'] }}".slice(0,2);
+     language = "{{language}}".slice(0,2);
     if (!languages.includes(language)) {
         language = 'fr';
     }

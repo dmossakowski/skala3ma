@@ -669,6 +669,7 @@ def index():
 
     language = session.get('language')
     if language is None:
+        logging.debug('language is None. setting to fr_FR')
         language = 'fr_FR'
         session['language'] = language
 
@@ -695,7 +696,8 @@ def main():
 def getCompetitionCalendar():
 
     #username = session.get('username')
-    logging.info('language:' + str(session.get('language')))
+    logging.info('competitionCalendar language:' + str(session.get('language')
+                                                       + ' engine lang'+ str(competitionsEngine.reference_data['current_language'])))
     can_create_competition = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is not None:
@@ -706,6 +708,7 @@ def getCompetitionCalendar():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
+                           language=str(competitionsEngine.reference_data['current_language']),
                            #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
                             **session
