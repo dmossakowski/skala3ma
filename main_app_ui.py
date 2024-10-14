@@ -708,9 +708,9 @@ def getCompetitionCalendar():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           language=str(competitionsEngine.reference_data['current_language']),
+                           language=session['language'],
                            #langpack=languages['en_US'],
-                           can_create_competition=can_create_competition,
+                           can_create_competition=can_create_competition
                            # **session
                            )
 
