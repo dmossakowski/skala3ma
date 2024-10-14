@@ -142,6 +142,7 @@ competition_status = {"created":competition_status_created, "open":1, "inprogres
 user_roles = ["none", "judge", "competitor", "admin"]
 
 supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
+first_default_language = "fr_FR"
 
 competition_type_adult_fsgt = 0
 competition_type_ado_fsgt = 1

@@ -215,7 +215,7 @@ def init():
 
     competitionsEngine.reference_data['languages'] = languages
     # this sets up the initial language of the app
-    langpack = competitionsEngine.reference_data['languages']['fr_FR']
+    langpack = competitionsEngine.reference_data['languages'][competitionsEngine.first_default_language]
     competitionsEngine.reference_data['current_language'] = langpack
 
     competitionsEngine.init()

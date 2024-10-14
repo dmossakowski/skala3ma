@@ -108,13 +108,6 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-# Internal imports
-
-
-# Flask app setup
-
-
-
 
 
 app_ui.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
@@ -696,7 +689,7 @@ def main():
 def getCompetitionCalendar():
 
     #username = session.get('username')
-    logging.info('competitionCalendar language:' + str(session.get('language')))
+    logging.info('competitionCalendar language=' + str(session.get('language')))
     can_create_competition = False
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is not None:

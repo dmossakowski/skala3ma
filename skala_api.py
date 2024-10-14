@@ -151,6 +151,7 @@ class Activity1(BaseModel):
 
 @skala_api_app.before_request
 def x(*args, **kwargs):
+    logging.debug('api before request '+str(session.get('language'))+ ' accepted languages='+str(request.accept_languages))
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
         language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
@@ -160,6 +161,7 @@ def x(*args, **kwargs):
         logging.debug ("api setting language to accept_languages="+str(request.accept_languages)+" session language="+str(session['language']))
         langpack = competitionsEngine.reference_data['languages'][session['language']]
         competitionsEngine.reference_data['current_language'] = langpack
+    
 
 
 @skala_api_app.route('/api/language/<language>')
