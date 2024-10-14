@@ -711,7 +711,7 @@ def getCompetitionCalendar():
                            language=str(competitionsEngine.reference_data['current_language']),
                            #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
-                            **session
+                           # **session
                            )
 
 
