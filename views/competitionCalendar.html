@@ -26,19 +26,19 @@
     <!-- Bootstrap Modal -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <div class="modal-content">
+        <div class="modal-content">
        
-        <div class="modal-body">
-          <div id="eventModalBody" class="event-content">
+            <div class="modal-body">
+            <div id="eventModalBody" class="event-content">
             <!-- Event content will be injected here -->
-          </div>
+            </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
     </div>
-  </div>
+</div>
 
     <script src='/public/js/index.global.min.js'></script>
     <script>
@@ -204,12 +204,16 @@
 
             // Populate the modal with event content
             var eventContent = `
-            <div class="event-content">
+            <div class="event-content text-center">
                 <a href="/competitionDetails/${info.event.extendedProps.id}" >
-                    <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="280">
-                <br><br>
-                <h2>${info.event.title} </h2></a>
+                    <h2>${info.event.title} </h2>
                  <h3> ${info.event.extendedProps.gym}</h3>
+                
+                    <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="280"></a>
+                    <br><br>
+                   ${info.event.extendedProps.text.status}
+                <br><br>
+                
                 
             </div>
             `;
@@ -274,11 +278,9 @@
         }
     </style>
 
-	<div  class="text-center heading-section ">
+<div  class="text-center heading-section ">
 
-		{% include "skala3ma-menu.html" %}
-
-        <div class=" fh5co-blog border-0 "    >
+    <div>
 						
 				
 				    <h3  class="display-2">{{ reference_data['current_language'].competitions }}
@@ -302,13 +304,13 @@
 
 						
 
-			</div>
-            </div>
+		</div>
+    </div>
 
            
 
 
-		<div class="container-fluid">
+	<div class="container-fluid">
             <div class="row">
 
                 <div id='calendar'></div>
@@ -320,10 +322,10 @@
 
 
 
-		</div>
-		</div>
+	</div>
+
 		<!-- fh5co-blog-section -->
 
-	</div>
+	
 <br><br>
 {% endblock %}

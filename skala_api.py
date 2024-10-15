@@ -659,6 +659,8 @@ def getCompetitionDashboard():
         c['date'] = comps[compid]['date']
         c['extendedProps'] = comps[compid]
         c['url'] = '/competitionDetails/'+compid
+        c['text'] = {}
+        c['text']['status'] = competitionsEngine.reference_data['current_language'].get('competition_status_'+str(comps[compid]['status']))
 
         compsreturnd.append(c)
     logging.debug('setting language of competitions to '+str(language)+' session language='+str(session.get('language')))
