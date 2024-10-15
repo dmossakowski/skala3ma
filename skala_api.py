@@ -158,9 +158,9 @@ def x(*args, **kwargs):
         if language is None:
             language = 'fr_FR'
         session['language'] = language
-        logging.debug ("api setting language to accept_languages="+str(request.accept_languages)+" session language="+str(session['language']))
-        langpack = competitionsEngine.reference_data['languages'][session['language']]
-        competitionsEngine.reference_data['current_language'] = langpack
+    logging.debug ("api setting language to session language="+str(session['language']))
+    langpack = competitionsEngine.reference_data['languages'][session['language']]
+    competitionsEngine.reference_data['current_language'] = langpack
     
 
 
