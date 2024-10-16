@@ -189,7 +189,8 @@
   "update_routes": "Update routes in a competition",
   "create_gym": "Create gym",
   "dob": "Date of birth",
-
+  "Calendar": "Calendar",
+  "Gallery": "Gallery",
 
   
   "error5314": "Updating routes is not permitted for this user",

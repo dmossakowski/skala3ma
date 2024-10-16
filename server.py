@@ -44,6 +44,8 @@ elif not os.path.exists(DATA_DIRECTORY):
 
 from flask import Flask, redirect, url_for, session, Request, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
@@ -116,12 +118,28 @@ oauth = OAuth(app)
 
 bcrypt = Bcrypt(app)
 
-#from fastapi.middleware.wsgi import WSGIMiddleware
+# Initialize the Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app
+    #default_limits=["2000 per day", "5000 per hour"]
+)
 
+# Custom rate limit exceeded handler
+#@limiter.request_filter
+#def rate_limit_exceeded():
+##    remote_addr = request.remote_addr
+ #   logging.warning(f"Rate limit exceeded by IP address: {remote_addr}")
+ #   return True  # Continue processing the request
+
+#from fastapi.middleware.wsgi import WSGIMiddleware
 #fastapi_test.fastapitest.mount("/", WSGIMiddleware(app))
 
 genres = {"test": "1"}
 authenticated = False
+
+# language set before any other request comes in
+startup_language='fr_FR'
 
 session_dataLoadingProgressMsg = 'dataLoadingProgressMsg'
 
@@ -196,7 +214,8 @@ def init():
             languages[lang_code] = json.loads(file.read())
 
     competitionsEngine.reference_data['languages'] = languages
-    langpack = competitionsEngine.reference_data['languages']['fr_FR']
+    # this sets up the initial language of the app
+    langpack = competitionsEngine.reference_data['languages'][competitionsEngine.first_default_language]
     competitionsEngine.reference_data['current_language'] = langpack
 
     competitionsEngine.init()
@@ -536,7 +555,7 @@ def googleauth_reply():
     profile1 = oauth.google.get('https://www.googleapis.com/oauth2/v1/userinfo')
     profile = token.get('userinfo')
     #profile = oauth.google.parse_id_token(token)
-    print(" Google User ", profile)
+    #print(" Google User ", profile)
 
     session['username']=profile['email']
     session['name']=profile['name']
@@ -561,9 +580,11 @@ def googleauth_reply():
 # first service to be called
 # if email found and password matches then log the user in
 @app.route('/email_login', methods=['POST'])
+@limiter.limit("5 per minute")
 def email_login():
     f = request.form
-    print(request.form)
+    #print(request.form)
+
     email = request.form.get('email')
     password = request.form.get('password')
     error = None
@@ -605,6 +626,7 @@ def email_login():
     
 
     if bcrypt.check_password_hash(user.get('password'), password):
+        logging.info('User logged in: '+email)
         session['username'] = user.get('email')
         session['email']=user.get('email')
         session['picture']='/public/images/favicon.png'
@@ -629,6 +651,7 @@ def email_login():
                            error=error)
     
     else:
+        logging.info('User failed login: '+email)
         error=get_translation('User_does_not_exist_or_wrong_password')
 
     
@@ -649,6 +672,7 @@ def register_with_email():
 # the user wants to register so send the confirmation email
 # or the user needs to reset the password
 @app.route('/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
     email = request.form.get('email')
     if not email:
@@ -699,6 +723,7 @@ def forgot_password():
 # the user must already be confirmed which means that their email is valid and they are in the database
 # they would also then have the email put in their session
 @app.route('/change_password', methods=['POST'])
+@limiter.limit("5 per minute")
 def change_password():
     email = session.get('email')
     if email is None:
@@ -810,6 +835,7 @@ def confirm_token(token, expiration=3600):
 # we will add the user to the db here because the mail is confirmed
 # we add the email to the session so that we match it with the password change request
 @app.route("/confirm/<type>/<token>", methods=["GET"])
+@limiter.limit("5 per minute")
 def confirm_email(type, token):
     
     email = confirm_token(token)

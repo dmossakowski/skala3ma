@@ -151,20 +151,37 @@ class Activity1(BaseModel):
 
 @skala_api_app.before_request
 def x(*args, **kwargs):
+    logging.debug('api before request '+str(session.get('language'))+ ' accepted languages='+str(request.accept_languages))
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
-        session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-        print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
+        language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
+        if language is None:
+            language = 'fr_FR'
+        session['language'] = language
+    logging.debug ("api setting language to session language="+str(session['language']))
+    langpack = competitionsEngine.reference_data['languages'][session['language']]
+    competitionsEngine.reference_data['current_language'] = langpack
+    
 
 
 @skala_api_app.route('/api/language/<language>')
 def set_language(language=None):
+    if language is None:
+        language = 'fr_FR'
     session['language'] = language
-
+    logging.debug('api setting language requested to '+str(language))
     langpack = competitionsEngine.reference_data['languages'][language]
     competitionsEngine.reference_data['current_language'] = langpack
 
     return language
+
+
+@skala_api_app.route('/language')
+def get_language():
+    if not session.get('language'):
+        return json.dumps({'language': 'fr_FR'})
+    else:
+        return json.dumps({'language': session['language']})
 
 
 def is_logged_in():
@@ -625,9 +642,29 @@ def journey_session_remove(journey_id, route_id):
     return {}
 
 
-@skala_api_app.route('/competition')
+@skala_api_app.route('/competition/list')
 def getCompetitionDashboard():
-    return competitionsEngine.getCompetitions()
+    comps = competitionsEngine.getCompetitions()
+    compsreturnd = []
+    language = session.get('language', 'fr')[:2]
+    # for each competition remove object climbers
+    for compid in comps:
+        c={}
+        comps[compid]['climbers'] = None
+        comps[compid]['routes'] = None
+        c['title'] = comps[compid]['name'] 
+        c['id'] = comps[compid]['gym_id']
+        #c['start'] = comps[compid]['date']+ "T11:00:00"
+        #c['end'] = comps[compid]['date']+ "T15:59:59"
+        c['date'] = comps[compid]['date']
+        c['extendedProps'] = comps[compid]
+        c['url'] = '/competitionDetails/'+compid
+        c['text'] = {}
+        c['text']['status'] = competitionsEngine.reference_data['current_language'].get('competition_status_'+str(comps[compid]['status']))
+
+        compsreturnd.append(c)
+    logging.debug('setting language of competitions to '+str(language)+' session language='+str(session.get('language')))
+    return json.dumps(compsreturnd)
 
 
 @skala_api_app.route('/competition/<competition_id>')
@@ -791,6 +828,8 @@ def get_user():
 
     if user is None:
         return {}
+    
+
     
     return json.dumps(user)
 
@@ -1491,8 +1530,13 @@ def gyms():
     return gyms
 
 
-@skala_api_app.route('/gyms/<field>/<value>')
+@skala_api_app.route('/gyms')
 def gyms_list(field=None, value=None):
+    return gyms_list_by_field('status', 'created')
+
+
+@skala_api_app.route('/gyms/<field>/<value>')
+def gyms_list_by_field(field=None, value=None):
 
     if field == 'status':
         s = competitionsEngine.reference_data.get('gym_status').get(value)
@@ -1500,6 +1544,10 @@ def gyms_list(field=None, value=None):
     #gyms = competitionsEngine.get_gyms()
 
     newgyms = []
+
+    if gyms is None:
+        return json.dumps(newgyms)
+    
     for gymid in gyms:
         gym = gyms.get(gymid)
         

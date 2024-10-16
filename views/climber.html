@@ -173,6 +173,7 @@
                         div.innerHTML = permissionLookup[permission] || permission;
                         generalPermissionsList.appendChild(div);
                     });
+                    
                     if (permissions.general.length === 0) {
                         perm_box = document.getElementById('permissions_box');
                         perm_box.style.display = 'none';

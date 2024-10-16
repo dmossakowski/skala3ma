@@ -12,65 +12,9 @@
 	{% block secondarycontent %}
 
 
-    <script src='/public/js/index.global.min.js'></script>
-    <script>
-//initialView: 'listYear',
-
-      document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        
-
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-  
-            headerToolbar: {
-    center: 'dayGridMonth,timeGridFourDay' // buttons for switching between views
-  },
-  views: {
-    timeGridFourDay: {
-      type: 'dayGrid',
-      duration: { month: 4 },
-      buttonText: '4 day'
-    }
-  },
-
-  events: [
-    {
-      title: 'Meeting',
-      start: '2024-08-12T14:30:00',
-      extendedProps: {
-        status: 'done'
-      }
-    },
-    {
-      title: 'Birthday Party',
-      start: '2024-08-13T07:00:00',
-      backgroundColor: 'green',
-      borderColor: 'green'
-    }
-  ],
-  eventDidMount: function(info) {
-    if (info.event.extendedProps.status === 'done') {
-
-      // Change background color of row
-      info.el.style.backgroundColor = 'green';
-
-      // Change color of dot marker
-      var dotEl = info.el.getElementsByClassName('fc-event-dot')[0];
-      if (dotEl) {
-        dotEl.style.backgroundColor = 'white';
-      }
-    }
-  }
-
-});
+    {% include "competitions-menu.html" %}
 
 
-        //calendar.render();
-      });
-
-
-
-    </script>
 
 	<div  class="text-center heading-section ">
 
@@ -90,8 +34,7 @@
 					<select 
                         style="width:200px; border-radius: 5px; font-size: 22px; border-color: #5a5a5a	" onchange="document.location.href='/competitions/year/'+this.value+''">
 						name="competition_year">
-						<!--option name="all" {% if year=="Latest" %} selected {% endif %}>Latest</option-->	
-                        <option name="2024" value="2024" {% if year=="2024" %} selected {%endif %}>2024-2025</option>	
+						<option name="2024" value="2024" {% if year=="2024" %} selected {%endif %}>2024-2025</option>	
 						<option name="2023" value="2023" {% if year=="2023" %} selected {%endif %}>2023-2024</option>
 						<option name="2022" value="2022" {% if year=="2022" %} selected {%endif %}>2022-2023</option>
 						<option name="2021" value="2021" {% if year=="2021" %} selected {%endif %}>2021-2022</option>
@@ -126,8 +69,7 @@
 										{{ competitions[competitionId]['date'] }}</h3>
 
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}<br>
-                                    <!--    {{ reference_data['current_language']['competition_type_'~competitions[competitionId]['competition_type']] }}-->
-
+                                
                                     </span>
 									<br>
 									<img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" ><br><br>
@@ -136,8 +78,7 @@
 										<span class="posted_by"><i class="icon-thumbs-up"></i>
                                                 {{ reference_data['current_language'].registered }}</span>
 										{% endif %}
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
+								
 								</div>
 							</div>
 							</a>

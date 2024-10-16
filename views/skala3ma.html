@@ -68,7 +68,7 @@
 
 function getData()
 {
-    fetch(`/api1/gyms/status/confirmed`)
+    fetch(`/api1/gyms/status/created`)
     .then(response => response.json())
     .then(data => {
         // use the retrieved data here
@@ -108,8 +108,8 @@ function processGyms(gyms)
             var lon = gyms[i].lon;
             if (lat == null || lon == null)
             {
-                lat = 48.935;
-                lon = 1.900000+i/17;
+                lat = 48.975;
+                lon = 2.100000+i/17;
             }
         
             var marker = L.marker([lat,lon],{icon: icon})

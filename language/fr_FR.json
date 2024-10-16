@@ -7,7 +7,7 @@
   "malefemale": "F/H",
   "competitions": "Compétitions",
   "gyms": "Murs",
-  "list": "Liste des compétitions",
+  "list": "Liste",
   "create_new": "Nouvelle compétition",
   "about": "À propos",
   "short_app_description": "Gérer les compétitions et les murs",
@@ -193,7 +193,9 @@
   "update_routes": "Mettre à jour les voies dans une competition",
   "create_gym": "Créer un mur",
   "dob": "Date de naissance",
-  
+  "Calendar": "Calendrier",
+  "Gallery": "Galerie",
+
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",

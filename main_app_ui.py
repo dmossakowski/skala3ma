@@ -108,13 +108,6 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-# Internal imports
-
-
-# Flask app setup
-
-
-
 
 
 app_ui.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
@@ -133,24 +126,21 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 @app_ui.before_request
 def x(*args, **kwargs):
-    if not session.get('language'):
-        #kk = competitionsEngine.supported_languages.keys()
-        session['language'] = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
-        print ("setting language to "+str(request.accept_languages)+" ->"+str(session['language']))
-        ##return redirect('/en' + request.full_path)
-
+    skala_api.x(*args, **kwargs)
+    
 
 @app_ui.route('/language/<language>')
 def set_language(language=None):
-    session['language'] = language
-
-    #competitionsEngine.reference_data['current_language'] = session['language']
-
-    langpack = competitionsEngine.reference_data['languages'][language]
-    competitionsEngine.reference_data['current_language'] = langpack
-
-    return redirect('/')
-    #return redirect(url_for('getCompetitionDashboard'))
+    skala_api.set_language(language)
+    
+    # Get the origin of the request from the Referer header
+    origin = request.headers.get('Referer')
+    
+    # Redirect to the origin if it's not None, otherwise redirect to the home page
+    if origin:
+        return redirect(origin)
+    else:
+        return redirect("/")
 
 
 def login_required(fn):
@@ -670,6 +660,12 @@ def privacy():
 def index():
     langs = competitionsEngine.reference_data['languages']
 
+    language = session.get('language')
+    if language is None:
+        logging.debug('language is None. setting to fr_FR')
+        language = 'fr_FR'
+        session['language'] = language
+
     user = competitionsEngine.get_user_by_email(session.get('email'))
     competitions= competitionsEngine.getCompetitions()
 
@@ -679,7 +675,7 @@ def index():
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=languages['en_US'],
+                           #langpack=language,
                             **session
                            )
 
@@ -687,6 +683,28 @@ def index():
 @app_ui.route('/main')
 def main():
     return redirect("/")
+
+
+@app_ui.route('/competitionCalendar')
+def getCompetitionCalendar():
+
+    #username = session.get('username')
+    logging.info('competitionCalendar language=' + str(session.get('language')))
+    can_create_competition = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        can_create_competition = competitionsEngine.can_create_competition(user)
+    
+    #langs = competitionsEngine.reference_data['languages']
+    return render_template('competitionCalendar.html',
+                           session=session,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           language=session['language'],
+                           #langpack=languages['en_US'],
+                           can_create_competition=can_create_competition
+                           # **session
+                           )
 
 
 @app_ui.route('/competitionDashboard')
@@ -726,7 +744,7 @@ def competitions_by_year(year):
                            user=user,
                            year=year,
                            reference_data=competitionsEngine.reference_data,
-                           langpack=languages['en_US'],
+                           #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
                             **session
                            )
@@ -1590,7 +1608,11 @@ def gyms():
         # Remove gyms already present in home_gym or permissioned_gyms
         if home_gym and home_gym.get('id') in gyms:
             del gyms[home_gym['id']]
-            
+
+        if home_gym and home_gym.get('id') in permissioned_gyms:
+            del permissioned_gyms[home_gym['id']]
+
+        # remove permissioned gyms from rest of gyms    
         if permissioned_gyms:
             for gym_id in permissioned_gyms.keys():
                 if gym_id in gyms:
