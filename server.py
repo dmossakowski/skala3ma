@@ -624,7 +624,6 @@ def email_login():
                                email=email,
                                error=error)
     
-
     if bcrypt.check_password_hash(user.get('password'), password):
         logging.info('User logged in: '+email)
         session['username'] = user.get('email')

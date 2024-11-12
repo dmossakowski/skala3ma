@@ -99,23 +99,23 @@ clubs = {
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
                        7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 
                        44: "Cordée 13",
-                       10:"CPS 10 - Faites le mur" , 
+                       10:"Faites le Mur - CPS10" , 
                        42:"CSMG Escalade - Gennevilliers",
                        11:"Dahu 91" , 
                        43: "EMA - Maisons-Alfort",
                        41:"EscaladA'sceaux",
                        39:"Escalade Populaire Montreuilloise",
                        12:"Entente Sportive Aérospatial Mureaux(ESAM)" ,
-                       14:"ESC 11", 15:"ESC XV"   ,16:"Espérance Sportive Stains",
+                       14:"ESC 11", 15:"ESC15"   ,16:"Espérance Sportive Stains",
                       17:"Grimpe 13"   ,
                       38:"Grimpe Fertoise Pays de Brie",
                       18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
                       20:"Groupe Escalade Saint Thibault"  ,
                       21:"Le Mur 20"  ,
                       1:"Nanterre Grimpe"  ,
-                      22:"Neuf-a-pic", 23:"Quatre +"  ,24:"ROC 14"  , 25:"RSC Champigny",
+                      22:"Neuf-a-pic", 23:"Quatre +"  ,24:"ROC14"  , 25:"RSCC ESCALADE MONTAGNE RANDONNEE",
                       26:"RSC Montreuillois"   ,27:"SNECMA Sports Corbeil", 28:"SNECMA Sports Genevilliers"   ,
-                      29:"Union Sportive Saint Arnoult", 30:"US Fontenay"   , 31:"US Ivry" , 32:"US Métro"  ,
+                      29:"Union Sportive Saint Arnoult", 30:"US Fontenay"   , 31:"US Ivry - Orme au Chat" , 32:"US Métro"  ,
                       33:"USMA", 34:"Vertical 12", 35:"Vertical Maubuée", 36:"Villejuif Altitude" 
                        
                         }
@@ -735,6 +735,9 @@ def init():
                 elif user.get('club') == 'US Ivry':
                     user['gymid'] = '8b797c6675934ad197b15d6f7950c8e2'
                     skala_db.upsert_user(user)
+                elif user.get('club') == 'RSC Champigny':
+                    user['gymid'] = 'ca09c1dab6c04bb7b8e224bd9344d4c9'
+                    skala_db.upsert_user(user)
                 else:    
                     logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
             
@@ -931,6 +934,7 @@ def get_category_from_dob(dob):
             return -1  # Return -1 if age does not fit any category
 
 
+                                    
 
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
     if climber is None:

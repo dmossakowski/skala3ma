@@ -952,12 +952,23 @@ def get_image(img_id):
 
 #migration and one time use methods
 
-    
+# sample query to get non confirmed users
+# select email  from climbers  where lower(trim(json_extract(jsondata, '$.is_confirmed'))) like '0' ;
 
 def update_gym_data(reference_data):
     # Connect to the database
     conn = lite.connect(COMPETITIONS_DB)
     cursor = conn.cursor()
+
+    # check if all gyms from the local reference list are in the database  
+    for club_id, club_name in reference_data.get('clubs').items():
+        gym = get_gym_by_gym_name(club_name)
+        if gym is not None:
+            logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')}")
+        else:
+            logging.warning(f"gym doesn't exist in db: {club_name}")
+
+
 
     # Retrieve all gyms from the GYM_TABLE
     cursor.execute('''SELECT id, jsondata FROM ''' + GYM_TABLE + ''' ;''')

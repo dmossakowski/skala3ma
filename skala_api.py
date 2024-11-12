@@ -863,6 +863,7 @@ def get_user_by_email(email):
     return climber
 
 
+
 @skala_api_app.route('/gym/<gym_id>/users')
 def get_users_by_gym(gym_id):
     users=  skala_db.get_users_by_gym_id(gym_id)
