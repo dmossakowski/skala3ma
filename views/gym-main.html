@@ -668,7 +668,7 @@
     <div class="row">  
         <div class="col m-2 bg-light border rounded-1">
                 <div class="row bg-body-secondary ">
-                <div class="col text-start">Default routes</div>
+                <div class="col text-start" id='routes_name'></div>
                 <div class="col">
 
                     <nav class="navbar navbar-expand-md p-0 ">
@@ -762,6 +762,7 @@
           .then(data => {
               // use the retrieved data here
               // console.log(data);
+              document.getElementById('routes_name').innerHTML = "Routes "+data.name;
               routes=data.routes
               renderTabulatorTable(routes);
               
