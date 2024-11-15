@@ -1605,7 +1605,7 @@ def generate_dummy_routes(size):
         routesA.append(route)
 
     routes['routes'] = routesA
-    routes['name'] = "Default routes"
+    routes['name'] = "Default"
     return routes
 
 
