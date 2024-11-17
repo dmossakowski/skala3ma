@@ -70,6 +70,43 @@ function getColorSVG(color, colorModifier){
 }
 
 
+
+function generatePizzaSVG(radius, colors) {
+    const centerX = radius;
+    const centerY = radius;
+    const slices = colors.length;
+    const angleStep = 360 / slices;
+  
+    let svgPaths = '';
+  
+    for (let i = 0; i < slices; i++) {
+      const startAngle = i * angleStep;
+      const endAngle = (i + 1) * angleStep;
+  
+      const startX = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+      const startY = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+      const endX = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+      const endY = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+  
+      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+  
+      svgPaths += `
+        <path d="M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z" 
+              fill="${colors[i]}" />
+      `;
+    }
+  
+    return `
+      <svg width="${radius * 2}" height="${radius * 2}" viewBox="0 0 ${radius * 2} ${radius * 2}" xmlns="http://www.w3.org/2000/svg">
+        ${svgPaths}
+      </svg>
+    `;
+  }
+  
+  
+
+
+
     var currentRouteStatusIconIndex = 0;
     var routeFinishStatus;
 

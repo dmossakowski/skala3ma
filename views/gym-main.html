@@ -578,7 +578,7 @@
 //            document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('route-name').innerHTML = data.name;
             document.getElementById('route-routenum').innerHTML = data.routenum;
-            document.getElementById('route-grade').innerHTML = data.grade;
+            document.getElementById('route-grade').innerHTML = data.grade + data.average_user_grade;
             modalBoxDiv.style.border="5px solid "+data.color1;
             document.getElementById('route-openedby').innerHTML = data.openedby;
             document.getElementById('route-opendate').innerHTML = data.opendate;
@@ -613,6 +613,13 @@
 
 
 
+
+
+
+  
+
+
+
 <div class="container-fluid">
     
 
@@ -620,14 +627,22 @@
     <div class="row">
         <div class="col m-2 bg-light border rounded-1">
             <div class="row bg-body-secondary">
-            <div class="col text-start">About</div>
+            <div class="col text-start">{{ reference_data['current_language'].about}}</div>
             <div class="col text-end"> <a href="/gyms/{{gym['id']}}/edit" title="Edit"><span alt="alttext" class="icon-wrench "></span></a></div>
         </div>
             <div class="h-100 p-4 mb-3  text-center">
+
+             <div id="pizza">  </div>
+<script>
+       // Example usage
+  const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00', '#00FF7F', '#00FFFF', '#007FFF'];
+  //const svgPizza = generatePizzaSVG(100, colors);
+  //document.getElementById('pizza').innerHTML = svgPizza;
+</script>
                 
 
             <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
-            <h1  class="display-3"> {{ gym['name'] }}</h1> 
+            <h1  class="display-3">  <div id='gym_name'></div></h1> 
 
             {{ gym['address'] }} <!--i class="icon-location"></i--><br>
             <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
@@ -637,9 +652,9 @@
     <div class="row">
         <div class="col m-2 bg-light border rounded-1">
             <div class="row bg-body-secondary">
-            <div class="col text-start">Climbers</div>
-            <div class="col text-end"> </div>
-        </div>
+                <div class="col text-start">{{ reference_data['current_language'].climbers}}</div>
+                <div class="col text-end"> </div>
+            </div>
         <div class="col" id="users-div-col">
             <div class="h-100 pt-2 mt-2  " id="users-div">
                 
@@ -649,14 +664,11 @@
     </div>
     </div>
        
-                
-           
-
 
     <div class="row">  
         <div class="col m-2 bg-light border rounded-1">
                 <div class="row bg-body-secondary ">
-                <div class="col text-start">Default routes</div>
+                <div class="col text-start" id='routes_name'></div>
                 <div class="col">
 
                     <nav class="navbar navbar-expand-md p-0 ">
@@ -685,7 +697,7 @@
                               </li>
                               <li class="nav-item">
                               <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/routes_csv" alt="download" class="nav-link active p-1">
-                                <i class="icon-download2"></i> Download CSV</a>
+                                <i class="icon-download2"></i> {{ reference_data['current_language'].download}}  CSV</a>
                                 </li>
                             </ul>
                            
@@ -697,6 +709,11 @@
                 </div>
             </div>
             <div class="col">
+
+
+
+
+
 
     
                 <div id="tabulator-table"></div>
@@ -716,10 +733,6 @@
    
 
 
-
-
-
-
     <script>
 
         var routes;
@@ -735,7 +748,7 @@
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
-            console.log(data);
+            //console.log(data);
             // set the gym-name span from data name param
             document.getElementById('gym_name').textContent = data.name;
 
@@ -749,8 +762,11 @@
           .then(data => {
               // use the retrieved data here
               // console.log(data);
+              document.getElementById('routes_name').innerHTML = "{{ reference_data['current_language'].routes}} - " +data.name;
               routes=data.routes
               renderTabulatorTable(routes);
+              
+              //renderCarousel(routes);
           })
           .catch(error => console.error(error));
       
@@ -849,6 +865,16 @@
                 </svg>`;
         }
       
+
+
+
+      function renderCarousel(routes)
+      {
+
+
+      } 
+      
+      
     var table;
       function renderTabulatorTable(routesA)
       {
@@ -876,8 +902,18 @@
         },
 
          
-          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+          {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false, 
+          formatter:function(cell, formatterParams, onRendered){
+                return `${cell.getValue()}   ${cell.getRow().getData().average_user_grade} `
+                     //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
+            },
+
+          },
+          
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 0 , minWidth:10},
+          /*{title: "Difficulty", field: "difficulty_rating", "responsive": 0 , minWidth:10, formatter:"star", formatterParams:{
+            stars:5,
+            }},*/
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
           {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 3},
           {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 5 , formatter:"plaintext"}
@@ -897,21 +933,30 @@
                 //dataTree:false, //do not include data tree in printed table
                 //formatCells:true, //show raw cell values without formatter
             },
-            //groupBy:"line",
+            groupBy:"line",
+            groupToggleElement:"header",
+            groupStartOpen:false,
             //groupBy:"routenum",
+            //groupStartOpen:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
+
+                //return false; //all groups with more than three rows start open, any with three or less start closed
+            //},
             groupHeader:function(value, count, data, group){
                 //value - the value all members of this group share
                 //count - the number of rows in this group
                 //data - an array of all the row data objects in this group
                 //group - the group component for the group
 
-                return value + "<span style='color:#d00; margin-left:10px;'>(" + count + " item)</span>"+
-                "<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='100'>";
+                return "<span style='font-size: 1.0rem'> {{reference_data['current_language'].line}}   " +value + " </span>";
             },
             columns: columns,
             data: routesA ,
-            //layout:"fitDataStretch",
-            layout: "fitDataFill",
+            layout:"fitDataStretch",
+            //layout: "fitDataFill",
             //layout: "fitColumns",
             movableRows: false,
             selectable: 1,
@@ -923,15 +968,15 @@
             //responsiveLayoutCollapseStartOpen:true,
             formatter:"responsiveCollapse", headerSort:false,
             rowFormatter:function(row){
-            if(row.getData().line % 2 == 0){
+            //if(row.getData().line % 2 == 0){
                 //row.getElement().style.backgroundColor = "#dddddd";
                 //row.getElement().classList.add("celled"); //mark rows with age less than 18 with a warning state;
-                row.getElement().style.backgroundColor = "#f1f1f1";
+              //  row.getElement().style.backgroundColor = "#f1f1f1";
             
-            }else{
-                row.getElement().style.backgroundColor = "#ffffff";
+            //}else{
+              //  row.getElement().style.backgroundColor = "#ffffff";
             
-            }
+            //}
             },
 
               /*rowContextMenu:[
@@ -1106,7 +1151,7 @@
 
 
         //mode: 'no-cors',
-        function saveData(data){
+        function saveData(inputData){
             console.log('saving data '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
             fetch('/api1/gym/{{gymid}}/{{routesid}}/saveone', {
@@ -1114,7 +1159,7 @@
                 headers: {
                 'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(inputData)
             })
             .then(response => {
                 if (!response.ok) {
@@ -1126,10 +1171,12 @@
                 return response.json();
             })
             .then(data => {
-                //console.log('Response:', data);
+                //console.log('inputData:', inputData);
+                
                 routes=data.routes
-                renderTabulatorTable(routes);
-                //table.replaceData(routes);
+                //renderTabulatorTable(routes);
+                table.updateOrAddData(routes);
+
                 hideModal()
       
             })
@@ -1168,7 +1215,7 @@
                 //console.log(data);
                 alertRibbon = document.getElementById('alert-ribbon')
                 alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} ' + data.starttime + 
-                '  <i class="bi bi-x" style="font-size: 3rem; color: rgb(98, 92, 92);"></i>'
+                '  <i class="bi bi-x" ="font-size: 3rem;style color: rgb(98, 92, 92);"></i>'
                 alertRibbon.style.display = "block"
                 //setTimeout(() => alertRibbon.style.display='none', 2500)
                 //document.getElementById('alert-ribbon').style.display='block';
