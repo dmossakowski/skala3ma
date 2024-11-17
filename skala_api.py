@@ -71,7 +71,7 @@ from authlib.integrations.flask_client import OAuthError
 
 languages = {}
 
-grades = ['?', '1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
+grades = ['?', '1', '2', '3', '4a', '4b', '4c', '5a','5a+', '5b', '5b+', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
     
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
@@ -1624,13 +1624,13 @@ def compute_average_user_grade(user_grades, original_grade):
 
     if difference == 0:
         return "&#10003;"
-    elif difference == -1:
-        return "&#8593;"
-    elif difference < -1:
-        return "&#8593;&#8593;"
     elif difference == 1:
-        return "&#8595;"
+        return "&#8593;" #up arrow
     elif difference > 1:
+        return "&#8593;&#8593;"
+    elif difference == -1:
+        return "&#8595;"
+    elif difference < -1:
         return "&#8595;&#8595;"
     else: 
         return "*"
@@ -1684,6 +1684,7 @@ def gym_by_id_route(gymid, routesid):
             route.update(route_data)
         else:
             route['average_user_grade'] = ""
+            route['user_grade'] = []
 
     return routes
 
