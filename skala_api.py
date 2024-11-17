@@ -34,6 +34,7 @@ from flask import Blueprint
 import activities_db as activities_db
 
 import skala_db
+
 from io import BytesIO
 
 from flask import send_file
@@ -415,11 +416,12 @@ def journey_add():
     name = data.get('activity_name')
     comp = {}
     gym = competitionsEngine.get_gym(gym_id)
+    routesid = gym.get('routesid')
 
 
     #a = Activity1(**data)
 
-    activity_id = activities_db.add_activity(user, gym, name, date)
+    activity_id = activities_db.add_activity(user, gym, routesid, name, date)
     activity = activities_db.get_activity(activity_id)
     # journey_id = user.get('journey_id')
     
@@ -801,7 +803,7 @@ def getCompetitionStats(competitionId):
         key = str(climber.get('sex'))+str(climber.get('category'))
         stats = statistics.get(key)
         for routenum in climber.get('routesClimbed'):
-            if climber.get('sex') is 'M':
+            if climber.get('sex') == 'M':
                 stats[routenum-1]=stats[routenum-1]+1
             else:
                 stats[routenum-1]=stats[routenum-1]+1  # can make -1 to have a stacked chart with males and females
@@ -1582,11 +1584,124 @@ def routes_by_gym_id(gymid):
     return json.dumps(routes.get('routes'))
 
 
+
+def compute_difficulty_rating(status_array):
+    if not status_array:
+        return 0
+
+    status_values = {
+        'attempted': 3,
+        'climbed': 2,
+        'flashed': 1
+    }
+
+    total_score = sum(status_values[status] for status in status_array if status in status_values)
+    average_score = total_score / len(status_array)
+
+    # Normalize to a scale of 0 to 4
+    difficulty_rating = (average_score - 1) / 2 * 4
+    return difficulty_rating
+
+
+def compute_average_user_grade(user_grades, original_grade):
+    if not user_grades:
+        return ""
+
+    if original_grade not in grades:
+        return ""
+
+    # Convert grades to numerical values based on their index in the grades list
+    total_grade = sum(grades.index(grade) for grade in user_grades if grade in grades)
+    average_grade_index = total_grade / len(user_grades)
+    
+    # Convert the average grade index back to a grade
+    average_grade = grades[int(round(average_grade_index))]
+
+    # Compare with the original grade
+    original_index = grades.index(original_grade)
+    average_index = grades.index(average_grade)
+    difference = average_index - original_index
+
+    if difference == 0:
+        return "&#10003;"
+    elif difference == -1:
+        return "&#8593;"
+    elif difference < -1:
+        return "&#8593;&#8593;"
+    elif difference == 1:
+        return "&#8595;"
+    elif difference > 1:
+        return "&#8595;&#8595;"
+    else: 
+        return "*"
+
+
 @skala_api_app.route('/gym/<gymid>/<routesid>')
 def gym_by_id_route(gymid, routesid):
 
     gym = competitionsEngine.get_gym(gymid)
     routes = competitionsEngine.get_routes(routesid)
+
+    activities = activities_db.get_activities_by_gym_id(gymid)
+    route_map = {}
+    route_counts = {}
+    total_routes = len(set(activity['route_id'] for activity in activities))
+
+    # Count the number of times each route appears
+    for activity in activities:
+        route_id = activity['route_id']
+        if route_id not in route_counts:
+            route_counts[route_id] = 0
+        route_counts[route_id] += 1
+
+    # Create the route map and assign ranks
+    for activity in activities:
+        route_id = activity['route_id']
+        if route_id not in route_map:
+            route_map[route_id] = {
+                'id': route_id,
+              
+                'user_grade': [],
+                'status': [],
+                'note': [],
+                'popularity_rank': 0,
+                'difficulty_rating': 0
+            }
+
+        if 'user_grade' in activity and activity['user_grade']:
+            route_map[route_id]['user_grade'].append(activity['user_grade'])
+        if 'status' in activity and activity['status']:
+            route_map[route_id]['status'].append(activity['status'])
+        if 'note' in activity and activity['note']:
+            route_map[route_id]['note'].append(activity['note'])
+
+      
+    for route in routes['routes']:
+        route_id = route['id']
+        if route_id in route_map:
+            route_data = route_map[route_id]
+            route_data['average_user_grade'] = compute_average_user_grade(route_data['user_grade'], route['grade'])
+            route.update(route_data)
+        else:
+            route['average_user_grade'] = ""
+
+    return routes
+
+
+
+@skala_api_app.route('/gym/<gymid>/routes/<routesid>/')
+def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
+
+    gym = competitionsEngine.get_gym(gymid)
+    routes = competitionsEngine.get_routes(routesid)
+
+    activities = activities_db.get_activities_by_gym_id(gymid)
+
+    #routes2 = activitiy_engine.enhance_routes(routes)
+    #routes2 = activitiy_engine.enhance_routes(routes)
+    #routs2 = get_activities_by_gym_id(gymid)
+
+
 
     return routes
 
@@ -1706,7 +1821,7 @@ def route_rating(gymid, routesid):
 
     activity_id = None
     if (len(activities) == 0):
-        activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
+        activity_id = activities_db.add_activity(user, gym, routesid, rating_activity_name, today)
     else:
         for activity in activities:
             if activity.get('gym_id') == gymid:
@@ -1714,7 +1829,7 @@ def route_rating(gymid, routesid):
                 activity_id = activity.get('id')
                 break
         if activity_id is None:
-            activity_id = activities_db.add_activity(user, gym, rating_activity_name, today)
+            activity_id = activities_db.add_activity(user, gym, routesid, rating_activity_name, today)
     #activity = activities_db.get_activity(activity_id)
 
     activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
@@ -1723,6 +1838,18 @@ def route_rating(gymid, routesid):
     return json.dumps(activity)
 
 
+@skala_api_app.route('/activity/gym/<gym_id>', methods=['GET'])
+def get_activities_by_gym_id(gym_id):
+    # Assuming activities is a list of all activities
+    activities = activities_db.get_activities_by_gym_id(gym_id)
+
+    # List to store matching session entries
+    matching_entries = []
+
+    # Iterate through all activities
+    #return json.dumps(activities)
+    return activities
+   
 
 
 @skala_api_app.route('/gym/<gymid>/save', methods=['POST'])

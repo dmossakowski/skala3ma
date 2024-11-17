@@ -61,12 +61,12 @@ def init():
         print('created ' + activities_TABLE)
 
 
-def add_activity(user, gym, name, date):
+def add_activity(user, gym, routesid, name, date):
     activity_id = str(uuid.uuid4().hex)
 
     gym_id = gym.get('id')
-    routes_id = gym.get('routesid')
-    activity = {"id": activity_id, "gym_id": gym_id, "routes_id": routes_id, "starttime": date, "name": name, 
+    #routes_id = gym.get('routesid')
+    activity = {"id": activity_id, "gym_id": gym_id, "routes_id": routesid, "starttime": date, "name": name, 
         "gym_name": gym.get('name'), 
             "routes": []
                }
@@ -75,15 +75,13 @@ def add_activity(user, gym, name, date):
     return activity_id
 
 
-
-
-
 def get_activity(session_id):
     return _get_activity(session_id)
 
 
 def get_activities(user_id):
     return _get_activities_by_user_id(user_id)
+
 
 def get_activities_by_date_by_user(date, user_id):
     return _get_activities_by_date_by_user_id(date, user_id)
@@ -121,6 +119,7 @@ def add_activity_entry(activity_id, route, status, note, user_grade):
     _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
 
     return activity
+
 
 def update_activity(activity_id, activity_json):
     if activity_json is None or activity_id is None:
@@ -164,6 +163,57 @@ def delete_activity_route(activity_id, entry_id):
     _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
 
     return activity
+
+
+def get_activities_by_routes_id(routes_id):
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        # Query to retrieve activities that contain the given route_id
+        cursor.execute(f"SELECT jsondata FROM {activities_TABLE} WHERE routes_id = ?", [str(routes_id)])
+        rows = cursor.fetchall()
+
+        matching_entries = []
+
+        for row in rows:
+            activity = json.loads(row[0])
+            for session_entry in activity.get('routes', []):
+                matching_entries.append(session_entry)
+
+        return matching_entries
+
+    finally:
+        db.close()
+        sql_lock.release()
+
+
+def get_activities_by_gym_id(gym_id):
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        # Query to retrieve activities that contain the given route_id
+        cursor.execute(f"SELECT jsondata FROM {activities_TABLE} WHERE gym_id = ?", [str(gym_id)])
+        rows = cursor.fetchall()
+
+        matching_entries = []
+
+        for row in rows:
+            activity = json.loads(row[0])
+            for session_entry in activity.get('routes', []):
+                matching_entries.append(session_entry)
+
+        return matching_entries
+
+    finally:
+        db.close()
+        sql_lock.release()
+
 
 
 def _add_activity(activity_id, user_id, gym_id, routes_id, date, jsondata):
