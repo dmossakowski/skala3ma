@@ -578,7 +578,7 @@
 //            document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('route-name').innerHTML = data.name;
             document.getElementById('route-routenum').innerHTML = data.routenum;
-            document.getElementById('route-grade').innerHTML = data.grade;
+            document.getElementById('route-grade').innerHTML = data.grade + data.average_user_grade;
             modalBoxDiv.style.border="5px solid "+data.color1;
             document.getElementById('route-openedby').innerHTML = data.openedby;
             document.getElementById('route-opendate').innerHTML = data.opendate;
