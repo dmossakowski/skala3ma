@@ -71,7 +71,7 @@ def add_activity(user, gym, routesid, name, date):
             "routes": []
                }
     # write this competition to db
-    _add_activity(activity_id, user.get('id'), gym_id, routes_id, date, activity)
+    _add_activity(activity_id, user.get('id'), gym_id, routesid, date, activity)
     return activity_id
 
 
