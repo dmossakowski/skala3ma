@@ -633,12 +633,12 @@
             <div class="h-100 p-4 mb-3  text-center">
 
              <div id="pizza">  </div>
-<script>
-       // Example usage
-  const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00', '#00FF7F', '#00FFFF', '#007FFF'];
-  //const svgPizza = generatePizzaSVG(100, colors);
-  //document.getElementById('pizza').innerHTML = svgPizza;
-</script>
+        <script>
+            // Example usage
+        const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#7FFF00', '#00FF00', '#00FF7F', '#00FFFF', '#007FFF'];
+        //const svgPizza = generatePizzaSVG(100, colors);
+        //document.getElementById('pizza').innerHTML = svgPizza;
+        </script>
                 
 
             <img src="/image/{{  gym.get('logo_img_id') }}"  height="200"/>
@@ -950,8 +950,18 @@
                 //count - the number of rows in this group
                 //data - an array of all the row data objects in this group
                 //group - the group component for the group
+                colorDivs = "";
+                // Loop over the data array
+                for (let i = 0; i < count; i++) {
+                    // Concatenate the result of getColorSVGDiv to colorDivs
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '20px')+
+                    `${data[i].grade}${data[i].average_user_grade}  &nbsp;&nbsp;&nbsp;`;
+                }
+                // Wrap the colorDivs in an encompassing div with flexbox styling
+                const encompassingDiv = `<div style="display: flex; gap: 3px;">${colorDivs}</div>`;
 
-                return "<span style='font-size: 1.0rem'> {{reference_data['current_language'].line}}   " +value + " </span>";
+                return "<span style='font-size: 1.0rem'> {{reference_data['current_language'].line}}   " +value +
+                    encompassingDiv+ "</span>";
             },
             columns: columns,
             data: routesA ,
