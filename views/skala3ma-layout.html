@@ -86,6 +86,23 @@
         console.log('Image URL: ' + profile.getImageUrl());
         console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
     }*/
+   //loadLanguagePack(true);
+
+   document.addEventListener('DOMContentLoaded', () => {
+    // Load the language pack and replace translations
+    loadLanguagePack().then(() => {
+        replaceTranslations();
+        // Call other functions that depend on translations being loaded
+        initializeApp();
+    }).catch(error => {
+        console.error('Failed to load language pack:', error);
+    });
+});
+
+function initializeApp() {
+    // Your code that depends on translations being loaded
+    console.log('App initialized with translations');
+}
 
 	function retrieveData() {
 		var targetContainer = document.getElementById('progressMessages');
@@ -203,7 +220,7 @@
                 </li>
                 {% endif %}
 
-
+                
                 <hr>
 
 
@@ -226,9 +243,9 @@
                         <i class="bi bi-translate" ></i></a>     
                     <ul class="dropdown-menu">
                 
-                        <li><a href="/language/fr_FR" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a></li>
-                        <li><a href="/language/en_US" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
-                        <li><a href="/language/pl_PL" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
+                        <li><a href="/language/fr_FR" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a></li>
+                        <li><a href="/language/en_US" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
+                        <li><a href="/language/pl_PL" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
                         <!-- Ajoutez d'autres langues avec leurs liens href -->
                     </ul>
                 </li>
@@ -341,9 +358,9 @@
                     <i class="bi bi-translate" ></i></a>     
                 <div class="dropdown-menu  dropdown-menu-end">
         
-                <a href="/language/fr_FR" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
-                <a href="/language/en_US" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
-                <a href="/language/pl_PL" class="dropdown-item fs-7  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
+                <a href="/language/fr_FR" onclick="clearTranslations();" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
+                <a href="/language/en_US" onclick="clearTranslations();" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
+                <a href="/language/pl_PL" onclick="clearTranslations();" class="dropdown-item fs-7  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
                 <!-- Ajoutez d'autres langues avec leurs liens href -->
                 </div>
                 </li>
@@ -428,9 +445,9 @@
 						<div  class="col-md-2">
 							<!-- http://usrz.github.io/bootstrap-languages/ -->
 							<h3 class="section-title">Languages</h3>
-							<a href="/language/fr_FR" style="color: white"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
-							<a href="/language/en_US" style="color: white"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
-							<a href="/language/pl_PL" style="color: white"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
+							<a href="/language/fr_FR" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
+							<a href="/language/en_US" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
+							<a href="/language/pl_PL" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
 
                             <br><br>
 						</div>

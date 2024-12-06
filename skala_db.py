@@ -873,7 +873,7 @@ def _update_gym_routes(gymid, routesid, jsondata):
     cursor.execute("update " + GYM_TABLE + " set  routesid = ? , jsondata = ? , added_at=datetime('now' ) where id=?",
                    [ str(routesid), json.dumps(jsondata), str(gymid)])
 
-    logging.info('updated gym with routes: '+str(jsondata))
+    logging.info('updated gym with routes: '+str(routesid))
 
     db.commit()
     db.close()
@@ -968,8 +968,6 @@ def update_gym_data(reference_data):
         else:
             logging.warning(f"gym doesn't exist in db: {club_name}")
 
-
-
     # Retrieve all gyms from the GYM_TABLE
     cursor.execute('''SELECT id, jsondata FROM ''' + GYM_TABLE + ''' ;''')
     gyms = cursor.fetchall()
@@ -1006,6 +1004,34 @@ def update_gym_data(reference_data):
 
             # Update the jsondata field in the GYM_TABLE
             cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
+
+    cursor.execute('''SELECT id, jsondata FROM ''' + ROUTES_TABLE + ''' ;''')
+    routesSets = cursor.fetchall()
+        # Loop through each row and edit the jsondata
+    for routeSet in routesSets:
+        route_id = routeSet[0]
+        jsondata = json.loads(routeSet[1])
+
+        # Modify the jsondata as needed
+        # Example: Add a new key-value pair
+        routes = jsondata.get('routes')
+        modified = False
+        if routes is not None:
+            for route in routes:
+                grade = route.get('grade')
+                if grade and any(char.isupper() for char in grade):
+                    route['grade'] = grade.lower()
+                    modified = True
+
+
+        # Convert the jsondata back to a JSON string
+        if modified:
+            updated_jsondata = json.dumps(jsondata)
+            cursor.execute('''UPDATE ''' + ROUTES_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, route_id))
+
+
+
+
     # Commit the changes and close the connection
     conn.commit()
     conn.close()

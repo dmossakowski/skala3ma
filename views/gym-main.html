@@ -392,8 +392,6 @@
 
         <script>
 
-            
-            //let dept = params.get("dept"); // return sales
 
             // Get the modal dialog container
             var modal = document.getElementById("modal");
@@ -417,8 +415,6 @@
                 hideRatigngUi();
                 return false;
             }
-
-            
 
 
             function deleteContent(){
@@ -685,11 +681,7 @@
                                 <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}" class="nav-link active p-1">
                                     <i class="icon-list"></i> Batch edit</a>
                               </li>
-                              <li class="nav-item">
-                               
-                                <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1">
-                                    <i class="icon-grid2 "></i> Competition tiles</a>
-                              </li>
+                             
                               <li class="nav-item">
                                
                                 <a href="#" id="print-table" alt="{{gym['homepage']}}" class="nav-link active p-1">
@@ -925,6 +917,7 @@
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
             //printStyled:true, //copy Tabulator styling to HTML table
+            printRowRange:"all",
             printConfig:{
                 //columnHeaders:false, //do not include column headers in printed table
                 columnGroups:false, //do not include column groups in column headers for printed table

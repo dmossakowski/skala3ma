@@ -118,15 +118,15 @@ function generatePizzaSVG(radius, colors) {
 
 
 
-    function resetFlashImage()
-    {
+function resetFlashImage()
+{
         //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
         currentRouteStatusIconIndex = 0;
         routeFinishStatus = 'climbed';
         //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
         document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
         
-    }
+}
 
     function toggleFlashImage()
     {
@@ -163,7 +163,7 @@ function generatePizzaSVG(radius, colors) {
      * - The server must have an endpoint '/api1/users/search' that accepts a query parameter 'q' and returns a JSON array of user objects.
      * - Each user object should have the following fields: firstname, lastname, nick, gpictureurl, fpictureurl, club, and id.
      */
-       function loadUserLookAhead() {
+    function loadUserLookAhead() {
         const userSearch = document.getElementById('user-search');
         const suggestions = document.getElementById('suggestions');
         const userIdField = document.getElementById('userId');
@@ -214,3 +214,52 @@ function generatePizzaSVG(radius, colors) {
         // Add event listener using the named function
         userSearch.addEventListener('input', handleUserInput);
     }
+
+
+let translations = {};
+
+// Function to load the language pack
+function loadLanguagePack(force = false) {
+    return new Promise((resolve, reject) => {
+        // Check if the language pack is in local storage and force is not true
+        const storedTranslations = localStorage.getItem('translations');
+        if (storedTranslations && !force) {
+            translations = JSON.parse(storedTranslations);
+            resolve();
+        } else {
+            // Fetch the language pack from the API
+            fetch('/api1/langpack')
+                .then(response => response.json())
+                .then(data => {
+                    translations = data;
+                    // Store the language pack in local storage
+                    localStorage.setItem('translations', JSON.stringify(translations));
+                    console.log('Language pack loaded:', translations);
+                    resolve();
+                })
+                .catch(error => {
+                    console.error('Error fetching language pack:', error);
+                    reject(error);
+                });
+        }
+    });
+}
+
+// Function to replace translations in the DOM
+function replaceTranslations() {
+    document.querySelectorAll('[data-translate-key]').forEach(element => {
+        const key = element.getAttribute('data-translate-key');
+        element.innerHTML = translations[key] || key;
+    });
+}
+
+function getTranslation(key) {
+    return translations[key] || key;
+}
+
+// Function to clear translations from local storage
+function clearTranslations() {
+    localStorage.removeItem('translations');
+    translations = {};
+}
+

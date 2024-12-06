@@ -1451,6 +1451,52 @@ def competitionRoutesList(competitionId):
 
 
 
+@app_ui.route('/competitionRoutes/<competitionId>')
+@login_required
+def competitionRoutes(competitionId):
+    #competitionId = request.args.get('competitionId')
+
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    competition = competitionsEngine.getCompetition(competitionId)
+
+    error_code = ""
+    if not competitionsEngine.can_update_routes(user,competition):
+        error_code = "error5314"
+
+    gymid = competition['gym_id']
+    gym = competitionsEngine.get_gym(gymid)
+    routesid = competition.get('routesid')
+    routes = competitionsEngine.get_routes(routesid)
+    routesName = routes.get('name')
+
+    if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
+        sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+        competition['climbers']= sorted_data
+
+    # library= {}
+    # library['tracks'] = tracks
+    # playlist = json.dumps(playlist)
+    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message)
+    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
+    #                       subheader_message=subheader_message,
+    #                       library=None,
+    #                       **session))
+
+    return render_template("competitionRoutes.html",
+                           error_code=error_code,
+                           user=user,
+                           gym=gym,
+                           gymid=gymid,
+                           routesid=routesid,
+                           routesName=routesName,
+                           routes=routes,
+                           competition=competition,
+                           competitionId=competitionId,
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
+
 # enter competition climbed routes for a climber and save them
 @app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
 @login_required

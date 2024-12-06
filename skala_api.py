@@ -185,6 +185,14 @@ def get_language():
         return json.dumps({'language': session['language']})
 
 
+@skala_api_app.route('/langpack')
+def get_langpack():
+    if not session.get('language'):
+        return json.dumps(competitionsEngine.reference_data['languages']['fr_FR'])
+    else:
+        return json.dumps(competitionsEngine.reference_data['languages'][session.get('language')])
+
+
 def is_logged_in():
     if session is not None and session.get('expires_at') is not None:
         return True
