@@ -1,0 +1,57 @@
+					<!-- START #fh5co-menu-wrap -->
+					<div class="nav">
+
+{% if competition is defined %}
+
+
+<ul class="nav justify-content-center ">
+<!-- li>{{ competition['name'] }}</li -->
+
+    <a href="/competitionDetails/{{ competitionId}}"  class="nav-link sf-menu2"><i class="bi bi-trophy-fill"></i>
+        {{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</a></li>
+
+					<a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link">{{ reference_data['current_language'].registration }}</a> </li>
+						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
+					<a href="/competitionRoutesEntry/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a></li>
+
+                    <a href="/competitionRoutes/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].routes }}</a></li>
+
+				<a href="/competitionResults/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].resultats }}</a></li>
+
+					<a href="/competitionStats/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].statistics }}</a>
+                                
+                                    <!--ul class="fh5co-sub-menu">
+                                        <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
+                                    </ul-->
+                                
+
+						
+							<!-- <ul class="fh5co-sub-menu">
+							<li><a href="/competitionResults/{{ competitionId}}/download">Download</a> </li>
+								</li></ul>-->
+
+{% endif %}
+
+						{% if username is defined %}
+
+							<!--li><a href="/progresstest">Progress</a></li-->
+
+
+
+								{% endif %}
+							<!--li><a href="blog.html">Blog</a></li-->
+							<!--li class="active"><a href="blog.html">Blog</a></li-->
+							<!--li><a href="contact.html">Contact</a></li-->
+							{% if username is not defined %}
+
+							{% endif %}
+
+
+{% if competition is defined and competition is not none %}
+
+				<a href="/competition_admin/{{competitionId}}" class="nav-link">Admin</a></li>
+							{% endif %}
+						</ul>
+
+</div>
+					

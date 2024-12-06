@@ -1,0 +1,50 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+    
+	<!--script src="https://cdn.jsdelivr.net/npm/apexcharts"></script-->
+
+
+		<!--styaaale="background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
+		{% include "competition-menu.html" %}
+
+
+        <div class="container">
+            <div class="text-center heading-section">
+                 
+		
+        <br>
+        <h3>{{competition['name'] }} - {{ competition['date']}} <br>
+    <span data-translate-key="routes"></span> - </label> {{routesName }}
+    </h3>                      
+        <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1" target="_tab">
+            <i class="icon-grid2 "></i> Competition tiles</a>
+    
+    </div>
+    </div>
+{% include "component-routes.html" %}
+
+<script>       
+
+const userConfig = {
+    gymid: "{{gymid}}",  
+    routeListId: "{{routesid}}",
+    groupBy: "line", // Override the default groupBy setting
+    initialSort: [{ column: "grade", dir: "desc" }] // Override the default initialSort setting
+};
+
+    configureRoutesTable(userConfig);
+</script>
+
+
+
+{% endblock %}
