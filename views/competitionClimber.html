@@ -25,7 +25,7 @@
 
 	{% block secondarycontent %}
 
-    {% include "skala3ma-menu.html" %}
+    {% include "competition-menu.html" %}
     
     <div class=" text-left heading-section">
         <div class="container">
@@ -51,11 +51,11 @@
                             <div class="form-floating">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
 							<input class="form-control mb-2" id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br>
-                            <label for="firstname">{{ reference_data['current_language'].firstname}}</label>
+                            <label for="firstname"><span data-translate-key="firstname"></span></label>
                             </div>
                             <div class="form-floating">
                             <input class="form-control mb-2" id="lastname" name="lastname" size="40" value="{{user['lastname']}}"/><br>
-                            <label for="lastname">{{ reference_data['current_language'].lastname}}</label>
+                            <label for="lastname"><span data-translate-key="lastname"></span></label>
                             
                         </div>
                         <!--

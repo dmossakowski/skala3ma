@@ -30,10 +30,22 @@
        
             <div class="modal-body">
             <div id="eventModalBody" class="event-content">
-            <!-- Event content will be injected here -->
+                <div class="event-content text-center">
+                    <img id="eventImage" src="" alt="" width="250">
+                    <br><br>
+                    <a id="eventLink" href="">
+                        <h1 id="eventTitle"></h1>
+                        <h3 id="eventGym"></h3>
+                    </a>
+                    <p id="eventStatus"></p>
+                   
+                </div>
+
+           
             </div>
             </div>
             <div class="modal-footer">
+                <a id="eventButton" href="" class="btn btn-primary" data-translate-key="view"></a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
@@ -202,23 +214,17 @@
 
             info.jsEvent.preventDefault(); // Prevent the browser from navigating to the event URL
 
-            // Populate the modal with event content
-            var eventContent = `
-            <div class="event-content text-center">
-                <a href="/competitionDetails/${info.event.extendedProps.id}" >
-                    <h2>${info.event.title} </h2>
-                 <h3> ${info.event.extendedProps.gym}</h3>
-                
-                    <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="280"></a>
-                    <br><br>
-                   ${info.event.extendedProps.text.status}
-                <br><br>
-                
-                
-            </div>
-            `;
-            document.getElementById('eventModalBody').innerHTML = eventContent;
 
+            // Set the values of the placeholders within the eventModalBody div
+            document.getElementById('eventImage').src = `/image/${info.event.extendedProps.id}`;
+            document.getElementById('eventImage').alt = info.event.title;
+            document.getElementById('eventLink').href = `/competitionDetails/${info.event.extendedProps.id}`;
+            document.getElementById('eventTitle').textContent = info.event.title;
+            document.getElementById('eventGym').textContent = info.event.extendedProps.gym;
+            document.getElementById('eventStatus').textContent = info.event.extendedProps.text.status;
+            document.getElementById('eventButton').href = `/competitionDetails/${info.event.extendedProps.id}`;
+          
+            
             // Show the modal
             var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
             eventModal.show();

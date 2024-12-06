@@ -13,14 +13,13 @@
    
 
 
-		{% include "skala3ma-menu.html" %}
+		{% include "competition-menu.html" %}
 
 		<div class="container-fluid">	
             <div class="h-100 p-5 bg-light border rounded-3 text-center">
                 <h1 class="display-5 fw-medium">{{competition['name'] }} </h1>
-                <h2 class="display-8 fw-medium"> {{ competition['date']}}</h2>
-                <a href="/gyms/{{competition['gym_id']}}/{{ competition['routesid']}}" class="nav-link sf-menu2">  {{ reference_data['current_language'].routes }}</a>
-
+                <h2 class="display-8 fw-medium">{{ competition['gym']}} - {{ competition['date']}}</h2>
+             
                 </div>	
             <div class="row align-items-md-stretch">	
            
@@ -45,7 +44,7 @@
                 </div>
 
 
-		<div class="table-responsive ">
+                <div class="table-responsive ">
 			
 
 
@@ -110,6 +109,7 @@
 
 			</div>
 		</div>
+        </div>
 		<!-- fh5co-blog-section -->
 
 
