@@ -287,7 +287,7 @@ function clearTranslations() {
      // Function to show a Bootstrap alert 
      // requires a div with the id 'alertPlaceholder' in the HTML
      function showAlert(message, level) {
-        console.log('showAlert:', message, level);
+        //console.log('showAlert:', message, level);
         const alertPlaceholder = document.getElementById('alertPlaceholder');
         // Create a span for the message
         const messageSpan = document.createElement('span');
