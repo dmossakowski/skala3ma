@@ -1025,12 +1025,13 @@ def update_user():
     else:
         club = None
 
-    error_message = []
+    error_message = ''
     categoryold = request.args.get('category')
 
     category = competitionsEngine.get_category_from_dob(dob)
     if category == -1:
-        error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
+        #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
+        error_message='error5325'
 
     
 
@@ -1046,13 +1047,13 @@ def update_user():
     climber['dob'] = dob
 
     if firstname is None or nick is None or sex is None or club is None or email is None:
-        error_message.append(" All fields are required")
+        error_message= 'all_fields_required'
         #subheader_message = "Update"
 
     if error_message is not None and len(error_message) > 0:
-        error_message_str = '. '.join(error_message) + '.'
+        #error_message_str = '. '.join(error_message) + '.'
         return render_template('climber.html',
-                               error_message = error_message_str,
+                               error_message = error_message,
                                competitionId=None,
                                climber=climber,
                                reference_data=competitionsEngine.reference_data,

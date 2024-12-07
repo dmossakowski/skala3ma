@@ -287,11 +287,12 @@ function clearTranslations() {
      // Function to show a Bootstrap alert 
      // requires a div with the id 'alertPlaceholder' in the HTML
      function showAlert(message, level) {
+        console.log('showAlert:', message, level);
         const alertPlaceholder = document.getElementById('alertPlaceholder');
         // Create a span for the message
         const messageSpan = document.createElement('span');
         messageSpan.setAttribute('data-translate-key', message);
-        //messageSpan.textContent = message;
+        messageSpan.textContent = message;
 
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${level} alert-dismissible fade show`;
@@ -307,6 +308,7 @@ function clearTranslations() {
         alertDiv.appendChild(messageSpan);
         alertDiv.appendChild(closeButton);
 
+        alertPlaceholder.className = 'text-center';
         alertPlaceholder.appendChild(alertDiv);
 
         // Automatically remove the alert after 5 seconds

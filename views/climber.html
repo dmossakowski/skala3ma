@@ -145,17 +145,20 @@
 
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-
-            var subheader_message = "{{ subheader_message }}";
+        var subheader_message = "{{ subheader_message }}";
             if (subheader_message != "") {
+                //console.log(getTranslation(subheader_message));
                 showAlert(subheader_message, 'success');
             }
 
             var error_message = "{{ error_message }}";
             if (error_message != "") {
+                //console.log(getTranslation(error_message));
                 showAlert(error_message, 'danger');
             }
+        document.addEventListener('DOMContentLoaded', function() {
+
+            
 
             fetch('/api1/user')
                 .then(response => response.json())
