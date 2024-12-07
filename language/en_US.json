@@ -101,7 +101,7 @@
   "competition_status_3": "Scoring",
   "competition_status_4": "Closed",
   "not_available": "Not available",
-  "firstname": "First ame",
+  "firstname": "First name",
   "lastname": "Last name",
   "nickname": "Nickname ",
   "email": "Email ",
@@ -191,6 +191,10 @@
   "dob": "Date of birth",
   "Calendar": "Calendar",
   "Gallery": "Gallery",
+  "Delete": "Delete",
+  "routes_deleted": "Routes deleted",
+  "routes_copied": "Routes copied",
+  "saved": "Saved",
 
   
   "error5314": "Updating routes is not permitted for this user",
@@ -201,6 +205,7 @@
   "error5323": "Maximum registrations reached",
   "error5324": "Choose a valid gym",
   "error5325": "No suitable category was found for your age",
+  "cannot_delete_routes": "Cannot delete routes as they're used by a gym or a competition",
 
 "Please_check_your_email_for_confirmation_link": "Please check your email for the confirmation link",
 "Invalid_username_or_password": "Invalid username or password",

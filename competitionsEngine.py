@@ -841,6 +841,29 @@ def _validate_or_upgrade_competition(competition):
 def get_all_competitions():
     return skala_db.get_all_competitions()
 
+def get_all_competitions_using_routes(routesid):
+    competitions = skala_db.get_all_competitions()
+
+    competitions2 = []
+    for competition in competitions.values():
+        if competition.get('routesid') == routesid:
+            logging.info('found competition '+str(competition.get('id'))+' using routes '+str(routesid))
+            competitions2.append(competition)
+    return competitions2
+
+
+def get_all_gyms_using_routes(routesid):
+    gyms = skala_db.get_all_gyms()
+
+    gyms2 = []
+    for gym in gyms.values():
+        if gym.get('routesid') == routesid:
+            logging.info('found gym '+str(gym.get('name'))+' using routes '+str(routesid))
+            gyms2.append(gym)
+    return gyms2
+
+
+
 
 def get_competitions_by_year(year):
     """
@@ -1427,6 +1450,44 @@ def delete_gym(gym_id):
     finally:
         sql_lock.release()
         logging.info("deleted gym and routes for "+gym_id)
+
+
+def delete_routes(routes_id):
+    if routes_id is None:
+        return    
+    try:
+        sql_lock.acquire()
+        c1 = get_all_competitions_using_routes(routes_id)
+        c2 = get_all_gyms_using_routes(routes_id)
+        if len(c1) == 0 and len(c2) == 0:
+            try:
+                logging.info('deleting routes' + routes_id)
+                
+                skala_db.delete_routes(routes_id)
+                jsonobject = {"status": "success", "label": "routes_deleted"}
+            except Exception as e:
+                logging.error(f'Error deleting routes {id}: {str(e)}')
+                jsonobject = {"status": "error", "label": "exception_deleting_routes", "message": str(e)}
+        else:
+            # Extract id and name for competitions
+            competitions = [{'id': comp['id'], 'name': comp['name']} for comp in c1]
+            
+            # Extract id and name for gyms
+            gyms = [{'id': gym['id'], 'name': gym['name']} for gym in c2]
+            
+            jsonobject = {
+                "status": "error",
+                "label": "cannot_delete_routes",
+                "competitions": competitions,
+                "gyms": gyms
+            }
+
+        
+    finally:
+        sql_lock.release()
+        logging.info("deleted routes for "+routes_id)
+        return jsonobject
+
 
 
 #routesid is the default routes to display

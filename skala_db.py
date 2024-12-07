@@ -252,6 +252,8 @@ def get_all_competitions():
 
     return comps
 
+def get_all_gyms():
+    return _get_gyms()
 
 def get_user(id):
     db = lite.connect(COMPETITIONS_DB)
@@ -827,6 +829,22 @@ def _add_gym(gymid, routesid, gym):
                    [str(gymid), str(routesid),  jsondata])
 
     logging.info('added gym: '+str(jsondata))
+
+    db.commit()
+    db.close()
+
+
+def delete_routes(routesid):
+    if routesid is None:
+        return
+    db = lite.connect(COMPETITIONS_DB)
+
+    db.in_transaction
+    cursor = db.cursor()
+    cursor.execute("delete from " + ROUTES_TABLE + " where id=?",
+                   [str(routesid)])
+
+    logging.info('deleted routes: '+str(routesid))
 
     db.commit()
     db.close()

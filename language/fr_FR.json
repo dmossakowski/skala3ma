@@ -195,6 +195,10 @@
   "dob": "Date de naissance",
   "Calendar": "Calendrier",
   "Gallery": "Galerie",
+  "Delete": "Supprimer",
+  "routes_deleted": "Voies supprimées",
+  "routes_copied": "Voies copiées",
+  "saved": "Sauvegardé",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
@@ -204,6 +208,9 @@
   "error5323": "Nombre maximal d'inscriptions atteint",
   "error5324": "Choose a valid gym",
   "error5325": "L'age n'est pas valide",
+  "error5326": "",
+  "cannot_delete_routes": "Impossible de supprimer les voies car elles sont utilisées par un mur ou une compétition",
+
 
 
   "Please_check_your_email_for_confirmation_link": "Veuillez vérifier votre e-mail pour le lien de confirmation",

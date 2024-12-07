@@ -1159,7 +1159,7 @@
             .then(data => {
                 //console.log(data);
                 alertRibbon = document.getElementById('alert-ribbon')
-                alertRibbon.innerHTML = getTranslation('rating_saved')+" {{ reference_data['current_language']['rating_saved']}} " + data.starttime + 
+                alertRibbon.innerHTML = getTranslation('rating_saved')+"  " + data.starttime + 
                 '  <i class="bi bi-x" ="font-size: 3rem;style color: rgb(98, 92, 92);"></i>'
                 alertRibbon.style.display = "block"
                 //setTimeout(() => alertRibbon.style.display='none', 2500)

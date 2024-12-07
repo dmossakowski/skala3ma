@@ -476,7 +476,7 @@ def facebook_auth():
         else:
             print('other auth error:')
             print(str(error))
-        return redirect('/competitionDashboard')
+        return after_login(user, None)
 
     logging.info(str(request))
     # check first if auth was succesful
@@ -501,7 +501,7 @@ def facebook_auth():
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
     else:
-        return redirect('/competitionDashboard')
+        return after_login(user, profile.get('email'))
     
     
 
@@ -546,7 +546,7 @@ def googleauth_reply():
         else:
             print('other auth error:')
             print(str(error))
-        return redirect('/competitionDashboard')
+        return redirect('/activities')
 
     logging.info(str(request))
     # check first if auth was succesful
@@ -572,7 +572,7 @@ def googleauth_reply():
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
     else:
-        return redirect('/competitionDashboard')
+        return after_login(user, profile.get('email'))
 
 
 
@@ -635,20 +635,9 @@ def email_login():
         
         if competitionsEngine.is_god(user) or GODMODE:
             session['godmode'] = True   
-        
-        if user.get('club') is None or user.get('club').strip() == '' or user.get('firstname') is None or user.get('firstname').strip() == '':
-            return render_template('climber.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           climber=user,
-                           logged_email=email,
-                           error=error)
 
-        return render_template('competitionDashboard.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error=error)
-    
+        return after_login(user, email)
+        
     else:
         logging.info('User failed login: '+email)
         error=get_translation('User_does_not_exist_or_wrong_password')
@@ -860,6 +849,31 @@ def confirm_email(type, token):
     return render_template('change_password.html',
                            reference_data=competitionsEngine.reference_data,
                            error=None,)
+
+
+
+
+
+def after_login(user, email):
+    if user.get('club') is None or user.get('club').strip() == '' or user.get('firstname') is None or user.get('firstname').strip() == '':
+        return render_template('climber.html',
+                        reference_data=competitionsEngine.reference_data,
+                        email=email,
+                        climber=user,
+                        logged_email=email)
+
+    if user.get('gymid') is not None:
+        return redirect("/gyms/"+user.get('gymid'))
+    
+    return redirect('/')
+        #render_template('competitionDashboard.html',
+            #              reference_data=competitionsEngine.reference_data,
+            #             email=email,
+            #            error=error)
+
+
+
+
 
 
 def get_translation(key):

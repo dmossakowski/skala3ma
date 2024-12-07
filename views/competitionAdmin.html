@@ -43,9 +43,7 @@
 	<input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
 	<div class="col-md-6">
         <div class="form-floating mb-3">
-            <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000">
-                {{ competition['instructions'] }}
-            </textarea>
+            <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000">{{ competition['instructions'] }}</textarea>
             <label for="topmessage">{{ reference_data['current_language'].Instructions }}:</label>
         </div>
     </div>
