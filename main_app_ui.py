@@ -279,6 +279,11 @@ def fsgtadmin():
             jsonobject = competitionsEngine.get_all_routes_ids()
 
 
+        if id is not None and action == 'delete':
+            competitionsEngine.delete_route(id)
+        
+
+
     elif edittype == 'activities':
         if jsonobject is not None  and action == 'update':
             #jsonobject = {"success": "competition updated"}
@@ -365,6 +370,9 @@ def competition_admin_post(competition_id):
     competition_status = request.form.get('competition_status')
 
     instructions = request.form.get('instructions')
+    if instructions is not None:
+        instructions = instructions.strip()
+
     user_id = request.form.get('userId')
 
     jsondata = request.form.get('jsondata')
@@ -988,11 +996,13 @@ def get_user():
                             **session)
 
 
+
+# function to save user details 
 @app_ui.route('/updateuser')
 def update_user():
     if session.get('email') is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No competition found",
+                               subheader_message="Login required",
                                **session)
 
     climber = competitionsEngine.get_user_by_email(session.get('email'))
@@ -1005,6 +1015,7 @@ def update_user():
     sex = request.args.get('sex')
     clubid = request.args.get('club')
     dob = request.args.get('dob')
+    subheader_message = ""
 
     if clubid is not None and clubid.isnumeric():
         clubid = int(clubid)
@@ -1021,7 +1032,7 @@ def update_user():
     if category == -1:
         error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
 
-    subheader_message = request.args.get('update_details')
+    
 
     email = session.get('email')
     name = session.get('name')
@@ -1052,6 +1063,7 @@ def update_user():
     else:
         climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, dob)
         subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
+        level = 'success'
 
 
     if name is None:
@@ -1694,6 +1706,9 @@ def gym_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
     #gym['routesid']='abc1'
 
+    if gym is None or len(gym) == 0:
+        return redirect('/gyms')
+    
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     
     #routes = all_routes.get(routesid)
@@ -1836,73 +1851,9 @@ def gym_edit(gymid):
                            )
 
 
-# NOT USED MOST LIKELY
-@app_ui.route('/gyms/<gymid>/edit', methods=['POST'])
-@login_required
-def gym_save(gymid):
-    raise ValueError("Not implemented")
-    formdata = request.form.to_dict(flat=False)
-
-    args1 = request.args
-    body = request.data
-    bodyj = request.json
-
-    routeid = formdata['routeid']
-    routeline = formdata['routeline']
-    color1 = formdata['color1']
-    #iscolor2same = formdata['iscolor2same']
-    color_modifier = formdata['color_modifier']
-    routegrade = formdata['routegrade']
-    routename = formdata['routename']
-    openedby = formdata['openedby']
-    opendate = formdata['opendate']
-    notes = formdata['notes']
-    routesname = formdata['name'][0]
-    permissioned_user = formdata['permissioned_user'][0]
-
-    user = competitionsEngine.get_user_by_email(session['email'])
-    can_create_gyms = competitionsEngine.can_create_gym(user)
-
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("app_ui.fsgtlogin"))
-
-    routes = []
-    for i, routeline1 in enumerate(routeline):
-        #print (i)
-        if routeid[i] == '0':
-            routeid[i]=str(uuid.uuid4().hex)
-        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i],
-                                                     color_modifier[i], routegrade[i],
-                                           routename[i], openedby[i], opendate[i], notes[i])
-        routes.append(oneline)
-
-    routes_dict = {}
-    routes_dict['id'] = gym['routesid']
-    routes_dict['name'] = routesname
-    routes_dict['routes'] = routes
-
-    gym['routes'] = []
-
-    competitionsEngine.update_gym(gym['id'], gym)
-    competitionsEngine.update_routes(gym['routesid'], routes_dict)
-
-    gym = competitionsEngine.get_gym(gym['id'])
-    gym['routes'] = []
-    routes = competitionsEngine.get_routes(gym['routesid'])
-
-    return render_template('gyms.html',
-                           gymid=gymid,
-                           gyms=None,
-                           gym=gym,
-                           routes=routes,
-                           reference_data=competitionsEngine.reference_data,
-                           can_create_gyms=can_create_gyms,
-                           )
 
 
-
-# this is the old HTML form routes editor
+# this is the old HTML javascript form batch routes editor
 @app_ui.route('/gyms/<gym_id>/<routesid>/edit', methods=['GET'])
 @login_required
 def gym_routes_edit(gym_id, routesid):
@@ -1920,7 +1871,6 @@ def gym_routes_edit(gym_id, routesid):
                                gyms=gyms,
                                reference_data=competitionsEngine.reference_data,
                                **session)
-
 
     return render_template('gym-routes-batch-edit.html',
                            gymid=gym_id,
@@ -2007,6 +1957,21 @@ def gym_routes_save(gymid, routesid):
     if not competitionsEngine.can_edit_gym(user, gym):
         return redirect(url_for("app_ui.fsgtlogin"))
 
+    if delete is not None:
+        
+        result = competitionsEngine.delete_routes(routesid)
+
+        if result.get('status') == 'success':
+            gymroutes = gym.get('routesid')
+        
+            return redirect(url_for('app_ui.gym_routes_edit', 
+                                    gym_id=gymid, routesid=gymroutes, label=result.get('label'), message=result.get('message'), level='success'))
+        else:
+            message = result.get('message')
+            return redirect(url_for('app_ui.gym_routes_edit', 
+                                    gym_id=gymid, routesid=routesid, label=result.get('label'), message=result.get('message'), level='danger'))
+
+
     routes = []
     for i, routeline1 in enumerate(routeline):
         if routeid[i] == '0':
@@ -2026,15 +1991,17 @@ def gym_routes_save(gymid, routesid):
         routes_dict['id'] = newroutesid
         routes_dict['name'] = routes_dict['name']+' copy'
         competitionsEngine.upsert_routes(newroutesid, gymid, routes_dict)
-        return redirect(f'/gyms/{gymid}/{newroutesid}/edit')
+        return redirect(url_for('app_ui.gym_routes_edit', 
+                                    gym_id=gymid, routesid=newroutesid, label="routes_copied", level='success'))
 
     competitionsEngine.update_routes(routesid, routes_dict)
 
     # pickup the default routes to be rendered
     routes = competitionsEngine.get_routes(gym.get('routesid'))
 
-    return redirect(f'/gyms/{gymid}/{routesid}')
-
+    return redirect(url_for('app_ui.gym_routes_edit', 
+                                    gym_id=gymid, routesid=routesid, label="routes_saved", level='success'))
+   
 
 
 @app_ui.route('/gyms/<gym_id>/<routesid>/routes_csv')
@@ -2265,6 +2232,7 @@ def gyms_update(gym_id):
     files = request.files
     delete = formdata.get('delete')
     save = formdata.get('save')
+    label = "saved"
 
     imgfilename = None
     if 'file1' in request.files:
@@ -2315,7 +2283,7 @@ def gyms_update(gym_id):
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 
-    return redirect(url_for('app_ui.gym_by_id', gymid=gym_id))
+    return redirect(url_for('app_ui.gym_by_id', gymid=gym_id, label=label, level='success'))
 
 
 

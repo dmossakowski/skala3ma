@@ -223,6 +223,14 @@ function loadLanguagePack(force = false) {
     return new Promise((resolve, reject) => {
         // Check if the language pack is in local storage and force is not true
         const storedTranslations = localStorage.getItem('translations');
+        const storedTimestamp = localStorage.getItem('translations-timestamp');
+        const currentTime = new Date().getTime();
+        const threeHoursInMillis = 3 * 60 * 60 * 1000;
+
+        if (!storedTimestamp || (currentTime - new Date(storedTimestamp).getTime()) > threeHoursInMillis) {
+            force = true;   
+        }
+
         if (storedTranslations && !force) {
             translations = JSON.parse(storedTranslations);
             resolve();
@@ -236,6 +244,7 @@ function loadLanguagePack(force = false) {
                     localStorage.setItem('translations', JSON.stringify(translations));
                     console.log('Language pack loaded:', translations);
                     resolve();
+                    localStorage.setItem('translations-timestamp', new Date().toISOString());
                 })
                 .catch(error => {
                     console.error('Error fetching language pack:', error);
@@ -263,3 +272,66 @@ function clearTranslations() {
     translations = {};
 }
 
+
+
+
+     // Function to show a Bootstrap alert 
+     // requires a div with the id 'alertPlaceholder' in the HTML
+     function showAlert(message, level) {
+        const alertPlaceholder = document.getElementById('alertPlaceholder');
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${level} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertPlaceholder.appendChild(alertDiv);
+
+        // Automatically remove the alert after 5 seconds
+        if (level === 'success') {
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                alertDiv.classList.add('fade');
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 150); // Allow time for the fade-out transition
+            }, 5000);
+        }
+    }
+
+
+
+    // Function to get query parameters
+    function getQueryParams() {
+        const params = {};
+        const queryString = window.location.search.substring(1);
+        const queryArray = queryString.split('&');
+        queryArray.forEach(param => {
+            const [key, value] = param.split('=');
+            params[key] = decodeURIComponent(value);
+        });
+        return params;
+    }
+
+
+
+         // Check for 'message' and 'level' query parameters and call showAlert
+         document.addEventListener('DOMContentLoaded', () => {
+            const queryParams = getQueryParams();
+            const message = queryParams['message'];
+            const label = getTranslation(queryParams['label'])
+                
+            const level = queryParams['level'];
+            if (label && level) {
+                showAlert(label, level);
+
+                  // Remove query parameters from the URL
+                  const url = new URL(window.location);
+                url.searchParams.delete('message');
+                url.searchParams.delete('level');
+                url.searchParams.delete('label');
+                window.history.replaceState({}, document.title, url.toString());
+       
+            }
+        });

@@ -193,6 +193,7 @@ def get_langpack():
         return json.dumps(competitionsEngine.reference_data['languages'][session.get('language')])
 
 
+
 def is_logged_in():
     if session is not None and session.get('expires_at') is not None:
         return True
@@ -1591,6 +1592,22 @@ def routes_by_gym_id(gymid):
     routes = competitionsEngine.get_routes(gym.get('routesid'))
     return json.dumps(routes.get('routes'))
 
+
+
+@skala_api_app.route('/gym/<gymid>/routes/<routesid>/delete', methods=['POST'])
+def delete_gym_routes(gymid, routesid):
+    user = competitionsEngine.get_user_by_email(session['email'])
+    gym = competitionsEngine.get_gym(gymid)
+    routes_set = competitionsEngine.get_routes_by_gym_id(gymid)
+
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return json.dumps({'status': 'error', 'message': 'You do not have permission to delete routes'})
+
+    if routesid not in routes_set:
+        return json.dumps({'status': 'error', 'message': 'Routes do not belong to gym {gymid}'})
+    
+    result = competitionsEngine.delete_routes(routesid)
+    return json.dumps(result)
 
 
 def compute_difficulty_rating(status_array):
