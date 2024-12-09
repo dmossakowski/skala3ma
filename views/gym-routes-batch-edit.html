@@ -13,7 +13,9 @@
 	<div class="row">
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="col-md text-center heading-section animate-box">
-						<br><br>
+						
+                        <div id="alertPlaceholder"></div>
+                        <br><br>
 				{% if gym is not none and gym is not undefined  %}
 						<h3>{{ gym['name'] }}</h3>
 
@@ -27,8 +29,8 @@
 
 
 	</select>
-    &nbsp;&nbsp;&nbsp;<a href="/gyms/{{gym['id']}}/{{routes['id']}}/routes_csv" target="_tab" name=copy value="copy" class="btn btn-outline-info btn-md">{{ reference_data['current_language'].download}}</a>
-    &nbsp;&nbsp;&nbsp;<a href="/gyms/{{gym['id']}}/{{routes['id']}}" target="_tab" name=edit value="edit" class="btn btn-outline-info btn-md">{{ reference_data['current_language'].view}}</a>
+    &nbsp;&nbsp;&nbsp;<a href="/gyms/{{gym['id']}}/{{routes['id']}}/routes_csv" target="_tab"  class="btn btn-outline-info btn-md">{{ reference_data['current_language'].download}}</a>
+    &nbsp;&nbsp;&nbsp;<a href="/gyms/{{gym['id']}}/{{routes['id']}}" target="_tab"  class="btn btn-outline-info btn-md">{{ reference_data['current_language'].view}}</a>
 		
 
 						{% else %}
@@ -47,6 +49,8 @@
      // btn ? btn.parentNode.parentNode.insertAdjacentHTML('afterend', row1): table.insertAdjacentHTML('beforeend',row1);
       //setIds();
     //}
+
+
 
 
 	function addRowAtId(id) {
@@ -165,19 +169,11 @@ function deleteRow(id) {
 		{{ routes['id']}} -->
 		<div class="row">
 		<div class="col-sm-8">
-		<label for="name">{{ reference_data['current_language'].name }}</label>
+		<label for="name" data-translate-key="name">name</label>
 		<input type="text" id="name" name="name" value="{{routes['name']}}">
         
 
 
-
-
-
-		<!-- Trigger the modal with a button -->
-<!--button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#myModal" data-afterrow="12"
-
-onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('show');"
->Add new route</button-->
 
 
 
@@ -186,8 +182,11 @@ onclick="$('#afterrow').val($(this).data('afterrow')); $('#showmodal').modal('sh
 </div><div class="col-sm-4 text-right">
 		<input type="submit" class="btn btn-primary btn-md" name=save value="{{ reference_data['current_language'].save}}">
         
-		&nbsp;&nbsp;&nbsp;<button name=copy value="copy" class="btn btn-warning btn-md">{{ reference_data['current_language'].make_copy}}</button>
-        </h2>
+		&nbsp;&nbsp;&nbsp;<button name=copy value="copy" class="btn btn-warning btn-md" data-translate-key="make_copy">make_copy</button>
+       
+        &nbsp;&nbsp;&nbsp;<button onClick=";" name="delete" class="btn btn-danger btn-md" data-translate-key="Delete">DEL</button>
+      
+    </h2>
 			<br><br>
 
 			</div>

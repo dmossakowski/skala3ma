@@ -10,15 +10,15 @@
 
 	{% block secondarycontent %}
 
-	
+	<div id="alertPlaceholder"></div>
     <div class="container">
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+        
 					<div class="row text-left heading-section animate-box">
 					<div class="col-md-8  text-center heading-section animate-box">
 
 						<h3>{{reference_data['current_language'].update_details}} </h3>
-						<font color="red">{{ error_message }}</font>
-                        <font color="darkgreen"><b>{{ subheader_message }}</b></font><br>
+						
                         <br>
 						{% if climber is not none  %}
 
@@ -104,7 +104,7 @@
                 <div class="row">
                     <div class="col m-2 ">
                     <div id="permissions_box" class="bg-light border rounded-1">
-                        <div class="row bg-body-secondary">
+                        <div class="row bg-body-secondary border">
                         
                             <div class="col text-start">   <i class="bi bi-shield-shaded"></i>  Permissions</div>
                         </div>
@@ -118,8 +118,8 @@
                         <div id="general-permissions-list"></div>
             
                         </div>
-        <br>
-
+        
+                        <br>
                 <!-- Gym Permissions -->
                 <div class="permissions-section">
                    
@@ -145,7 +145,21 @@
 
 
     <script>
+        var subheader_message = "{{ subheader_message }}";
+            if (subheader_message != "") {
+                //console.log(getTranslation(subheader_message));
+                showAlert(subheader_message, 'success');
+            }
+
+            var error_message = "{{ error_message }}";
+            if (error_message != "") {
+                //console.log(getTranslation(error_message));
+                showAlert(error_message, 'danger');
+            }
         document.addEventListener('DOMContentLoaded', function() {
+
+            
+
             fetch('/api1/user')
                 .then(response => response.json())
                 .then(data => {
@@ -174,7 +188,7 @@
                         generalPermissionsList.appendChild(div);
                     });
                     
-                    if (permissions.general.length === 0) {
+                    if (permissions.general.length === 0 && permissions.gyms.length === 0 && permissions.competitions.length === 0) {
                         perm_box = document.getElementById('permissions_box');
                         perm_box.style.display = 'none';
                         

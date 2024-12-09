@@ -199,6 +199,10 @@
   "dob": "Data urodzenia",
   "Calendar": "Kalendarz",
   "Gallery": "Galeria",
+  "Delete": "Usuń",
+  "routes_deleted": "Drogi usunięte",
+  "routes_copied": "Drogi skopiowane",
+  "saved": "Zapisane",
   
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
@@ -207,8 +211,8 @@
   "error5322": "Rejestracja na te zawody jest niemożliwa",
   "error5323": "Osiągnięto maksymalną liczbę zawodników",
   "error5324": "Choose a valid gym",
-  "error5325": "Nie mamy kategorie dla tego wieku",
-
+  "error5325": "Nie ma kategorii dla tego wieku",
+  "cannot_delete_routes": "Nie można usunąć dróg, bo są one używane w zawodach lub w klubie",
 
   "Please_check_your_email_for_confirmation_link": "Proszę sprawdzić swoją skrzynkę e-mail, aby potwierdzić link",
   "Invalid_username_or_password": "Nieprawidłowa nazwa użytkownika lub hasło",
