@@ -1,3 +1,30 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% include "gym-menu.html" %}
+                                    
+    
+
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+
+
+
+	{% if gym is not none and gym is not undefined  %}
+
+
+
+
+
         <style>
             /* Style for the modal dialog container */
             .modal-container {
@@ -79,43 +106,6 @@
                         .form-row textarea {
                           flex: 1;
                         }
-
-
-
-                        .custom-select-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-}
-
-.custom-select {
-    display: inline-block;
-    width: 100%;
-    padding: 6px;
-    font-size: 1.6em;
-    font-weight: bold;
-    color: #40ad48;
-    background-color: #eff3ef;
-    border: none;
-    border-radius: 2%;
-    appearance: none; /* Remove default dropdown arrow */
-    -webkit-appearance: none; /* Remove default dropdown arrow in Safari */
-    -moz-appearance: none; /* Remove default dropdown arrow in Firefox */
-    box-shadow: 1px 1px 1px 3px #9ecab3;
-    outline: none;
-}
-
-.custom-select-wrapper::after {
-    content: '\25BC'; /* Unicode character for down arrow */
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    font-size: 1.6em;
-    color: #40ad48; /* Match the color of the select text */
-}
-
         </style>
     
 
@@ -178,8 +168,8 @@
 <!-- start user rating -->
                     
 <div id='route-rating-div'  style="display:none;">
-    <br><hr>
-    <h4>&nbsp; {{reference_data['current_language'].rate}}&nbsp; </h4>
+    <br><hr><br>
+    <h4>&nbsp; {{reference_data['current_language'].rating_activity_prompt}}&nbsp; </h4>
     <div class="form-row row">
         <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
         outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
@@ -187,55 +177,58 @@
         
         </div>
         <div class="col">
-            <div class="custom-select-wrapper">
-                <select class="custom-select" id='grade_user' name="grade_user"  size="1" type="text" >
-                <option value="?">?</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4a">4a</option>
-                <option value="4b">4b</option>
-                <option value="4c">4c</option>
-                <option value="5a">5a</option>
-                <option value="5a+">5a+</option>
-                <option value="5b">5b</option>
-                <option value="5b+">5b+</option>
-                <option value="5c">5c</option>
-                <option value="5c+">5c+</option>
-                <option value="6a">6a</option>
-                <option value="6a+">6a+</option>
-                <option value="6b">6b</option>
-                <option value="6b+">6b+</option>
-                <option value="6c">6c</option>
-                <option value="6c+">6c+</option>
-                <option value="7a">7a</option>
-                <option value="7a+">7a+</option>
-                <option value="7b">7b</option>
-                <option value="7b+">7b+</option>
-                <option value="7c">7c</option>
-                <option value="7c+">7c+</option>
-                <option value="8a">8a</option>
-                <option value="8a+">8a+</option>
-                <option value="8b">8b</option>
-                <option value="8b+">8b+</option>
-                <option value="8c">8c</option>
-                <option value="8c+">8c+</option>
-                <option value="9a">9a</option>
-                <option value="9a+">9a+</option>
-                <option value="9b">9b</option>
-                <option value="9b+">9b+</option>
-                <option value="9c">9c</option>
-            
-                </select>
 
-        </div></div></div>
-
-        <div class="row text-center">
-    
-        <input id='notes_user' name="notes_user" size="10" type="text" 
+        <select class="col form-select form-select-lg" id='grade_user' name="grade_user"  size="1" type="text" 
         style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-        outline-style:solid; padding: 15px; border-radius: 2%;display: inline-block; margin: 0px 30px 10px; border-width: 0px;
-        font-weight: bold; color: #40ad48; width: 320px; "/>
+        outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
+        font-size:1.6em; font-weight: bold; color: #40ad48">
+        <option value="?">?</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4a">4a</option>
+        <option value="4b">4b</option>
+        <option value="4c">4c</option>
+        <option value="5a">5a</option>
+        <option value="5a+">5a+</option>
+        <option value="5b">5b</option>
+        <option value="5b+">5b+</option>
+        <option value="5c">5c</option>
+        <option value="5c+">5c+</option>
+        <option value="6a">6a</option>
+        <option value="6a+">6a+</option>
+        <option value="6b">6b</option>
+        <option value="6b+">6b+</option>
+        <option value="6c">6c</option>
+        <option value="6c+">6c+</option>
+        <option value="7a">7a</option>
+        <option value="7a+">7a+</option>
+        <option value="7b">7b</option>
+        <option value="7b+">7b+</option>
+        <option value="7c">7c</option>
+        <option value="7c+">7c+</option>
+        <option value="8a">8a</option>
+        <option value="8a+">8a+</option>
+        <option value="8b">8b</option>
+        <option value="8b+">8b+</option>
+        <option value="8c">8c</option>
+        <option value="8c+">8c+</option>
+        <option value="9a">9a</option>
+        <option value="9a+">9a+</option>
+        <option value="9b">9b</option>
+        <option value="9b+">9b+</option>
+        <option value="9c">9c</option>
+    
+        </select>
+
+        </div>
+
+        <div class="col">
+    
+        <input id='notes_user' name="notes_user" size="13" type="text" 
+        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
+        outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;
+        font-weight: bold; color: #40ad48"/>
         <!--button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
           
             <i class="bi bi-plus-circle" style="font-size: 3rem; color: white;"></i>
@@ -244,11 +237,12 @@
                  
                    
         </div>
-   
+    </div>
+    <div class="form-row-heading">
         <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">
             <i class="bi bi-plus-circle" style="color: white;"></i> {{reference_data['current_language'].add_activity}}</button>
     </div>               
-
+</div>
 
 
 <!-- end user rating-->
@@ -408,7 +402,6 @@
             var currentRow;
             var mod_type;
             var isLoggedIn = false;
-
 
 
             function showEditDiv(){
@@ -612,15 +605,7 @@
         color1input.addEventListener("change", colorChanged(1), false);
 
     </script>
-    
-
-
-
-
-
-
-
-
+{%endif%}
 
 
 
@@ -631,57 +616,46 @@
 
 
 
-<div class="container-fluid">
+<div class="container text-center">
     
-       
-    
-    <div class="row">  
-      
-            <div class="col g-0">
+    <div class="row">
+        <div class="col justify-content-md-center">
+           
+           
 
+            <img src="/image/{{  gym.get('logo_img_id') }}"  width="400"/>
+            <h1  class="display-3">  <span id='gym_name'></span></h1> 
+            {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+            <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
+            <br>
+            <img src="/gym/{{gymid}}/qr" /><br>
+            
+            <a href="https://skala3ma.com">https://skala3ma.com</a>
 
-
-
-
-
-    
-                <div id="tabulator-table"></div>
-            </div>
+           
+            <br><br>
+            
         </div>
-
+      
     </div>
-<br><br>
+
 
 </div>
-
-
-	<!-- Trigger the modal with a button -->
-
-
-   
-
+       
 
     <script>
-        let routesTableConfig;
+
         var routes;
         var activitiesRecorded = 0;
         var usersRegistered = 0;
       
-        function configureRoutesTable(userConfig)
+   
+        function fetchServerData()
         {
-            const defaultConfig = {
-                gymid: "{{gymid}}",
-                routeListId: "{{routesid}}",
-                groupBy: "grade",
-                initialSort: [{ column: "grade", dir: "desc" }]
-            };
+          const gymid = "{{gymid}}";
+          const routeListId = "{{routesid}}";
 
-            // Merge default settings with user-provided settings
-            routesTableConfig = { ...defaultConfig, ...userConfig };
-
-
-
-          fetch(`/api1/gym/${routesTableConfig.gymid}`)
+          fetch(`/api1/gym/${gymid}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -694,20 +668,7 @@
           })
           .catch(error => console.error(error));
       
-          fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}`)
-          .then(response => response.json())
-          .then(data => {
-              // use the retrieved data here
-              // console.log(data);p
-              //document.getElementById('routes_name').innerHTML = "{{ reference_data['current_language'].routes}} - " +data.name;
-              routes=data.routes
-              renderTabulatorTable(routes);
-              //console.log('creating qr code');
-              //new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
-              
-              //renderCarousel(routes);
-          })
-          .catch(error => console.error(error));
+        
       
           fetch(`/api1/user`)
           .then(response => response.json())
@@ -726,7 +687,7 @@
           )
           .catch(error => console.error(error));
 
-          fetch(`/api1/activity/gym/${routesTableConfig.gymid}/routes/${routesTableConfig.routeListId}`)
+          fetch(`/api1/activity/gym/${gymid}/routes/${routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -744,53 +705,9 @@
           )
           .catch(error => console.error(error));
 
-
-          fetch(`/api1/gym/${routesTableConfig.gymid}/users`)
-          .then(response => response.json())
-          .then(data => {
-              // use the retrieved data here
-                //console.log(data);
-                if (Object.keys(data).length === 0) {
-                    // data is an empty object
-                    // remove div called users-div
-                    var usersDiv = document.getElementById('users-div-col');
-                    usersDiv.remove();
-                }
-                else{
-                    usersRegistered = Object.keys(data).length;
-                    usersDiv = document.getElementById('users-div');
-                    // create div element
-                    //var div = document.createElement('div');
-                    // loop over usersRegistered and create a div for each user
-                    for (var i = 0; i < usersRegistered; i++) {
-                        //console.log(data[i]);
-                        var user = data[i];
-                        var userDiv = document.createElement('div');
-                        // set class col on userDiv
-                        userDiv.className = 'd-inline-flex focus-ring py-1 ms-1 mb-1 px-2 text-decoration-none border rounded-2';
-                        userDiv.innerHTML = user['firstname']+'  &nbsp;';
-                        // add pictureurl from user to div as an image
-                        var img = document.createElement('img');
-                        img.src = user['pictureurl'];
-                        img.width = 30;
-                        
-                        // add the image to the div
-                        userDiv.appendChild(img);
-                        usersDiv.appendChild(userDiv);
-                    }
-                    //isLoggedIn = true;
-                    //showRatingUi();
-                }
-                
-            }                
-          )
-          .catch(error => console.error(error));
-
-          
-
-
         }
       
+
         // Function to create a hatched pattern in color rendering when printing to pdf  
         function createHatchedSVG(color, width = '100px', height = '20px') {
               return `
@@ -826,6 +743,8 @@
                      //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
             },
         
+        
+        
         },
           {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
@@ -838,6 +757,7 @@
             },
         },
 
+         
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false, 
           formatter:function(cell, formatterParams, onRendered){
                 return `${cell.getValue()}   ${cell.getRow().getData().average_user_grade} `
@@ -857,7 +777,7 @@
       
           // Create the Tabulator table
         table = new Tabulator("#tabulator-table", {
-            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }} </h1>", // set header content on printed table
+            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }}</h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
             //printStyled:true, //copy Tabulator styling to HTML table
@@ -870,7 +790,7 @@
                 //dataTree:false, //do not include data tree in printed table
                 //formatCells:true, //show raw cell values without formatter
             },
-            groupBy: routesTableConfig.groupBy,
+            groupBy:"line",
             groupToggleElement:"header",
             groupStartOpen:false,
             //groupBy:"routenum",
@@ -962,6 +882,7 @@
       }
       
       
+        fetchServerData();
         
         function getFormData() {
           const formData = {};
@@ -1061,7 +982,7 @@
             var data = getFormData();
             //console.log('saving new route to activity '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/activity/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
+            fetch('/api1/activity/{{gymid}}/{{routesid}}/saveone', {
                 mode: 'no-cors',
                 method: 'POST',
                 headers: {
@@ -1100,7 +1021,7 @@
         function saveData(inputData){
             console.log('saving data '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/saveone', {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
@@ -1141,7 +1062,7 @@
                 var data = getFormData();
                 //console.log('rating route '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/rate`, {
+            fetch('/api1/gym/{{gymid}}/{{routesid}}/rate', {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
@@ -1160,25 +1081,31 @@
             .then(data => {
                 //console.log(data);
                 alertRibbon = document.getElementById('alert-ribbon')
-                alertRibbon.innerHTML = getTranslation('rating_saved')+"  " + data.starttime + 
+                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} ' + data.starttime + 
                 '  <i class="bi bi-x" ="font-size: 3rem;style color: rgb(98, 92, 92);"></i>'
                 alertRibbon.style.display = "block"
                 //setTimeout(() => alertRibbon.style.display='none', 2500)
                 //document.getElementById('alert-ribbon').style.display='block';
                 //table.replaceData(routes);
                 hideModal()
+                //document.getElementById('thanksbox').style.display='block';
                 
+      
             })
             .catch(error => {
                 console.error('catch error:', error);
                 document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+                
                 
             });
-            return false;
-        }
+                return false;
+            }
 
       </script>
       
       
       
 
+
+{% endblock %}

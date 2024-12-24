@@ -25,6 +25,10 @@ import competitionsEngine
 import csv
 from functools import wraps
 import qrcode 
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
+from qrcode.image.styles.colormasks import RadialGradiantColorMask
+  
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, \
     jsonify, Response, \
@@ -832,14 +836,12 @@ def new_competition_post():
                 imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
                 file1.save(imgpath)
 
-
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
         return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
 
     subheader_message='Welcome '
     competitions= competitionsEngine.getCompetitions()
-
 
     return render_template('competitionDashboard.html',
                            subheader_message=subheader_message,
@@ -1739,6 +1741,44 @@ def gym_by_id(gymid):
                            )
 
 
+@app_ui.route('/gyms/<gymid>/qrcode')
+def gym_qrcode_by_id(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    #gym['routesid']='abc1'
+
+    if gym is None or len(gym) == 0:
+        return redirect('/gyms')
+    
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    
+    #routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    routes_dict = competitionsEngine.get_routes_by_gym_id(gymid)
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
+     
+    #routes1 = competitionsEngine.get_routes(gym['routesid'])
+    routes = routes_dict.get(gym['routesid'])
+    routesid = gym['routesid']
+    return render_template('gym-qrcode.html',
+                           gymid=gymid,
+                           routesid=routesid,
+                           gyms=None,
+                           gym=gym,
+                           routes=None,
+                           all_routes=all_routes,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
+                           )
+
+
+
 
 @app_ui.route('/gyms/<gym_id>/<routesid>', methods=['GET'])
 #@login_required
@@ -2346,15 +2386,75 @@ def image_route(img_id):
 
 
 
-@app_ui.route('/qr', methods=['GET'])
-def qr():
+@app_ui.route('/gym/<gymid>/qr', methods=['GET'])
+def gym_qr(gymid):
     try:
-        # Get the URL from the query string
-        url = request.args.get('url')
+         # Construct the URL
+        base_url = request.url_root
+        url = f"{base_url}gyms/{gymid}"
 
-        # Create the QR code image
-        img = qrcode.make(url)
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+        qr.add_data(url)
 
+        #img_1 = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer())
+        #img_2 = qr.make_image(image_factory=StyledPilImage, color_mask=RadialGradiantColorMask())
+        img_1 = qr.make_image(image_factory=StyledPilImage, embeded_image_path="public/images/favicon.png")
+
+        #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, image_factory=StyledPilImage)
+        #qr.add_data('Some data')
+
+        #img = qrcode.make(url)
+        #img = qr.make_image(embeded_image_path="images/fsgt-logo-me.png")
+        
+        buffer = io.BytesIO()
+        img_1.save(buffer)
+        buffer.seek(0)
+
+        response = make_response(buffer.getvalue())
+        #response.headers['Content-Disposition'] = 'attachment; filename=qr-code.png'
+        response.mimetype = 'image/png' 
+
+        return response
+    except Exception as e:
+        print(e)
+        return 'Internal Server Error', 500
+    
+
+
+@app_ui.route('/competition/<competitionid>/qrcode', methods=['GET'])
+def competition_qr(competitionid):
+    try:
+         # Construct the URL
+        base_url = request.url_root
+        url = f"{base_url}competition/{competitionid}/"
+
+        #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+        name = "Competition ABC"
+
+        img = qrcode.make('''
+        BEGIN:VCALENDAR
+        VERSION:1.0
+        BEGIN:VEVENT
+        SUMMARY:'''+name+'''
+        DTSTART;TZID=America/New_York:20230420T120000
+        DURATION:PT1H
+        LOCATION:Meeting Room 1
+        END:VEVENT
+        END:VCALENDAR
+        ''')
+        type(img)
+        #img.save("vcal.png")
+
+        #img_1 = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer())
+        #img_2 = qr.make_image(image_factory=StyledPilImage, color_mask=RadialGradiantColorMask())
+        #img_1 = qr.make_image(image_factory=StyledPilImage, embeded_image_path="public/images/favicon.png")
+
+        #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, image_factory=StyledPilImage)
+        #qr.add_data('Some data')
+
+        #img = qrcode.make(url)
+        #img = qr.make_image(embeded_image_path="images/fsgt-logo-me.png")
+        
         buffer = io.BytesIO()
         img.save(buffer)
         buffer.seek(0)
@@ -2367,3 +2467,4 @@ def qr():
     except Exception as e:
         print(e)
         return 'Internal Server Error', 500
+    
