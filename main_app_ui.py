@@ -2391,7 +2391,7 @@ def gym_qr(gymid):
     try:
          # Construct the URL
         base_url = request.url_root
-        url = f"{base_url}gym/{gymid}"
+        url = f"{base_url}gyms/{gymid}"
 
         qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
         qr.add_data(url)
