@@ -681,6 +681,11 @@ def getCompetitionDashboard():
 @skala_api_app.route('/competition/<competition_id>')
 def get_competition_by_id(competition_id):
     competition = competitionsEngine.getCompetition(competition_id)
+    
+    for climber in competition.get('climbers').values():
+        climber.pop('email', None)
+
+
     if competition is None:
         return {"error": "competition not found"}
     return competition
@@ -2102,3 +2107,5 @@ def image_route(img_id):
     #return send_file(bytes_io, mimetype='image/png')
 
     return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)
+
+
