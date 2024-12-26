@@ -2434,7 +2434,7 @@ def competition_qr(competitionid):
         
         # Construct the URL
         base_url = request.url_root
-        url = f"{base_url}competition/{competitionid}/"
+        url = f"{base_url}competitionDetails/{competitionid}"
 
         # Create vCalendar text
         vcalendar_text = f'''
