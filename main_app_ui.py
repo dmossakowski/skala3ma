@@ -2424,26 +2424,33 @@ def gym_qr(gymid):
 @app_ui.route('/competition/<competitionid>/qrcode', methods=['GET'])
 def competition_qr(competitionid):
     try:
+        comp = competitionsEngine.getCompetition(competitionid)
          # Construct the URL
+        # Extract competition details
+        comp_id = comp['id']
+        comp_name = comp['name']
+        comp_date = comp['date']
+        comp_gym = comp['gym']
+        
+        # Construct the URL
         base_url = request.url_root
         url = f"{base_url}competition/{competitionid}/"
 
-        #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
-        name = "Competition ABC"
-
-        img = qrcode.make('''
-        BEGIN:VCALENDAR
-        VERSION:1.0
-        BEGIN:VEVENT
-        SUMMARY:'''+name+'''
-        DTSTART;TZID=America/New_York:20230420T120000
-        DURATION:PT1H
-        LOCATION:Meeting Room 1
-        END:VEVENT
-        END:VCALENDAR
-        ''')
-        type(img)
-        #img.save("vcal.png")
+        # Create vCalendar text
+        vcalendar_text = f'''
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Your Organization//Your Product//EN
+BEGIN:VEVENT
+UID:{comp_id}
+DTSTAMP:{comp_date.replace("-", "")}T120000Z
+DTSTART;TZID=Europe/Paris:{comp_date.replace("-", "")}T120000
+SUMMARY:{comp_name}
+LOCATION:{comp_gym}
+DESCRIPTION: {url}
+END:VEVENT
+END:VCALENDAR
+        '''.strip()
 
         #img_1 = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer())
         #img_2 = qr.make_image(image_factory=StyledPilImage, color_mask=RadialGradiantColorMask())
@@ -2455,9 +2462,15 @@ def competition_qr(competitionid):
         #img = qrcode.make(url)
         #img = qr.make_image(embeded_image_path="images/fsgt-logo-me.png")
         
+        # Generate QR code
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+        qr.add_data(vcalendar_text)
+        img = qr.make_image()
+
         buffer = io.BytesIO()
         img.save(buffer)
         buffer.seek(0)
+
 
         response = make_response(buffer.getvalue())
         #response.headers['Content-Disposition'] = 'attachment; filename=qr-code.png'

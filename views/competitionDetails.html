@@ -16,30 +16,39 @@
 		{% include "competition-menu.html" %}
 
 		<div class="container-fluid">	
-            <div class="h-100 p-5 bg-light border rounded-3 text-center">
-                <h1 class="display-5 fw-medium">{{competition['name'] }} </h1>
-                <h2 class="display-8 fw-medium">{{ competition['gym']}} - {{ competition['date']}}</h2>
+            <div class="text-center heading-section">
+
+
+                <br>
+                <h3>
+                        {{competition['name'] }} - {{ competition['date']}}</h3>
              
-                </div>	
+                </div>
+
             <div class="row align-items-md-stretch">	
            
-    
                 <div class="row align-items-md-stretch">	
                     <div class="col">
                         <div class="row">
                             <!-- Image Column -->
-                            <div class="col-md-6 text-center"><br><br>
+                            <div class="col-md-6 text-center">
                                 <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}" width="65%" class=""><br><br>
-                                <!--img src="/competition/{{ competition['id'] }}/qrcode"><br><br-->
+                               
                             </div>
                             <!-- Instructions Column -->
-                            <div class="col-md-6">
-                               
-                                <div class="p-3">
-                                    <pre style="font-family: Arial, Helvetica, sans-serif">{{ competition['instructions'] }}
-                                    </pre>
-                                </div>
+                            <div class="col-md-6 text-center">
+                                <img src="/competition/{{ competition['id'] }}/qrcode" width="400"><br><br>
+                                
                             </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-2">   </div>
+                            <div class="col">
+                                    
+                                <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap;">{{ competition['instructions'] }}
+                                </pre>
+                            </div>
+                            <div class="col-2">   </div>
                         </div>
                     </div>
                 </div>
