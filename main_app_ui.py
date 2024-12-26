@@ -2448,6 +2448,7 @@ DTSTART;TZID=Europe/Paris:{comp_date.replace("-", "")}T120000
 SUMMARY:{comp_name}
 LOCATION:{comp_gym}
 DESCRIPTION: {url}
+URL:{url}
 END:VEVENT
 END:VCALENDAR
         '''.strip()
