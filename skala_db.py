@@ -174,6 +174,7 @@ def _add_competition(compId, competition):
 
 
 #internal method.. not locked!!!
+# used when saving competiton details in admin
 def _update_competition(compId, competition):
 
     if compId is None:
