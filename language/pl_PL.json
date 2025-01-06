@@ -203,6 +203,8 @@
   "routes_deleted": "Drogi usunięte",
   "routes_copied": "Drogi skopiowane",
   "saved": "Zapisane",
+  "your_route_count": "Twoje drogi",
+  "average_route_count": "Średnia drog",
   
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",

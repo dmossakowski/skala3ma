@@ -38,7 +38,7 @@ import skala_db
 from io import BytesIO
 
 from flask import send_file
-
+from collections import defaultdict
 #import Activity
 
 #from flask_openapi3 import APIBlueprint, OpenAPI, Tag
@@ -378,15 +378,44 @@ def get_activities():
     user = competitionsEngine.get_user_by_email(session['email'])
     activitiesA = activities_db.get_activities(user.get('id'))
 
+    allActivities = activities_db.get_activities_all_anonymous()
+
     activities = {}
     activities['activities'] = activitiesA
 
-    newactivities = calculate_activities_stats(activitiesA)
-    activities['stats'] = newactivities
+    avg_stats = []
+    user_stats = []
+    user_activities_stats = calculate_activities_stats(activitiesA)
+    all_activities_stats = calculate_activities_stats(allActivities)
+
+    combined_dates = sorted(set(user_activities_stats['dates'] + all_activities_stats['dates']), reverse=False)
+
+    # Limit the combined_dates list to only the last 26 items
+    combined_dates = combined_dates[-25:]
+
+    # Create a dictionary for all_activities_stats for quick lookups
+    all_activities_dict = {date: count for date, count in zip(all_activities_stats['dates'], all_activities_stats['routes_done'])}
+
+    # Loop through user_activities_stats and check if the date exists in all_activities_stats
+    for date in combined_dates:
+        if date in all_activities_dict:
+            avg_stats.append(all_activities_dict[date])
+        else:
+            avg_stats.append(0)
+        if date in user_activities_stats['dates']:
+            user_stats.append(user_activities_stats['routes_done'][user_activities_stats['dates'].index(date)])
+        else:
+            user_stats.append(0)
+
+    activities['stats'] = {}
+    activities['stats']['dates'] = combined_dates
+    activities['stats']['routes_done'] = user_stats
+    activities['stats']['routes_avg'] = avg_stats
     return json.dumps(activities)
 
 
-def calculate_activities_stats(activities):
+#calculates number of routes done per day
+def calculate_activities_stats_per_day(activities):
     # Get today's date
     today = datetime.today().date()
     stats  = {}
@@ -409,6 +438,41 @@ def calculate_activities_stats(activities):
     stats['routes_done'] = routes_done_list
 
     return stats
+
+# calculates number of activities per day
+def calculate_activities_stats(activities):
+    # Initialize a dictionary to store the count of routes done per week
+    weekly_stats = defaultdict(int)
+
+    for activity in activities:
+        # Parse the date of the activity
+        activity_date = datetime.strptime(activity['date'], '%Y-%m-%d')
+        
+        # Find the Monday of the week for the activity date
+        start_of_week = activity_date - timedelta(days=activity_date.weekday())
+        
+        # Increment the count of routes done for that week
+        weekly_stats[start_of_week] += len(activity['routes'])
+
+    # Convert the weekly_stats dictionary to a sorted list of tuples
+    sorted_weekly_stats = sorted(weekly_stats.items())
+
+    # Initialize the result dictionary with dates and routes_done lists
+    result = {'dates': [], 'routes_done': []}
+
+    # Populate the result dictionary
+    for week_start, count in sorted_weekly_stats:
+        result['dates'].append(week_start.strftime('%Y-%m-%d'))
+        result['routes_done'].append(count)
+
+    return result
+
+
+@skala_api_app.get('/activities/all')
+def get_activities_all():
+    activities = activities_db.get_activities_all_anonymous()
+    #return json.dumps(activities)
+    return activities
 
 
 @skala_api_app.post('/activity')
@@ -436,7 +500,6 @@ def journey_add():
     
     #journeys = activities_db.get_activities(user.get('id'))
     return json.dumps(activity)
-
 
 
 @skala_api_app.delete('/activity/<activity_id>')
@@ -1672,7 +1735,7 @@ def gym_by_id_route(gymid, routesid):
     gym = competitionsEngine.get_gym(gymid)
     routes = competitionsEngine.get_routes(routesid)
 
-    activities = activities_db.get_activities_by_gym_id(gymid)
+    activities = activities_db.get_activity_routes_by_gym_id(gymid)
     route_map = {}
     route_counts = {}
     total_routes = len(set(activity['route_id'] for activity in activities))
@@ -1726,11 +1789,11 @@ def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
     gym = competitionsEngine.get_gym(gymid)
     routes = competitionsEngine.get_routes(routesid)
 
-    activities = activities_db.get_activities_by_gym_id(gymid)
+    activities = activities_db.get_activity_routes_by_gym_id(gymid)
 
     #routes2 = activitiy_engine.enhance_routes(routes)
     #routes2 = activitiy_engine.enhance_routes(routes)
-    #routs2 = get_activities_by_gym_id(gymid)
+    #routs2 = get_activity_routes_by_gym_id(gymid)
 
 
 
@@ -1870,9 +1933,9 @@ def route_rating(gymid, routesid):
 
 
 @skala_api_app.route('/activity/gym/<gym_id>', methods=['GET'])
-def get_activities_by_gym_id(gym_id):
+def get_activity_routes_by_gym_id(gym_id):
     # Assuming activities is a list of all activities
-    activities = activities_db.get_activities_by_gym_id(gym_id)
+    activities = activities_db.get_activity_routes_by_gym_id(gym_id)
 
     # List to store matching session entries
     matching_entries = []

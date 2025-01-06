@@ -741,6 +741,9 @@ def init():
                 elif user.get('club') == 'US Fontenay' or user.get('club') == 'USF Escalade':
                     user['gymid'] = '1a088f939d1b4a82a359bda05fed0f24'
                     skala_db.upsert_user(user)
+                elif user.get('club') == 'CPS 10 - Faites le mur':
+                    user['gymid'] = '20605d959edc4bee8a212935973590e4'
+                    skala_db.upsert_user(user)
                 else:    
                     logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
             

@@ -226,14 +226,15 @@ function loadLanguagePack(force = false) {
         const storedTimestamp = localStorage.getItem('translations-timestamp');
         const currentTime = new Date().getTime();
         const threeHoursInMillis = 3 * 60 * 60 * 1000;
+        const difference = currentTime - new Date(storedTimestamp).getTime()
 
-        if (!storedTimestamp || (currentTime - new Date(storedTimestamp).getTime()) > threeHoursInMillis) {
+        if (!storedTimestamp || difference > threeHoursInMillis) {
             force = true;   
         }
 
         if (storedTranslations && !force) {
             translations = JSON.parse(storedTranslations);
-            //console.log('Language pack loaded from local storage:', translations['routes_saved']);
+            //console.log('Language pack loaded from local storage:', translations['your_route_count'], difference);
             resolve();
         } else {
             // Fetch the language pack from the API
@@ -255,22 +256,25 @@ function loadLanguagePack(force = false) {
     });
 }
 
+
 // Function to replace translations in the DOM
 function replaceTranslations() {
     document.querySelectorAll('[data-translate-key]').forEach(element => {
         const key = element.getAttribute('data-translate-key');
         element.innerHTML = translations[key] || key;
     });
+
+    
 }
 
 function getTranslation(key) {
-    console.log('getTranslation:', key);
+    //console.log('getTranslation:', key);
 
     t1 = JSON.parse(localStorage.getItem('translations'));
     //key='name'
     //console.log('t1:', t1);
-    console.log('t1:', t1[key]);
-    console.log('t2:', translations[key]);
+    //console.log('t1:', t1[key]);
+    //console.log('t2:', translations[key]);
 
     return translations[key] || key;
 }
