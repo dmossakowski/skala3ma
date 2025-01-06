@@ -190,7 +190,7 @@ def get_activities_by_routes_id(routes_id):
         sql_lock.release()
 
 
-def get_activities_by_gym_id(gym_id):
+def get_activity_routes_by_gym_id(gym_id):
     try:
         sql_lock.acquire()
 
@@ -214,6 +214,55 @@ def get_activities_by_gym_id(gym_id):
         db.close()
         sql_lock.release()
 
+
+def get_activities_by_gym_id(gym_id):
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        # Query to retrieve activities that contain the given route_id
+        cursor.execute(f"SELECT jsondata FROM {activities_TABLE} WHERE gym_id = ?", [str(gym_id)])
+        rows = cursor.fetchall()
+
+        matching_entries = []
+
+        for row in rows:
+            activity = json.loads(row[0])
+            matching_entries.append(activity)
+
+        return matching_entries
+
+    finally:
+        db.close()
+        sql_lock.release()
+
+
+def get_activities_all_anonymous():
+    try:
+        sql_lock.acquire()
+
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+
+        # Query to retrieve activities that contain the given route_id
+        cursor.execute(f"SELECT jsondata FROM {activities_TABLE} order by added_at desc")
+        rows = cursor.fetchall()
+
+        matching_entries = []
+
+        for row in rows:
+            activity = json.loads(row[0])
+            activity.pop('user_id')
+            activity.pop('name')
+            matching_entries.append(activity)
+
+        return matching_entries
+
+    finally:
+        db.close()
+        sql_lock.release()
 
 
 def _add_activity(activity_id, user_id, gym_id, routes_id, date, jsondata):

@@ -195,6 +195,9 @@
   "routes_deleted": "Routes deleted",
   "routes_copied": "Routes copied",
   "saved": "Saved",
+  "your_route_count": "Your routes done",
+  "average_route_count": "Average routes done",
+
 
   
   "error5314": "Updating routes is not permitted for this user",

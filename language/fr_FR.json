@@ -199,6 +199,8 @@
   "routes_deleted": "Voies supprimées",
   "routes_copied": "Voies copiées",
   "saved": "Sauvegardé",
+  "your_route_count": "Vos voies grimpées",
+  "average_route_count": "Moyenne des voies grimpées",
 
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",

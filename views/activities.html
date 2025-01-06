@@ -424,10 +424,15 @@ function addActivityEntry(text)
     {
         dateChartOptions = {
           series: [{
-          name: '',
+          name: 'your_route_count',
           data: [
             ]
-        }],
+        },{
+          name: 'average_route_count',
+          data: [
+            ]
+        }
+    ],
           chart: {
           type: 'bar',
           height: 280
@@ -457,7 +462,7 @@ function addActivityEntry(text)
           labels: {
             show: true,
             formatter: function (val) {
-              return val + "";
+              return val + " oo ";
             }
           }
         },
@@ -467,8 +472,11 @@ function addActivityEntry(text)
         tooltip: {
           y: {
             formatter: function (val) {
-              return "" + val + ""
-            }
+              return "" + getTranslation(val) 
+            },
+            title: {
+              formatter: (seriesName) => getTranslation(seriesName),
+          },
           }
         },
         labels: {
@@ -476,9 +484,17 @@ function addActivityEntry(text)
             formatter: function (val) {
               return val + "%";
             }
-          }
+          },
+          
+        legend: {
+          position: 'bottom',
+          horizontalAlign: 'center',
+          offsetX: 40,
+          formatter: function( val) {
+            return getTranslation(val) + " "
+            }
+        }
         };
-
         //var datesChart = new ApexCharts(document.getElementById("activitychart"), dateChartOptions);
         //datesChart.render()
     }
@@ -497,6 +513,7 @@ function addActivityEntry(text)
         //dateChartOptions.series[0].data[0].y=stats['dates']        
 
         dateChartOptions.series[0].data= stats['routes_done']
+        dateChartOptions.series[1].data= stats['routes_avg']
         dateChartOptions.xaxis.categories= stats['dates']
         dateChartOptions.xaxis.tickAmount = 5
         dateChartOptions.xaxis.labels = {

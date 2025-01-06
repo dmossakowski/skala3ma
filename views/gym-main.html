@@ -820,8 +820,34 @@
                         var user = data[i];
                         var userDiv = document.createElement('div');
                         // set class col on userDiv
-                        userDiv.className = 'd-inline-flex focus-ring py-1 ms-1 mb-1 px-2 text-decoration-none border rounded-2';
-                        userDiv.innerHTML = user['firstname']+'  &nbsp;';
+                        userDiv.className = 'd-inline-flex text-secondary focus-ring py-1 ms-1 mb-1 px-2 text-decoration-none border rounded-2';
+                        // Check if the user has permission for the given gym
+                        //console.log(gymid);
+                        //console.log(user);
+                        var hasPermission = user.permissions && user.permissions.gyms.includes(gymid);
+                        var userName = user.firstname;
+                        if (hasPermission) {
+                            //userName = ' <i class="bi bi-person-gear"></i> &nbsp;'+userName; // Add a star next to the name
+                            //userName = ' <i class="bi bi-balloon"></i> &nbsp;'+userName; // Add a star next to the name
+                            //userName = ' <i class="bi bi-diamond"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-disc"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-flower3"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-hammer"></i> &nbsp;'+userName; 
+                            userName = ' <i class="icon-wrench"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-info"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-lightbulb"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-nut"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-pencil"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-shield-lock"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-signpost"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-sliders"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-tools"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-wrench-adjustable"></i> &nbsp;'+userName; 
+                            //userName = ' <i class="bi bi-wrench"></i> &nbsp;'+userName; 
+                            
+
+                        }
+                        userDiv.innerHTML = userName+'  &nbsp;';
                         // add pictureurl from user to div as an image
                         var img = document.createElement('img');
                         img.src = user['pictureurl'];
