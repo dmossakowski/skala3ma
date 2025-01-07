@@ -375,6 +375,36 @@ function showModal() {
             //responsiveLayout:"fitColumns",
             //movableColumns: true, 
             responsiveLayoutCollapseStartOpen:false,
+            groupBy: "line",
+            groupToggleElement:"header",
+            groupStartOpen:false,
+            //groupBy:"routenum",
+            //groupStartOpen:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
+
+                //return false; //all groups with more than three rows start open, any with three or less start closed
+            //},
+            groupHeader:function(value, count, data, group){
+                //value - the value all members of this group share
+                //count - the number of rows in this group
+                //data - an array of all the row data objects in this group
+                //group - the group component for the group
+                colorDivs = "";
+                // Loop over the data array
+                for (let i = 0; i < count; i++) {
+                    // Concatenate the result of getColorSVGDiv to colorDivs
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '20px')+
+                    ` &nbsp;&nbsp;&nbsp;`;
+                }
+                // Wrap the colorDivs in an encompassing div with flexbox styling
+                const encompassingDiv = `<div style="display: flex; gap: 3px;">${colorDivs}</div>`;
+
+                return "<span style='font-size: 1.0rem'> {{reference_data['current_language'].line}}   " +value +
+                    encompassingDiv+ "</span>";
+            },
             formatter:"responsiveCollapse", headerSort:true,
             rowFormatter:function(row){
             if(row.getData().line % 2 == 0){

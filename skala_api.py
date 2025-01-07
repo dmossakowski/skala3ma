@@ -745,6 +745,9 @@ def getCompetitionDashboard():
 def get_competition_by_id(competition_id):
     competition = competitionsEngine.getCompetition(competition_id)
     
+    if competition is None:
+        return {}
+
     for climber in competition.get('climbers').values():
         climber.pop('email', None)
 
