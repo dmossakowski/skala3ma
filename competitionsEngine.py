@@ -909,7 +909,7 @@ def get_competitions_by_year(year):
 
     return dict(sorted(competitions2.items(),
                          key=lambda x: x[1]['date'],
-                         reverse=True))
+                         reverse=False))
 
 
 def get_active_competitions():
