@@ -47,6 +47,7 @@ import logging
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 GODMODE = os.getenv('GODMODE') == "true"
 
+
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
 
@@ -157,7 +158,7 @@ reference_data = {"categories":categories, "categories_ado":categories_ado,
                   "competition_types":competition_types, "gym_status":gym_status}
 
 # called from main_app_ui
-def addCompetition(compId, name, date, routesid, max_participants, competition_type, instructions):
+def addCompetition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -184,7 +185,8 @@ def addCompetition(compId, name, date, routesid, max_participants, competition_t
                    "competition_type":competition_type,
                    "status" : competition_status_created,
                    "routes": routes.get('routes'),
-                   "instructions": instructions}
+                   "instructions": instructions,
+                   "added_by": added_by}
     # write this competition to db
     skala_db._add_competition(compId, competition);
 
@@ -1560,10 +1562,6 @@ def upsert_routes(routesid, gym_id, routes):
         db.close()
         sql_lock.release()
         logging.info("done with routes :"+str(routesid))
-
-
-
-
 
 
 

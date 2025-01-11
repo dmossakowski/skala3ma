@@ -79,6 +79,33 @@
 
 
     <br><br>
+
+    <div class="card mb-3 border-dark">
+    <div class="card-body">
+	<label for="email">{{ reference_data['current_language'].send_email_to_participants }}
+
+    <br><br>
+   
+	<div class="col-md-6">
+        <div class="form-floating mb-3">
+            <textarea style="height: 330px;" class="form-control" id="email_content" name="email_content" placeholder="Message" rows="20" cols="300" maxlength="2000">{{ competition['instructions'] }}</textarea>
+            <label for="email_content">{{ reference_data['current_language'].email }}</label>
+        </div>
+    </div>
+    </div>
+    <div class="card-footer">
+	<button name="email_sending_button" value="email_sending_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].send_it}}</button>
+  	
+</div>
+</div>
+
+<br><br>
+
+
+
+
+
+
     <div class="card mb-3 border-dark">
         <div class="card-body">
             <!-- Input field for look-ahead search -->

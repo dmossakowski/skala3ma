@@ -58,7 +58,15 @@ import logging
 
 from main_app_ui import app_ui, languages
 from skala_api import skala_api_app
+
 import competitionsEngine
+
+from src.email_sender import EmailSender
+
+# Initialize EmailSender with necessary configurations
+email_sender = EmailSender(
+    reference_data=competitionsEngine.reference_data
+)
 #import locale
 import glob
 from flask import Flask
@@ -680,7 +688,9 @@ def register():
                                email=email)
 
     if user is not None and user.get('is_confirmed') == True:
-        send_password_reset_email(email)
+        token = generate_token(email)
+        confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
+        email_sender.send_password_reset_email(email, confirm_url)
         return render_template('competitionLogin.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Link_to_reset_password_sent_to_email'))
@@ -747,59 +757,12 @@ def change_password():
                            error=get_translation('Please_login_again_with_your_new_password'),
                            email=email)
     
-   
 
 def send_registration_email(email):
     token = generate_token(email)
     confirm_url = url_for('confirm_email', type='register', token=token, _external=True)
-  
-    email_subject = competitionsEngine.reference_data['current_language']['registration_email_subject']
-    email_text = render_template('registration-email.html', 
-                                 reference_data=competitionsEngine.reference_data,
-                                 confirm_url=confirm_url,
-                                 email=email)
-    
-    ret = requests.post(
-        "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
-        auth=("api", SMTP_API_KEY),
-        data={"from": "SKALA3MA Admin <do-not-reply@skala3ma.com>",
-            "to": [email],
-            "subject": email_subject,
-            "text": "Thanks for registering. Copy and paste this link in your browser: "+confirm_url+"" ,
-            "html": email_text
-            })
-            
-    return 'mail sent'+ret.reason+' '+ret.text
-
-
-def send_password_reset_email(email):
-    token = generate_token(email)
-    confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
-    email_subject = competitionsEngine.reference_data['current_language']['reset_password_email_subject']
-    email_link_text = competitionsEngine.reference_data['current_language']['reset_password_email_text1']
-    
-    email_text = """<img src='https://skala3ma.com/public/images/favicon.png' width="35">
-            <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
-
-            <br><br>
-            <a href='"""+confirm_url+"""'>
-            """+email_link_text+"""
-           </a>.
-            <br><br> 
-    """
-
-    ret = requests.post(
-        "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
-        auth=("api", SMTP_API_KEY),
-        data={"from": "SKALA3MA <do-not-reply@skala3ma.com>",
-            "to": [email],
-            "subject": email_subject,
-            "text": "Need to test this new account registration email "+confirm_url+" ",
-            "html": email_text
-            })
-    
-    return 'mail sent'+ret.reason+' '+ret.text
-    #return confirm_url
+    ret = email_sender.send_registration_email(email, confirm_url)
+    return 'mail sent'+ret
 
 
 def generate_token(email):
@@ -849,9 +812,6 @@ def confirm_email(type, token):
     return render_template('change_password.html',
                            reference_data=competitionsEngine.reference_data,
                            error=None,)
-
-
-
 
 
 def after_login(user, email):

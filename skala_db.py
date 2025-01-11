@@ -506,6 +506,9 @@ def has_permission_for_gym(gym_id, user):
     return gym_id in permissions['gyms'] or permissions['godmode'] == True
 
 
+# Add general permission if it already doesn't exist
+# user is a user dictionary
+# permission is a string
 def add_user_permission(user, permission):
     try:
         sql_lock.acquire()

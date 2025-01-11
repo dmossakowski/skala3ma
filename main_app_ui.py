@@ -29,6 +29,7 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from qrcode.image.styles.colormasks import RadialGradiantColorMask
   
+import skala_db
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, \
     jsonify, Response, \
@@ -64,6 +65,14 @@ from authlib.integrations.flask_client import OAuthError
 import activities_db as activities_db
 #from flask_openapi3 import Info, Tag, APIBlueprint
 #from flask_openapi3 import OpenAPI
+
+from src.email_sender import EmailSender
+
+# Initialize EmailSender with necessary configurations
+email_sender = EmailSender(
+    reference_data=competitionsEngine.reference_data
+)
+
 
 languages = {}
 
@@ -360,11 +369,12 @@ def competition_admin_post(competition_id):
     max_participants = request.form.get('max_participants')
     # get climber id in competition admin table (not none when a change is saved)
     climber_id = request.form.get('update_climber')
-
+    email_content = request.form.get('email_content')
 
     competition_update_button = request.form.get('competition_update_button')
     delete_competition_button = request.form.get('delete_competition_button')
     change_poster_button = request.form.get('change_poster_button')
+    email_sending_button = request.form.get('email_sending_button')
 
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -400,8 +410,6 @@ def competition_admin_post(competition_id):
         session["wants_url"] = request.url
         return redirect(url_for("app_ui.fsgtlogin"))
 
-
-    
     
     # add this competition to another user's permissions
     # remove this competition from another users permissions
@@ -463,16 +471,29 @@ def competition_admin_post(competition_id):
             competitionsEngine.delete_competition(competition['id'])
             return redirect(f'/competitionDashboard')
 
-
     if change_poster_button is not None and imgfilename is not None:
         competitionsEngine.update_competition(competition['id'], competition)
 
-
+    if email_sending_button is not None:
+        if email_content is not None:
+            print("email_content: " + email_content)
+            for climber_id in competition['climbers']:
+                email_to = competition['climbers'][climber_id]['email']
+                #print("sending email to: " + email_to)
+                competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
+                email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
+            users= skala_db.get_users_by_gym_id(competition['gym_id'])
+            for user in users:
+                if user.get('permissions') is None or user.get('permissions').get('competitions') is None:
+                    continue 
+                if competition['id'] in user['permissions']['competitions']:
+                    email_to = user['email']
+                    competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
+                    email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
+            
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
             
-
-
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
                            user=user,
@@ -824,8 +845,9 @@ def new_competition_post():
     if user is None or not competitionsEngine.can_create_competition(user):
         return redirect(url_for('app_ui.fsgtlogin', competitionId=competitionId))
 
+    added_by = user['id']
     if name is not None and date is not None and routesid is not None and max_participants is not None:
-        competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
+        competitionId = competitionsEngine.addCompetition(None, added_by, name, date, routesid, max_participants,
                                                           competition_type=competition_type, instructions=instructions)
         # now if an image was provided, save it under the competition id
         # there is only one main image allowed per competition for now

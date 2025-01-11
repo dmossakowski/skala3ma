@@ -201,7 +201,12 @@
   "saved": "Sauvegardé",
   "your_route_count": "Vos voies grimpées",
   "average_route_count": "Moyenne des voies grimpées",
-
+  "send_email_to_participants": "Envoyer un email aux participants",
+  "competition_participants_email0": "Vous recevez cet email parce que vous êtes un participant ou un organisateur de la compétition ",
+  "competition_participants_email1": "Les organisateurs vous ont envoyé le message suivant : ",
+  "competition_participants_email2": "Ne répondez pas à cet email. Si vous avez des questions, veuillez contacter les organisateurs de la compétition.<br> Sportivement, <a href='https://skala3ma.com'>SKALA3MA</a>",
+  
+  
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",

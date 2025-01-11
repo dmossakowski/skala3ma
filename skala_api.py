@@ -304,8 +304,6 @@ def fsgtadmin():
                            id=id)
 
 
-
-
 @skala_api_app.route('/competition_admin/<competition_id>', methods=['POST'])
 @login_required
 def competition_admin_post(competition_id):
