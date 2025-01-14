@@ -290,7 +290,7 @@ function clearTranslations() {
 
      // Function to show a Bootstrap alert 
      // requires a div with the id 'alertPlaceholder' in the HTML
-     function showAlert(message, level) {
+     function showAlert(message, level, timeout=8000) {
         //console.log('showAlert:', message, level);
         const alertPlaceholder = document.getElementById('alertPlaceholder');
         // Create a span for the message
@@ -316,14 +316,14 @@ function clearTranslations() {
         alertPlaceholder.appendChild(alertDiv);
 
         // Automatically remove the alert after 5 seconds
-        if (level === 'success') {
+        if (timeout > 0) {
             setTimeout(() => {
                 alertDiv.classList.remove('show');
                 alertDiv.classList.add('fade');
                 setTimeout(() => {
                     alertDiv.remove();
                 }, 150); // Allow time for the fade-out transition
-            }, 5000);
+            }, 8000);
         }
     }
 

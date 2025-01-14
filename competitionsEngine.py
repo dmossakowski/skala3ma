@@ -14,6 +14,7 @@
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import base64
 import json
 import os
 import glob
@@ -43,6 +44,7 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
 
 from functools import lru_cache, reduce
 import logging
+
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 GODMODE = os.getenv('GODMODE') == "true"
@@ -156,6 +158,15 @@ reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
                   "competition_types":competition_types, "gym_status":gym_status}
+
+
+from src.email_sender import EmailSender
+
+# Initialize EmailSender with necessary configurations
+email_sender = EmailSender(
+    reference_data=reference_data
+)
+
 
 # called from main_app_ui
 def addCompetition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions):
@@ -1564,8 +1575,35 @@ def upsert_routes(routesid, gym_id, routes):
         logging.info("done with routes :"+str(routesid))
 
 
-
-
+def send_email_to_participants(competition, sent_by, email_content):
+    recipientCount=0
+    if email_content is not None and len(email_content) > 10:
+        #print("email_content: " + email_content)
+        for climber_id in competition['climbers']:
+            email_to = competition['climbers'][climber_id]['email']
+            #print("sending email to: " + email_to)
+            competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
+            email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
+            recipientCount += 1
+        users= skala_db.get_users_by_gym_id(competition['gym_id'])
+        for user in users:
+            if user.get('permissions') is None or user.get('permissions').get('competitions') is None:
+                continue 
+            if competition['id'] in user['permissions']['competitions']:
+                email_to = user['email']
+                competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
+                email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
+                recipientCount += 1
+        emails = competition.get('emails')
+        if emails is None:
+            emails = []
+        email_content = base64.b64encode(email_content.encode('utf-8')).decode('utf-8')
+        time_sent = (datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
+        email = {'content': email_content, 'recipientCount': recipientCount, 'date': time_sent, 'sent_by': sent_by}
+        emails.append(email)
+        competition['emails'] = emails
+        update_competition(competition['id'], competition)
+    return recipientCount
 
 
 def add_testing_data():

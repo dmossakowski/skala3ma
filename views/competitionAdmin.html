@@ -12,12 +12,28 @@
 {% include "competition-menu.html" %}
 
 <div class="text-center heading-section animate-box">
-						<br>
+    <div id="alertPlaceholder"></div>
+
+
+
+
+{% if resultMessage is not none and  resultMessage|default('')|length > 0 %}
+
+<script> showAlert('{{resultMessage}}', 'success', 0);</script>
+{% endif %}
+
+
+{% if resultError is not none and  resultError|default('')|length > 0 %}
+
+<script> showAlert('{{resultError}}', 'danger', 0);</script>
+{% endif %}		
+
+<br>
 				<h3>{{competition['name'] }} - {{ competition['date']}} <br>
 				{{competition['gym']}}</h3>
 				 	 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
 </div>
-
+<div class=""
 <div class="container-fluid">
 
 {% if competition is not none and competition is not undefined  %}

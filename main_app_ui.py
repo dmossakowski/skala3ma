@@ -405,6 +405,8 @@ def competition_admin_post(competition_id):
 
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competition_id)
+    resultMessage = None
+    resultError = None
 
     if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
         session["wants_url"] = request.url
@@ -420,21 +422,25 @@ def competition_admin_post(competition_id):
         user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_edit_competition(user2)
+        resultMessage= "User added as a competition admin"
 
 
     if permission_scorer_user is not None:
         user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_update_routes(user2)
+        resultMessage= "User added as scorer"
 
 
     if update_status is not None:
         competition['status'] = int(competition_status)
         competitionsEngine.update_competition(competition_id, competition)
+        resultMessage= "Status updated"
 
     if remove_climber is not None:
         competition['climbers'].pop(remove_climber)
         competitionsEngine.update_competition(competition['id'], competition)
+        resultMessage= "Climber removed"
 
     if climber_id is not None:
         competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
@@ -464,7 +470,7 @@ def competition_admin_post(competition_id):
         competition['max_participants']=max_participants
 
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes, instructions)
-
+        resultMessage= "Competition details updated"
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
@@ -473,23 +479,18 @@ def competition_admin_post(competition_id):
 
     if change_poster_button is not None and imgfilename is not None:
         competitionsEngine.update_competition(competition['id'], competition)
+        resultMessage= "Poster updated"
 
     if email_sending_button is not None:
-        if email_content is not None:
+        if email_content is not None and len(email_content) > 20:
             print("email_content: " + email_content)
-            for climber_id in competition['climbers']:
-                email_to = competition['climbers'][climber_id]['email']
-                #print("sending email to: " + email_to)
-                competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
-                email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
-            users= skala_db.get_users_by_gym_id(competition['gym_id'])
-            for user in users:
-                if user.get('permissions') is None or user.get('permissions').get('competitions') is None:
-                    continue 
-                if competition['id'] in user['permissions']['competitions']:
-                    email_to = user['email']
-                    competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
-                    email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
+            recipientCount = competitionsEngine.send_email_to_participants(competition, user['id'], email_content)
+            if recipientCount == 0:
+                resultError = "No valid email addresses found"
+            else:
+                resultMessage = "Email sent to " + str(recipientCount) + " participants"
+        else:
+            resultError = "Email content is empty or too short"
             
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
@@ -502,7 +503,9 @@ def competition_admin_post(competition_id):
                            competitionId=competition_id,
                            all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
-                           id=id)
+                           id=id,
+                           resultMessage=resultMessage,
+                           resultError=resultError)
 
 
 @app_ui.route('/fsgtadmin/<edittype>')
