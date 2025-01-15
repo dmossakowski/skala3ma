@@ -690,7 +690,7 @@ def register():
     if not email:
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Email_is_required'),
+                               error=get_translation('Please_try_again'),
                                email=email,
                                captcha=new_captcha_dict)
     
@@ -702,7 +702,7 @@ def register():
         
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Email_is_required'),
+                               error=get_translation('Please_try_again'),
                                email=email,
                                captcha=new_captcha_dict)
     
@@ -712,6 +712,7 @@ def register():
 
     if user is not None and user.get('is_confirmed') == False:
         send_registration_email(email)
+        log_request_details()
         return render_template('competitionLogin.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Please_check_your_email_for_confirmation_link'),
@@ -721,18 +722,21 @@ def register():
         token = generate_token(email)
         confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
         email_sender.send_password_reset_email(email, confirm_url)
+        log_request_details()
         return render_template('competitionLogin.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Link_to_reset_password_sent_to_email'))
 
     ## send email to confirm registration
     send_registration_email(email)
-
+    log_request_details()
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            error=get_translation('Please_check_your_email_for_confirmation_link'),
                            email=email,
                            captcha=new_captcha_dict)
+
+
 
 
 @app.route('/forgot_password')
@@ -868,6 +872,9 @@ def after_login(user, email):
             #            error=error)
 
 
+def log_request_details():
+    logging.info('Email Sender Request URL: ' + request.url+' Request headers: ' + str(request.headers))
+    logging.info('Email Sender Client IP: ' + request.remote_addr+' Request form data: ' + str(request.form))
 
 
 

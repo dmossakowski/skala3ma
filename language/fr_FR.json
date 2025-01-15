@@ -232,7 +232,7 @@
   "Please_login_first": "Veuillez vous connecter d'abord",
   "Invalid_parameters_passwords_do_not_match_or_password_too_short": "Paramètres invalides, les mots de passe ne correspondent pas ou le mot de passe est trop court",
   "Please_login_again_with_your_new_password": "Veuillez vous reconnecter avec votre nouveau mot de passe",
-  "Please try again": "Veuillez réessayer",
+  "Please_try_again": "On a un probleme.. Veuillez réessayer.",
 
 
   "last": "Last"
