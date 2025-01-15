@@ -2,7 +2,7 @@ import os
 import requests
 from flask import url_for
 from itsdangerous import URLSafeTimedSerializer
-
+import logging
 
 class EmailSender:
     def __init__(self, reference_data):

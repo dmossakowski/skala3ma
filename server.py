@@ -129,7 +129,7 @@ bcrypt = Bcrypt(app)
 
 from flask_simple_captcha import CAPTCHA
 YOUR_CONFIG = {
-    'SECRET_CAPTCHA_KEY': 'LONG_KEY',
+    'SECRET_CAPTCHA_KEY': GOOGLE_CLIENT_SECRET,
     'CAPTCHA_LENGTH': 6,
     'CAPTCHA_DIGITS': False,
     'EXPIRE_SECONDS': 600,
@@ -698,8 +698,7 @@ def register():
     c_hash = request.form.get('captcha-hash')
     c_text = request.form.get('captcha-text')
     if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
-        time.sleep(3)
-        
+        time.sleep(2) # this is to slow down the brute force attack
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Please_try_again'),
