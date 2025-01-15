@@ -197,8 +197,12 @@
   "saved": "Saved",
   "your_route_count": "Your routes done",
   "average_route_count": "Average routes done",
+  "send_email_to_participants": "Send email to participants",
+  "competition_participants_email0": "You are receiving this email because you are a participant or an organizer of the competition ",
+  "competition_participants_email1": "The organizers have sent you the following message:",
+  "competition_participants_email2": "Do not reply to this email. If you have any questions, please contact the competition organizers.<br> Rock on from <a href='https://skala3ma.com'>SKALA3MA</a>",
 
-
+                
   
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
@@ -222,6 +226,7 @@
 "Please_login_first": "Please login first",
 "Invalid_parameters_passwords_do_not_match_or_password_too_short": "Invalid parameters, passwords do not match or password too short",
 "Please_login_again_with_your_new_password": "Please login again with your new password",
+"Please_try_again": "We have a problem.. Please try again.",
 
 
 

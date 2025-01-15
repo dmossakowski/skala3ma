@@ -205,7 +205,13 @@
   "saved": "Zapisane",
   "your_route_count": "Twoje drogi",
   "average_route_count": "Średnia drog",
-  
+  "send_email_to_participants": "Wyślij email do uczestników",
+  "competition_participants_email0": "Otrzymujesz ten email, ponieważ jesteś uczestnikiem/uczestniczką lub organizatorem zawodów ",
+  "competition_participants_email1": "Organizatorzy przesłali Ci następującą wiadomość:",
+  "competition_participants_email2": "Nie odpowiadaj na ten email. Jeśli masz jakiekolwiek pytania, skontaktuj się z organizatorami zawodów.<br> Rura Helmut od <a href='https://skala3ma.com'>SKALA3MA</a>",
+
+
+
   "error5314": "Ten użytkownik nie moze zmieniać dróg",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
@@ -228,6 +234,7 @@
   "Please_login_first": "Proszę najpierw się zalogować",
   "Invalid_parameters_passwords_do_not_match_or_password_too_short": "Nieprawidłowe parametry, hasła nie pasują lub hasło jest za krótkie",
   "Please_login_again_with_your_new_password": "Proszę zalogować się ponownie z nowym hasłem",
+  "Please_try_again": "Mamy problem.. Spróbuj ponownie",
 
 
   "last": "Last"

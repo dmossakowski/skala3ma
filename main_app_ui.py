@@ -29,6 +29,7 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from qrcode.image.styles.colormasks import RadialGradiantColorMask
   
+import skala_db
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, \
     jsonify, Response, \
@@ -64,6 +65,14 @@ from authlib.integrations.flask_client import OAuthError
 import activities_db as activities_db
 #from flask_openapi3 import Info, Tag, APIBlueprint
 #from flask_openapi3 import OpenAPI
+
+from src.email_sender import EmailSender
+
+# Initialize EmailSender with necessary configurations
+email_sender = EmailSender(
+    reference_data=competitionsEngine.reference_data
+)
+
 
 languages = {}
 
@@ -360,11 +369,12 @@ def competition_admin_post(competition_id):
     max_participants = request.form.get('max_participants')
     # get climber id in competition admin table (not none when a change is saved)
     climber_id = request.form.get('update_climber')
-
+    email_content = request.form.get('email_content')
 
     competition_update_button = request.form.get('competition_update_button')
     delete_competition_button = request.form.get('delete_competition_button')
     change_poster_button = request.form.get('change_poster_button')
+    email_sending_button = request.form.get('email_sending_button')
 
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -395,13 +405,13 @@ def competition_admin_post(competition_id):
 
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competition_id)
+    resultMessage = None
+    resultError = None
 
     if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
         session["wants_url"] = request.url
         return redirect(url_for("app_ui.fsgtlogin"))
 
-
-    
     
     # add this competition to another user's permissions
     # remove this competition from another users permissions
@@ -412,21 +422,25 @@ def competition_admin_post(competition_id):
         user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_edit_competition(user2)
+        resultMessage= "User added as a competition admin"
 
 
     if permission_scorer_user is not None:
         user2 = competitionsEngine.get_user(user_id)
         competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
         competitionsEngine.add_user_permission_update_routes(user2)
+        resultMessage= "User added as scorer"
 
 
     if update_status is not None:
         competition['status'] = int(competition_status)
         competitionsEngine.update_competition(competition_id, competition)
+        resultMessage= "Status updated"
 
     if remove_climber is not None:
         competition['climbers'].pop(remove_climber)
         competitionsEngine.update_competition(competition['id'], competition)
+        resultMessage= "Climber removed"
 
     if climber_id is not None:
         competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
@@ -456,23 +470,31 @@ def competition_admin_post(competition_id):
         competition['max_participants']=max_participants
 
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes, instructions)
-
+        resultMessage= "Competition details updated"
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
             competitionsEngine.delete_competition(competition['id'])
             return redirect(f'/competitionDashboard')
 
-
     if change_poster_button is not None and imgfilename is not None:
         competitionsEngine.update_competition(competition['id'], competition)
+        resultMessage= "Poster updated"
 
-
+    if email_sending_button is not None:
+        if email_content is not None and len(email_content) > 20:
+            print("email_content: " + email_content)
+            recipientCount = competitionsEngine.send_email_to_participants(competition, user['id'], email_content)
+            if recipientCount == 0:
+                resultError = "No valid email addresses found"
+            else:
+                resultMessage = "Email sent to " + str(recipientCount) + " participants"
+        else:
+            resultError = "Email content is empty or too short"
+            
     user_list = competitionsEngine.get_all_user_emails()
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
             
-
-
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
                            user=user,
@@ -481,7 +503,9 @@ def competition_admin_post(competition_id):
                            competitionId=competition_id,
                            all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
-                           id=id)
+                           id=id,
+                           resultMessage=resultMessage,
+                           resultError=resultError)
 
 
 @app_ui.route('/fsgtadmin/<edittype>')
@@ -824,8 +848,9 @@ def new_competition_post():
     if user is None or not competitionsEngine.can_create_competition(user):
         return redirect(url_for('app_ui.fsgtlogin', competitionId=competitionId))
 
+    added_by = user['id']
     if name is not None and date is not None and routesid is not None and max_participants is not None:
-        competitionId = competitionsEngine.addCompetition(None, name, date, routesid, max_participants,
+        competitionId = competitionsEngine.addCompetition(None, added_by, name, date, routesid, max_participants,
                                                           competition_type=competition_type, instructions=instructions)
         # now if an image was provided, save it under the competition id
         # there is only one main image allowed per competition for now
