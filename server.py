@@ -47,6 +47,7 @@ from flask import Flask, redirect, url_for, session, Request, request, render_te
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
 
@@ -125,6 +126,17 @@ app.secret_key = 'development'
 oauth = OAuth(app)
 
 bcrypt = Bcrypt(app)
+
+from flask_simple_captcha import CAPTCHA
+YOUR_CONFIG = {
+    'SECRET_CAPTCHA_KEY': 'LONG_KEY',
+    'CAPTCHA_LENGTH': 6,
+    'CAPTCHA_DIGITS': False,
+    'EXPIRE_SECONDS': 600,
+}
+SIMPLE_CAPTCHA = CAPTCHA(config=YOUR_CONFIG)
+app = SIMPLE_CAPTCHA.init_app(app)
+
 
 # Initialize the Limiter
 limiter = Limiter(
@@ -588,7 +600,7 @@ def googleauth_reply():
 # first service to be called
 # if email found and password matches then log the user in
 @app.route('/email_login', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("2 per minute")
 def email_login():
     f = request.form
     #print(request.form)
@@ -660,22 +672,40 @@ def email_login():
 
 @app.route('/register', methods=['GET'])
 def register_with_email():
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    time.sleep(2)
     return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict
                            )
 
 
 # the user wants to register so send the confirmation email
 # or the user needs to reset the password
 @app.route('/register', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("2 per minute")
 def register():
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
     email = request.form.get('email')
     if not email:
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Email_is_required'),
-                               email=email)
+                               email=email,
+                               captcha=new_captcha_dict)
+    
+    
+    c_hash = request.form.get('captcha-hash')
+    c_text = request.form.get('captcha-text')
+    if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
+        time.sleep(3)
+        
+        return render_template('register.html',
+                               reference_data=competitionsEngine.reference_data,
+                               error=get_translation('Email_is_required'),
+                               email=email,
+                               captcha=new_captcha_dict)
+    
     email = email.lower()
     
     user = competitionsEngine.get_user_by_email(email)
@@ -701,7 +731,8 @@ def register():
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            error=get_translation('Please_check_your_email_for_confirmation_link'),
-                           email=email)
+                           email=email,
+                           captcha=new_captcha_dict)
 
 
 @app.route('/forgot_password')
@@ -711,10 +742,11 @@ def forgot_password():
       #                         reference_data=competitionsEngine.reference_data,
        #                        error=get_translation('Login_first_to_change_your_password'),
         #                       email=session.get('email'))
-
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
-                           action='forgot_password')
+                           action='forgot_password',
+                           captcha=new_captcha_dict)
 
 
 # this endpoint only gets two passwords from change_passsword.html
@@ -742,9 +774,11 @@ def change_password():
     user = competitionsEngine.get_user_by_email(email)
 
     if user is None:
+        new_captcha_dict = SIMPLE_CAPTCHA.create()
         return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
-                           error=None)
+                           error=None,
+                           captcha=new_captcha_dict)
     
 
     password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -792,9 +826,11 @@ def confirm_email(type, token):
     email = confirm_token(token)
 
     if email is False:
+        new_captcha_dict = SIMPLE_CAPTCHA.create()
         return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
-                           error='Invalid or expired token. ')
+                           error='Invalid or expired token. ',
+                           captcha=new_captcha_dict)
     
     user = competitionsEngine.get_user_by_email(email)
 
