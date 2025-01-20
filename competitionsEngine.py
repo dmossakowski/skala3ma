@@ -957,7 +957,7 @@ def get_category_from_dob(dob):
         # Calculate the age
         today = datetime.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        print (age)
+        
         # Determine the category based on age
         if 17 <= age <= 49:
             return 0
