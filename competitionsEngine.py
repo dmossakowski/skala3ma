@@ -322,7 +322,7 @@ def getFlatCompetition(competitionId):
 
 
 def getCompetition(competitionId):
-    print("retreiving competition"+str(competitionId))
+    #print("retreiving competition"+str(competitionId))
     return get_competition(competitionId)
  
 
@@ -438,9 +438,8 @@ def recalculate(competitionId, comp=None):
 
 # returns sorted arrays based on rank
 def get_sorted_rankings(competition):
-    if competition['status'] not in [competition_status_closed,
-                                     competition_status_scoring]:
-        return None
+    
+    
     rankings = {}
     rankings['F'] = []
     rankings['M'] = []
@@ -958,7 +957,7 @@ def get_category_from_dob(dob):
         # Calculate the age
         today = datetime.today()
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-
+        
         # Determine the category based on age
         if 17 <= age <= 49:
             return 0

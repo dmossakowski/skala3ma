@@ -859,7 +859,7 @@ def getCompetitionStats(competitionId):
     routesDict = competitionsEngine.get_routes(routesid)
     routes = routesDict['routes']
 
-    rankings = competitionsEngine.get_sorted_rankings(competition)
+    #rankings = competitionsEngine.get_sorted_rankings(competition)
     # we need 6 categories:
     categories = ["F0","F1","F2","M0","M1","M2"]
     #category_names =  [reference_data['current_language'].ranking_diament_women,

@@ -673,7 +673,7 @@ def email_login():
 @app.route('/register', methods=['GET'])
 def register_with_email():
     new_captcha_dict = SIMPLE_CAPTCHA.create()
-    time.sleep(2)
+    time.sleep(1)
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            captcha=new_captcha_dict
@@ -698,7 +698,7 @@ def register():
     c_hash = request.form.get('captcha-hash')
     c_text = request.form.get('captcha-text')
     if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
-        time.sleep(2) # this is to slow down the brute force attack
+        time.sleep(1) # this is to slow down the brute force attack
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Please_try_again'),
