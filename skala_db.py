@@ -371,6 +371,36 @@ def search_all_users(search_string):
     return users
 
 
+
+
+def get_users_with_competition_id(competition_id):
+    # Connect to the database
+    conn = lite.connect(COMPETITIONS_DB)
+    cursor = conn.cursor()
+
+    # Enable the JSON1 extension
+    #conn.enable_load_extension(True)
+    #conn.execute('SELECT load_extension("mod_spatialite")')
+    
+    # Query to retrieve users with the specified competition ID in their permissions
+    query = """
+    SELECT jsondata
+    FROM climbers, json_tree(climbers.jsondata, '$.permissions.competitions')
+    WHERE json_tree.value = ?
+    """
+    cursor.execute(query, (competition_id,))
+    users = cursor.fetchall()
+
+    # List to store users with the specified competition ID in their permissions
+    filtered_users = [json.loads(user[0]) for user in users]
+
+    # Close the database connection
+    conn.close()
+
+    return filtered_users
+
+
+
 def get_all_competition_ids():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()

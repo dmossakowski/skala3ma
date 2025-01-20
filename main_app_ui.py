@@ -1166,10 +1166,8 @@ def get_mygyms():
 def getCompetition(competitionId):
     #competitionId = request.args.get('competitionId')
 
-
-    #   logging.info(session['id']+' competitionId '+competitionId)
-    # r = request
-    # username = request.args.get('username')
+    #comps = skala_db.get_users_with_competition_id(competitionId)
+    #print ('matching users', comps)
 
     competition = None
 
@@ -1239,10 +1237,18 @@ def getCompetitionResults(competitionId):
                                    library={},
                                    **session)
 
+    rankings = None
 
-    rankings = competitionsEngine.get_sorted_rankings(competition)
+    isAdminUser = False
 
+    if session.get('email') is not None: 
+        user = competitionsEngine.get_user_by_email(session.get('email'))
+        if competitionsEngine.has_permission_for_competition(competitionId, user):
+            isAdminUser = True
 
+    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
+                                    competitionsEngine.competition_status_scoring]): 
+        rankings = competitionsEngine.get_sorted_rankings(competition)
 
     return render_template("competitionResults.html", 
                            competitionId=competitionId,
@@ -1276,8 +1282,19 @@ def getCompetitionStats(competitionId):
                                    getPlaylistError="Playlist has no tracks or it was not found",
                                    library={},
                                    **session)
+    rankings = None
 
-    rankings = competitionsEngine.get_sorted_rankings(competition)
+    isAdminUser = False
+    #if skala_api.is_logged_in():
+
+    if session.get('email') is not None: 
+        user = competitionsEngine.get_user_by_email(session.get('email'))
+        if competitionsEngine.has_permission_for_competition(competitionId, user):
+            isAdminUser = True
+
+    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
+                                    competitionsEngine.competition_status_scoring]): 
+        rankings = competitionsEngine.get_sorted_rankings(competition)
 
 
     return render_template("competitionStats.html", competitionId=competitionId,
@@ -2116,7 +2133,7 @@ def downloadRoutesCsv(gym_id, routesid):
 
 
 
-
+# competition tiles
 @app_ui.route('/gyms/<gym_id>/<routesid>/download')
 def downloadRoutes(gym_id, routesid):
 
