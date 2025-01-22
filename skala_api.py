@@ -144,22 +144,19 @@ class Activity1(BaseModel):
     date: datetime
     
 
-
-
-
 # User session management setup
 # https://flask-login.readthedocs.io/en/latest
 
 @skala_api_app.before_request
 def x(*args, **kwargs):
-    logging.debug('api before request '+str(session.get('language'))+ ' accepted languages='+str(request.accept_languages))
+    #logging.debug('api before request '+str(session.get('language'))+ ' accepted languages='+str(request.accept_languages))
     if not session.get('language'):
         #kk = competitionsEngine.supported_languages.keys()
         language = request.accept_languages.best_match(competitionsEngine.supported_languages.keys())
         if language is None:
             language = 'fr_FR'
         session['language'] = language
-    logging.debug ("api setting language to session language="+str(session['language']))
+    #logging.debug ("api setting language to session language="+str(session['language']))
     langpack = competitionsEngine.reference_data['languages'][session['language']]
     competitionsEngine.reference_data['current_language'] = langpack
     
