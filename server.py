@@ -262,13 +262,13 @@ def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
     console = logging.StreamHandler()
     console.setLevel(console_loglevel)
     # set a format which is simpler for console use
-    formatter = logging.Formatter("%(asctime)s %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     console.setFormatter(formatter)
     # add the handler to the root logger
     logging.getLogger('').addHandler(console)
     #global LOG
     #LOG = logging.getLogger(__name__)
-
+    
 
 
 
@@ -547,6 +547,8 @@ def googleauth():
         }
     )
 
+    log_request_details('google auth')
+
     redirect_uri = url_for('googleauth_reply', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
@@ -588,6 +590,8 @@ def googleauth_reply():
     user = competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
     if competitionsEngine.is_god(user) or GODMODE:
         session['godmode'] = True   
+
+    log_request_details('google auth successful '+profile['email'])
 
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
@@ -645,7 +649,7 @@ def email_login():
                                error=error)
     
     if bcrypt.check_password_hash(user.get('password'), password):
-        logging.info('User logged in: '+email)
+        log_request_details('user logged in with password: '+email)
         session['username'] = user.get('email')
         session['email']=user.get('email')
         session['picture']='/public/images/favicon.png'
@@ -659,7 +663,7 @@ def email_login():
         return after_login(user, email)
         
     else:
-        logging.info('User failed login: '+email)
+        log_request_details('User failed login '+email)
         error=get_translation('User_does_not_exist_or_wrong_password')
 
     
@@ -699,6 +703,7 @@ def register():
     c_text = request.form.get('captcha-text')
     if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
         time.sleep(1) # this is to slow down the brute force attack
+        log_request_details('captcha failed '+email)
         return render_template('register.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Please_try_again'),
@@ -711,7 +716,7 @@ def register():
 
     if user is not None and user.get('is_confirmed') == False:
         send_registration_email(email)
-        log_request_details()
+        log_request_details('resending registration email to user already registered but not confirmed '+email)
         return render_template('competitionLogin.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Please_check_your_email_for_confirmation_link'),
@@ -721,14 +726,14 @@ def register():
         token = generate_token(email)
         confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
         email_sender.send_password_reset_email(email, confirm_url)
-        log_request_details()
+        log_request_details("reset password email sent to "+email)
         return render_template('competitionLogin.html',
                                reference_data=competitionsEngine.reference_data,
                                error=get_translation('Link_to_reset_password_sent_to_email'))
 
     ## send email to confirm registration
     send_registration_email(email)
-    log_request_details()
+    log_request_details('sending registration email to '+email)
     return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            error=get_translation('Please_check_your_email_for_confirmation_link'),
@@ -830,6 +835,7 @@ def confirm_email(type, token):
 
     if email is False:
         new_captcha_dict = SIMPLE_CAPTCHA.create()
+        log_request_details('Invalid or expired token '+email)
         return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            error='Invalid or expired token. ',
@@ -838,6 +844,7 @@ def confirm_email(type, token):
     user = competitionsEngine.get_user_by_email(email)
 
     if user is not None and user.get('is_confirmed') == True and type == 'register':
+        log_request_details('user already confirmed, need to login normallly '+email)
         return render_template('competitionLogin.html',
                            reference_data=competitionsEngine.reference_data,
                            error='User already confirmed. Please login. ')
@@ -871,9 +878,9 @@ def after_login(user, email):
             #            error=error)
 
 
-def log_request_details():
-    logging.info('Email Sender Request URL: ' + request.url+' Request headers: ' + str(request.headers))
-    logging.info('Email Sender Client IP: ' + request.remote_addr+' Request form data: ' + str(request.form))
+def log_request_details(msg=''):
+    logging.info('Event: '+msg+' URL: ' + request.url+' headers: ' + str(request.headers) + 
+            ' Client IP: ' + request.remote_addr+' form data: ' + str(request.form))
 
 
 

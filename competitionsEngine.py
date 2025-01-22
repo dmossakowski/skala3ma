@@ -308,7 +308,7 @@ def getClimber(competitionId, climberId):
 
 
 def getFlatCompetition(competitionId):
-    print("retreiving competition" + str(competitionId))
+    print("retreiving flat competition " + str(competitionId))
     competition = get_competition(competitionId)
 
     for climberid in competition['climbers']:
@@ -322,7 +322,7 @@ def getFlatCompetition(competitionId):
 
 
 def getCompetition(competitionId):
-    #print("retreiving competition"+str(competitionId))
+    print("retreiving competition "+str(competitionId))
     return get_competition(competitionId)
  
 
@@ -1139,7 +1139,9 @@ def confirm_user(email):
             _common_user_validation(newuser)
             user = skala_db._add_user(None, email, newuser)
             logging.info('added confirmed user email' + str(email))
-        
+        else:
+            user['is_confirmed'] = True
+            user = skala_db._update_user(user['id'], email, user)
         
             #logging.info('normal user is confirmed ' + str(email))
         return user
