@@ -64,10 +64,12 @@
 	<div style="padding-block: 0px 0px; padding:0px 0px; border: 0px solid rgb(226, 15, 15); float:none; position:relative; display:inline-block">
 
 		{# here we iterate over every item in our list which we will pass from bar() #}
+        {% set routes_per_page = 168 // routes['routes']|length %}
+          
 		 {% for route in routes['routes'] %}
 
 
-		 <div style="border-radius: 15px; margin:4px 4px; padding: 2px 2px; width:80;  float:left; border: 1px solid black; text-align: center;">
+		 <div style="border-radius: 15px; margin:4px 4px; padding: 1px 1px; width:80;  float:left; border: 1px solid black; text-align: center;">
 				
 				<font style="font-size:18px; "><b>{{ route['routenum'] }}</b>  </font>
                 <input type="checkbox" name="route" value="{{ route['routenum'] }}" style="width: 14px; height: 14px; margin: 0px 0px; padding: 0px 0px; border: 0px solid black; text-align: center;">
@@ -84,7 +86,7 @@
 
 	</div>
 </div><br>
-{% if loop.index % 2 == 0 and not loop.last %}
+{% if loop.index % routes_per_page ==0 and not loop.last %}
 <div style="page-break-before: always;"></div>
 {% endif %}
 {% endfor %}
