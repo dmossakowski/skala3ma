@@ -23,12 +23,16 @@
                  
 		
         <br>
+        <table width="100%"><tr><td>
         <h3>{{competition['name'] }} - {{ competition['date']}} <br>
     <span data-translate-key="routes"></span> - </label> {{routesName }}
-    </h3>                      
-        <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1" target="_tab">
-            <i class="icon-grid2 "></i> Competition tiles</a>
+    </h3>           
+    </td><td>           
+        <a href="/gyms/{{gym['id']}}/{{routesid}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1" target="_tab">
+            <img src="/public/images/competition_tiles.png" width="220" height="120" alt="Download competition tiles" title="Download competition tiles">
+            <!--br><i class="icon-grid2 "></i> Competition tiles!--></a>
     
+        </td></tr></table>
     </div>
     </div>
 {% include "component-routes.html" %}

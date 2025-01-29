@@ -167,7 +167,7 @@
          <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
          <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
-<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].email }}</th>
+<th data-field="category">{{ reference_data['current_language'].email }}</th>
 <th data-field="category" data-filter-control="input">{{ reference_data['current_language'].status }}</th>
 			 <th>{{reference_data['current_language'].action}}</th>
          </tr>
@@ -201,7 +201,7 @@
 							size="10" >{{reference_data['categories'][category]}}</option>
 						{% endfor %}
 					</select></td>
-					<td><input type="text" name="email_{{ climberId }}" value="{{ competition['climbers'][climberId]['email'] }}" required></td>
+					<td><input type="text" name="email_{{ climberId }}" value="{{ competition['climbers'][climberId]['email'] }}"></td>
 					{% if (loop.index <= competition['max_participants']|int) %}
 						<td><i>{{ reference_data['current_language'].registered }}</i></td>
 					{% else %}
