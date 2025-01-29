@@ -64,17 +64,19 @@
 	<div style="padding-block: 0px 0px; padding:0px 0px; border: 0px solid rgb(226, 15, 15); float:none; position:relative; display:inline-block">
 
 		{# here we iterate over every item in our list which we will pass from bar() #}
-        {% set routes_per_page = 168 // routes['routes']|length %}
+        {% set routes_per_page = (81*2) // routes['routes']|length %}
           
 		 {% for route in routes['routes'] %}
 
 
-		 <div style="border-radius: 15px; margin:4px 4px; padding: 1px 1px; width:80;  float:left; border: 1px solid black; text-align: center;">
+		 <div style="border-radius: 5px; margin:0px 0px; padding: 1px 1px; width:70;  float:left; border: 1px solid black; text-align: center;">
 				
 				<font style="font-size:18px; "><b>{{ route['routenum'] }}</b>  </font>
+                
+                <img class="svg-img-{{ loop.index }}" width='35px' height='18px' alt="SVG Image"><br>
                 <input type="checkbox" name="route" value="{{ route['routenum'] }}" style="width: 14px; height: 14px; margin: 0px 0px; padding: 0px 0px; border: 0px solid black; text-align: center;">
 
-                <font style="font-size:12px; ">{{ route['grade'] }}</font>
+                <font style="font-size:14px; ">{{ route['grade'] }}&nbsp;</font>
 				
               
 			 <!--i>{{route['grade'] }}</i-->
@@ -97,5 +99,20 @@
 			
 </div>
 			
+<script src="/public/js/skala3ma-utils.js"></script>
+<script>
 
+
+    document.addEventListener("DOMContentLoaded", function() {
+            const routes = {{ routes['routes']|tojson }};
+            routes.forEach((route, index) => {
+                const svgString = getColorSVG(route.color1, route.color_modifier);
+                const encodedSVG = encodeURIComponent(svgString);
+                const imgElements = document.querySelectorAll(`.svg-img-${index + 1}`);
+                imgElements.forEach((imgElement) => {
+                    imgElement.src = `data:image/svg+xml,${encodedSVG}`;
+                });
+            });
+        });
+</script>
 

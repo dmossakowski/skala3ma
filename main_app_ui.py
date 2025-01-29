@@ -2166,7 +2166,7 @@ def downloadRoutes(gym_id, routesid):
     header = routes['routes'][0].copy()
     header.pop('id')
     header.pop('colorfr')
-    header.pop('color_modifier')
+    #header.pop('color_modifier')
     header.pop('opendate')
     header.pop('notes')
     header.pop('openedby')
@@ -2183,7 +2183,7 @@ def downloadRoutes(gym_id, routesid):
     for route in routes['routes']:
         route.pop('id')
         route.pop('colorfr')
-        route.pop('color_modifier')
+        #route.pop('color_modifier')
         route.pop('opendate')
         route.pop('notes')
         route.pop('openedby')
