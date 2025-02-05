@@ -402,6 +402,22 @@ function initializeApp() {
 </nav>
     
 
+<div class="modal fade" id="fullscreenModal" tabindex="-1" role="dialog" aria-labelledby="fullscreenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fullscreenModalLabel"></h5>
+                <!--button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button-->
+            </div>
+            <div class="modal-body text-center" id="fullscreenModalBody">
+                <img src="" class="img-fluid" id="fullscreenModalImage">
+            </div>
+        </div>
+    </div>
+</div>
+
 
 				 {% block topcontent %} {% endblock %}
 
@@ -474,7 +490,46 @@ function initializeApp() {
 
 	</div>
 
+    <script>
 
+
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('fullscreenModal');
+            const modalBody = document.getElementById('fullscreenModalBody');
+            const bootstrapModal = new bootstrap.Modal(modal);
+
+            // Add click event listener to the modal body to dismiss the modal
+            modalBody.addEventListener('click', function() {
+                //const bootstrapModal = new bootstrap.Modal(modal);
+                bootstrapModal.hide();
+                console.log('hide modal in layout')
+                //modal.style.display = 'none';
+            });
+
+            window.showFullscreen = function(url, title) {
+            // Get the existing modal elements
+            const modal = document.getElementById('fullscreenModal');
+            const modalTitle = document.getElementById('fullscreenModalLabel');
+            const modalImage = document.getElementById('fullscreenModalImage');
+        
+            // Set the title and image source
+            modalTitle.textContent = title;
+            modalImage.src = url;
+        
+            // Show the modal using Bootstrap's JavaScript API
+            //const bootstrapModal = new bootstrap.Modal(modal);
+
+            /*modalImage.addEventListener('click', function() {
+                const bootstrapModal = new bootstrap.Modal(modal);
+                bootstrapModal.hide();
+                console.log('hiding modal on image click');
+            });*/
+
+            bootstrapModal.show();
+        }
+        });
+    </script>
 	</body>
 </html>
 
