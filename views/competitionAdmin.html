@@ -44,20 +44,15 @@
     
     <div class="card mb-3 border-dark">
         <div class="card-body">
-  
-	<label for="competition_name">{{ reference_data['current_language'].nazwa }}:</label>
-	<input name="competition_name" size="40" value="{{competition['name']}}" id="competition_name"/>
-	<input name="competition_date" size="30" type="date" id="competition_date" value="{{competition['date']}}"/>
 
-	<select name="competition_routes" id="default_routes">
-		{% for route in all_routes %}
-			<option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == competition['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
-		{% endfor %}
-	</select>
+    <label for="competition_name">{{ reference_data['current_language'].nazwa }}:</label>
+    <input name="competition_name" size="40" value="{{competition['name']}}" id="competition_name"/>
+    <input name="competition_date" size="30" type="date" id="competition_date" value="{{competition['date']}}"/>
+
     <br>
     <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
-	<input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
-	<div class="col-md-6">
+    <input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
+    <div class="col-md-6">
         <div class="form-floating mb-3">
             <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000">{{ competition['instructions'] }}</textarea>
             <label for="topmessage">{{ reference_data['current_language'].Instructions }}:</label>
@@ -65,23 +60,55 @@
     </div>
     </div>
     <div class="card-footer">
-	<button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+    <button name="competition_update_button" value="competition_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
     <button name="delete_competition_button" value="delete_competition_button" class="btn btn-danger btn-sm">{{ reference_data['current_language'].delete_competition}}</button>
-	
+    
 </div>
 </div>
 
 <br><br>
 
+
+
+    
 <div class="card mb-3 border-dark">
     <div class="card-body">
 
-	<label for="competition_status">{{ reference_data['current_language'].competition_status}}:</label>
-	<select name="competition_status" id="competition_status">
-							<option value="choose" size="20" ></option>
 
-		{% for competition_status in reference_data['competition_status'] %}
-							<option value="{{reference_data['competition_status'][competition_status]}}" size="20" >{{ reference_data['current_language']['competition_status_'~loop.index0] }} </option>
+        <label for="competition_routes">{{ reference_data['current_language'].routes}}:</label>
+<select name="competition_routes" id="default_routes">
+    {% for route in all_routes %}
+        <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == competition['routesid'] %} selected {% endif %}  >{{all_routes[route]['name']}} </option>
+    {% endfor %}
+</select>
+<br>
+
+</div>
+<div class="card-footer">
+<button name="competition_routes_update_button" value="competition_routes_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+
+</div>
+</div>
+
+
+<br><br>
+
+
+<div class="card mb-3 border-dark">
+    <div class="card-body">
+
+	<label for="competition_status">{{ reference_data['current_language'].competition_status}}: 
+
+       
+    </label>
+	<select name="competition_status" id="competition_status">
+		<option value="choose" size="20" >--</option>
+
+	{% for competition_status in reference_data['competition_status'] %}
+		<option value="{{reference_data['competition_status'][competition_status]}}" size="20" 
+        {% if reference_data['competition_status'][competition_status] == competition['status'] %} selected {% endif %} >
+        
+        {{ reference_data['current_language']['competition_status_'~loop.index0] }} </option>
 	{% endfor %}
 
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;

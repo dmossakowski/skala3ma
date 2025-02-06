@@ -98,7 +98,7 @@ categories_ado = {0:"Ado 12-13",
 #last 44 
 clubs = {               
     40:"11C+",
-    0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 3:"AS Pierrefitte" ,
+    0:"APACHE" , 111:"Argenteuil Grimpe", 2:"AS Noiseraie Champy" , 
                        4:"ASG Bagnolet"  , 5:"Athletic Club Bobigny", 6:"Au Pied du Mur (APDM)" ,
                        7:"Chelles Grimpe"  , 8:"Cimes 19"  , 9:"CMA Plein Air", 
                        44: "Cordée 13",
@@ -112,6 +112,7 @@ clubs = {
                        14:"ESC 11", 15:"ESC15"   ,16:"Espérance Sportive Stains",
                       17:"Grimpe 13"   ,
                       38:"Grimpe Fertoise Pays de Brie",
+                      3:"Grimpe heureuse de Pierrefitte" ,
                       18:"Grimpe Tremblay Dégaine", 19:"GrimpO6"   ,
                       20:"Groupe Escalade Saint Thibault"  ,
                       21:"Le Mur 20"  ,
@@ -152,7 +153,7 @@ competition_type_ado_fsgt = 1
 
 competition_types = {"adult_fsgt":competition_type_adult_fsgt, "ado_fsgt":competition_type_ado_fsgt}
 
-gym_status = {"created":0, "open":1, "confirmed":2, "contested":3, "defunct":4}
+gym_status = {"created":0, "confirmed":1, "active":3, "inactive":4, "deleted":5}
 
 reference_data = {"categories":categories, "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
@@ -204,30 +205,34 @@ def addCompetition(compId, added_by, name, date, routesid, max_participants, com
     return compId
 
 
-def update_competition_details(competition, name, date, routesid, instructions):
+def update_competition_details(competition, name, date, instructions):
     competition['name']=name
     competition['date'] = date
     competition['instructions'] = instructions
+    skala_db._update_competition(competition['id'], competition)
+    return competition
+    
 
+
+def update_competition_routes(competition, routesid, force=False):
     # only update routes if it is different
-    if competition.get('routes') is None or competition.get('routesid') != routesid:
-        competition['routesid'] = routesid
-        routes = skala_db.get_routes_by_id(routesid)
+    #if competition.get('routes') is None or competition.get('routesid') != routesid:
+    competition['routesid'] = routesid
+    routes = skala_db.get_routes_by_id(routesid)
 
-        if (routes is None or len(routes)==0):
-            logging.error('Routes not found '+str(competition.get('id')))
-            return competition
-            #raise ValueError('Routes not found')
-        
-        competition['routes'] = routes.get('routes')
+    if (routes is None or len(routes)==0):
+        logging.error('Routes not found '+str(competition.get('id')))
+        return competition
+        #raise ValueError('Routes not found')
+    
+    competition['routes'] = routes.get('routes')
 
-        try:
-            setRoutesClimbed2(competition)
-        except:
-            logging.error('error setting routes climbed2')
-            pass
-        
-
+    try:
+        setRoutesClimbed2(competition)
+    except:
+        logging.error('error setting routes climbed2')
+        pass
+    
     skala_db._update_competition(competition['id'], competition)
 
     return competition
@@ -272,6 +277,9 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
         #logging.info(competition)
 
         _update_competition(competitionId, competition)
+    except Exception as e:
+        logging.error(f'Error adding climber to the competition {email}: {str(e)}')
+        raise
     finally:
         sql_lock.release()
 
@@ -723,17 +731,18 @@ def init():
     logging.info('created ' + COMPETITIONS_DB)
 
     logging.info("running user migrations - adding gymid to users...")
-    emails = get_all_user_emails()
+    emails = get_all_user_emails() # select email from climbers table
     for email in emails:
         user = get_user_by_email(email)
         if user is None:
-            logging.info('no user found for email: '+str(email))
+            logging.info('no climber in db for email: '+str(email))
             continue
         if user.get('gymid') is None:
             if user.get('club') is not None:
                 gym = skala_db.get_gym_by_gym_name(user['club'])
                 if gym is not None:
                     user['gymid'] = gym['id']
+                    logging.info('adding gymid: '+str(gym['id'])+' for user '+str(user['email']))
                     skala_db.upsert_user(user)
                 elif user.get('club') == 'ROC 14':
                     user['gymid'] = '005d3b0d78b5477db673f6424b0fbeba'
@@ -756,10 +765,12 @@ def init():
                 elif user.get('club') == 'CPS 10 - Faites le mur':
                     user['gymid'] = '20605d959edc4bee8a212935973590e4'
                     skala_db.upsert_user(user)
+                elif user.get('club') == 'AS Pierrefitte' or user.get('club') == 'Grimpe Heureuse de Pierrefitte':
+                    user['gymid'] = 'a247c13c9ae54e898d2651cf7369145a'
+                    skala_db.upsert_user(user)
                 else:    
-                    logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email']))
-            
-    
+                    logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email'])+' confirmed='+str(user.get('is_confirmed')))
+        
             #user['gymid'] = ''
     skala_db.update_gym_data(reference_data)
     skala_db.update_users_data()
@@ -842,9 +853,12 @@ def _validate_or_upgrade_competition(competition):
         gym = get_gym(competition['gym_id'])
         competition['routesid'] = gym['routesid']
 
-    if competition.get('routes') is None:
-        update_competition_details(competition, competition['name'], competition['date'], competition['routesid'], competition.get('instructions'))
-        
+    #if competition.get('routes') is None:
+     #   update_competition_details(competition, competition['name'], competition['date'], competition['routesid'], competition.get('instructions'))
+    
+    # do another check here for routes included in the competition against the routes in the gym
+    # do a check that the length of the routesClimbed2 is the same as the length of the routesClimbed
+
     empty_routes_count = sum(1 for climber in competition['climbers'].values() if not climber.get('routesClimbed2'))
     if empty_routes_count == len(competition['climbers']) and competition.get('routes') is not None:
         competition = setRoutesClimbed2(competition)

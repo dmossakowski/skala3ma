@@ -342,7 +342,6 @@ function clearTranslations() {
     }
 
 
-
          // Check for 'message' and 'level' query parameters and call showAlert
          document.addEventListener('DOMContentLoaded', () => {
             const queryParams = getQueryParams();
@@ -364,3 +363,6 @@ function clearTranslations() {
        
             }
         });
+
+
+

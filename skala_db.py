@@ -27,15 +27,29 @@ from src.User import User
 from collections import Counter
 import sqlite3 as lite
 import uuid
-from threading import RLock
-
 import requests
 
-sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
 
 import logging
+
+
+import threading
+import logging
+
+# Create a global logging RLock
+sql_lock = threading.RLock()
+
+class DatabaseLock:
+    def __init__(self, lock):
+        self.lock = lock
+
+    def __enter__(self):
+        self.lock.acquire()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.lock.release()
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
 
@@ -156,8 +170,7 @@ def _add_competition(compId, competition):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
-    try:
-        sql_lock.acquire()
+    with DatabaseLock(sql_lock):
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
@@ -165,12 +178,10 @@ def _add_competition(compId, competition):
                        "(id, jsondata, added_at) VALUES"+
                         " (?, ?, datetime('now')) ",
                        [compId, json.dumps(competition)])
-
-        logging.info('competition added: '+str(compId))
-    finally:
         db.commit()
         db.close()
-        sql_lock.release()
+        logging.info('competition added: '+str(compId))
+    
 
 
 #internal method.. not locked!!!
@@ -276,16 +287,23 @@ def get_user(id):
 
 
 def get_user_by_email(email):
-
+    method_start_time = time.time()
     if email is None:
         return None
     email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     count = 0
+    update_start_time = time.time()
+
     one = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where email=? LIMIT 1;''', [email])
+        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where lower(email) = ? LIMIT 1;''', [email])
+    
+    update_end_time = time.time()
+    update_duration = update_end_time - update_start_time
+    
     one = one.fetchone()
+    db.close()
 
     if one is None or one[0] is None:
         return None
@@ -294,8 +312,9 @@ def get_user_by_email(email):
     if user.get('email') is None:
         user['email'] = email
 
+    method_duration = time.time() - method_start_time
+    #logging.debug(f'get_user_by_email - in {update_duration:.4f}s ; user id {email} in {method_duration:.4f}s')
     
-
     return user
 
 
@@ -418,28 +437,39 @@ def get_all_competition_ids():
 
 
 
-
+# need to check so that anonymous user registering for a competition
+#  is not able to overwrite an actual user
 def upsert_user(user):
+    method_start_time = time.time() 
+    
     try:
         sql_lock.acquire()
         existing_user = None
         email = user.get('email')
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
+        #db = lite.connect(COMPETITIONS_DB)
+        #cursor = db.cursor()
 
         if email is not None:
             email = email.lower()
+            update_duration = 1
             existing_user = get_user_by_email(email)
             if existing_user is None:
                 _add_user(None, email, user)
-                logging.info('added user id ' + str(email))
+                logging.info(' added user id ' + str(email))
             else:
                 existing_user.update(user)
                 _update_user(user['id'], email, existing_user)
+                logging.info(' updated user id ' + str(email))
+    except Exception as e:
+        logging.error(f"Error in upsert_user for email {email}: {e}")
+   
     finally:
-        db.commit()
-        db.close()
+        #db.commit()
+        #db.close()
         sql_lock.release()
+        method_duration = time.time() - method_start_time
+        logging.info(f'upsert_user - in {update_duration:.4f}s ; user id {email} in {method_duration:.4f}s')
+    
         return existing_user
 
 
@@ -450,8 +480,8 @@ def user_authenticated_fb(fid, name, email, picture):
         email = email.lower()
         user = get_user_by_email(email)
         _common_user_validation(user)
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
+        #db = lite.connect(COMPETITIONS_DB)
+        #cursor = db.cursor()
         if user is None:
             newuser = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture }
             _add_user(None, email, newuser)
@@ -462,9 +492,12 @@ def user_authenticated_fb(fid, name, email, picture):
             user.update(u)
             _update_user(user['id'], email, user)
             logging.info('updated user id ' + str(email))
+    except Exception as e:
+        logging.error(f"Error in user_authenticated_fb for email {email}: {e}")
+   
     finally:
-        db.commit()
-        db.close()
+        #db.commit()
+        #db.close()
         sql_lock.release()
         logging.info("done with user:"+str(email))
 
@@ -475,8 +508,8 @@ def user_authenticated_google(name, email, picture):
         email = email.lower()
         user = get_user_by_email(email)
         _common_user_validation(user)
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
+        #db = lite.connect(COMPETITIONS_DB)
+        #cursor = db.cursor()
         if user is None:
             newuser = {'gname': name, 'email': email, 'gpictureurl': picture }
             _common_user_validation(newuser)
@@ -487,9 +520,11 @@ def user_authenticated_google(name, email, picture):
             user.update(u)
             _update_user(user['id'], email, user)
             logging.info('updated google user id ' + str(email))
+    except Exception as e:
+        logging.error(f"Error in user_authenticated_google for email {email}: {e}")
     finally:
-        db.commit()
-        db.close()
+        #db.commit()
+        #db.close()
         sql_lock.release()
         logging.info("done with user:"+str(email))
 
@@ -542,8 +577,8 @@ def has_permission_for_gym(gym_id, user):
 def add_user_permission(user, permission):
     try:
         sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
+        #db = lite.connect(COMPETITIONS_DB)
+        #cursor = db.cursor()
         permissions = user.get('permissions')
         if permissions is None:
             permissions = User.generate_permissions()
@@ -553,10 +588,12 @@ def add_user_permission(user, permission):
             permissions['general'].append(permission)
         _update_user(user['id'], user['email'], user)
         logging.info('updated user id ' + str(user['email']))
-
+    except Exception as e:
+        logging.error(f"Error in add_user_permission for email {user.get('email')}: {e}")
+ 
     finally:
-        db.commit()
-        db.close()
+        #db.commit()
+        #db.close()
         sql_lock.release()
         logging.info(str(permission)+" done with user:"+str(user['email']))
         return user
@@ -575,8 +612,8 @@ def modify_user_permissions_to_gym(user, gym_id, action="ADD"):
 def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
     try:
         sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
+        #db = lite.connect(COMPETITIONS_DB)
+        #cursor = db.cursor()
         permissions = user.get('permissions')
         if permissions is None:
             permissions = User.generate_permissions()
@@ -595,10 +632,13 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
                      ' action='+str(action))
         else:
             raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
+    except Exception as e:
+        logging.error(f"Error in _modify_user_permissions for email {user.get('email')}: {e}")
+        raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
         
     finally:
-        db.commit()
-        db.close()
+        #db.commit()
+        #db.close()
         sql_lock.release()
         logging.info("done with user:"+str(user['email']))
         return user
@@ -625,8 +665,6 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
 
     try:
         sql_lock.acquire()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
         if user is None:
             _common_user_validation(newclimber)
             _add_user(climberId, email, newclimber)
@@ -636,10 +674,10 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
             user.update(newclimber)
             _update_user(climberId, email, user)
             logging.info('updated user id ' + str(email))
-
+    except Exception as e:
+        logging.error(f"Error in user_registered_for_competition for email {email}: {e}")
+ 
     finally:
-        db.commit()
-        db.close()
         sql_lock.release()
         logging.info("done with user:"+str(name))
         #return climber
@@ -664,22 +702,42 @@ def _add_user(climberId, email, climber):
 
 
 def _update_user(climberId, email, climber):
+    # Start timing for the entire method
+    method_start_time = time.time()
+
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     email = email.lower()
 
+    update_start_time = time.time()
     if climberId is None:
         if (climber.get('id') is None):
             climberId = str(uuid.uuid4().hex)
             climber['id'] = climberId
-        else:
-            climberId = climber['id']
-            
-    cursor.execute("UPDATE " + USERS_TABLE + " set id=?, jsondata=? where email =? ",
+            cursor.execute("UPDATE " + USERS_TABLE + " set id=?, jsondata=? where email =? ",
                    [str(climberId), json.dumps(climber), str(email)])
-    logging.info('updated user id ' + str(email))
+        else:
+            logging.warning(f"climberId is None and climber['id'] is None for email {email}")
+    else:
+        climberId = climber['id']
+        cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
+                   [ json.dumps(climber), str(email)])
+    
+    # End timing for the update query
+    update_end_time = time.time()
+ 
+    # Calculate duration for the update query
+    update_duration = update_end_time - update_start_time
+    
     db.commit()
     db.close()
+     # End timing for the entire method
+    method_end_time = time.time()
+   
+    # Calculate duration for the entire method
+    method_duration = method_end_time - method_start_time
+    #logging.info(f'query executed in {update_duration:.4f} seconds ; user id {email} in {method_duration:.4f} seconds (total method duration)')
+    
     return climber
 
 
@@ -744,6 +802,9 @@ def _get_gyms_by_ids(gym_ids, status=None):
             gym = json.loads(jsondata)
             if status is None or gym.get('status') == status:
                 gyms[gym_id] = gym
+    except Exception as e:
+        logging.error(f"Error in _get_gyms_by_ids for email : {e}")
+ 
     finally:
         db.close()
 

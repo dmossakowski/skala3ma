@@ -375,6 +375,8 @@ def competition_admin_post(competition_id):
     delete_competition_button = request.form.get('delete_competition_button')
     change_poster_button = request.form.get('change_poster_button')
     email_sending_button = request.form.get('email_sending_button')
+    competition_routes_update_button = request.form.get('competition_routes_update_button')
+
 
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -435,6 +437,7 @@ def competition_admin_post(competition_id):
     if update_status is not None:
         competition['status'] = int(competition_status)
         competitionsEngine.update_competition(competition_id, competition)
+        competitionsEngine.setRoutesClimbed2(competition)
         resultMessage= "Status updated"
 
     if remove_climber is not None:
@@ -460,7 +463,7 @@ def competition_admin_post(competition_id):
     if competition_update_button is not None:
         competition_name = request.form.get('competition_name')
         competition_date = request.form.get('competition_date')
-        competition_routes = request.form.get('competition_routes')
+        
         max_participants = request.form.get('max_participants')
         # update gym name in the competition if Gym Name is changed somewhere else
         gym = competitionsEngine.get_gym(competition['gym_id'])
@@ -469,8 +472,15 @@ def competition_admin_post(competition_id):
                 competition['gym']=gym['name']
         competition['max_participants']=max_participants
 
-        competitionsEngine.update_competition_details(competition, competition_name, competition_date, competition_routes, instructions)
+        competitionsEngine.update_competition_details(competition, competition_name, competition_date, instructions)
         resultMessage= "Competition details updated"
+
+
+    if competition_routes_update_button is not None:
+        competition_routes = request.form.get('competition_routes')
+        competitionsEngine.update_competition_routes(competition, competition_routes, True)
+        resultMessage= "Competition routes updated"
+
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
@@ -905,12 +915,10 @@ def addCompetitionClimber(competitionId):
         error_code = "error5322"
     
     is_registered = competitionsEngine.is_registered(user, comp)
-
     climber = None
 
     # check if user with this email is known and should login themselves to register
-    if user is None and form_user is not None and (
-            form_user.get('fname') is not None or form_user.get('gname') is not None):
+    if user is None and form_user is not None and form_user.get('is_confirmed') == 1:
         error_code = "error5316" 
 
     # the user found by email on form is already registered
@@ -923,19 +931,16 @@ def addCompetitionClimber(competitionId):
         if category == -1:
             error_code = "error5325"
 
-    
     if not error_code and not is_registered and firstname is not None and sex is not None and club is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
-        
-        
-
 
         try:
             if club not in competitionsEngine.clubs.values():
                 club = otherclub
             climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
-            competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
+            if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
+                competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
                                                                climber['club'],  dob)
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
@@ -947,8 +952,8 @@ def addCompetitionClimber(competitionId):
                     reference_data=competitionsEngine.reference_data,
                     library=None,
                     **session)
-
-        except ValueError:
+        except ValueError as e:
+            logging.error('Error adding climber {str(e)}')
             # this user is alrady registered
             error_code = "error5321"
             
