@@ -1433,10 +1433,13 @@ def get_routes(routesid):
         return generate_dummy_routes(100)
     else:
         routes = skala_db._get_routes(routesid)
+        if routes is None:
+            return generate_dummy_routes(100)
         if type(routes) == list:
             routesdict = {"id":routesid, "routes":routes}
             skala_db._update_routes(routesid, routesdict)
             routes = routesdict
+        
         return routes
 
 

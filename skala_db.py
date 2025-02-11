@@ -647,6 +647,8 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
+# this should not be called when registering an anonmymous user as they could provide any details
+# and thus overwrite the actual, confirmed user details
 def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
     email = email.lower()
     user = get_user_by_email(email)
