@@ -48,7 +48,7 @@
   "ranking_men": "Men's rankings",
   "ranking_clubs": "Club rankings",
   "ranking_diament_women": "Diamond women's rankings",
-  "ranking_diament_men": "Diamend men's rankings",
+  "ranking_diament_men": "Diamond men's rankings",
   "ranking_titan_women": "Titan women's rankings",
   "ranking_titan_men": "Titan men's rankings",
   "ranking_senior_women": "Senior women's rankings",
@@ -201,7 +201,7 @@
   "competition_participants_email0": "You are receiving this email because you are a participant or an organizer of the competition ",
   "competition_participants_email1": "The organizers have sent you the following message:",
   "competition_participants_email2": "Do not reply to this email. If you have any questions, please contact the competition organizers.<br> Rock on from <a href='https://skala3ma.com'>SKALA3MA</a>",
-
+  "Rankings": "Rankings",
                 
   
   "error5314": "Updating routes is not permitted for this user",

@@ -902,6 +902,7 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
     dob = request.args.get('dob')
     
+    
     comp = competitionsEngine.getCompetition(competitionId)
     user = competitionsEngine.get_user_by_email(useremail)
     climber_id = str(uuid.uuid4().hex)
@@ -1263,6 +1264,50 @@ def getCompetitionResults(competitionId):
                            **session)
 
 
+@app_ui.route('/competitionFullResults/<competitionId>')
+#@login_required
+def getCompetitionFullResults(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    rankings = None
+
+    isAdminUser = False
+
+    if session.get('email') is not None: 
+        user = competitionsEngine.get_user_by_email(session.get('email'))
+        if competitionsEngine.has_permission_for_competition(competitionId, user):
+            isAdminUser = True
+
+    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
+                                    competitionsEngine.competition_status_scoring]): 
+        rankings = competitionsEngine.get_sorted_rankings(competition)
+
+    return render_template("competitionFullResults.html", 
+                           competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           rankings = rankings,
+                           **session)
+
+
 
 # Statistics for a competition
 @app_ui.route('/competitionStats/<competitionId>')
@@ -1388,11 +1433,10 @@ def downloadCompetitionCsv(competitionId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
-    if routes is not None:
-        routes = routes.get('routes')
-
-
-
+    if routes is  None:
+        return "No routes found for competition"
+    
+    routes = routes.get('routes')
     out = {}
 
     def flatten(x, name=''):

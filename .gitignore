@@ -8,3 +8,8 @@ key.pem
 my_run.sh
 my_kill.sh
 .vscode/launch.json
+datadir
+.venv31110
+node
+node_modules
+venv312
