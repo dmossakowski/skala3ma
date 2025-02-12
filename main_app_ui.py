@@ -1433,11 +1433,10 @@ def downloadCompetitionCsv(competitionId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
-    if routes is not None:
-        routes = routes.get('routes')
-
-
-
+    if routes is  None:
+        return "No routes found for competition"
+    
+    routes = routes.get('routes')
     out = {}
 
     def flatten(x, name=''):

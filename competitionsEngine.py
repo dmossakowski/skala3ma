@@ -1430,11 +1430,13 @@ def get_gyms_by_ids(ids):
 def get_routes(routesid):
     if routesid is None:
         # generate routes
-        return generate_dummy_routes(100)
+        #return generate_dummy_routes(100)
+        raise ValueError('routesid cannot be None')
     else:
         routes = skala_db._get_routes(routesid)
         if routes is None:
-            return generate_dummy_routes(100)
+            return None
+
         if type(routes) == list:
             routesdict = {"id":routesid, "routes":routes}
             skala_db._update_routes(routesid, routesdict)
@@ -1575,9 +1577,7 @@ def upsert_routes(routesid, gym_id, routes):
             return None
         sql_lock.acquire()
         existing_routes = get_routes(routesid)
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-
+        
         logging.info("routes are a "+ str(type(routes)))
 
         if existing_routes is None:
@@ -1587,8 +1587,6 @@ def upsert_routes(routesid, gym_id, routes):
             skala_db._update_routes(routesid, routes)
             logging.info('routes updated ' + str(routesid))
     finally:
-        db.commit()
-        db.close()
         sql_lock.release()
         logging.info("done with routes :"+str(routesid))
 
