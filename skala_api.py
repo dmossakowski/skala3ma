@@ -800,7 +800,31 @@ def getCompetitionStats(competitionId):
 #				reference_data['current_language'].ranking_diament_men,
 #				reference_data['current_language'].ranking_titan_men,
 #				reference_data['current_language'].ranking_senior_men]
-				 
+	
+    statistics = {}
+    for category in categories:
+        repeatArray = [0]*len(routes) 
+        statistics[str(category)]=repeatArray
+
+    for climber in competition['climbers'].values():
+
+        key = str(climber.get('sex'))+str(climber.get('category'))
+        stats = statistics.get(key)
+        for routenum in climber.get('routesClimbed'):
+            if climber.get('sex') == 'M':
+                stats[routenum-1]=stats[routenum-1]+1
+            else:
+                stats[routenum-1]=stats[routenum-1]+1  # can make -1 to have a stacked chart with males and females
+
+    statout = []
+    for category in categories:     
+        statout.append( {  #"name":category,
+                           "data": statistics.get(category)})
+
+    statresponse = { "chartdata": statout,
+                    "routedata" : routes}
+    
+    return json.dumps(statresponse)
 
 
 # Statistics for a competition for apex charts
@@ -859,7 +883,7 @@ def getCompetitionFlatFullTable(competitionId):
             if int(route.get('routenum')) in climber.get('routesClimbed'):
                 table_entry = {}
                 index = climber.get('routesClimbed').index(int(route.get('routenum')))
-                if (route.get('id') != climber.get('routesClimbed2')[index].get('id')):
+                if (route.get('id') != climber.get('routesClimbed2')[index].get('id')):  # there is a potential bug here on routeseClimbed2 not there
                     print("error")
                 points = climber.get('points_earned')[index]
 
@@ -877,11 +901,11 @@ def getCompetitionFlatFullTable(competitionId):
                 full_routes_table.append(table_entry)
     
 
-    #statresponse = { "chartdata": statout,
-     #               "routedata" : routes}
+    statresponse = { "chartdata": statout,
+                    "routedata" : routes}
     
-    #return json.dumps(full_routes_table)
-    return full_routes_table
+    return json.dumps(full_routes_table)
+    #return full_routes_table
 
 
 

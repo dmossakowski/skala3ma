@@ -1410,6 +1410,8 @@ def get_gyms(status=None):
     try:
         sql_lock.acquire()
         gyms = skala_db._get_gyms(status)
+    except Exception as e:
+        logging.error('error getting gyms: '+str(e))
     finally:
         sql_lock.release()
         logging.info("retrieved all gyms  ")

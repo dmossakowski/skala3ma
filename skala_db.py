@@ -7,6 +7,8 @@ import random
 from datetime import datetime, date, timedelta, timezone
 import time
 from io import BytesIO
+from src.Gym import Gym
+from src.RouteSet import RouteSet
 from src.User import User
 
 #    Copyright (C) 2023 David Mossakowski
@@ -1065,16 +1067,15 @@ def get_image(img_id):
 
 
 
-#migration and one time use methods
+# migration and one time use methods
 
 # sample query to get non confirmed users
 # select email  from climbers  where lower(trim(json_extract(jsondata, '$.is_confirmed'))) like '0' ;
-
 def update_gym_data(reference_data):
     # Connect to the database
     conn = lite.connect(COMPETITIONS_DB)
     cursor = conn.cursor()
-
+    logging.info("-----  checking if clubs exist in db")
     # check if all gyms from the local reference list are in the database  
     for club_id, club_name in reference_data.get('clubs').items():
         gym = get_gym_by_gym_name(club_name)
@@ -1082,6 +1083,22 @@ def update_gym_data(reference_data):
             logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')}")
         else:
             logging.warning(f"gym doesn't exist in db: {club_name}")
+            gym_id = str(uuid.uuid4().hex)
+            gym = Gym(
+                gymid=gym_id,
+                routesid=None,
+                name=club_name,
+                added_by="admin",
+                logo_img_id=None,
+                homepage=None,
+                address=None,
+                organization=None,
+                routesA=None
+            )
+            route_set = RouteSet()
+            route_set.generate_dummy_routes(5)
+            _add_routes(route_set.get_id(), gym_id, route_set.get_routes())
+            _add_gym(gym_id, route_set.get_id(), gym.get_gym_json()) 
 
     # Retrieve all gyms from the GYM_TABLE
     cursor.execute('''SELECT id, jsondata FROM ''' + GYM_TABLE + ''' ;''')
@@ -1122,7 +1139,8 @@ def update_gym_data(reference_data):
 
     cursor.execute('''SELECT id, jsondata FROM ''' + ROUTES_TABLE + ''' ;''')
     routesSets = cursor.fetchall()
-        # Loop through each row and edit the jsondata
+    
+    # set grades to lowercase
     for routeSet in routesSets:
         route_id = routeSet[0]
         jsondata = json.loads(routeSet[1])
