@@ -873,6 +873,24 @@ def get_gym_by_gym_name(gym_name):
 
 
 
+def get_gym_by_ref_id(ref_id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    count = 0
+    rows = cursor.execute(
+        '''select jsondata  from gyms where lower(trim(json_extract(jsondata, '$.ref_id'))) like lower(trim(?));''', [ref_id])
+
+    one = rows.fetchone()
+    db.close()
+    if one is not None and one[0] is not None:
+        return json.loads(one[0])
+
+
+    return None
+
+
+
+
 
 
 def get_all_routes_ids():
@@ -1002,7 +1020,7 @@ def _update_gym(gymid, jsondata):
     #db.in_transaction
     cursor = db.cursor()
 
-    cursor.execute("update " + GYM_TABLE + " set jsondata = ? , added_at=datetime('now' ) where id=?",
+    cursor.execute("update " + GYM_TABLE + " set jsondata = ?  where id=?",
                    [json.dumps(jsondata), str(gymid)])
 
     logging.info('updated gym: '+jsondata['name'])
@@ -1014,7 +1032,7 @@ def _update_gym(gymid, jsondata):
 def _add_routes(routesid, gym_id, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
-    db.in_transaction
+    #db.in_transaction
     cursor = db.cursor()
 
     cursor.execute("INSERT INTO " + ROUTES_TABLE + " (id, gym_id, jsondata, added_at ) "
@@ -1029,9 +1047,9 @@ def _add_routes(routesid, gym_id, jsondata):
 def _update_routes(routesid, jsondata):
     db = lite.connect(COMPETITIONS_DB)
 
-    db.in_transaction
+    #db.in_transaction
     cursor = db.cursor()
-
+    cursor.execute("BEGIN")
     cursor.execute("Update " + ROUTES_TABLE + " set  jsondata = ? where id = ?  ",
                                                    [json.dumps(jsondata), str(routesid)])
 
@@ -1066,41 +1084,55 @@ def get_image(img_id):
 
 
 
-
+#####################################
 # migration and one time use methods
 
 # sample query to get non confirmed users
 # select email  from climbers  where lower(trim(json_extract(jsondata, '$.is_confirmed'))) like '0' ;
 def update_gym_data(reference_data):
     # Connect to the database
-    conn = lite.connect(COMPETITIONS_DB)
-    cursor = conn.cursor()
     logging.info("-----  checking if clubs exist in db")
     # check if all gyms from the local reference list are in the database  
-    for club_id, club_name in reference_data.get('clubs').items():
+    # we try to retrieve by gym name but also by ref_id in case the gym name has changed
+    # this check by gym name should be removed in the future and only ref_id should be used
+    for ref_id, club_name in reference_data.get('clubs').items():
         gym = get_gym_by_gym_name(club_name)
         if gym is not None:
-            logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')}")
+            logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')} ref_id='{ref_id}'")
+            if gym.get('ref_id') is None:
+                gym['ref_id'] = ref_id
+                _update_gym(gym.get('id'), gym)
         else:
-            logging.warning(f"gym doesn't exist in db: {club_name}")
-            gym_id = str(uuid.uuid4().hex)
-            gym = Gym(
-                gymid=gym_id,
-                routesid=None,
-                name=club_name,
-                added_by="admin",
-                logo_img_id=None,
-                homepage=None,
-                address=None,
-                organization=None,
-                routesA=None
-            )
-            route_set = RouteSet()
-            route_set.generate_dummy_routes(5)
-            _add_routes(route_set.get_id(), gym_id, route_set.get_routes())
-            _add_gym(gym_id, route_set.get_id(), gym.get_gym_json()) 
+            gym = get_gym_by_ref_id(ref_id)
+
+            if gym is not None:
+                logging.info(f"Club '{club_name}' ref_id='{ref_id}' exists with ID: {gym.get('id')}")
+            else:
+                logging.warning(f"gym doesn't exist in db: {club_name} ref_id='{ref_id}' ")
+                route_set = RouteSet()
+                route_set.generate_dummy_routes(5)
+
+                gym_id = str(uuid.uuid4().hex)
+                gym = Gym(
+                    gymid=gym_id,
+                    routesid=route_set.get_id(),
+                    name=club_name,
+                    added_by="admin",
+                    logo_img_id=None,
+                    homepage=None,
+                    address=None,
+                    organization='FSGT',
+                    routesA=None
+                )
+                gym.set_ref_id(ref_id)
+                
+                _add_routes(route_set.get_id(), gym_id, route_set.get_routes())
+                _add_gym(gym_id, route_set.get_id(), gym.get_gym_json()) 
 
     # Retrieve all gyms from the GYM_TABLE
+    conn = lite.connect(COMPETITIONS_DB)
+    cursor = conn.cursor()
+    
     cursor.execute('''SELECT id, jsondata FROM ''' + GYM_TABLE + ''' ;''')
     gyms = cursor.fetchall()
 
@@ -1128,8 +1160,17 @@ def update_gym_data(reference_data):
                 cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
 
 
-        if 'status' not in gym_data:
+        if 'status' not in gym_data or gym_data.get('status') is None:
             gym_data['status'] = reference_data.get('gym_status').get('confirmed')
+
+            # Convert the updated gym data back to JSON
+            updated_jsondata = json.dumps(gym_data)
+
+            # Update the jsondata field in the GYM_TABLE
+            cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
+
+        if 'organization' not in gym_data or gym_data.get('organization') is None:
+            gym_data['organization'] = 'FSGT'
 
             # Convert the updated gym data back to JSON
             updated_jsondata = json.dumps(gym_data)

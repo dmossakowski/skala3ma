@@ -54,6 +54,11 @@ class Gym:
             return self.gymjson
         self.gymjson['status'] = status
         return self.gymjson
+    
+
+    def set_ref_id(self, ref_id):
+        self.gymjson['ref_id'] = ref_id
+
 
 # Example usage
 if __name__ == "__main__":

@@ -8,19 +8,21 @@ class RouteSet:
 
     def generate_dummy_routes(self, num_routes):
         routesA = []
+        
         for i in range(1, num_routes + 1):
+            line = (i - 1) // 3 + 1 
             route = {
                 'id': str(uuid.uuid4().hex),
                 'routenum': str(i),
-                'line': str(i),
+                'line': str(line),
                 'colorfr': 'Vert',
                 'color1': '#2E8B57',
                 'color2': '',
-                'grade': '4b',
-                'name': 'Dummy route '+str(i),
+                'grade': '5b',
+                'name': 'Route '+str(i),
                 'openedby': '',
                 'opendate': '',
-                'notes': 'dummy routes'
+                'notes': ''
             }
             routesA.append(route)
         self.routes['routes'] = routesA
