@@ -1627,6 +1627,12 @@ def gyms_list(field=None, value=None):
     return gyms_list_by_field('status', 'created')
 
 
+
+@skala_api_app.route('/gyms/names')
+def gyms_names(field=None, value=None):
+    return skala_db.get_all_gym_names()
+
+
 @skala_api_app.route('/gyms/<field>/<value>')
 def gyms_list_by_field(field=None, value=None):
 

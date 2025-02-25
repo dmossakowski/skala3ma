@@ -889,6 +889,23 @@ def get_gym_by_ref_id(ref_id):
     return None
 
 
+def get_all_gym_names():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    gym_names = []
+
+    try:
+        rows = cursor.execute(
+            '''SELECT json_extract(jsondata, '$.name') FROM gyms'''
+        )
+
+        gym_names = [row[0] for row in rows.fetchall() if row[0] is not None]
+    except Exception as e:
+        logging.error(f"Error retrieving gym names: {e}")
+    finally:
+        db.close()
+
+    return gym_names
 
 
 
@@ -1159,7 +1176,6 @@ def update_gym_data(reference_data):
                 # Update the jsondata field in the GYM_TABLE
                 cursor.execute('''UPDATE ''' + GYM_TABLE + ''' SET jsondata = ? WHERE id = ?''', (updated_jsondata, gym_id))
 
-
         if 'status' not in gym_data or gym_data.get('status') is None:
             gym_data['status'] = reference_data.get('gym_status').get('confirmed')
 
@@ -1229,7 +1245,10 @@ def update_users_data():
             # Update the user data in the database
             updated_jsondata = json.dumps(user)
             cursor.execute(f'UPDATE {USERS_TABLE} SET jsondata = ? WHERE id = ?', (updated_jsondata, user_id))
-    
+            
+            # Update the user data in the database
+            #updated_jsondata = json.dumps(user)
+            #cursor.execute(f'UPDATE {USERS_TABLE} SET jsondata = ? WHERE id = ?', (updated_jsondata, user_id))
     # Commit the changes
     db.commit()
     db.close()

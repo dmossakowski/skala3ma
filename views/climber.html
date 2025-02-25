@@ -75,13 +75,8 @@
 
                             <div class="form-floating mb-3">
                                 <select class="form-select" name="club" id="club">
-                                    <option value="other" size="20">{{reference_data['current_language'].choose}} /{{reference_data['current_language'].other}} </option>
-                                    {% for club in reference_data['clubs'] %}
-                                        <option value="{{ club }}" {% if reference_data['clubs'][club] == climber['club'] %}selected{% endif %} size="20">
-                                            {{reference_data['clubs'][club]}}
-                                        </option>
-                                    {% endfor %}
-                                    <option value="other" size="20">{{reference_data['current_language'].other}}</option>
+                                    <option value="other" size="20">{{reference_data['current_language'].choose}} / {{reference_data['current_language'].other}} </option>
+                                   
                                 </select>
                                 <label for="club">{{reference_data['current_language'].club}}</label>
                             </div>
@@ -158,12 +153,12 @@
             }
         document.addEventListener('DOMContentLoaded', function() {
 
-            
-
+       
             fetch('/api1/user')
                 .then(response => response.json())
                 .then(data => {
                     const permissions = data.permissions;
+                    
 
                     // Mapping for Jinja lookups
                     const permissionLookup = {
@@ -236,8 +231,34 @@
                                 }
                             });
                         });
+
+                        populateGymsSelect(data.gymid);
                     }
                 });
+
+                console.log('retrieving gyms '+clubId);
+            // Fetch gyms and populate the club select element
+
+
+        function populateGymsSelect(clubId){
+            fetch('/api1/gyms')
+                .then(response => response.json())
+                .then(data => {
+                    const clubSelect = document.getElementById('club');
+                    data.forEach(gym => {
+                        const option = document.createElement('option');
+                        option.value = gym.id;
+                        option.textContent = gym.name;
+                        if (gym.id === clubId) {
+                            option.selected = true;
+                        }
+                        clubSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching gyms:', error);
+                });
+            }
         });
     </script>
 

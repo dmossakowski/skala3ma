@@ -1050,9 +1050,12 @@ def update_user():
     dob = request.args.get('dob')
     subheader_message = ""
 
-    if clubid is not None and clubid.isnumeric():
-        clubid = int(clubid)
-        club = competitionsEngine.reference_data['clubs'].get(clubid)
+    if clubid is not None and clubid != 'other':
+        gym = competitionsEngine.get_gym(clubid)
+        if gym is not None:
+            club = gym['name']
+        else:
+            raise ValueError('gym not found for id ' + clubid)
     elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
         club = request.args.get('otherclub').strip()
     else:
