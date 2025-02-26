@@ -111,9 +111,14 @@ function processGyms(gyms)
                 lat = 48.975;
                 lon = 2.100000+i/17;
             }*/
-        
-            var marker = L.marker([lat,lon],{icon: icon})
-            .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);   
+            
+            if (lat != undefined && lon != undefined)
+            {
+                var marker = L.marker([lat,lon],{icon: icon})
+            .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);  
+            }
+            
+             
             
         };
         
