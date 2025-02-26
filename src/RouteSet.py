@@ -1,4 +1,5 @@
 import uuid
+import random
 
 class RouteSet:
     def __init__(self):
@@ -8,6 +9,10 @@ class RouteSet:
 
     def generate_dummy_routes(self, num_routes):
         routesA = []
+
+        colors = ['#44C662', '#FF4500','#558afe','#a07821','#efdd41','#d33f2a','#333333']
+        grades = ['4a', '4b', '4c', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '8a', '8b', '8c']
+        color_modifier = ['solid', 'marble']
         
         for i in range(1, num_routes + 1):
             line = (i - 1) // 3 + 1 
@@ -16,9 +21,10 @@ class RouteSet:
                 'routenum': str(i),
                 'line': str(line),
                 'colorfr': 'Vert',
-                'color1': '#2E8B57',
+                'color1': random.choice(colors),
                 'color2': '',
-                'grade': '5b',
+                'grade': random.choice(grades),
+                'color_modifier': random.choice(color_modifier),
                 'name': 'Route '+str(i),
                 'openedby': '',
                 'opendate': '',

@@ -971,12 +971,10 @@
         
 
         table.on("tableBuilt", function(){
-            console.log("table built");
             table.on("dataSorting", function(sorters){
             //sorters - an array of the sorters currently applied
             
             table.setGroupBy(false); 
-            console.log("sorting event");
             if (sorters.length >0 && sorters[0].field == 'line'){
                 table.setGroupBy('line');
             }else{
@@ -984,19 +982,13 @@
             }
             
         });
-        });
-        
-      
+        });        
       }
-      
-
-      console.log("table ");
 
 
         function getFormData() {
           const formData = {};
 
-          
           const routeid = document.getElementById('routeid').value;
           console.log('getFormData routeid '+routeid);
           

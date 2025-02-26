@@ -1045,12 +1045,10 @@
 
 
         table.on("tableBuilt", function(){
-            console.log("table built");
             table.on("dataSorting", function(sorters){
             //sorters - an array of the sorters currently applied
             
             table.setGroupBy(false); 
-            console.log("sorting event");
             if (sorters.length >0 && sorters[0].field == 'line'){
                 table.setGroupBy('line');
             }else{

@@ -1127,7 +1127,7 @@ def update_gym_data(reference_data):
             else:
                 logging.warning(f"gym doesn't exist in db: {club_name} ref_id='{ref_id}' ")
                 route_set = RouteSet()
-                route_set.generate_dummy_routes(5)
+                route_set.generate_dummy_routes(15)
 
                 gym_id = str(uuid.uuid4().hex)
                 gym = Gym(
