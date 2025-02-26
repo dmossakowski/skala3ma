@@ -211,7 +211,9 @@
 						</select>
 					</td>
 					<td><select name="club_{{ climberId }}" >
+                        <option value="-1" size="20" >{{ reference_data['current_language'].other}}</option>
 								{% for club in reference_data['clubs'] %}
+                                
 
 								{% if reference_data['clubs'][club] == competition['climbers'][climberId]['club'] %}selected{% endif %}
 								<option value="{{reference_data['clubs'][club]}}"

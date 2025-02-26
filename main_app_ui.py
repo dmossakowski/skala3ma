@@ -446,9 +446,12 @@ def competition_admin_post(competition_id):
         resultMessage= "Climber removed"
 
     if climber_id is not None:
+        climber_club = request.form.get('club_'+ climber_id)
+        if climber_club == '-1':
+            climber_club = None
         competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
         competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
-        competition['climbers'][climber_id]['club'] = request.form.get('club_'+ climber_id)
+        competition['climbers'][climber_id]['club'] = climber_club
         competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
         try:
             # Attempt to retrieve the category from the form data and convert it to an integer
@@ -1058,6 +1061,7 @@ def update_user():
             raise ValueError('gym not found for id ' + clubid)
     elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
         club = request.args.get('otherclub').strip()
+        clubid =  -1 # id for an unknown club
     else:
         club = None
 
@@ -1068,8 +1072,6 @@ def update_user():
     if category == -1:
         #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
         error_message='error5325'
-
-    
 
     email = session.get('email')
     name = session.get('name')
@@ -1098,7 +1100,7 @@ def update_user():
                                **session)
 
     else:
-        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, dob)
+        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, clubid, dob)
         subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
         level = 'success'
 

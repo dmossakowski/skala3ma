@@ -240,7 +240,7 @@ def update_competition_routes(competition, routesid, force=False):
 
 # add or register climber to a competition
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category):
-    logging.info("adding climber "+str(climberId))
+    logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
     email = email.lower()
@@ -990,8 +990,7 @@ def get_category_from_dob(dob):
 
 
                                     
-
-def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
+def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid, dob):
     if climber is None:
         raise ValueError("Climber cannot be None")
 
@@ -1002,10 +1001,10 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
             fullname = firstname+" "+lastname
 
         newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
-                      'sex': sex, 'club': club, 'dob': dob}
+                      'sex': sex, 'club': club, 'gymid': gymid, 'dob': dob}
         
         if club is not None:
-            gym = skala_db.get_gym_by_gym_name(club)
+            gym = skala_db.get_gym(gymid)
             if gym is not None:
                 newclimber['gymid'] = gym.get('id')
             else:
