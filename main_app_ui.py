@@ -20,6 +20,7 @@ import glob
 import random
 import uuid
 from datetime import datetime, date, time, timedelta
+from src.RouteSet import RouteSet
 from src.User import User
 import competitionsEngine
 import csv
@@ -446,9 +447,12 @@ def competition_admin_post(competition_id):
         resultMessage= "Climber removed"
 
     if climber_id is not None:
+        climber_club = request.form.get('club_'+ climber_id)
+        if climber_club == '-1':
+            climber_club = None
         competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
         competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
-        competition['climbers'][climber_id]['club'] = request.form.get('club_'+ climber_id)
+        competition['climbers'][climber_id]['club'] = climber_club
         competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
         try:
             # Attempt to retrieve the category from the form data and convert it to an integer
@@ -902,6 +906,7 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
     dob = request.args.get('dob')
     
+    
     comp = competitionsEngine.getCompetition(competitionId)
     user = competitionsEngine.get_user_by_email(useremail)
     climber_id = str(uuid.uuid4().hex)
@@ -1049,11 +1054,15 @@ def update_user():
     dob = request.args.get('dob')
     subheader_message = ""
 
-    if clubid is not None and clubid.isnumeric():
-        clubid = int(clubid)
-        club = competitionsEngine.reference_data['clubs'].get(clubid)
+    if clubid is not None and clubid != 'other':
+        gym = competitionsEngine.get_gym(clubid)
+        if gym is not None:
+            club = gym['name']
+        else:
+            raise ValueError('gym not found for id ' + clubid)
     elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
         club = request.args.get('otherclub').strip()
+        clubid =  -1 # id for an unknown club
     else:
         club = None
 
@@ -1064,8 +1073,6 @@ def update_user():
     if category == -1:
         #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
         error_message='error5325'
-
-    
 
     email = session.get('email')
     name = session.get('name')
@@ -1094,7 +1101,7 @@ def update_user():
                                **session)
 
     else:
-        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, dob)
+        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, clubid, dob)
         subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
         level = 'success'
 
@@ -1263,6 +1270,50 @@ def getCompetitionResults(competitionId):
                            **session)
 
 
+@app_ui.route('/competitionFullResults/<competitionId>')
+#@login_required
+def getCompetitionFullResults(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                               subheader_message="No competition found",
+                               **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+
+    rankings = None
+
+    isAdminUser = False
+
+    if session.get('email') is not None: 
+        user = competitionsEngine.get_user_by_email(session.get('email'))
+        if competitionsEngine.has_permission_for_competition(competitionId, user):
+            isAdminUser = True
+
+    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
+                                    competitionsEngine.competition_status_scoring]): 
+        rankings = competitionsEngine.get_sorted_rankings(competition)
+
+    return render_template("competitionFullResults.html", 
+                           competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           rankings = rankings,
+                           **session)
+
+
 
 # Statistics for a competition
 @app_ui.route('/competitionStats/<competitionId>')
@@ -1388,11 +1439,10 @@ def downloadCompetitionCsv(competitionId):
     #gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
-    if routes is not None:
-        routes = routes.get('routes')
-
-
-
+    if routes is  None:
+        return "No routes found for competition"
+    
+    routes = routes.get('routes')
     out = {}
 
     def flatten(x, name=''):
@@ -2267,8 +2317,11 @@ def gyms_add():
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-
-    routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
+    
+    route_set = RouteSet()
+    route_set.generate_dummy_routes(int(numberOfRoutes))
+    routes = route_set.get_routes()
+    
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
     gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
     gym['routes'] = routes

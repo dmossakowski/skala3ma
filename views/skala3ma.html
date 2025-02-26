@@ -106,14 +106,19 @@ function processGyms(gyms)
 
             var lat = gyms[i].lat;
             var lon = gyms[i].lon;
-            if (lat == null || lon == null)
+            /*if (lat == null || lon == null)
             {
                 lat = 48.975;
                 lon = 2.100000+i/17;
+            }*/
+            
+            if (lat != undefined && lon != undefined)
+            {
+                var marker = L.marker([lat,lon],{icon: icon})
+            .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);  
             }
-        
-            var marker = L.marker([lat,lon],{icon: icon})
-            .bindPopup("<b><a href=/gyms/"+gyms[i].id+">"+gyms[i].name+"</a></b><br>"+gyms[i].address+"").openPopup().addTo(map);   
+            
+             
             
         };
         

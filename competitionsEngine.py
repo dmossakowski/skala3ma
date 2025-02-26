@@ -240,7 +240,7 @@ def update_competition_routes(competition, routesid, force=False):
 
 # add or register climber to a competition
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category):
-    logging.info("adding climber "+str(climberId))
+    logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
     email = email.lower()
@@ -990,8 +990,7 @@ def get_category_from_dob(dob):
 
 
                                     
-
-def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
+def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid, dob):
     if climber is None:
         raise ValueError("Climber cannot be None")
 
@@ -1002,10 +1001,10 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
             fullname = firstname+" "+lastname
 
         newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
-                      'sex': sex, 'club': club, 'dob': dob}
+                      'sex': sex, 'club': club, 'gymid': gymid, 'dob': dob}
         
         if club is not None:
-            gym = skala_db.get_gym_by_gym_name(club)
+            gym = skala_db._get_gym(gymid)
             if gym is not None:
                 newclimber['gymid'] = gym.get('id')
             else:
@@ -1022,6 +1021,7 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, dob):
             climber.update(newclimber)
             skala_db._update_user(climber['id'], email, climber)
             logging.info('updated user id ' + str(climber))
+        
     finally:
         db.commit()
         db.close()
@@ -1410,6 +1410,8 @@ def get_gyms(status=None):
     try:
         sql_lock.acquire()
         gyms = skala_db._get_gyms(status)
+    except Exception as e:
+        logging.error('error getting gyms: '+str(e))
     finally:
         sql_lock.release()
         logging.info("retrieved all gyms  ")
@@ -1430,13 +1432,18 @@ def get_gyms_by_ids(ids):
 def get_routes(routesid):
     if routesid is None:
         # generate routes
-        return generate_dummy_routes(100)
+        #return generate_dummy_routes(100)
+        raise ValueError('routesid cannot be None')
     else:
         routes = skala_db._get_routes(routesid)
+        if routes is None:
+            return None
+
         if type(routes) == list:
             routesdict = {"id":routesid, "routes":routes}
             skala_db._update_routes(routesid, routesdict)
             routes = routesdict
+        
         return routes
 
 
@@ -1572,9 +1579,7 @@ def upsert_routes(routesid, gym_id, routes):
             return None
         sql_lock.acquire()
         existing_routes = get_routes(routesid)
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-
+        
         logging.info("routes are a "+ str(type(routes)))
 
         if existing_routes is None:
@@ -1584,8 +1589,6 @@ def upsert_routes(routesid, gym_id, routes):
             skala_db._update_routes(routesid, routes)
             logging.info('routes updated ' + str(routesid))
     finally:
-        db.commit()
-        db.close()
         sql_lock.release()
         logging.info("done with routes :"+str(routesid))
 
@@ -1711,20 +1714,6 @@ def loadgymsdict():
         {'id': '', 'routesid': '1', 'name': 'Nanterre Sprortiv' },
         {'id': '', 'routesid': '2', 'name': 'ESS 78'}]
     }
-
-
-def generate_dummy_routes(size):
-    routes_id = str(uuid.uuid4().hex)
-    routes = {"id":routes_id }
-    routesA = []
-    for i in range(1, size+1):
-        route_id = str(uuid.uuid4().hex)
-        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '?', 'route'+str(i), '', '', '')
-        routesA.append(route)
-
-    routes['routes'] = routesA
-    routes['name'] = "Default"
-    return routes
 
 
 def get_img(img_id):

@@ -1,0 +1,170 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+		<!--styaaale="background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
+		{% include "competition-menu.html" %}
+
+
+			<!--style="background-image: linear-gradient(to bottom right, rgba(240,248,255,0.5), rgba(235,245,255,0.8));" -->
+ <!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
+
+
+<div class="container">
+    <div class="text-center heading-section">
+        <br>{{ reference_data['current_language'].competition_results }} 
+
+            <h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+
+    </div>
+   
+
+</div>
+    <div class="table-responsive">
+
+        <div class="form-group">
+            <label for="groupBy"></label>
+            <select id="groupBy" class="form-control" onchange="handleGroupByChange(this.value)">
+                <option value="none"></option>
+                <option value="climber">{{ reference_data['current_language'].climbers }} </option>
+                <option value="club">{{ reference_data['current_language'].club }} </option>
+            </select>
+        </div>
+
+    <div id="tabulator-table"></div>
+
+
+
+
+</div>
+</div>
+
+
+
+
+<script>
+
+
+
+const url = '/api1/competition/{{competition['id']}}/fullresults';
+//const url2 = '/api1/competition_results/{{competition['id']}}/stats';
+var fulldata;
+var table;
+async function getData() {
+const jsondata = await (await fetch(url)).json();
+processData(jsondata);
+
+//const rangejsondata = await (await fetch(url2)).json();
+//processDataRange(rangejsondata);
+
+}
+
+
+getData();
+
+
+function processData(fullresponse)
+{
+//console.log('here2');
+//console.log(fullresponse['F0']);
+//
+
+
+//document.querySelector("#routes_climbed_count").innerHTML = fulldata['personalstats']['routes_climbed_count']
+//document.querySelector("#competitions_count").innerHTML = fulldata['personalstats']['competitions_count']
+renderTabulatorTable(fullresponse)
+}
+
+
+function renderTabulatorTable(routesA)
+{
+var columns = [
+{title:"{{ reference_data['current_language'].name}}", field:"firstname", headerFilter:true},
+{title:"{{ reference_data['current_language'].lastname}}", field:"lastname", headerFilter:"input"},
+{title:"{{ reference_data['current_language'].sex}}", field:"sex", headerFilter:"input"},
+
+{title: "{{ reference_data['current_language'].club}}", field: "club", headerFilter:"input", topCalc:"unique"},
+{title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100, type: "number", headerFilter:"input", headerFilterFunc:"<=", topCalc:"avg",},
+{title:"{{ reference_data['current_language'].route_num}}", field:"routenum",headerFilter:"input", headerFilterFunc:"=", topCalc:"count",},
+{title: "{{ reference_data['current_language'].color }}", field: "color1", 
+           "responsive": 0 , minWidth:10, 
+           formatter:function(cell, formatterParams, onRendered){ 
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+            },
+        
+            formatterPrint:function(cell, formatterParams, onRendered){
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+            },
+        },
+//{title:"Line", field:"line"},
+{title:"{{ reference_data['current_language'].grade}}", field:"grade", headerFilter:"input"},
+{title:"{{ reference_data['current_language'].points}}", field:"points", topCalc:"sum", topCalcParams:{
+    precision:1,
+}},
+];
+
+// Create the Tabulator table
+table = new Tabulator("#tabulator-table", {
+  columns: columns,
+  data: routesA ,
+  //layout:"fitDataFill",
+  layout:"fitColumns",
+  movableRows: false,
+  selectable: false,
+  //responsiveLayout:"collapse",
+  resizableRows:false,
+  //groupBy:"routenum",
+  //groupToggleElement:"header",
+  groupStartOpen:false,
+  //virtualDomBuffer:600, //set virtual DOM buffer to 300px
+
+});
+
+
+
+
+
+}
+
+
+function groupByClimber(group = true) {
+            if (group) {
+                table.setGroupBy("lastname");
+            } else {
+                table.setGroupBy(false);
+            }
+        }
+
+function groupByClub(group = true) {
+            if (group) {
+                table.setGroupBy("club");
+            } else {
+                table.setGroupBy(false);
+            }
+        }
+
+
+        function handleGroupByChange(value) {
+            if (value === "climber") {
+                groupByClimber(true);
+            } else if (value === "club") {
+                groupByClub(true);
+            } else {
+                table.setGroupBy(false);
+            }
+        }
+
+</script>
+
+
+{% endblock %}

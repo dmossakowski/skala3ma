@@ -33,18 +33,21 @@
 			<input type="file" name="file1" id="file1"><br>
 <br>
 <label for="url">{{ reference_data['current_language'].link }}:</label><br>
-	<input name="url" id="url" type="url" size="60"/>
+	<input name="url" id="url"  size="60"/>
 							<br><br>
 
-    <label for="organization">{{ reference_data['current_language'].club}}:</label><br>
-    <select name="organization" id="organization">
+    <label for="organization">{{ reference_data['current_language'].organization}}:</label><br>
+    <input name="organization" id="organization"  size="60"/>
+	
+    
+    <!--select name="organization" id="organization">
 							
                             {% for club in reference_data['clubs'] %}
 
 							<option value="{{reference_data['clubs'][club]}}"
 									size="20" >{{reference_data['clubs'][club]}}</option>
 							{% endfor %}
-                    </select>
+                    </select!-->
 							
 							<br><br>
 

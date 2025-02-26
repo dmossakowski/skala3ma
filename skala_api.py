@@ -763,10 +763,74 @@ def addCompetitionClimber(competitionId):
     return None
 
 
-# Statistics for a competition
+# Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/stats')
 #@login_required
 def getCompetitionStats(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return render_template('competitionDashboard.html', sortedA=None,
+                            subheader_message="No competition found",
+                            **session)
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                getPlaylistError="Playlist was not found",
+                                library={},
+                                **session)
+    elif len(competition) == 0:
+        return render_template('index.html', sortedA=None,
+                                getPlaylistError="Playlist has no tracks or it was not found",
+                                library={},
+                                **session)
+
+    routesid = competition.get('routesid')
+    routesDict = competitionsEngine.get_routes(routesid)
+    routes = routesDict['routes']
+
+    #rankings = competitionsEngine.get_sorted_rankings(competition)
+    # we need 6 categories:
+    categories = ["F0","F1","F2","M0","M1","M2"]
+    #category_names =  [reference_data['current_language'].ranking_diament_women,
+#				reference_data['current_language'].ranking_titan_women,
+#				reference_data['current_language'].ranking_senior_women,
+#				reference_data['current_language'].ranking_diament_men,
+#				reference_data['current_language'].ranking_titan_men,
+#				reference_data['current_language'].ranking_senior_men]
+	
+    statistics = {}
+    for category in categories:
+        repeatArray = [0]*len(routes) 
+        statistics[str(category)]=repeatArray
+
+    for climber in competition['climbers'].values():
+
+        key = str(climber.get('sex'))+str(climber.get('category'))
+        stats = statistics.get(key)
+        for routenum in climber.get('routesClimbed'):
+            if climber.get('sex') == 'M':
+                stats[routenum-1]=stats[routenum-1]+1
+            else:
+                stats[routenum-1]=stats[routenum-1]+1  # can make -1 to have a stacked chart with males and females
+
+    statout = []
+    for category in categories:     
+        statout.append( {  #"name":category,
+                           "data": statistics.get(category)})
+
+    statresponse = { "chartdata": statout,
+                    "routedata" : routes}
+    
+    return json.dumps(statresponse)
+
+
+# Statistics for a competition for apex charts
+@skala_api_app.route('/competition/<competitionId>/fullresults')
+#@login_required
+def getCompetitionFlatFullTable(competitionId):
     competition = None
 
     if competitionId is not None:
@@ -800,33 +864,48 @@ def getCompetitionStats(competitionId):
 #				reference_data['current_language'].ranking_diament_men,
 #				reference_data['current_language'].ranking_titan_men,
 #				reference_data['current_language'].ranking_senior_men]
-				 
 
 
     statistics = {}
     for category in categories:
         repeatArray = [0]*len(routes) 
         statistics[str(category)]=repeatArray
-        
-    for climber in competition['climbers'].values():
-        
-        key = str(climber.get('sex'))+str(climber.get('category'))
-        stats = statistics.get(key)
-        for routenum in climber.get('routesClimbed'):
-            if climber.get('sex') == 'M':
-                stats[routenum-1]=stats[routenum-1]+1
-            else:
-                stats[routenum-1]=stats[routenum-1]+1  # can make -1 to have a stacked chart with males and females
                 
     statout = []
     for category in categories:     
         statout.append( {  #"name":category,
                            "data": statistics.get(category)})
 
+    full_routes_table = []
+    table_entry = {}
+    for route in competition.get('routes'):
+        for climber in competition['climbers'].values():
+            if int(route.get('routenum')) in climber.get('routesClimbed'):
+                table_entry = {}
+                index = climber.get('routesClimbed').index(int(route.get('routenum')))
+                if (route.get('id') != climber.get('routesClimbed2')[index].get('id')):  # there is a potential bug here on routeseClimbed2 not there
+                    print("error")
+                points = climber.get('points_earned')[index]
+
+                table_entry.update(route)
+                table_entry['points'] = round(points,2)
+                table_entry['category'] = climber.get('category')
+                table_entry['firstname'] = climber.get('firstname')
+                table_entry['lastname'] = climber.get('lastname')
+                table_entry['club'] = climber.get('club')
+                table_entry['rank'] = climber.get('rank')
+                table_entry['sex'] = climber.get('sex')
+
+                
+                #full_routes_table.append(route)
+                full_routes_table.append(table_entry)
+    
+
     statresponse = { "chartdata": statout,
                     "routedata" : routes}
     
-    return json.dumps(statresponse)
+    return json.dumps(full_routes_table)
+    #return full_routes_table
 
 
 
@@ -1548,6 +1627,12 @@ def gyms_list(field=None, value=None):
     return gyms_list_by_field('status', 'created')
 
 
+
+@skala_api_app.route('/gyms/names')
+def gyms_names(field=None, value=None):
+    return skala_db.get_all_gym_names()
+
+
 @skala_api_app.route('/gyms/<field>/<value>')
 def gyms_list_by_field(field=None, value=None):
 
@@ -2001,40 +2086,6 @@ def gym_routes_save(gymid, routesid):
 
 
 
-
-@skala_api_app.route('/gym/add', methods=['POST'])
-@login_required
-def gyms_add():
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    formdata = request.form.to_dict(flat=False)
-
-    args1 = request.args
-    body = request.data
-    bodyj = request.json
-    files = request.files
-    gym_id = str(uuid.uuid4().hex)
-    imgfilename = None
-    if 'file1' in request.files:
-        file1 = request.files['file1']
-        if file1.filename is not None and len(file1.filename) > 0:
-            imgfilename = gym_id
-            imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
-            file1.save(imgpath)
-
-    gymName = formdata['gymName'][0]
-    numberOfRoutes = formdata['numberOfRoutes'][0]
-    if numberOfRoutes is None or len(numberOfRoutes)==0:
-        numberOfRoutes = 10  #default value of routes for a gym
-    address = formdata['address'][0]
-    url = formdata['url'][0]
-    organization = formdata['organization'][0]
-
-    routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
-    competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
-    gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
-
-    return gym
 
 
 @skala_api_app.route('/gyms/<gym_id>/update', methods=['POST'])

@@ -687,7 +687,10 @@
               // use the retrieved data here
             //console.log(data);
             // set the gym-name span from data name param
-            document.getElementById('gym_name').textContent = data.name;
+            el = document.getElementById('gym_name');
+            if (el != null){
+                el.textContent = data.name;
+            }
 
 
               
@@ -759,6 +762,9 @@
                 else{
                     usersRegistered = Object.keys(data).length;
                     usersDiv = document.getElementById('users-div');
+                    if (usersDiv == null){
+                        return;
+                    }
                     // create div element
                     //var div = document.createElement('div');
                     // loop over usersRegistered and create a div for each user
@@ -815,6 +821,7 @@
       
       
     var table;
+    
       function renderTabulatorTable(routesA)
       {
         var columns = [
@@ -954,19 +961,34 @@
             table.selectRow(2);
           }*/
 
-          document.getElementById("print-table").addEventListener("click", function(){
-            table.print(false, true);
+        printTable = document.getElementById("print-table");
+        if (printTable !== null)
+        {
+            printTable.addEventListener("click", function(){
+                table.print(false, true);
             });
-
-      
-      }
-      
-      
+        }
         
+
+        table.on("tableBuilt", function(){
+            table.on("dataSorting", function(sorters){
+            //sorters - an array of the sorters currently applied
+            
+            table.setGroupBy(false); 
+            if (sorters.length >0 && sorters[0].field == 'line'){
+                table.setGroupBy('line');
+            }else{
+                table.setGroupBy(false);
+            }
+            
+        });
+        });        
+      }
+
+
         function getFormData() {
           const formData = {};
 
-          
           const routeid = document.getElementById('routeid').value;
           console.log('getFormData routeid '+routeid);
           
