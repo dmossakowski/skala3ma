@@ -312,8 +312,11 @@ function clearTranslations() {
         alertDiv.appendChild(messageSpan);
         alertDiv.appendChild(closeButton);
 
-        alertPlaceholder.className = 'text-center';
-        alertPlaceholder.appendChild(alertDiv);
+        if (alertPlaceholder !== undefined)
+        {
+            alertPlaceholder.className = 'text-center';
+            alertPlaceholder.appendChild(alertDiv);
+        }
 
         // Automatically remove the alert after 5 seconds
         if (timeout > 0) {
