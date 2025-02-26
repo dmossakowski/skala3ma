@@ -2087,40 +2087,6 @@ def gym_routes_save(gymid, routesid):
 
 
 
-@skala_api_app.route('/gym/add', methods=['POST'])
-@login_required
-def gyms_add():
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    formdata = request.form.to_dict(flat=False)
-
-    args1 = request.args
-    body = request.data
-    bodyj = request.json
-    files = request.files
-    gym_id = str(uuid.uuid4().hex)
-    imgfilename = None
-    if 'file1' in request.files:
-        file1 = request.files['file1']
-        if file1.filename is not None and len(file1.filename) > 0:
-            imgfilename = gym_id
-            imgpath = os.path.join(UPLOAD_FOLDER, imgfilename)
-            file1.save(imgpath)
-
-    gymName = formdata['gymName'][0]
-    numberOfRoutes = formdata['numberOfRoutes'][0]
-    if numberOfRoutes is None or len(numberOfRoutes)==0:
-        numberOfRoutes = 10  #default value of routes for a gym
-    address = formdata['address'][0]
-    url = formdata['url'][0]
-    organization = formdata['organization'][0]
-
-    routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
-    competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
-    gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
-
-    return gym
-
 
 @skala_api_app.route('/gyms/<gym_id>/update', methods=['POST'])
 @login_required

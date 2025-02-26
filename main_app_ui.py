@@ -20,6 +20,7 @@ import glob
 import random
 import uuid
 from datetime import datetime, date, time, timedelta
+from src.RouteSet import RouteSet
 from src.User import User
 import competitionsEngine
 import csv
@@ -2317,7 +2318,10 @@ def gyms_add():
     url = formdata['url'][0]
     organization = formdata['organization'][0]
     
-    routes = competitionsEngine.generate_dummy_routes(int(numberOfRoutes))
+    route_set = RouteSet()
+    route_set.generate_dummy_routes(int(numberOfRoutes))
+    routes = route_set.get_routes()
+    
     competitionsEngine.upsert_routes(routes['id'], gym_id, routes)
     gym = competitionsEngine.add_gym(user, gym_id, routes['id'], gymName, imgfilename, url, address, organization, [])
     gym['routes'] = routes

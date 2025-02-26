@@ -1004,7 +1004,7 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid,
                       'sex': sex, 'club': club, 'gymid': gymid, 'dob': dob}
         
         if club is not None:
-            gym = skala_db.get_gym(gymid)
+            gym = skala_db._get_gym(gymid)
             if gym is not None:
                 newclimber['gymid'] = gym.get('id')
             else:
@@ -1021,6 +1021,7 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid,
             climber.update(newclimber)
             skala_db._update_user(climber['id'], email, climber)
             logging.info('updated user id ' + str(climber))
+        
     finally:
         db.commit()
         db.close()
@@ -1713,20 +1714,6 @@ def loadgymsdict():
         {'id': '', 'routesid': '1', 'name': 'Nanterre Sprortiv' },
         {'id': '', 'routesid': '2', 'name': 'ESS 78'}]
     }
-
-
-def generate_dummy_routes(size):
-    routes_id = str(uuid.uuid4().hex)
-    routes = {"id":routes_id }
-    routesA = []
-    for i in range(1, size+1):
-        route_id = str(uuid.uuid4().hex)
-        route = _get_route_dict(route_id, str(i), '1', '#2E8857', 'solid', '?', 'route'+str(i), '', '', '')
-        routesA.append(route)
-
-    routes['routes'] = routesA
-    routes['name'] = "Default"
-    return routes
 
 
 def get_img(img_id):
