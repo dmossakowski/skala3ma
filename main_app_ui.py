@@ -958,7 +958,7 @@ def addCompetitionClimber(competitionId):
                     library=None,
                     **session)
         except ValueError as e:
-            logging.error('Error adding climber {str(e)}')
+            logging.error(f'Error adding climber {str(e)}')
             # this user is alrady registered
             error_code = "error5321"
             
@@ -1040,6 +1040,7 @@ def update_user():
     if session.get('email') is None:
         return render_template('competitionDashboard.html', sortedA=None,
                                subheader_message="Login required",
+                               reference_data=competitionsEngine.reference_data,
                                **session)
 
     climber = competitionsEngine.get_user_by_email(session.get('email'))
@@ -1187,9 +1188,8 @@ def getCompetition(competitionId):
         competition = competitionsEngine.recalculate(competitionId)
 
     if competition is None:
-        return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No competition found",
-                               **session)
+        return redirect("/competitionDashboard")
+    
     elif competition is LookupError:
         return render_template('index.html', sortedA=None,
                                    getPlaylistError="Playlist was not found",
