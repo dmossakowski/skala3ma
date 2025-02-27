@@ -304,10 +304,14 @@ def update_token(name, token, refresh_token=None, access_token=None):
 
 @app.errorhandler(404)
 @app.errorhandler(500)
-
 def page_not_found(e):
     # You can render a custom 404 template or return a simple message
     return render_template('404.html', reference_data=competitionsEngine.reference_data,), 404
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    logging.error(f"Unexpected error: {error}", exc_info=True)
+    return render_template('404.html', reference_data=competitionsEngine.reference_data,error=error), 404
 
 
 @app.route('/login')
@@ -835,7 +839,7 @@ def confirm_email(type, token):
 
     if email is False:
         new_captcha_dict = SIMPLE_CAPTCHA.create()
-        log_request_details('Invalid or expired token '+email)
+        log_request_details('Invalid or expired token ')
         return render_template('register.html',
                            reference_data=competitionsEngine.reference_data,
                            error='Invalid or expired token. ',

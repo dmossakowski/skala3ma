@@ -40,7 +40,7 @@ class EmailSender:
                 "html": email_text
                 })
                 
-        return 'mail sent'+ret.reason+' '+ret.text
+        return 'mail sent'+str(ret.reason)+' '+str(ret.text)
 
 
     def send_password_reset_email(self, email, confirm_url):
@@ -66,7 +66,7 @@ class EmailSender:
                 "html": email_text
                 })
         
-        return 'mail sent reason='+ret.reason+' text='+ret.text+' ret.status_code='+ret.status_code
+        return 'mail sent reason='+str(ret.reason)+' text='+str(ret.text)+' ret.status_code='+str(ret.status_code)
     
     
     def send_email_to_participant(self, competition_name, competition_url, email_to, email_content):
