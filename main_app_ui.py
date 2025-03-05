@@ -430,9 +430,13 @@ def competition_admin_post(competition_id):
 
     if permission_scorer_user is not None:
         user2 = competitionsEngine.get_user(user_id)
-        competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
-        competitionsEngine.add_user_permission_update_routes(user2)
-        resultMessage= "User added as scorer"
+        if user2 is None:
+            resultError = "User not found"
+            logging.error("User not found  in permission_scorer_user "+user_id)
+        else:
+            competitionsEngine.modify_user_permissions_to_competition(user2, competition_id)
+            competitionsEngine.add_user_permission_update_routes(user2)
+            resultMessage= "User added as scorer"
 
 
     if update_status is not None:

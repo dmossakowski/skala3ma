@@ -608,7 +608,7 @@ def googleauth_reply():
 # first service to be called
 # if email found and password matches then log the user in
 @app.route('/email_login', methods=['POST'])
-@limiter.limit("2 per minute")
+@limiter.limit("3 per minute")
 def email_login():
     f = request.form
     #print(request.form)
@@ -1064,7 +1064,7 @@ if __name__ == '__main__':
     # setting debug=True is not needed with vscode
     # after initial start the app server starts again with line:
     #     Restarting with stat 
-    app.run(host='0.0.0.0', threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+    app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
 
 
