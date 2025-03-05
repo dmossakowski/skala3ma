@@ -231,9 +231,18 @@
 	function processDataRange(fullresponse)
 	{
 		//console.log('here3');
-		//console.log(fullresponse['rangeData']);
+		console.log(fullresponse['rangeData']);
 		
-		chart3.updateSeries(fullresponse['rangeData']);
+        options3.series[0] = fullresponse['rangeData'][0];
+        options3.series[1] = fullresponse['rangeData'][1];
+        
+		var chart3 = new ApexCharts(document.getElementById("myChart3"), options3);
+        
+        //chart3.updateSeries(fullresponse['rangeData']);
+            //var chart3 = new ApexCharts(document.querySelector("#myChart3"), options3);
+            
+        chart3.render();
+
 	}
 
     var optionsMFchart = {
@@ -396,13 +405,48 @@
       
     
 
+        var optionsScatter = {
+          series: [{
+          name: "SAMPLE A",
+          data: [
+          ['4c', 5.4], ['4c', 2] ]
+        },{
+          name: "SAMPLE B",
+          data: [
+          ["5a", 13.4], ["5a", 11], ["5a", 8]]
+        }],
+          chart: {
+          height: 350,
+          type: 'scatter',
+          zoom: {
+            enabled: true,
+            type: 'xy'
+          }
+        },
+        xaxis: {
+          tickAmount: 10,
+          labels: {
+            formatter: function(val) {
+              return parseFloat(val).toFixed(1)
+            }
+          }
+        },
+        yaxis: {
+          tickAmount: 7
+        }
+        };
+
+      
+
+
 
 // top chart with men and women
-    var options3 = {
+var options3 = {
         //labels: ['Femme Senior', 'Femme Titane'],
-		colors: [ '#FF9800','#4CAF50'],
+		//colors: [ '#FF9800','#4CAF50'],
+        colors: [ '#DDDDDD','#eeeeee'],
         
-          series:  [
+    series:  [
     {
       
       
@@ -436,7 +480,9 @@
         {
           "x": "6b", 
           "y": [
+            420,
             790, 
+            900,
             1000
           ]
         }, 
@@ -444,7 +490,7 @@
           "x": "6b", 
           "y": [
             190, 
-            300
+            191
           ]
         }, 
         {
@@ -459,46 +505,141 @@
     }
   ], 
   
-  
+       
         chart: {
           height: 650,
           
-          type: 'rangeBar'
+          //type: 'rangeBar',
+          type : 'rangeBar',
+          //stacked: true,
         },
+        /*dataLabels: {
+            enabled: true,
+            //enabledOnSeries: undefined,
+            
+            textAnchor: 'start',
+            position: 'center',
+            offsetX: -200,
+            hideOverflowingLabels: false,
+            dropShadow: {
+                enabled: false
+            },
+            style: {
+                colors: ['#FF0000'],
+            },
+          
+        
+            custom: function({series, seriesIndex, dataPointIndex, w}) {
+                var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];    
+                return 'customr data label'
+                }
+        },*/
         plotOptions: {
-          bar: {
-            horizontal: true
-          }
+            bar: {
+            horizontal: true,
+            dataLabels: {
+            position: 'top',
+            //columnWidth: '600px',
+            rangeBarOverlap: true,
+            isDumbbell: true,
+            },
+            },
         },
         tooltip: {
-            enabled: true,
+            enabled: false,
             enabledOnSeries: undefined,
             shared: false,
+            
+            /*custom: function({series, seriesIndex, dataPointIndex, w}) {
+                //var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];    
+                const goals =
+              options3.series[seriesIndex].data[dataPointIndex]
+                .goals
+        
+            var    t = '<div class="arrow_box"><span> ' 
+            
+            if (goals && goals.length) {
+                    t = t+ goals.map(goal => goal.value).sort((a,b) => a-b).join(', ');
+                //return ` ${val} / ${t}`;
+                }
+            //console.log('t: '+t);   
+            return t + '</span>' +'</div>'
+            },*/
+
             x: {
-                show: true,
+                show: false,
                 format: 'dd MMM',
                 formatter: undefined,
                 },
             y: {
-            formatter: function(value) {
-                return value
+                formatter: function(value, opts) {
+                    console.log(value)
+                    const goals = w.config.series[seriesIndex].data[dataPointIndex].goals;
+                    let t = '';
+                    if (goals && goals.length) {
+                        t = goals.map(goal => goal.value).sort((a, b) => a - b).join(', ');
+                        return `${value} / Goals: ${t}`;
+                    }
+                    return value;
                 },
                 title: {
-                    formatter: (seriesName) => seriesName,
+                    formatter: (seriesName) => seriesName+ ' 999 ',
                 },
             },    
         },
    
         dataLabels: {
           enabled: true,
-          formatter: function(val) {
-            var a = val[0]
-            var b = val[1]
-            var diff = val[1] - val[0]
-            return diff 
-          }
+
+          textAnchor: 'start',
+            position: 'center',
+            offsetX: -400,
+            hideOverflowingLabels: false,
+            dropShadow: {
+                enabled: false
+            },
+            style: {
+                colors: ['#33aa33'],
+            },
+          
+
+
+            formatter: function(val, opts) {
+              var a = val[0]
+              var b = val[1]
+              var diff = val[1] - val[0]
+
+              console.log(opts)
+             console.log(opts.config.series[opts.seriesIndex])
+             const goals = opts.config.series[opts.seriesIndex].data[opts.dataPointIndex].goals;
+                    let t = '';
+                    if (goals && goals.length) {
+                        t = goals.map(goal => goal.value).sort((a, b) => a - b).join('  ,   ');
+                        //return `${value} / Goals: ${t}`;
+                    }
+                    //return value;
+
+            return  '  '+ t + ' '
+           
+          },
+          /*formatter: function({series, seriesIndex, dataPointIndex, w}) {
+            //var a = val[0]
+            //var b = val[1]
+            //var diff = val[1] - val[0]
+
+            const goals = w.config.series[seriesIndex].data[dataPointIndex].goals;
+                    let t = '';
+                    if (goals && goals.length) {
+                        t = goals.map(goal => goal.value).sort((a, b) => a - b).join(', ');
+                        return `${value} / Goals: ${t}`;
+                    }
+                    //return value;
+
+            return  t
+           
+          }*/
         },
-        fill: {
+        /*fill: {
           type: 'gradient',
           gradient: {
             shade: 'light',
@@ -510,53 +651,30 @@
             opacityTo: 1,
             stops: [50, 0, 100, 100]
           }
-        },
+        },*/
+        
         xaxis: {
-          type: 'integer'
+          type: 'integer',
+          //categories: ['4', '5a', '5b', '6a', '6b', '7a', '7b', '8a', '8b', '9a', '9b', '10a', '10b'],
+          tickAmount: 20,
+      
+        },
+        grid: {
+          xaxis: {
+            lines: {
+              show: true
+            }
+          }
         },
         legend: {
           position: 'top'
         }
-        };
+    };
 
 
-        var options4 = {
-          series: [{
-          name: "SAMPLE A",
-          data: [
-          ["4", 5.4], ["5a", 2], ["5a", 3], ["5b", 2]]
-        },{
-          name: "SAMPLE B",
-          data: [
-          ["4", 51.4], ["5a", 2], ["5a", 3], ["5b", 21]]
-        },{
-          name: "SAMPLE C",
-          data: [
-          ["4", 5.4], ["5a", 21], ["5a", 31], ["5b", 2]]
-        }],
-          chart: {
-          height: 350,
-          type: 'scatter',
-          zoom: {
-            enabled: true,
-            type: 'xy'
-          }
-        },
-        xaxis: {
-          tickAmount: 10,
-          
-        },
-        yaxis: {
-          tickAmount: 7
-        }
-        };
 
 
-        //var chart3 = new ApexCharts(document.querySelector("#myChart3"), options3);
-        var chart3 = new ApexCharts(document.getElementById("myChart3"), options3);
-        
-        chart3.render();
-
+    
 
 
 

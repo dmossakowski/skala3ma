@@ -612,6 +612,8 @@ def modify_user_permissions_to_gym(user, gym_id, action="ADD"):
 
 # modify permission to edit specific competition to a user
 def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
+    if user is None:
+        raise ValueError("User cannot be None")
     try:
         sql_lock.acquire()
         #db = lite.connect(COMPETITIONS_DB)

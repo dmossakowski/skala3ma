@@ -157,8 +157,7 @@ def x(*args, **kwargs):
             language = 'fr_FR'
         session['language'] = language
     #logging.debug ("api setting language to session language="+str(session['language']))
-    langpack = competitionsEngine.reference_data['languages'][session['language']]
-    competitionsEngine.reference_data['current_language'] = langpack
+    set_language(session['language'])
     
 
 
@@ -168,9 +167,19 @@ def set_language(language=None):
         language = 'fr_FR'
     session['language'] = language
     logging.debug('api setting language requested to '+str(language))
-    langpack = competitionsEngine.reference_data['languages'][language]
-    competitionsEngine.reference_data['current_language'] = langpack
+    langpack = competitionsEngine.reference_data['languages'].get(language)
+    if langpack is None:
+        if language.startswith('pl'):
+            langpack = competitionsEngine.reference_data['languages']['pl_PL']
+        elif language.startswith('en'):
+            langpack = competitionsEngine.reference_data['languages']['en_US']
+        elif language.startswith('fr'):
+            langpack = competitionsEngine.reference_data['languages']['fr_FR']
+        else:
+            langpack = competitionsEngine.reference_data['languages']['fr_FR']
+            logging.warn('api setting language not found '+str(language))
 
+    competitionsEngine.reference_data['current_language'] = langpack
     return language
 
 
@@ -883,8 +892,8 @@ def getCompetitionFlatFullTable(competitionId):
             if int(route.get('routenum')) in climber.get('routesClimbed'):
                 table_entry = {}
                 index = climber.get('routesClimbed').index(int(route.get('routenum')))
-                if (route.get('id') != climber.get('routesClimbed2')[index].get('id')):  # there is a potential bug here on routeseClimbed2 not there
-                    print("error")
+                if (climber.get('routesClimbed2') and climber.get('routesClimbed2')[index] and route.get('id') != climber.get('routesClimbed2')[index].get('id')):  # there is a potential bug here on routeseClimbed2 not there
+                    logging.error("getCompetitionFlatFullTable route id is not matching or climber doesn't have a routeClimbed")
                 points = climber.get('points_earned')[index]
 
                 table_entry.update(route)
@@ -1477,6 +1486,51 @@ def get_myskala():
 
 
 
+def transform_json_bubble(input_data):
+    # Create a dictionary to hold the data for each grade
+    seriesH = {'name': 'Homme', 'data': []}
+    seriesF = {'name': 'Femme', 'data': []}
+
+    # Create a dictionary to track grades and their corresponding data
+    grade_data_h = {}
+    grade_data_f = {}
+
+    
+    # Loop over the routes and add them to the appropriate grade
+    for route in input_data['routes']:
+        grade = route['grade']
+        points_m = int(route['pointsM'])
+        points_f = int(route['pointsF'])
+        routenum = int(route['routenum'])
+
+    # Add points_m to seriesH
+        if grade not in grade_data_h:
+            grade_data_h[grade] = {'x': grade, 'y': [points_m]}
+        else:
+            grade_data_h[grade]['y'].append(points_m)
+
+        # Add points_f to seriesF
+        if grade not in grade_data_f:
+            grade_data_f[grade] = {'x': grade, 'y': [points_f]}
+        else:
+            grade_data_f[grade]['y'].append(points_f)
+
+        
+        #seriesH.get('data').append({'x': routenum, 'y': [points_m, points_m]})
+        #seriesF.get('data').append({'x': routenum, 'y': [points_f, points_f]})
+        
+        seriesH.get('data').append([grade, points_m, points_m])
+        seriesF.get('data').append([grade, points_f, points_f])
+        
+        
+    #sorted_grades = sorted(grades.keys(), key=lambda x: (x  if x else 'ZZZ'))
+
+    
+    return [seriesH, seriesF]
+
+
+
+
 def transform_json(input_data):
     # Create a dictionary to hold the data for each grade
     grades = {}
@@ -1489,8 +1543,8 @@ def transform_json(input_data):
         
         # If this is the first route we've seen for this grade, create a new dictionary for it
         if grade not in grades:
-            grades[grade] = {'homme': {'min': points_m-2, 'max': points_m, 'goals': []}, 
-                             'femme': {'min': points_f-2, 'max': points_f, 'goals': []}}
+            grades[grade] = {'homme': {'min': points_m, 'max': points_m, 'goals': []}, 
+                             'femme': {'min': points_f, 'max': points_f, 'goals': []}}
         # Otherwise, update the min and max points for this grade
         else:
             if points_m < grades[grade]['homme']['min']:
@@ -1516,11 +1570,13 @@ def transform_json(input_data):
         data = []
         for grade in sorted_grades:
             if grade in grades:
-                grade_data = {'x': grade, 'y': [grades[grade][gender]['min'], grades[grade][gender]['max']]}
+                #grade_data = {'x': grade, 'y': [grades[grade][gender]['min'], grades[grade][gender]['max']]}
+                grade_data = {'x': grade, 'y': [grades[grade][gender]['min'], 1000]}
                 if grades[grade][gender]['goals']:
                     goals = []
                     for goal in grades[grade][gender]['goals']:
-                        goals.append({'name': str(goal), 'value': goal, 'strokeColor': '#FFCCCC'})
+                        goal = {'name': str(goal), 'value': goal, 'strokeColor': '#333333', 'strokeWidth': 4}
+                        goals.append(goal)
                     grade_data['goals'] = goals
                 data.append(grade_data)
         series.append({'name': gender.capitalize(), 'data': data})
