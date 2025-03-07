@@ -1028,6 +1028,77 @@ def progressSimple():
 
 
 
+#################################################
+#### CONTACT
+#################################################
+@app.route('/contact')
+def contact():
+    email = session.get('email')
+    if email is None:
+        email = ''
+    name = session.get('name')
+    if name is None:
+        name = ''
+
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    return render_template("contact.html",
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           name=name,
+                           captcha=new_captcha_dict)
+
+
+
+@app.route('/contact', methods=['POST'])
+def contact_post():
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    email = request.form.get('email')
+    name = request.form.get('name')
+    message = request.form.get('message')
+    subject = request.form.get('subject')
+    c_hash = request.form.get('captcha-hash')
+    c_text = request.form.get('captcha-text')
+
+    time.sleep(1)
+
+    if not email or not name or not message or not subject:
+        return render_template('contact.html',
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('all_fields_required'),
+                           top_notification_level='danger')
+
+    if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
+        return render_template("contact.html",
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                            email=email,
+                            name=name,
+                            subject=subject,
+                            message=message,
+                            top_notification_label=get_translation('Bad_captcha'),
+                            top_notification_level='danger')
+    else:
+        email_sender.send_contact_email(email, name, subject, message)
+        return render_template('contact.html',
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('Email_sent'),
+                           top_notification_level='success')
+                           
+
+
+
+
+
 @app.route("/hello")
 def hello():
     return "Hello mister"
@@ -1040,10 +1111,6 @@ def test():
 def contactus():
     return render_template('contact-us.html')
 
-
-@app.route('/contact.html')
-def contact():
-    return render_template('contact.html')
 
 
 @app.route('/login.html')

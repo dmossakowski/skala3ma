@@ -1,4 +1,21 @@
 
+class App {
+    constructor() {
+        this.top_notification_label = '';
+        this.top_notification_level = '';
+    }
+
+    setNotification(label, level) {
+        this.top_notification_label = label;
+        this.top_notification_level = level;
+    }
+}
+
+// Initialize the App class
+const app = new App();
+
+
+
 function getColorByBgColor(bgColor) 
 {
  if (!bgColor) { return ''; }
@@ -290,16 +307,17 @@ function clearTranslations() {
 
      // Function to show a Bootstrap alert 
      // requires a div with the id 'alertPlaceholder' in the HTML
-     function showAlert(message, level, timeout=8000) {
+     function showAlert(message, level, timeout=20000) {
         //console.log('showAlert:', message, level);
         const alertPlaceholder = document.getElementById('alertPlaceholder');
         // Create a span for the message
         const messageSpan = document.createElement('span');
         messageSpan.setAttribute('data-translate-key', message);
+        message = getTranslation(message);
         messageSpan.textContent = message;
 
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${level} alert-dismissible fade show`;
+        alertDiv.className = `alert alert-${level} alert-dismissible fade show fixed-top-alert`;
         alertDiv.role = 'alert';
         // Create the close button
         const closeButton = document.createElement('button');
@@ -349,19 +367,19 @@ function clearTranslations() {
          document.addEventListener('DOMContentLoaded', () => {
             const queryParams = getQueryParams();
             const message = queryParams['message'];
-            var label = queryParams['label']
+            const top_notification_labelQP = app.top_notification_label || queryParams['top_notification_label'];
+            const top_notification_levelQP = app.top_notification_level ||queryParams['top_notification_level'];
 
+            console.log('top_notification_label in skala util:'+ app.top_notification_label);
+
+            if (top_notification_labelQP && top_notification_levelQP) {
+                showAlert(top_notification_labelQP, top_notification_levelQP);
                 
-            const level = queryParams['level'];
-
-            if (label && level) {
-                showAlert(label, level);
-
                   // Remove query parameters from the URL
                   const url = new URL(window.location);
-                url.searchParams.delete('message');
-                url.searchParams.delete('level');
-                url.searchParams.delete('label');
+                //url.searchParams.delete('message');
+                url.searchParams.delete('top_notification_level');
+                url.searchParams.delete('top_notification_label');
                 window.history.replaceState({}, document.title, url.toString());
        
             }

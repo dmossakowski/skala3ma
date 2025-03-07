@@ -1298,4 +1298,15 @@ div.cs-select span {
   background: url(../images/hourglass.svg) center no-repeat #222222; }
 
 
+
+
+.fixed-top-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050; /* Ensure it is above other elements */
+    text-align: center;
+}
+
 /*# sourceMappingURL=style.css.map */

@@ -1738,6 +1738,7 @@ def migrategyms():
 
 
 ######## GYMS
+########################################
 @app_ui.route('/gyms')
 def gyms():
     fullname = request.args.get('fullname')
@@ -2107,11 +2108,13 @@ def gym_routes_save(gymid, routesid):
             gymroutes = gym.get('routesid')
         
             return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=gymroutes, label=result.get('label'), message=result.get('message'), level='success'))
+                                    gym_id=gymid, routesid=gymroutes, label=result.get('label'), 
+                                    top_notification_label=result.get('message'), top_notification_level='success'))
         else:
             message = result.get('message')
             return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=routesid, label=result.get('label'), message=result.get('message'), level='danger'))
+                                    gym_id=gymid, routesid=routesid, label=result.get('label'), 
+                                    top_notification_label=result.get('message'), top_notification_level='danger'))
 
 
     routes = []
@@ -2134,7 +2137,7 @@ def gym_routes_save(gymid, routesid):
         routes_dict['name'] = routes_dict['name']+' copy'
         competitionsEngine.upsert_routes(newroutesid, gymid, routes_dict)
         return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=newroutesid, label="routes_copied", level='success'))
+                                    gym_id=gymid, routesid=newroutesid, top_notification_label="routes_copied", top_notification_level='success'))
 
     competitionsEngine.update_routes(routesid, routes_dict)
 
@@ -2142,7 +2145,7 @@ def gym_routes_save(gymid, routesid):
     routes = competitionsEngine.get_routes(gym.get('routesid'))
 
     return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=routesid, label="routes_saved", level='success'))
+                                    gym_id=gymid, routesid=routesid, top_notification_label="routes_saved", top_notification_level='success'))
    
 
 
@@ -2428,12 +2431,14 @@ def gyms_update(gym_id):
     gym.update((k, v) for k, v in gym_json.items() if v is not None)
     competitionsEngine.update_gym(gym_id, gym)
 
-    return redirect(url_for('app_ui.gym_by_id', gymid=gym_id, label=label, level='success'))
+    return redirect(url_for('app_ui.gym_by_id', gymid=gym_id, top_notification_label=label, top_notification_level='success'))
 
 
 
 
-
+#################################################
+### COMPETITIONS  Dashboard
+#################################################
 
 
 @app_ui.route('/competitionDashboard/loadData')
@@ -2443,6 +2448,8 @@ def loadData():
     return render_template("competitionDashboard.html", climberId=None,
                            subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data)
+
+
 
 
 @app_ui.route('/image/')

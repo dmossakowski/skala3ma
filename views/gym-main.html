@@ -110,13 +110,6 @@
     
 
 
-
-    <div class="alert alert-success" role="alert" id="alert-ribbon" onclick="this.style.display='none';"
-      style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80%; 
-      background-color: #f4f9f5; padding: 20px; border: 0px solid rgb(114, 114, 114);
-      font-size: 2em; font-style:bold; ">
-        
-    </div>
         
 
         <div id="modal" class="modal-container">
@@ -1184,6 +1177,7 @@
             .then(data => {
                 console.log('Response from saving route');
                 console.log(data)
+                showAlert('route_saved', 'success');
                 //routes=data.routes
                 //renderTabulatorTable(routes);
                 //table.replaceData(routes);
@@ -1224,6 +1218,7 @@
                 //console.log('inputData:', inputData);
                 
                 routes=data.routes
+                showAlert('routes_saved', 'success');
                 //renderTabulatorTable(routes);
                 table.updateOrAddData(routes);
 
@@ -1263,15 +1258,10 @@
             })
             .then(data => {
                 //console.log(data);
-                alertRibbon = document.getElementById('alert-ribbon')
-                alertRibbon.innerHTML = '{{ reference_data['current_language']['rating_saved']}} ' + data.starttime + 
-                '  <i class="bi bi-x" ="font-size: 3rem;style color: rgb(98, 92, 92);"></i>'
-                alertRibbon.style.display = "block"
-                //setTimeout(() => alertRibbon.style.display='none', 2500)
-                //document.getElementById('alert-ribbon').style.display='block';
-                //table.replaceData(routes);
+                
+                showAlert('rating_saved', 'success');
+                
                 hideModal()
-                //document.getElementById('thanksbox').style.display='block';
                 
       
             })
