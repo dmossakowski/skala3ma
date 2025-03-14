@@ -307,12 +307,14 @@ function clearTranslations() {
 
      // Function to show a Bootstrap alert 
      // requires a div with the id 'alertPlaceholder' in the HTML
+     // this function should be called after the DOMContentLoaded event
+     // it expects that translations are already loaded
      function showAlert(message, level, timeout=20000) {
         //console.log('showAlert:', message, level);
         const alertPlaceholder = document.getElementById('alertPlaceholder');
         // Create a span for the message
         const messageSpan = document.createElement('span');
-        messageSpan.setAttribute('data-translate-key', message);
+        //messageSpan.setAttribute('data-translate-key', message);
         message = getTranslation(message);
         messageSpan.textContent = message;
 

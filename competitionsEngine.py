@@ -989,6 +989,15 @@ def get_category_from_dob(dob):
             return -1  # Return -1 if age does not fit any category
 
 
+def get_user_emails_with_competition_id(competition_id):
+    users = skala_db.get_users_with_competition_id(competition_id)
+    emails = []
+    for user in users:
+        if user.get('email') is not None:
+            emails.append(user.get('email'))
+    return emails
+
+
                                     
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid, dob):
     if climber is None:

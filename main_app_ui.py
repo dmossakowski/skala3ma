@@ -1365,6 +1365,14 @@ def getCompetitionStats(competitionId):
 
 
 
+
+
+
+
+
+
+
+
 #@app_ui.route('/competitionDashboard/<competitionId>/climber/<climberId>')
 #@login_required
 # THIS IS NOT USED PROBABLY!!!!
@@ -1720,6 +1728,13 @@ def update_routes_climbed(competitionId, climberId):
                            competitionId=competitionId,
                            reference_data=competitionsEngine.reference_data,
                            **session)
+
+
+
+
+
+
+
 
 
 
