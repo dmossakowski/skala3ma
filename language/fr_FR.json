@@ -11,7 +11,7 @@
   "create_new": "Nouvelle compétition",
   "about": "À propos",
   "short_app_description": "Gérer les compétitions et les murs",
-  "app_welcome": "Application officielle des compétitions autrement de la FSGT",
+  "app_welcome": "Application officielle du collectif Compétitions Autrement de la FSGT",
   "update_details": "Renseignez vos informations",
   "details_saved": "Vos informations sont sauvegardées",
   "all_fields_required": "Tous les champs sont requis",
@@ -214,6 +214,7 @@
   "Send": "Envoyer",
   "Email_sent": "Email envoyé",
   "Contact": "Contact",
+  "Contact_us": "Contactez-nous",
   
   "error5314": "La mise à jour des voies n'est pas autorisée",
   "error5315": "Pas de permission pour éditer le mur",
@@ -242,6 +243,7 @@
   "Please_login_again_with_your_new_password": "Veuillez vous reconnecter avec votre nouveau mot de passe",
   "Please_try_again": "On a un probleme.. Veuillez réessayer.",
   "Bad_captcha": "Mauvais CAPTCHA. Veuillez réessayer.",
+  "Contact_us_text1": "Vous aimez cette appli ? Vos questions ou idees sont les bienvenues. ",
 
   "last": "Last"
 }

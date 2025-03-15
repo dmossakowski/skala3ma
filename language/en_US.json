@@ -210,6 +210,7 @@
   "Send": "Send",
   "Email_sent": "Email sent",
   "Contact": "Contact",
+  "Contact_us": "Contact us",
   
   "error5314": "Updating routes is not permitted for this user",
   "error5315": "No permission to edit gym",
@@ -235,7 +236,7 @@
 "Please_login_again_with_your_new_password": "Please login again with your new password",
 "Please_try_again": "We have a problem.. Please try again.",
 "Bad_captcha": "Bad CAPTCHA. Please try again.",
-
+"Contact_us_text1": "Do you like this app? Do you have a qustion or a suggestion to improve it? ",
 
   "last": "Last"
   
