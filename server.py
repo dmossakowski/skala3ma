@@ -1028,6 +1028,189 @@ def progressSimple():
 
 
 
+#################################################
+#### CONTACT
+#################################################
+@app.route('/contact')
+def contact():
+    email = session.get('email')
+    if email is None:
+        email = ''
+    name = session.get('name')
+    if name is None:
+        name = ''
+
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    return render_template("contact.html",
+                           reference_data=competitionsEngine.reference_data,
+                           email=email,
+                           name=name,
+                           captcha=new_captcha_dict)
+
+
+
+@app.route('/contact', methods=['POST'])
+@limiter.limit("2 per minute")
+def contact_post():
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    email = request.form.get('email')
+    name = request.form.get('name')
+    message = request.form.get('message')
+    subject = request.form.get('subject')
+    c_hash = request.form.get('captcha-hash')
+    c_text = request.form.get('captcha-text')
+
+
+    if not email or not name or not message or not subject:
+        return render_template('contact.html',
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('all_fields_required'),
+                           top_notification_level='danger')
+
+    if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
+        time.sleep(1)
+        return render_template("contact.html",
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                            email=email,
+                            name=name,
+                            subject=subject,
+                            message=message,
+                            top_notification_label=get_translation('Bad_captcha'),
+                            top_notification_level='danger')
+    else:
+        email_sender.send_contact_email(email, name, subject, message)
+        return render_template('contact.html',
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('Email_sent'),
+                           top_notification_level='success')
+                           
+
+
+
+
+
+
+
+@app.route('/competition_contact/<competitionId>')
+def competition_contact(competitionId):
+
+    competition = None
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return redirect("/competitionDashboard")
+    
+    elif competition is LookupError:
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist was not found",
+                                   library={},
+                                   **session)
+    elif len(competition) == 0:
+
+        return render_template('index.html', sortedA=None,
+                                   getPlaylistError="Playlist has no tracks or it was not found",
+                                   library={},
+                                   **session)
+    subject=competition['name']+ ' - '+competition['date']
+    subheader_message = "CompetitionDetails '" + competition['name'] + "' on "+competition['date']
+
+    return render_template("competitionContact.html", 
+                           competitionId=competitionId,
+                           competition=competition,
+                           subject=subject,
+                           captcha=new_captcha_dict,
+                           subheader_message=subheader_message,
+                           reference_data=competitionsEngine.reference_data,
+                           library=None,
+                           **session)
+
+
+
+
+
+
+@app.route('/competition_contact/<competitionId>', methods=['POST'])
+@limiter.limit("2 per minute")
+def competition_contact_post(competitionId):
+    new_captcha_dict = SIMPLE_CAPTCHA.create()
+    email = request.form.get('email')
+    name = request.form.get('name')
+    message = request.form.get('message')
+    subject = request.form.get('subject')
+    c_hash = request.form.get('captcha-hash')
+    c_text = request.form.get('captcha-text')
+
+    if competitionId is not None:
+        competition = competitionsEngine.get_competition(competitionId)
+
+    if competition is None:
+        return redirect("/competitionDashboard")
+    
+
+    if not email or not name or not message or not subject:
+        return render_template('competitionContact.html',
+                               competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('all_fields_required'),
+                           top_notification_level='danger')
+
+    if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
+        time.sleep(1)
+        return render_template("competitionContact.html",
+                               competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                            email=email,
+                            name=name,
+                            subject=subject,
+                            message=message,
+                            top_notification_label=get_translation('Bad_captcha'),
+                            top_notification_level='danger')
+    else:
+
+        competition_string = competition['name'] + ' - ' + competition['date']
+        emails_to = competitionsEngine.get_user_emails_with_competition_id(competitionId)
+
+        competition_url = url_for('competition_contact', competitionId=competitionId, _external=True)
+      
+        email_sender.send_email_to_organizer(email, name, subject, message, emails_to, competition_string, competition_url)
+        
+        return render_template('competitionContact.html',
+                               competitionId=competitionId,
+                           competition=competition,
+                           reference_data=competitionsEngine.reference_data,
+                           captcha=new_captcha_dict,
+                           email=email,
+                           name=name,
+                           subject=subject,
+                           message=message,
+                           top_notification_label=get_translation('Email_sent'),
+                           top_notification_level='success')
+                           
+
+
+
 @app.route("/hello")
 def hello():
     return "Hello mister"
@@ -1040,10 +1223,6 @@ def test():
 def contactus():
     return render_template('contact-us.html')
 
-
-@app.route('/contact.html')
-def contact():
-    return render_template('contact.html')
 
 
 @app.route('/login.html')

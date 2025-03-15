@@ -5,19 +5,23 @@
 
 {% block topcontent %}
 
-
-
 {% endblock %}
-
 
 	{% block secondarycontent %}
 
-    
-	
+
+   
+
+
+		{% include "competition-menu.html" %}
+
+        
+        
 <div class=" text-center heading-section animate-box">
     <div id="alertPlaceholder"></div>
                 <br>
-                <h3><span data-translate-key="Contact_us"></span></h3>
+                <h3><span data-translate-key="competition_contact_email"></span></h3>
+                
 </div>
 
 
@@ -37,27 +41,32 @@
     //}
 </script>
 
-
-
-<div class="container">
-
+<div class="container-fluid">	
     <div class="row">
+<div class="col-md-6 text-center">
+    <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date'] }}')">
+        <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}" width="65%" class=""><br><br>
+    </a>
+</div>
+<!-- qr code -->
+<div class="col-md-6">
+
       
-	    <form action="/contact" method="POST" enctype="multipart/form-data">
+	    <form action="/competition_contact/{{competitionId}}" method="POST" enctype="multipart/form-data">
 
 
 
             <div class="form-floating">
                 <!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
-                <input class="form-control mb-2" id="name" name="name" size="40" value="{{name}}" required/><br>
+                <input class="form-control mb-2" id="name" name="name" size="20" value="{{name}}" required/><br>
                 <label for="name"><span data-translate-key="name"></span></label>
             </div>
             <div class="form-floating">
-                <input class="form-control mb-2" id="email" name="email" size="40" value="{{email}}" type=email required/><br>
+                <input class="form-control mb-2" id="email" name="email" size="20" value="{{email}}" type=email required/><br>
                 <label for="lastname"><span data-translate-key="email"></span></label>
             </div>
             <div class="form-floating">
-                <input class="form-control mb-2" id="subject" name="subject" size="40" value="{{subject}}"  required/><br>
+                <input class="form-control mb-2" id="subject" name="subject" size="20" value="{{subject}}"  required/><br>
                 <label for="subject"><span data-translate-key="Subject"></span></label>
             </div>
                
@@ -67,7 +76,7 @@
             <div class="form-floating mb-3">
           	
 
-            <textarea class="form-control" name="message" id="email_text" rows="6" cols="50" size="50" style="height: 200px">{{message}}</textarea><br>
+            <textarea class="form-control" name="message" id="email_text" rows="6" cols="20" size="50" style="height: 200px">{{message}}</textarea><br>
             <label for="message"><span data-translate-key="Message"></span></label>
             
            
@@ -88,17 +97,15 @@
     	</form>
 
 
-
+</div>
     </div>
 
 
   
     <br><br>
-    <script>
-       
-</script>
-<br><br><br><br><br><br>
-
+    
 
 </div>
+
+
 {% endblock %}

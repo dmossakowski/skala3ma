@@ -157,7 +157,7 @@ def x(*args, **kwargs):
             language = 'fr_FR'
         session['language'] = language
     #logging.debug ("api setting language to session language="+str(session['language']))
-    set_language(session['language'])
+    set_language(session['language'])   
     
 
 

@@ -152,9 +152,7 @@
                 showAlert(error_message, 'danger');
             }
         document.addEventListener('DOMContentLoaded', function() {
-
-       
-            fetch('/api1/user')
+            fetch('/api1/user')            
                 .then(response => response.json())
                 .then(data => {
                     const permissions = data.permissions;

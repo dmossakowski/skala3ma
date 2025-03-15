@@ -4,6 +4,9 @@ from flask import url_for
 from itsdangerous import URLSafeTimedSerializer
 import logging
 
+CONTACT_EMAIL = os.getenv('CONTACT_EMAIL')
+
+
 class EmailSender:
     def __init__(self, reference_data):
         self.smtp_api_key = os.getenv("SMTP_API_KEY")
@@ -105,3 +108,73 @@ class EmailSender:
         
 
 
+    def send_email_to_organizer(self, email_from, name, subject, email_content, email_to, competition_string, competition_url):
+        
+        # if email_to is not an array
+        if not isinstance(email_to, list):
+            raise ValueError('email_to must be a list')
+        
+        email_subject = self.reference_data['current_language']['competitions']
+        email_link_text = self.reference_data['current_language']['reset_password_email_text1']
+        competition_contact_email0 = self.reference_data['current_language']['competition_contact_email0']
+        competition_contact_email1 = self.reference_data['current_language']['competition_contact_email1']
+        
+        competition_name = 'Contact message'
+        if subject is None:
+            subject = 'No subject'
+        email_text = """
+    
+                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <br><br>"""+competition_contact_email0+""" 
+                <br><br>"""+name+""" ("""+email_from+""")"""+ competition_contact_email1+""" '"""+competition_string+"""'
+                <br>    
+                
+                <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+"""+email_content+"""
+                </pre>
+                <br><br>Competition URL: <a href='"""+competition_url+"""'>"""+competition_url+"""</a>
+        """
+
+        ret = requests.post(
+            "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
+            auth=("api", self.smtp_api_key),
+            data={"from": "SKALA3MA <do-not-reply@skala3ma.com>",
+                "to": email_to,
+                "subject": ""+name+" - "+subject,
+                "text": "Contact message from:  "+name+" \n"+email_from+"\n"+email_content,
+                "html": email_text
+                })
+
+    
+    def send_contact_email(self, email_from, name, subject, email_content, email_to=CONTACT_EMAIL,):
+        
+        email_subject = self.reference_data['current_language']['competitions']
+        email_link_text = self.reference_data['current_language']['reset_password_email_text1']
+        competition_url = "BLAH BLAH" # f"{self.base_url}/competitionDetails/"
+        competition_name = 'Contact message'
+        if subject is None:
+            subject = 'No subject'
+        email_text = """
+    
+                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <br><br>Contact email from """+name+""" at """+email_from+"""
+               
+                <br>
+                <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+"""+email_content+"""
+                </pre>
+                
+        """
+
+        ret = requests.post(
+            "https://api.eu.mailgun.net/v3/skala3ma.com/messages",
+            auth=("api", self.smtp_api_key),
+            data={"from": "SKALA3MA <do-not-reply@skala3ma.com>",
+                "to": [email_to],
+                "subject": "Contact from "+name+" - "+subject,
+                "text": "Contact message from:  "+name+"  "+email_from+"  "+email_content,
+                "html": email_text
+                })
+        
+        return 'mail sent'+ret.reason+' '+ret.text
+        

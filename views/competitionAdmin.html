@@ -19,13 +19,13 @@
 
 {% if resultMessage is not none and  resultMessage|default('')|length > 0 %}
 
-<script> showAlert('{{resultMessage}}', 'success', 0);</script>
+<script> showAlert('{{resultMessage}}', 'success', 20000);</script>
 {% endif %}
 
 
 {% if resultError is not none and  resultError|default('')|length > 0 %}
 
-<script> showAlert('{{resultError}}', 'danger', 0);</script>
+<script> showAlert('{{resultError}}', 'danger', 20000);</script>
 {% endif %}		
 
 <br>
