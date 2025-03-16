@@ -83,6 +83,7 @@ from flask_login import (
 
 from flask_bcrypt import Bcrypt
 from itsdangerous import URLSafeTimedSerializer
+from flask_babel import Babel, format_date
 
 #from flask_openapi3 import OpenAPI, Info, Tag
 
@@ -138,12 +139,38 @@ SIMPLE_CAPTCHA = CAPTCHA(config=YOUR_CONFIG)
 app = SIMPLE_CAPTCHA.init_app(app)
 
 
+
 # Initialize the Limiter
 limiter = Limiter(
     get_remote_address,
     app=app
     #default_limits=["2000 per day", "5000 per hour"]
 )
+
+# Configure Babel
+app.config['BABEL_DEFAULT_LOCALE'] = 'en_US'
+app.config['BABEL_SUPPORTED_LOCALES'] = ['en_US', 'fr_FR', 'de_DE']
+
+def get_locale():# You can use request.args, request.cookies, or any other method to determine the locale
+    return request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
+
+babel = Babel(app, locale_selector=get_locale)
+
+@app.template_filter('strftime')
+def format_datetime(date_str, format=None):
+    formats = ["%Y-%m-%d", "%d-%m-%Y"]
+    for fmt in formats:
+        try:
+            parsed_date = datetime.datetime.strptime(date_str, fmt)
+            formatted_date = parsed_date.strftime("%d-%m-%Y")
+            return formatted_date
+        except ValueError:
+            continue
+    return date_str
+
+    
+
+
 
 # Custom rate limit exceeded handler
 #@limiter.request_filter

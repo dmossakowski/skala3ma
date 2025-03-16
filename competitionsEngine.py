@@ -774,6 +774,7 @@ def init():
             #user['gymid'] = ''
     skala_db.update_gym_data(reference_data)
     skala_db.update_users_data()
+    skala_db.update_competitions_data()
 
 
 

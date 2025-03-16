@@ -25,11 +25,11 @@
 	
 						<br> 
 
-							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+							<h3>{{competition['name'] }} - {{ competition['date'] | strftime(format='short')}}</h3>
 
 			{% else %}
             <br><br>
-							<h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+							<h3>{{competition['name'] }} - {{ competition['date'] | strftime(format='short')}}</h3>
 						<br><br>
 						<h3> {{ reference_data['current_language'].competition_results }} <br>
 						<br>{{ reference_data['current_language'].not_available }}</h3>

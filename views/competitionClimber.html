@@ -32,7 +32,7 @@
             <div class="row">
                 <div class="col">
                     <br>
-                    <h3> {{ competition['name']}} - {{ competition['date']}}</h3>
+                    <h3> {{ competition['name']}} - {{ competition['date']| strftime(format='short') }}</h3>
                     <font color="red">{{ reference_data['current_language'][error_code] }}</font>
                     <br>
 

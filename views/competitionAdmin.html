@@ -29,7 +29,7 @@
 {% endif %}		
 
 <br>
-				<h3>{{competition['name'] }} - {{ competition['date']}} <br>
+				<h3>{{competition['name'] }} - {{ competition['date'] | strftime(format='short') }} <br>
 				{{competition['gym']}}</h3>
 				 	 {{ reference_data['current_language']['competition_status_'~competition['status']] }}
 </div>

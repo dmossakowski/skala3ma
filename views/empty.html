@@ -98,7 +98,7 @@
 									<h4>{{ gyms[gymid]['name'] }}</h4>
 									<span class="posted_by">{{ gyms[gymid]['routesid'] }}</span>
 									<br>
-									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
+									<span class="posted_by">{{ gyms[gymid]['date'] | strftime(format='short')}}</span>
 									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
 
 
