@@ -21,7 +21,7 @@
 
                 <br>
                 <h3>
-                        {{competition['name'] }} - {{ competition['date']}}</h3>
+                        {{competition['name'] }} - {{ competition['date'] | strftime(format='short') }}</h3>
              
                 </div>
 
@@ -32,7 +32,7 @@
                         <div class="row">
                             <!-- competiton poster -->
                             <div class="col-md-6 text-center">
-                                <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date'] }}')">
+                                <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date']| strftime(format='short') }}')">
                                     <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}" width="65%" class=""><br><br>
                                 </a>
                             </div>

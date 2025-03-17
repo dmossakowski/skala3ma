@@ -25,7 +25,7 @@
 						<h3>{{ reference_data['current_language'].youareonwaitinglist }}</h3>
 						{% endif %} 
 
-				{{competition['name'] }} - {{ competition['date']}}<br>	
+				{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}<br>	
 						 <br><br><br>
 				
 					</div>

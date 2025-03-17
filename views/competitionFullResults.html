@@ -24,7 +24,7 @@
     <div class="text-center heading-section">
         <br>{{ reference_data['current_language'].competition_results }} 
 
-            <h3>{{competition['name'] }} - {{ competition['date']}}</h3>
+            <h3>{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
 
     </div>
    

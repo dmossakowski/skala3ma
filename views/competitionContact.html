@@ -44,7 +44,7 @@
 <div class="container-fluid">	
     <div class="row">
 <div class="col-md-6 text-center">
-    <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date'] }}')">
+    <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date'] | strftime(format='short')}}')">
         <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}" width="65%" class=""><br><br>
     </a>
 </div>

@@ -1256,6 +1256,31 @@ def update_users_data():
     db.close()
 
 
+def _parse_date(date_str):
+    formats = ["%Y-%m-%d", "%d-%m-%Y"]
+    for fmt in formats:
+        try:
+            parsed_date = datetime.strptime(date_str, fmt)
+            formatted_date = parsed_date.strftime("%m-%d-%Y")
+            return True, formatted_date
+        except ValueError:
+            continue
+    return False, date_str
+
+
+def update_competitions_data():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    
+    # Fetch all users
+    cursor.execute(f'SELECT id, jsondata FROM {COMPETITIONS_TABLE}')
+    competitions = cursor.fetchall()
+    for competition_id, jsondata in competitions:
+        competition = json.loads(jsondata)
+        
+        
+    db.commit()
+    db.close()
 
 if __name__ == '__main__':
     init()

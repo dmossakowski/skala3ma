@@ -14,9 +14,9 @@
 
 
 body {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: "Lato","Roboto", Arial, "Open Sans", Arial, sans-serif;
   line-height: 1.6;
-  font-size: 16px;
+  font-size: 18px;
   background: #fff;
   color: #333333;
   font-weight: 300; 
@@ -29,9 +29,12 @@ body {
 }
 
 .skala3ma-logo {
+    font-family: "Lato","Chakra Petch";
+    /*, "Rajdhani", "Doto",  "Chakra Petch" , "Lato", "Chakra Petch", "Slabo";*/
     color: #44C662 !important;
-    font-size:28px;
+    font-size:30px;
     font-weight: 700;
+    color: #333333;
 }
 
 .large-icons {
@@ -49,7 +52,7 @@ body {
 
 a {
   /*color: #33a632 !important;*/
-  font-family: "Open Sans", Arial, sans-serif;
+  /*font-family: "Open Sans", Arial, sans-serif;*/
  
   
   color: rgba(51, 51, 51, 0.7) ;
@@ -67,11 +70,12 @@ p, ul, ol {
   margin-bottom: 1.5em;
   font-size: 16px;
   color: #333333;
-  font-family: "Open Sans", Arial, sans-serif; }
+  /*font-family: "Open Sans", Arial, sans-serif; */
+  }
 
 h1, h2, h3, h4, h5, h6 {
   color: #5a5a5a;
-  font-family: "Open Sans", Arial, sans-serif;
+  /*font-family: "Open Sans", Arial, sans-serif;*/
   font-weight: 400;
   margin: 0 0 30px 0; }
 
