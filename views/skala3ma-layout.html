@@ -181,11 +181,11 @@ function initializeApp() {
                 <div class="navbar-nav ml-auto d-md-none">
                 
                 <ul class="navbar-nav ml-left">
-                    <!-- 
+                    
                     <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionCalendar">{{ reference_data['current_language'].competitions }}</a>
--->
+
                                {% if session is defined and session['expires_at'] is defined %}
                  
                     <a href="/user" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -242,7 +242,9 @@ function initializeApp() {
                     </ul>
                 </li>
 
-                <a href="/contact" class="nav-link fs-4">{{ reference_data['current_language'].Contact }}<span class="badge text-bg-secondary">New</span></a>
+                <li><a href="/contact" class="nav-link fs-4">{{ reference_data['current_language'].Contact }}</a></li><br>
+                <li><a href="https://www.facebook.com/skala3ma" class="nav-link fs-4"><i class="icon-facebook2"></i> Facebook page</a></li>
+                <li><a href="https://github.com/dmossakowski/skala3ma/discussions" class="nav-link fs-4"><i class="icon-github"></i> GitHub</a> </li>
                    
 
             </div>
@@ -449,7 +451,7 @@ function initializeApp() {
                                 <li><a href="/logout">{{ reference_data['current_language'].logout }}</a></li>
 							{% endif %}
                                 <br>
-								<li><a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i> Facebook page</a></li>
+								<li><a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i> Facebook</a></li>
                                 <li><a href="https://github.com/dmossakowski/skala3ma"><i class="icon-github"></i> GitHub</a></li>
 							</ul>
 
