@@ -3,6 +3,7 @@ import requests
 from flask import url_for
 from itsdangerous import URLSafeTimedSerializer
 import logging
+from datetime import datetime
 
 CONTACT_EMAIL = os.getenv('CONTACT_EMAIL')
 
@@ -149,6 +150,9 @@ class EmailSender:
     def send_contact_email(self, session_email, email_from, name, subject, email_content, email_to=CONTACT_EMAIL,):
         if email_from is None:
             raise ValueError('email_from must be provided')
+        
+        current_date = datetime.now().strftime("%Y-%m-%d")
+
         email_subject = self.reference_data['current_language']['competitions']
         email_link_text = self.reference_data['current_language']['reset_password_email_text1']
         competition_url = "BLAH BLAH" # f"{self.base_url}/competitionDetails/"
@@ -161,7 +165,7 @@ class EmailSender:
         email_text = """
     
                 <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
-                <br><br>Contact email from """+name+""" at """+email_from+"""   logged in as """+session_email+"""
+                <br><br>Contact email from """+name+""" at """+email_from+""" - logged in as """+session_email+"""
                
                 <br>
                 <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
@@ -175,7 +179,7 @@ class EmailSender:
             auth=("api", self.smtp_api_key),
             data={"from": "SKALA3MA <do-not-reply@skala3ma.com>",
                 "to": [email_to],
-                "subject": "Contact from "+name+" - "+subject,
+                "subject": "Contact from "+name+" - "+current_date+ " - "+subject,
                 "text": "Contact message from:  "+name+"  "+email_from+"  "+email_content,
                 "html": email_text
                 })
