@@ -1079,6 +1079,7 @@ def contact():
 @app.route('/contact', methods=['POST'])
 @limiter.limit("2 per minute")
 def contact_post():
+    session_email = session.get('email')
     new_captcha_dict = SIMPLE_CAPTCHA.create()
     email = request.form.get('email')
     name = request.form.get('name')
@@ -1111,7 +1112,7 @@ def contact_post():
                             top_notification_label=get_translation('Bad_captcha'),
                             top_notification_level='danger')
     else:
-        email_sender.send_contact_email(email, name, subject, message)
+        email_sender.send_contact_email(session_email, email, name, subject, message)
         return render_template('contact.html',
                            reference_data=competitionsEngine.reference_data,
                            captcha=new_captcha_dict,
@@ -1136,7 +1137,7 @@ def competition_contact(competitionId):
     new_captcha_dict = SIMPLE_CAPTCHA.create()
 
     if competitionId is not None:
-        competition = competitionsEngine.recalculate(competitionId)
+        competition = competitionsEngine.get_competition(competitionId)
 
     if competition is None:
         return redirect("/competitionDashboard")

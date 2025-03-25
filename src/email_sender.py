@@ -146,18 +146,22 @@ class EmailSender:
                 })
 
     
-    def send_contact_email(self, email_from, name, subject, email_content, email_to=CONTACT_EMAIL,):
-        
+    def send_contact_email(self, session_email, email_from, name, subject, email_content, email_to=CONTACT_EMAIL,):
+        if email_from is None:
+            raise ValueError('email_from must be provided')
         email_subject = self.reference_data['current_language']['competitions']
         email_link_text = self.reference_data['current_language']['reset_password_email_text1']
         competition_url = "BLAH BLAH" # f"{self.base_url}/competitionDetails/"
         competition_name = 'Contact message'
+        if session_email is None:
+            session_email = 'Not logged in'
+
         if subject is None:
             subject = 'No subject'
         email_text = """
     
                 <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
-                <br><br>Contact email from """+name+""" at """+email_from+"""
+                <br><br>Contact email from """+name+""" at """+email_from+"""   logged in as """+session_email+"""
                
                 <br>
                 <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
