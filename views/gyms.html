@@ -44,7 +44,7 @@ $(document).ready(function () {
 
 			    {% if gym is not none and gym is not undefined  %}
                         not used
-						<img src="/image/{{ gym.get('logo_img_id') }}" width="150" >
+						<img src="/image/{{ gym.get('logo_img_id') }}" width="120" >
 
 						<font size="+5"> {{ gym['name'] }}</font>
 						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
@@ -84,7 +84,7 @@ $(document).ready(function () {
 
             <div class="col d-flex justify-content-center align-items-center">
                 
-                <div class=" fh5co-blog border-0 text-center"  style="width: 10rem;"  >
+                <div class=" fh5co-blog border-0 text-center"  style="qqwidth: 12rem;"  >
                    
                     <div id='home_gym' class="fh5co-blog">       
                         <a href="gyms/{{ home_gym['id'] }}">
@@ -101,29 +101,30 @@ $(document).ready(function () {
                 </div>
             </div>
             
-
-
 		{%endif %}
 
 
 
-        {% if permissioned_gyms is not none and permissioned_gyms is not undefined %}
-            
-                    <h1></h1>
+        {% if  permissioned_gyms is not none and permissioned_gyms is not undefined %}
+                
             {% for gymid in permissioned_gyms %}
 
 
-                <div class="col d-flex justify-content-center align-items-center">
-                    <div class=" fh5co-blog border-0 text-center"  style="width: 10rem;"  >
+                <div class="col justify-content-center align-items-center">
+
+
+                
+
+                    <div class=" fh5co-blog border-0 text-center"  style="qqwidth: 12rem;"  >
                        
 
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog"
+						<div id='albumArt{{ loop.index }}' class=""
 							 onmouseover="undefined"
 							 onmouseleave="undefined">       
 							<a href="gyms/{{ gymid }}">
 							<div class="blog-text">
 								<div class="text-center">
-								    <img src="/image/{{  permissioned_gyms[gymid].get('logo_img_id') }}" >
+								    <img src="/image/{{  permissioned_gyms[gymid].get('logo_img_id') }}" width="100" >
 									<span class="posted_by">{{ permissioned_gyms[gymid]['date'] }}</span>
 									<br><br>
 									<h3 class="display-2">{{ permissioned_gyms[gymid]['name'] }}</h3>
@@ -136,6 +137,7 @@ $(document).ready(function () {
                 </div>
 
 			{% endfor %}
+        </div>
 
         {% endif %}
 
@@ -149,13 +151,14 @@ $(document).ready(function () {
             {% if home_gym is not none or permissioned_gyms is not none  %}
             <h1></h1>
             {% endif %}
-                <div class="row   g-4 ">
+               
         
+                    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-6">
             {% for gymid in gyms %}
 
 
                 <div class="col d-flex justify-content-center align-items-center">
-                    <div class=" fh5co-blog border-0"  style="width: 16rem;"  >
+                    <div class=" fh5co-blog border-0"   >
 
 
 						<div id='albumArt{{ loop.index }}' class="fh5co-blog"

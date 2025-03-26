@@ -85,17 +85,47 @@ function processData(fullresponse)
 renderTabulatorTable(fullresponse)
 }
 
+function customInHeaderFilter(headerValue, rowValue, rowData, filterParams){
+    //headerValue - the value of the header filter element
+    //rowValue - the value of the column in this row
+    //rowData - the data for the row being filtered
+    //filterParams - params object passed to the headerFilterFuncParams property
+
+    const filterValues = headerValue.split(/[\s,]+/);
+
+    // Check if any of the split strings is in the rowValue
+    match = filterValues.some(value => rowValue && rowValue.toString().toLowerCase().includes(value.toLowerCase()));
+
+    return match;
+    //return rowData.name == filterParams.name && rowValue < headerValue; //must return a boolean, true if it passes the filter.
+}
+
+function customEqualHeaderFilter(headerValue, rowValue, rowData, filterParams){
+    //headerValue - the value of the header filter element
+    //rowValue - the value of the column in this row
+    //rowData - the data for the row being filtered
+    //filterParams - params object passed to the headerFilterFuncParams property
+
+    //console.log('filterParams', filterParams);
+    const filterValues = headerValue.split(/[\s,]+/);
+
+    // Check if any of the split strings is in the rowValue
+    match = filterValues.some(value => rowValue && rowValue.toString().toLowerCase() === value.toLowerCase());
+    return match;
+    //return rowData.name == filterParams.name && rowValue < headerValue; //must return a boolean, true if it passes the filter.
+}
+
 
 function renderTabulatorTable(routesA)
 {
 var columns = [
-{title:"{{ reference_data['current_language'].name}}", field:"firstname", headerFilter:true},
-{title:"{{ reference_data['current_language'].lastname}}", field:"lastname", headerFilter:"input"},
+{title:"{{ reference_data['current_language'].name}}", field:"firstname", headerFilterFunc:customInHeaderFilter, headerFilter:true},
+{title:"{{ reference_data['current_language'].lastname}}", field:"lastname", headerFilterFunc:customInHeaderFilter, headerFilter:"input"},
 {title:"{{ reference_data['current_language'].sex}}", field:"sex", headerFilter:"input"},
 
 {title: "{{ reference_data['current_language'].club}}", field: "club", headerFilter:"input", topCalc:"unique"},
 {title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100, type: "number", headerFilter:"input", headerFilterFunc:"<=", topCalc:"avg",},
-{title:"{{ reference_data['current_language'].route_num}}", field:"routenum",headerFilter:"input", headerFilterFunc:"=", topCalc:"count",},
+{title:"{{ reference_data['current_language'].route_num}}", field:"routenum",headerFilter:"input", headerFilterFunc:"=", topCalc:"count", headerFilterFunc:customEqualHeaderFilter, },
 {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
@@ -107,7 +137,7 @@ var columns = [
             },
         },
 //{title:"Line", field:"line"},
-{title:"{{ reference_data['current_language'].grade}}", field:"grade", headerFilter:"input"},
+{title:"{{ reference_data['current_language'].grade}}", field:"grade", headerFilterFunc:customEqualHeaderFilter, headerFilter:"input"},
 {title:"{{ reference_data['current_language'].points}}", field:"points", topCalc:"sum", topCalcParams:{
     precision:1,
 }},
