@@ -2419,6 +2419,36 @@ def gyms_update(gym_id):
     lat = formdata['lat'][0]
     lon = formdata['lon'][0]
 
+
+    # Check if lat or lon are empty and address is not empty
+    if (not lat or not lon) and address:
+        try:
+            # Use OpenStreetMap Nominatim API to get latitude and longitude
+            nominatim_url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                "q": address,
+                "format": "json",
+                "addressdetails": 1,
+                "limit": 1
+            }
+            headers = {
+                "User-Agent": "Skala3maApp/1.0 (https://skala3ma.com; contact@skala3ma.com)",
+                "Referer": "https://skala3ma.com"
+            }
+            response = requests.get(nominatim_url, params=params, headers=headers)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            data = response.json()
+
+            if data:
+                lat = data[0].get("lat", "")
+                lon = data[0].get("lon", "")
+                logging.info(f"Retrieved coordinates: lat={lat}, lon={lon}")
+            else:
+                logging.info("No coordinates found for the given address.")
+        except Exception as e:
+            logging.error(f"Error retrieving coordinates: {e}")
+
+
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]

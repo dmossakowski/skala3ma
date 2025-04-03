@@ -10,7 +10,7 @@ class RouteSet:
     def generate_dummy_routes(self, num_routes):
         routesA = []
 
-        colors = ['#44C662', '#FF4500','#558afe','#a07821','#efdd41','#d33f2a','#333333']
+        colors = ['#53be6b', '#FF4500','#558afe','#a07821','#efdd41','#d33f2a','#333333']
         grades = ['4a', '4b', '4c', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '8a', '8b', '8c']
         color_modifier = ['solid', 'marble']
         
