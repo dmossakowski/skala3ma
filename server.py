@@ -1164,7 +1164,9 @@ def competition_contact(competitionId):
                            subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data,
                            library=None,
-                           **session)
+                           **session,
+                           top_notification_label=get_translation('all_fields_required'),
+                           top_notification_level='danger')
 
 
 
