@@ -31,7 +31,10 @@ body {
 .skala3ma-logo {
     font-family: "Lato","Chakra Petch";
     /*, "Rajdhani", "Doto",  "Chakra Petch" , "Lato", "Chakra Petch", "Slabo";*/
-    color: #44C662 !important;
+    /*color: #44C662 !important;*/
+    /*color: #53be6b !important;*/
+    color: #29c05c !important;
+    
     font-size:30px;
     font-weight: 700;
     color: #333333;
@@ -42,7 +45,7 @@ body {
     font-size:28px;
     font-weight: 700;
     text-decoration: none;
-    color: #44C662;
+    color: #3caf57;
     
 
 }
@@ -63,7 +66,7 @@ a {
 
 a:hover {
   text-decoration: none;
-  color: #44C662 !important;
+  color: #3caf57 !important;
 }
 
 p, ul, ol {
@@ -88,15 +91,15 @@ figure {
 
 ::-webkit-selection {
   color: #fcfcfc;
-  background: #44C662; }
+  background: #53be6b; }
 
 ::-moz-selection {
   color: #fcfcfc;
-  background: #44C662; }
+  background: #53be6b; }
 
 ::selection {
   color: #fcfcfc;
-  background: #44C662; }
+  background: #53be6b; }
 
 
 .sf-arrows .sf-with-ul {
@@ -188,7 +191,7 @@ figure {
   top: 0;
   left: 0;
   font-size: 16px;
-  color: #44C662;
+  color: #53be6b;
   background: rgba(0, 0, 0, 0.06);
   padding: 10px;
   -webkit-border-radius: 50%;
@@ -197,9 +200,9 @@ figure {
   border-radius: 50%; }
 #fh5co-logo a {
     text-decoration: none;
-  color: #44C662; }
+  color: #53be6b; }
 #fh5co-logo a:hover, #fh5co-logo a:focus {
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-logo span {
   font-weight: 300; }
 
@@ -213,7 +216,7 @@ figure {
   padding: 1em .75em; }
 
 #fh5co-primary-menu > li > ul li.active > a {
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-primary-menu > li > .sf-with-ul:after {
   border: none !important;
   font-family: 'icomoon';
@@ -320,7 +323,7 @@ figure {
   text-transform: none;
   background: none; }
 #fh5co-primary-menu .fh5co-sub-menu a:hover {
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 
 #fh5co-search-map {
   width: 100%;
@@ -336,7 +339,7 @@ figure {
 #fh5co-search-map .search-property {
   width: 33.5%;
   float: right;
-  background: #44C662; }
+  background: #53be6b; }
 @media screen and (max-width: 768px) {
   #fh5co-search-map .search-property {
     width: 100%;
@@ -366,16 +369,16 @@ figure {
   font-size: 12px; }
 #fh5co-search-map .s-holder input[type="text"]::-webkit-input-placeholder {
   /* Chrome/Opera/Safari */
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-search-map .s-holder input[type="text"]::-moz-placeholder {
   /* Firefox 19+ */
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-search-map .s-holder input[type="text"]:-ms-input-placeholder {
   /* IE 10+ */
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-search-map .s-holder input[type="text"]:-moz-placeholder {
   /* Firefox 18- */
-  color: #44C662 !important; }
+  color: #53be6b !important; }
 #fh5co-search-map .s-holder input[type="text"], #fh5co-search-map .s-holder .cs-select {
   width: 60% !important;
   float: right;
@@ -428,7 +431,7 @@ div.cs-select span {
 .cs-skin-border > span {
   border: transparent;
   background: white;
-  color: #44C662;
+  color: #53be6b;
   padding: 14px 10px !important; }
 .cs-skin-border > span::after {
   font-size: 14px !important;
@@ -439,7 +442,7 @@ div.cs-select span {
 
 .cs-skin-border.cs-active > span {
   background: rgba(0, 0, 0, 0.05) !important;
-  color: #44C662; }
+  color: #53be6b; }
 
 .cs-select .cs-options {
   -webkit-box-shadow: 0px 10px 20px -12px rgba(0, 0, 0, 0.18);
@@ -466,7 +469,7 @@ div.cs-select span {
   font-size: 40px;
   font-weight: 400;
   position: relative;
-  color: #44C662; }
+  color: #53be6b; }
 .heading-section p {
   font-size: 20px; }
 
@@ -499,7 +502,7 @@ div.cs-select span {
   top: 12px;
   left: -7px;
   color: #fff;
-  background: #44C662;
+  background: #53be6b;
   padding: 10px 12px;
   font-weight: bold;
   font-size: 12px; }
@@ -512,7 +515,7 @@ div.cs-select span {
   height: 0;
   border-style: solid;
   border-width: 0px 0px 5px 7px;
-  border-color: transparent transparent #44C662 transparent; }
+  border-color: transparent transparent #53be6b transparent; }
 .fh5co-property .prop-details {
   width: 90%;
   margin: 0 auto;
@@ -529,7 +532,7 @@ div.cs-select span {
   display: inline-block;
   font-weight: 400;
   color: #fff;
-  background: #44c662;
+  background: #53be6b;
   padding: 5px 10px;
   margin-bottom: 10px; }
 
@@ -544,7 +547,7 @@ div.cs-select span {
   display: inline-block;
   font-weight: 400;
   margin-bottom: 10px;
-  color: #44C662; }
+  color: #53be6b; }
 .property .property-details .address {
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: block;
@@ -595,11 +598,11 @@ div.cs-select span {
 #fh5co-about .fh5co-staff .list-prop {
   display: block;
   margin-bottom: 20px;
-  color: #44C662;
+  color: #53be6b;
   font-weight: 400; }
 
 .fh5co-agent {
-  background: #44C662; }
+  background: #53be6b; }
 .fh5co-agent h3, .fh5co-agent p {
   color: #fff !important; }
 .fh5co-agent .fh5co-staff {
@@ -643,7 +646,7 @@ div.cs-select span {
   display: table-cell;
   vertical-align: middle;
   font-size: 40px;
-  color: #44C662; }
+  color: #53be6b; }
 .feature-left .feature-copy {
   float: right;
   width: 80%; }
@@ -665,72 +668,6 @@ div.cs-select span {
   line-height: 1.8;
   margin-bottom: 10px; }
 
-#fh5co-testimonial {
-  position: relative;
-  background: #44C662; }
-#fh5co-testimonial .fh5co-heading {
-  margin-bottom: 4em; }
-#fh5co-testimonial .fh5co-heading h2 {
-  color: white;
-  font-size: 40px; }
-#fh5co-testimonial .box-testimony {
-  margin-bottom: 2em;
-  float: left; }
-#fh5co-testimonial .box-testimony a {
-  color: rgba(255, 255, 255, 0.5); }
-#fh5co-testimonial .box-testimony a:hover, #fh5co-testimonial .box-testimony a:focus, #fh5co-testimonial .box-testimony a:active {
-  color: white;
-  text-decoration: none; }
-#fh5co-testimonial .box-testimony blockquote {
-  padding-left: 0;
-  border-left: none;
-  padding: 40px;
-  background: #fff;
-  position: relative;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  -ms-border-radius: 4px;
-  border-radius: 4px; }
-#fh5co-testimonial .box-testimony blockquote:after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 40px;
-  border-top: 15px solid black;
-  border-top-color: #fff;
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent; }
-#fh5co-testimonial .box-testimony blockquote .quote {
-  position: absolute;
-  top: 0;
-  left: 10px;
-  text-align: center;
-  font-size: 30px;
-  line-height: 0;
-  display: table;
-  color: #fff;
-  width: 56px;
-  height: 56px;
-  margin-top: -30px;
-  background: #44C662;
-  -webkit-border-radius: 50%;
-  -moz-border-radius: 50%;
-  -ms-border-radius: 50%;
-  border-radius: 50%; }
-#fh5co-testimonial .box-testimony blockquote .quote > span {
-  display: table-cell;
-  vertical-align: middle; }
-#fh5co-testimonial .box-testimony blockquote p {
-  letter-spacing: 1px; }
-#fh5co-testimonial .box-testimony .author {
-  line-height: 20px;
-  color: white;
-  font-size: 20px;
-  margin-left: 20px; }
-#fh5co-testimonial .box-testimony .author .subtext {
-  display: block;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 16px; }
 
 #fh5co-features {
   padding: 7em 0; }
@@ -836,60 +773,6 @@ div.cs-select span {
   background-size: cover;
   background-repeat: no-repeat; }
 
-.fh5co-testimonial, .fh5co-team {
-  position: relative;
-  background: #fff;
-  padding: 30px;
-  border-radius: 5px;
-  margin-bottom: 30px; }
-@media screen and (max-width: 768px) {
-  .fh5co-testimonial, .fh5co-team {
-    border-right: 0;
-    margin-bottom: 80px; } }
-.fh5co-testimonial h2, .fh5co-team h2 {
-  font-size: 16px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-weight: bold;
-  margin-bottom: 50px; }
-.fh5co-testimonial figure, .fh5co-team figure {
-  position: relative;
-  top: 0px;
-  background-size: cover;
-  margin-bottom: 20px; }
-.fh5co-testimonial figure img, .fh5co-team figure img {
-  width: 130px;
-  height: 130px;
-  border: 10px solid #fff;
-  background-size: cover;
-  -webkit-border-radius: 50%;
-  -moz-border-radius: 50%;
-  -ms-border-radius: 50%;
-  border-radius: 50%; }
-.fh5co-testimonial > div, .fh5co-team > div {
-  padding: 30px 30px 0 30px; }
-.fh5co-testimonial > div h3, .fh5co-team > div h3 {
-  margin-bottom: 0;
-  font-size: 20px;
-  color: #44C662; }
-.fh5co-testimonial > div .position, .fh5co-team > div .position {
-  color: #d9d9d9;
-  margin-bottom: 30px; }
-.fh5co-testimonial > div, .fh5co-testimonial blockquote, .fh5co-team > div, .fh5co-team blockquote {
-  border: none;
-  padding: 0;
-  margin-bottom: 20px; }
-.fh5co-testimonial > div p, .fh5co-testimonial blockquote p, .fh5co-team > div p, .fh5co-team blockquote p {
-  font-size: 16px;
-  line-height: 1.5;
-  color: #555555; }
-.fh5co-testimonial span, .fh5co-team span {
-  font-style: italic;
-  color: #b3b3b3; }
-
-.fh5co-testimonial p .text-mute {
-  color: #ccc !important; }
-
 
 
 .fh5co-blog {
@@ -918,7 +801,7 @@ div.cs-select span {
 .fh5co-blog .blog-text span.comment a {
   color: rgba(0, 0, 0, 0.5); }
 .fh5co-blog .blog-text span.comment a i {
-  color: #44C662;
+  color: #53be6b;
   padding-left: 7px; }
 .fh5co-blog .blog-text h3 {
   font-size: 20px;
@@ -996,7 +879,7 @@ div.cs-select span {
 
 .fh5co-social-icons > a {
   padding: 4px 10px;
-  color: #44C662; }
+  color: #53be6b; }
 .fh5co-social-icons > a i {
   font-size: 20px; }
 .fh5co-social-icons > a:hover, .fh5co-social-icons > a:focus, .fh5co-social-icons > a:active {
@@ -1036,7 +919,7 @@ div.cs-select span {
   right: 10px;
   border-top-left-radius: 0px !important;
   border-bottom-left-radius: 0px !important;
-  background: #44C662;
+  background: #53be6b;
   border: none; }
 #footer #fh5co-header-subscribe button i {
   color: #fff;
@@ -1054,13 +937,13 @@ div.cs-select span {
   -o-transition: 0.3s;
   transition: 0.3s; }
 .btn.btn-primary {
-  background: #44C662;
+  background: #53be6b;
   color: #fff;
   border: none !important;
   border: 2px solid transparent !important; }
 .btn.btn-primary:hover, .btn.btn-primary:active, .btn.btn-primary:focus {
   box-shadow: none;
-  background: #44C662;
+  background: #53be6b;
   color: #fff !important; }
 .btn:hover, .btn:active, .btn:focus {
   /*background: #393e46 !important;*/
@@ -1070,10 +953,10 @@ div.cs-select span {
   border-color: transparent; }
 .btn.btn-outline {
   background: transparent;
-  color: #44C662;
-  border: 2px solid #44C662 !important; }
+  color: #53be6b;
+  border: 2px solid #53be6b !important; }
 .btn.btn-outline:hover, .btn.btn-outline:focus, .btn.btn-outline:active {
-  background: #44C662 !important;
+  background: #53be6b !important;
   color: #fff !important; }
 
 .tab-content .btn {
@@ -1136,12 +1019,12 @@ div.cs-select span {
   font-size: 18px;
   color: rgba(255, 255, 255, 0.4); }
 #offcanvas-menu ul li a:hover {
-  color: #44C662; }
+  color: #53be6b; }
 #offcanvas-menu ul li > .fh5co-sub-menu {
   margin-top: 9px;
   padding-left: 20px; }
 #offcanvas-menu ul li.active > a {
-  color: #44C662; }
+  color: #53be6b; }
 #offcanvas-menu ul .fh5co-sub-menu {
   display: block !important; }
 

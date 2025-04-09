@@ -19,7 +19,7 @@ class EmailSender:
         email_subject = self.reference_data['current_language']['registration_email_subject']
         email_text = """
 <img src='https://skala3ma.com/public/images/favicon.png' width="35">
-<span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+<span style="color: #53be6b; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
 
 <br><br>"""+self.reference_data['current_language']['hello']+"""  """+ email +"""  
 <br><br>
@@ -51,7 +51,7 @@ class EmailSender:
         email_subject = self.reference_data['current_language']['reset_password_email_subject']
         
         email_text = """<img src='https://skala3ma.com/public/images/favicon.png' width="35">
-                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <span style="color: #53be6b; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
 
                 <br><br>
                 <a href='"""+confirm_url+"""'>
@@ -81,7 +81,7 @@ class EmailSender:
 
         email_text = """
     <img src='https://skala3ma.com/public/images/favicon.png' width="35">
-                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <span style="color: #53be6b; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
 
                 <br><br>"""+self.reference_data['current_language']['competition_participants_email0']+"""
                 <a href='"""+competition_url+"""'>"""+competition_name+"""</a>.
@@ -125,7 +125,7 @@ class EmailSender:
             subject = 'No subject'
         email_text = """
     
-                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <span style="color: #53be6b; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
                 <br><br>"""+competition_contact_email0+""" 
                 <br><br>"""+name+""" ("""+email_from+""")"""+ competition_contact_email1+""" '"""+competition_string+"""'
                 <br>    
@@ -164,7 +164,7 @@ class EmailSender:
             subject = 'No subject'
         email_text = """
     
-                <span style="color: #44C662; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
+                <span style="color: #53be6b; font-size: 38px; font-weight:700; font-family: 'sans-serif', 'Arial'"> SKALA3MA</span>
                 <br><br>Contact email from """+name+""" at """+email_from+""" - logged in as """+session_email+"""
                
                 <br>
