@@ -804,6 +804,7 @@ def competitions_by_year(year):
                            )
 
 
+
 @app_ui.route('/newCompetition', methods=['GET'])
 @login_required
 def new_competition():

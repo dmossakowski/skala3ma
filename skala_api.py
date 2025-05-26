@@ -836,9 +836,39 @@ def getCompetitionStats(competitionId):
     return json.dumps(statresponse)
 
 
+#@skala_api_app.route('/competitionResults2025')
+def get_competition_results_2024():
+    year = "2024"
+    competitions3 = competitionsEngine.get_competitions_by_year(year)
+
+    fullResults = {}
+    for competition_id, competition in competitions3.items():
+        fullresults = getCompetitionFlatFullTable(competition_id)
+        #rankings = competitionsEngine.get_sorted_rankings(competition)
+
+        logging.debug("Adding entry to full results: "+str(len(competition)))
+        for entry in   fullresults:
+            
+            if entry.get('rank') not in [1, 2, 3]:
+                continue
+            fullResults[entry.get('climber_email')] = {
+                'firstname': entry.get('firstname'),
+                'lastname': entry.get('lastname'),
+                'club': entry.get('club'),
+                'category': entry.get('category'),
+                'rank': entry.get('rank'),
+            }
+
+    return fullResults
+
+
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/fullresults')
 #@login_required
+def getCompetitionFlatFullTableString(competitionId):
+    return json.dumps(getCompetitionFlatFullTable(competitionId))
+
+
 def getCompetitionFlatFullTable(competitionId):
     competition = None
 
@@ -904,7 +934,8 @@ def getCompetitionFlatFullTable(competitionId):
                 table_entry['club'] = climber.get('club')
                 table_entry['rank'] = climber.get('rank')
                 table_entry['sex'] = climber.get('sex')
-
+                table_entry['climber_id'] = climber.get('id')
+                table_entry['climber_email'] = climber.get('email')
                 
                 #full_routes_table.append(route)
                 full_routes_table.append(table_entry)
@@ -913,8 +944,7 @@ def getCompetitionFlatFullTable(competitionId):
     statresponse = { "chartdata": statout,
                     "routedata" : routes}
     
-    return json.dumps(full_routes_table)
-    #return full_routes_table
+    return full_routes_table
 
 
 
