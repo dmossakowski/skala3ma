@@ -1680,7 +1680,28 @@ def gyms():
 
 @skala_api_app.route('/gyms')
 def gyms_list(field=None, value=None):
-    return gyms_list_by_field('status', 'created')
+    # Optional filter: /api1/gyms?status=<status_key>
+    # If no status provided, return all gyms.
+    status_key = request.args.get('status')
+
+    # When a status is provided, reuse the existing filtered implementation.
+    if status_key:
+        return gyms_list_by_field('status', status_key)
+
+    # No status provided: fetch all gyms and serialize to list
+    gyms = competitionsEngine.get_gyms()
+
+    newgyms = []
+    if gyms is None:
+        return json.dumps(newgyms)
+
+    for gymid in gyms:
+        gym = gyms.get(gymid)
+        if 'added_by' in gym:
+            gym['added_by'] = gym['added_by'].split('@')[0]
+        newgyms.append(gym)
+
+    return json.dumps(newgyms)
 
 
 
@@ -1894,10 +1915,17 @@ def route_add(gymid, routesid):
     allroutes = all_routes.get(routesid)
 
     routeset = allroutes.get('routes')
-    
-    for route in routes:
-        if route['id'] == routedata['id']:
-            routeset.insert(routeset['routenum'], routesdata)
+    routes = routeset if isinstance(routeset, list) else []
+
+    # Insert only if not already present; default position is end
+    exists = any(route.get('id') == routedata.get('id') for route in routes)
+    if not exists:
+        try:
+            pos = int(routedata.get('routenum', len(routes)))
+        except Exception:
+            pos = len(routes)
+        pos = max(0, min(pos, len(routes)))
+        routes.insert(pos, routedata)
 
     return json.dumps(allroutes)
 
@@ -2209,6 +2237,8 @@ def image_route(img_id):
     #bytes_io = competitionsEngine.get_img(img_id)
     #return send_file(bytes_io, mimetype='image/png')
 
-    return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)
+    import mimetypes
+    guessed, _ = mimetypes.guess_type(img_id)
+    return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=guessed)
 
 

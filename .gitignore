@@ -13,3 +13,4 @@ datadir
 node
 node_modules
 venv312
+*pem

@@ -46,6 +46,75 @@ Minimum version of Python is 3.7. You will need to have either Google or Faceboo
  openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
 ```
 
+
+certificate generation for mobile app:
+
+```
+cd /Users/david/dev/gitrepos/skala3ma && if [ -f dev-local.pem ] && [ -f dev-local-key.pem ]; then echo "dev cert exists"; else echo "Generating dev-local cert covering 127.0.0.1 localhost ::1 10.0.2.2 with openssl"; cat > openssl-dev.cnf <<'EOF'
+[ req ]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+prompt             = no
+req_extensions     = req_ext
+x509_extensions    = v3_req
+
+[ req_distinguished_name ]
+C            = US
+ST           = Local
+L            = Local
+O            = Dev
+OU           = Dev
+CN           = 127.0.0.1
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ v3_req ]
+subjectAltName = @alt_names
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+[ alt_names ]
+DNS.1   = localhost
+IP.1    = 127.0.0.1
+IP.2    = 10.0.2.2
+IP.3    = ::1
+EOF
+ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout dev-local-key.pem -out dev-local.pem -config openssl-dev.cnf; fi
+
+ ```
+
+ install it:
+
+ ```
+ export AUTHLIB_INSECURE_TRANSPORT=true; pkill -f "python .*server.py" || true; sleep 0.5; /Users/david/dev/gitrepos/skala3ma/venv312/bin/python /Users/david/dev/gitrepos/skala3ma/server.py | sed -u -e 's/\x1b\[[0-9;]*m//g' | head -n 5
+
+ ```
+
+
+ generate der for the certiifcate to install it on the app
+
+ ```
+ if [ -f dev-local.pem ]; then openssl x509 -outform der -in dev-local.pem -out /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/app/src/main/res/raw/dev_local.cer; else echo "dev-local.pem not found"; fi
+
+ if [ -f /Users/david/dev/gitrepos/skala3ma/dev-local.pem ]; then openssl x509 -outform der -in /Users/david/dev/gitrepos/skala3ma/dev-local.pem -out /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/app/src/main/res/raw/dev_local.cer; else echo "dev-local.pem not found"; fi
+
+```
+
+rebuild the app
+```
+
+export PATH="/opt/homebrew/opt/node@20/bin:$PATH"; export JAVA_HOME="$(/usr/libexec/java_home -v 17)"; /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/gradlew -p /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android :app:installDebug
+
+adb logcat -c; adb shell am force-stop com.skala3mamobile; adb shell am start -n com.skala3mamobile/.MainActivity; sleep 2; adb logcat -d | grep -i -E "(SSLHandshakeException|CERTIFICATE|UnknownServiceException|https:\/\/10\.0\.2\.2:3000|gyms)" | tail -n 120
+
+ ```
+
+
+
+
+
 2. Create Python Virtual Environment
 ```
   python -m venv .venv

@@ -140,6 +140,8 @@ app = SIMPLE_CAPTCHA.init_app(app)
 
 
 
+
+
 # Initialize the Limiter
 limiter = Limiter(
     get_remote_address,
@@ -223,13 +225,18 @@ def init():
     #init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
     #init_logging(console_loglevel=logging.DEBUG)
     r = random.randint(0, 10000)
-    init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
     # init_logging(console_loglevel=logging.DEBUG)
 
     
     if not os.path.exists(DATA_DIRECTORY):
         print("DATA_DIRECTORY does not exist... this will not end welll....")
 
+    if not os.path.exists(DATA_DIRECTORY+"/logs"):
+        os.mkdir(DATA_DIRECTORY+"/logs")
+        print('Created logs directory')
+
+    init_logging(log_file=DATA_DIRECTORY+'/logs/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
+   
     if not os.path.exists(DATA_DIRECTORY+"/users"):
         os.mkdir(DATA_DIRECTORY+"/users")
         print('Created users directory')
@@ -361,7 +368,6 @@ def login():
 @app.route('/revoke')
 def revoke():
     logging.info ("doing revoke")
-    spotify.revoke()
 
 
 @app.route('/logout')
@@ -381,7 +387,6 @@ def logout():
     session['email'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
-    #spotify.token
 
     return redirect("/")
 
@@ -1271,7 +1276,12 @@ if __name__ == '__main__':
     # setting debug=True is not needed with vscode
     # after initial start the app server starts again with line:
     #     Restarting with stat 
-    app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+    # app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+    # Use a cert that includes SANs for 127.0.0.1, localhost, ::1, and 10.0.2.2 so Android emulator can connect over HTTPS.
+    # Generate with mkcert (preferred):
+    #   mkcert -cert-file dev-local.pem -key-file dev-local-key.pem 127.0.0.1 localhost ::1 10.0.2.2
+    # Or generate with your dev CA including these SANs and update the filenames below.
+    app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('dev-local.pem', 'dev-local-key.pem'))
 
 
 
