@@ -784,7 +784,6 @@ def contact():
 
 
 @app.route('/contact', methods=['POST'])
-@limiter.limit("2 per minute")
 def contact_post():
     session_email = session.get('email')
     new_captcha_dict = SIMPLE_CAPTCHA.create()
