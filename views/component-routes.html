@@ -750,6 +750,9 @@
                     // data is an empty object
                     // remove div called users-div
                     var usersDiv = document.getElementById('users-div-col');
+                    if (usersDiv == null){
+                        return;
+                    }
                     usersDiv.remove();
                 }
                 else{

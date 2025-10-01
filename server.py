@@ -63,6 +63,7 @@ from skala_api import skala_api_app
 import competitionsEngine
 
 from src.email_sender import EmailSender
+from src.email_login import EmailLoginService
 
 # Initialize EmailSender with necessary configurations
 email_sender = EmailSender(
@@ -104,6 +105,10 @@ GOOGLE_DISCOVERY_URL = (
 FACEBOOK_CLIENT_ID=os.getenv("FACEBOOK_CLIENT_ID", None)
 FACEBOOK_CLIENT_SECRET=os.getenv("FACEBOOK_CLIENT_SECRET", None)
 
+# Spotify configuration (restored)
+SPOTIFY_APP_ID = os.getenv("SPOTIFY_APP_ID", "")
+SPOTIFY_APP_SECRET = os.getenv("SPOTIFY_APP_SECRET", "")
+
 SMTP_API_KEY = os.getenv("SMTP_API_KEY")
 
 # workaround to hardcoded limit in Request class
@@ -125,6 +130,20 @@ app.register_blueprint(skala_api_app)
 app.debug = True
 app.secret_key = 'development'
 oauth = OAuth(app)
+# Register spotify oauth client if credentials available
+if SPOTIFY_APP_ID and SPOTIFY_APP_SECRET:
+    oauth.register(
+        name='spotify',
+        client_id=SPOTIFY_APP_ID,
+        client_secret=SPOTIFY_APP_SECRET,
+        access_token_url='https://accounts.spotify.com/api/token',
+        authorize_url='https://accounts.spotify.com/authorize',
+        api_base_url='https://api.spotify.com/v1/',
+        client_kwargs={'scope': 'user-read-email'}
+    )
+    spotify = oauth.create_client('spotify')
+else:
+    spotify = None
 
 bcrypt = Bcrypt(app)
 
@@ -137,6 +156,9 @@ YOUR_CONFIG = {
 }
 SIMPLE_CAPTCHA = CAPTCHA(config=YOUR_CONFIG)
 app = SIMPLE_CAPTCHA.init_app(app)
+
+# Instantiate email login service AFTER bcrypt & captcha are set up
+email_login_service = EmailLoginService(competitionsEngine, email_sender, bcrypt, SIMPLE_CAPTCHA)
 
 
 
@@ -343,25 +365,17 @@ def handle_exception(error):
 
 @app.route('/login')
 def login():
-    logging.info ("doing login "+str(request.referrer)+" client_id "+str(SPOTIFY_APP_ID))
-
+    if not spotify:
+        return render_template('index.html', subheader_message='Spotify not configured', library={}, **session)
+    logging.info("doing login %s client_id %s", str(request.referrer), str(SPOTIFY_APP_ID))
     callback = url_for('spotify_authorized', _external=True)
-
-    #print(" request.referrer " + request.referrer)
-    #print(" request.args.get('next') ="+request.args.get('next'))
-
-    callback2 = url_for(
-        'spotify_authorized',
-        next=request.args.get('next') or request.referrer or None,
-        _external=True
-    )
     return spotify.authorize_redirect(callback)
 
 
 @app.route('/revoke')
 def revoke():
     logging.info ("doing revoke")
-    spotify.revoke()
+    return redirect("/")
 
 
 @app.route('/logout')
@@ -384,75 +398,50 @@ def logout():
     #spotify.token
 
     return redirect("/")
+ 
+
+
 
 #@app.route('/authorize')
 #def authorize():
-#    token = oauth.twitter.authorize_access_token()
-#    # this is a pseudo method, you need to implement it yourself
-#    #OAuth1Token.save(current_user, token)
-#    return redirect(url_for('twitter_profile'))
 
 
 @app.route('/login/authorized')
 def spotify_authorized():
+    if not spotify:
+        return redirect('/')
     logging.info("spotify is calling /login/authorized ...")
     try:
         error = request.args.get('error')
-        logging.info(str(request))
-
-        if str(error) == 'access_denied':
-            logging.info ("access is denied ",error)
-            return render_template('index.html', subheader_message="Not authorized", library={}, **session)
-
-        #acc = spotify.fetch_access_token(scope='user-library-read')
+        if error:
+            logging.info("spotify auth error param: %s", error)
+            return render_template('index.html', subheader_message='Not authorized', library={}, **session)
         resp = spotify.authorize_access_token()
-        logging.info ("spotify calls us now " + str(resp))
-        if resp is None:
-            return 'Access denied: reason={0} error={1}'.format(
-                request.args['error_reason'],
-                request.args['error_description']
-            )
-        #if isinstance(resp, OAuthException):
-        #    return 'Access denied: {0}'.format(resp.message)
-
+        logging.info("spotify calls us now %s", str(resp))
+        if not resp:
+            return 'Access denied'
         session['token'] = resp
-        session['access_token'] = (resp['access_token'], '')
-        session['refresh_token'] = (resp['refresh_token'], '')
-        session['expires_at'] = resp['expires_at']
-        session['expires_in'] = resp['expires_in']
-        session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
+        session['access_token'] = (resp.get('access_token'), '')
+        session['refresh_token'] = (resp.get('refresh_token'), '')
+        session['expires_at'] = resp.get('expires_at')
+        session['expires_in'] = resp.get('expires_in')
+        if resp.get('expires_in'):
+            session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
         session.dataLoadingProgressMsg = ''
-
-       
         global authenticated
         authenticated = True
-       
-        meProfile = getAllMeItems('')
-
-        session['id'] = meProfile['id']
-        session['username'] = meProfile['display_name']
-        #print(str(session.get("wants_url")))
-
-        if session.get("wants_url") is not None:
+        # Fallback if Spotify profile fetch helper not available
+        try:
+            meProfile = getAllMeItems('')  # type: ignore # legacy helper
+        except Exception:
+            meProfile = {'id': 'unknown', 'display_name': 'User'}
+        session['id'] = meProfile.get('id')
+        session['username'] = meProfile.get('display_name')
+        if session.get("wants_url"):
             return redirect(session["wants_url"])
         else:
-            if analyze.getUpdateDt(_getDataPath()) is not None:
-                return redirect("/")
-            else:
-                return redirect("/dataload")
-            #return redirect("/")
-            #print('This should never happen. wants_url missing in session')
-
-        #return render_template('index.html')
-        #return me.data
-        #return "logged in"
-        #return 'logged in token '.format(session['oauth_token'])
-        #return 'Logged in as id={0} name={1} redirect={2}'.format(
-         #   me.data['id'],
-          #  me.data['name'],
-           # request.args.get('next')
-        #)
-    except OAuthError as e:
+            return redirect("/")
+    except OAuthError as e:  # single except
         logging.info(" error in authentication ", traceback.format_exc())
         return render_template('index.html',
                                subheader_message="Authentication error "+str(traceback.format_exc()),
@@ -637,82 +626,51 @@ def googleauth_reply():
 @app.route('/email_login', methods=['POST'])
 @limiter.limit("3 per minute")
 def email_login():
-    f = request.form
-    #print(request.form)
-
     email = request.form.get('email')
     password = request.form.get('password')
     error = None
 
     if not email or not password:
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('User_does_not_exist_or_wrong_password'))
-                        
+        return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, error=get_translation('User_does_not_exist_or_wrong_password'))
+
     email = email.lower()
     user = competitionsEngine.get_user_by_email(email)
-
     if user is None:
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               email=email,
-                               error=get_translation('User_does_not_exist_or_wrong_password'))
-    
+        return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=get_translation('User_does_not_exist_or_wrong_password'))
+
     if user.get('password') is None:
         error = get_translation('You_must_set_your_password')
-        return render_template('change_password.html',
-                               reference_data=competitionsEngine.reference_data,
-                               email=email,
-                               error=error)
+        return render_template('change_password.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
 
-    if user.get('is_confirmed') is not None and user.get('is_confirmed') == False:
+    if user.get('is_confirmed') is not None and user.get('is_confirmed') is False:
         error = get_translation('User_not_confirmed_Please_check_your_email_for_confirmation_link')
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               email=email,
-                               error=error)
-    
+        return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
+
     if user.get('fpictureurl') is not None or user.get('gpictureurl') is not None:
         error = get_translation('User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login')
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               email=email,
-                               error=error)
-    
+        return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
+
     if bcrypt.check_password_hash(user.get('password'), password):
         log_request_details('user logged in with password: '+email)
         session['username'] = user.get('email')
-        session['email']=user.get('email')
-        session['picture']='/public/images/favicon.png'
+        session['email'] = user.get('email')
+        session['picture'] = '/public/images/favicon.png'
         session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24))
-        #session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
         session['authsource'] = 'self'
-        
         if competitionsEngine.is_god(user) or GODMODE:
-            session['godmode'] = True   
-
+            session['godmode'] = True
         return after_login(user, email)
-        
-    else:
-        log_request_details('User failed login '+email)
-        error=get_translation('User_does_not_exist_or_wrong_password')
 
-    
-    return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           email=email,
-                           error=error)
+    log_request_details('User failed login '+email)
+    error = get_translation('User_does_not_exist_or_wrong_password')
+    return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
 
 
 
 @app.route('/register', methods=['GET'])
 def register_with_email():
-    new_captcha_dict = SIMPLE_CAPTCHA.create()
-    time.sleep(1)
-    return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           captcha=new_captcha_dict
-                           )
+    result = email_login_service.register_with_email()
+    return render_template(result['template'], **result['context'])
 
 
 # the user wants to register so send the confirmation email
@@ -720,72 +678,16 @@ def register_with_email():
 @app.route('/register', methods=['POST'])
 @limiter.limit("2 per minute")
 def register():
-    new_captcha_dict = SIMPLE_CAPTCHA.create()
-    email = request.form.get('email')
-    if not email:
-        return render_template('register.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Please_try_again'),
-                               email=email,
-                               captcha=new_captcha_dict)
-    
-    
-    c_hash = request.form.get('captcha-hash')
-    c_text = request.form.get('captcha-text')
-    if not SIMPLE_CAPTCHA.verify(c_text, c_hash):
-        time.sleep(1) # this is to slow down the brute force attack
-        log_request_details('captcha failed '+email)
-        return render_template('register.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Please_try_again'),
-                               email=email,
-                               captcha=new_captcha_dict)
-    
-    email = email.lower()
-    
-    user = competitionsEngine.get_user_by_email(email)
-
-    if user is not None and user.get('is_confirmed') == False:
-        send_registration_email(email)
-        log_request_details('resending registration email to user already registered but not confirmed '+email)
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Please_check_your_email_for_confirmation_link'),
-                               email=email)
-
-    if user is not None and user.get('is_confirmed') == True:
-        token = generate_token(email)
-        confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
-        email_sender.send_password_reset_email(email, confirm_url)
-        log_request_details("reset password email sent to "+email)
-        return render_template('competitionLogin.html',
-                               reference_data=competitionsEngine.reference_data,
-                               error=get_translation('Link_to_reset_password_sent_to_email'))
-
-    ## send email to confirm registration
-    send_registration_email(email)
-    log_request_details('sending registration email to '+email)
-    return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error=get_translation('Please_check_your_email_for_confirmation_link'),
-                           email=email,
-                           captcha=new_captcha_dict)
+    result = email_login_service.register(request.form)
+    return render_template(result['template'], **result['context'])
 
 
 
 
 @app.route('/forgot_password')
 def forgot_password():
-    #if session.get('email') is None:
-     #   return render_template('competitionLogin.html',
-      #                         reference_data=competitionsEngine.reference_data,
-       #                        error=get_translation('Login_first_to_change_your_password'),
-        #                       email=session.get('email'))
-    new_captcha_dict = SIMPLE_CAPTCHA.create()
-    return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           action='forgot_password',
-                           captcha=new_captcha_dict)
+    result = email_login_service.forgot_password()
+    return render_template(result['template'], **result['context'])
 
 
 # this endpoint only gets two passwords from change_passsword.html
@@ -794,101 +696,15 @@ def forgot_password():
 @app.route('/change_password', methods=['POST'])
 @limiter.limit("5 per minute")
 def change_password():
-    email = session.get('email')
-    if email is None:
-        return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='Please login first')
-
-    password = request.form.get('password')
-    password2 = request.form.get('password2')
-    email = email.lower()
-
-    if not email or not password or not password2 or password != password2 or len(password) < 6:
-        return render_template('change_password.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error=get_translation('Invalid_parameters_passwords_do_not_match_or_password_too_short'),
-                           email=email)
-                        
-    user = competitionsEngine.get_user_by_email(email)
-
-    if user is None:
-        new_captcha_dict = SIMPLE_CAPTCHA.create()
-        return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error=None,
-                           captcha=new_captcha_dict)
+    result = email_login_service.change_password(request.form.get('password'), request.form.get('password2'))
+    return render_template(result['template'], **result['context'])
     
 
-    password = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    user = competitionsEngine.user_authenticated(email, password)
-    
-    
-    return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error=get_translation('Please_login_again_with_your_new_password'),
-                           email=email)
-    
-
-def send_registration_email(email):
-    token = generate_token(email)
-    confirm_url = url_for('confirm_email', type='register', token=token, _external=True)
-    ret = email_sender.send_registration_email(email, confirm_url)
-    return 'mail sent'+ret
-
-
-def generate_token(email):
-    serializer = URLSafeTimedSerializer(os.getenv("SECRET_KEY"))
-    return serializer.dumps(email, salt=os.getenv("SECURITY_PASSWORD_SALT"))
-
-
-def confirm_token(token, expiration=3600):
-    serializer = URLSafeTimedSerializer(os.getenv("SECRET_KEY"))
-    try:
-        email = serializer.loads(
-            token, salt=os.getenv('SECURITY_PASSWORD_SALT'), max_age=expiration
-        )
-        return email
-    except Exception as e:
-        print(e)
-        return False
-    
-
-# this path is called when the user clicks the confirmation link in the email
-# we will add the user to the db here because the mail is confirmed
-# we add the email to the session so that we match it with the password change request
-@app.route("/confirm/<type>/<token>", methods=["GET"])
+@app.route('/confirm/<type>/<token>', methods=['GET'])
 @limiter.limit("5 per minute")
 def confirm_email(type, token):
-    
-    email = confirm_token(token)
-
-    if email is False:
-        new_captcha_dict = SIMPLE_CAPTCHA.create()
-        log_request_details('Invalid or expired token ')
-        return render_template('register.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='Invalid or expired token. ',
-                           captcha=new_captcha_dict)
-    
-    user = competitionsEngine.get_user_by_email(email)
-
-    if user is not None and user.get('is_confirmed') == True and type == 'register':
-        log_request_details('user already confirmed, need to login normallly '+email)
-        return render_template('competitionLogin.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error='User already confirmed. Please login. ')
-
-    user = competitionsEngine.confirm_user(email)
-
-    session['username'] = user.get('email')
-    session['email']=user.get('email')
-    session['access_token'] = token
-
-    return render_template('change_password.html',
-                           reference_data=competitionsEngine.reference_data,
-                           error=None,)
+    result = email_login_service.confirm_email(type, token)
+    return render_template(result['template'], **result['context'])
 
 
 def after_login(user, email):
@@ -942,115 +758,6 @@ def _getDataPath():
     if (session.get('id')):
         return str(DATA_DIRECTORY)+"/users/"+session['id']+"/"
     return str(DATA_DIRECTORY)+"/"
-
-
-@app.route('/progresstest')
-@login_required
-def progresspage():
-    if session.get('dataLoadingProgressMsg') is None:
-        session['dataLoadingProgressMsg'] = ''
-
-    if gdata.get(session['id']+'backgroundMsg') is None:
-        gdata[(session['id'] + 'backgroundMsg')] = ''
-
-    x = 0
-    #while x <= 20:
-    #    session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
-    #    gdata[(session['id'] + 'backgroundMsg')] = "gdata: "+str(x)+" - "+str(datetime.datetime.now())
-    #    print("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
-    #          + ' session: ' + session['dataLoadingProgressMsg']
-    #          + ' gdata:' + gdata.get(session['id'] + 'backgroundMsg'))
-    #    x = x + 1
-    #    time.sleep(0.5)
-    return render_template('progresstest.html',
-                           subheader_message="Testing progress " + str(session['expires_at_localtime'])
-                                             + "x: "+str(x)+" - "+str(datetime.datetime.now()),
-                           **session)
-
-
-@app.route('/progressStart')
-@login_required
-def progressstart():
-    if session.get('dataLoadingProgressMsg') is None:
-        session['dataLoadingProgressMsg'] = ''
-
-    #_retrieveSpotifyData()
-    x = 0
-    max = 976
-    _setUserSessionMsg("Starting fake data load at " + str(datetime.datetime.now()))
-    time.sleep(3)
-    while x <= max:
-        #session['dataLoadingProgressMsg'] = "x: "+str(x)+" - "+str(datetime.datetime.now())
-        _setUserSessionMsg("Loading fake data: "+str(x)+"/"+str(max)+" at "+str(datetime.datetime.now()))
-        logging.info("long running  session id: " + str(id(session['dataLoadingProgressMsg']))
-              + ' session: ' + session['dataLoadingProgressMsg']
-              + ' gdata:' + _getUserSessionMsg())
-        x = x + 1
-        time.sleep(0.2)
-
-    _setUserSessionMsg("Fake data loaded: " + str(x) + "/" + str(max) + " at " + str(datetime.datetime.now()))
-    #session['dataLoadingProgressMsg'] = 'starting at ' + str(datetime.datetime.now())
-    return render_template('progresstest.html',
-                           subheader_message="Testing progress " + str(session['username']),
-                           **session)
-
-
-def generate(sessionLocal):
-    x = 0
-    started = str(datetime.datetime.now())
-    with app.app_context():
-        #print("generator started...")
-        #thread = Thread(target=_retrieveSpotifyData, args=(session))
-        #thread.start()
-
-        lib = analyze.loadLibraryFromFiles(_getDataPath())
-        #session['dataLoadingProgressMsg'] = userId
-        while _getUserSessionMsg():
-            #s = "data: {x:" + str(x) + ', generator ' \
-            s = 'data: ' + _getUserSessionMsg()
-            #+ sessionLocal['dataLoadingProgressMsg'] \
-            #+ ' library: '+analyze.getLibrarySize(lib) \
-
-            yield s + "\n\n"
-            #print("generator yielding: " + s)
-            x = x + 10
-            time.sleep(0.3)
-
-
-@app.route('/progress')
-def progress():
-    if session.get('dataLoadingProgressMsg') is None:
-        logging.info('setting dataLoadingProgressMsg to empty')
-        session['dataLoadingProgressMsg'] = ''
-
-    if _getUserSessionMsg() is None:
-        _setUserSessionMsg('')
-
-    logging.info('progress called. gdata:' + _getUserSessionMsg() + ' has: '+session.get('dataLoadingProgressMsg'))
-    #@copy_current_request_context
-
-    return Response(stream_with_context(generate(session)), mimetype='text/event-stream')
-
-
-
-@app.route('/progressSimple')
-def progressSimple():
-    if session.get('dataLoadingProgressMsg') is None:
-        session.dataLoadingProgressMsg = ''
-
-    logging.info("progress started")
-    def generateOLD():
-        x = 0
-        logging.info(str(datetime.datetime.now()))
-        yield "data:" + str(x) + " - " + str(datetime.datetime.now()) + "\n\n"
-        #while x <= 100:
-        #    yield "data:" + str(x) + "\n msg: "+ str(datetime.date) + "\n\n"
-        #    x = x + 10
-        #    time.sleep(0.5)
-    return Response(generateOLD(), mimetype='text/event-stream')
-
-
-
 
 
 
@@ -1243,24 +950,9 @@ def competition_contact_post(competitionId):
 def hello():
     return "Hello mister"
 
-@app.route('/test')
-def test():
-    return render_template('test.html')
-
-@app.route('/contact-us.html')
-def contactus():
-    return render_template('contact-us.html')
 
 
 
-@app.route('/login.html')
-def blog():
-    return render_template('login.html', **session)
-
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
 
 
 # this is not executed by gunicorn but only when running direclty by Python
@@ -1273,8 +965,4 @@ if __name__ == '__main__':
     #     Restarting with stat 
     app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
 
-
-
-
-
-
+ 

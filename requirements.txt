@@ -40,3 +40,5 @@ Werkzeug==2.2.3
 zipp==3.15.0
 zope.event==5.0
 zope.interface==6.1
+PyJWT==2.8.0
+google-auth==2.34.0

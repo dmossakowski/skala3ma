@@ -292,7 +292,7 @@ function initializeApp() {
                 &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-7 fw-semibold" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
                 &nbsp;&nbsp;&nbsp;
-                <a class="nav-link fs-9 fw-bold " href="/contact"><span class="bi bi-pencil badge text-bg-secondary badge rounded-pill "> </span> {{ reference_data['current_language'].Contact }} </a>
+                <a class="nav-link fs-9 fw-bold " href="/contact"> {{ reference_data['current_language'].Contact }} </a>
                 &nbsp;&nbsp;&nbsp;
 
                 <li  class="nav-item">
@@ -478,4 +478,20 @@ function initializeApp() {
     </script>
 	</body>
 </html>
+
+<script>
+// Ensure JWT cleared when user clicks any logout link
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href="/logout"]').forEach(a => {
+        a.addEventListener('click', () => {
+            if (window.clearJwtToken) { window.clearJwtToken(); }
+        });
+    });
+    // Optional: attach token debug info in console
+    if (window.getJwtToken) {
+        const t = window.getJwtToken();
+        if (t) { console.debug('JWT present (truncated):', t.substring(0,24)+'...'); }
+    }
+});
+</script>
 

@@ -103,6 +103,16 @@ You can also run the server using gunicorn:
   - logout and sign up some anonymous users
   - manage the state of competition through admin console
 
+
+
+9 Create trust store for android:
+
+```
+cd /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/app
+keytool -genkeypair -v -keystore skala3ma-upload.keystore -alias skala3ma \
+  -keyalg RSA -keysize 2048 -validity 10000
+
+  ````
   We will try to provide a test database that will have a good set of working data soon.
 
 

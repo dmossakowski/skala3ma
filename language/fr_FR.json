@@ -216,7 +216,7 @@
   "Contact": "Contact",
   "Contact_us": "Contactez-nous",
   
-  "error5314": "La mise à jour des voies n'est pas autorisée",
+  "error5314": "La mise à jour des voies n'est pas autorisée pour cet utilisateur ou la compétition n'est pas dans le bon état",
   "error5315": "Pas de permission pour éditer le mur",
   "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",
   "error5321": "Un utilisateur avec cet email est déjà inscrit",
@@ -243,7 +243,7 @@
   "Please_login_again_with_your_new_password": "Veuillez vous reconnecter avec votre nouveau mot de passe",
   "Please_try_again": "On a un probleme.. Veuillez réessayer.",
   "Bad_captcha": "Mauvais CAPTCHA. Veuillez réessayer.",
-  "Contact_us_text1": "Vous aimez cette appli ? Vos questions ou idees sont les bienvenues. ",
+  "Contact_us_text1": "Vous aimez cette appli ? Aidez-nous à l'améliorer !",
 
   "last": "Last"
 }
