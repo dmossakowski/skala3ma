@@ -1253,7 +1253,8 @@ def get_user():
         'club': user.get('club'),
         'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode')),
         'picture': picture,
-        'permissions': user.get('permissions', {})
+        'permissions': user.get('permissions', {}),
+        'gymid': user.get('gymid')
     })
 
 
