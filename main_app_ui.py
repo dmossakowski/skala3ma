@@ -1928,6 +1928,38 @@ def gym_routes_new(gym_id, routesid):
 
 
 
+
+@app_ui.route('/gyms/<gym_id>/<routesid>/discs', methods=['GET'])
+#@login_required
+def gym_routes_discs(gym_id, routesid):
+
+    gym = competitionsEngine.get_gym(gym_id)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
+        #activities = skala_api.get_activities()
+
+
+    return render_template('gym-routes-discs.html',
+                           gymid=gym_id,
+                           routesid=routesid,
+                           gyms=None,
+                           gym=gym,
+                           routes=routes,
+                           all_routes=all_routes,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
+                           )
+
+
+
 @app_ui.route('/gyms/<gym_id>/<routesid>/beta', methods=['GET'])
 #@login_required
 def gym_routes_new_beta(gym_id, routesid):
