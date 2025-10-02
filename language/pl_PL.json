@@ -221,7 +221,7 @@
   "Contact_us": "Skontaktuj się",
 
 
-  "error5314": "Ten użytkownik nie moze zmieniać dróg",
+  "error5314": "Ten użytkownik nie moze zmieniać dróg lub zawody nie są w odpowiednim statusie",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",
   "error5316": "Ten użytkownik jest znany i powinien sie wpisac sam i zapisac sam",
   "error5321": "Ten adres jest juz zarejestrowany",
@@ -245,7 +245,7 @@
   "Please_login_again_with_your_new_password": "Proszę zalogować się ponownie z nowym hasłem",
   "Please_try_again": "Mamy problem.. Spróbuj ponownie",
   "Bad_captcha": "Zły CAPTCHA. Spróbuj ponownie",
-  "Contact_us_text1": "Macie pytania lub sugestie?",
+  "Contact_us_text1": "Macie pytania lub sugestie? ",
 
 
   "last": "Ostatni"

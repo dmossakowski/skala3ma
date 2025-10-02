@@ -19,7 +19,8 @@ import io
 import glob
 import random
 import uuid
-from datetime import datetime, date, time, timedelta
+import time
+from datetime import datetime, date, timedelta
 import competitionsEngine
 import csv
 from functools import wraps
@@ -64,7 +65,17 @@ from oauthlib.oauth2 import WebApplicationClient
 import requests
 
 from pydantic import BaseModel
-#skala_api_app = Blueprint('skala_api_app', __name__)
+# Email login service (shared with server)
+from src.email_login import EmailLoginService
+from src.email_sender import EmailSender
+import jwt
+# Google auth (optional)
+try:
+    from google.oauth2 import id_token as google_id_token  # type: ignore
+    from google.auth.transport import requests as google_requests  # type: ignore
+    GOOGLE_AUTH_AVAILABLE = True
+except Exception:
+    GOOGLE_AUTH_AVAILABLE = False
 
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.flask_client import OAuthError
@@ -103,6 +114,17 @@ oauth = OAuth(skala_api_app)
 
 genres = {"test": "1"}
 authenticated = False
+
+# Initialize email login service (captcha None for API)
+_email_sender = EmailSender(reference_data=competitionsEngine.reference_data)
+email_login_service_api = EmailLoginService(competitionsEngine, _email_sender, bcrypt=None, simple_captcha=None)  # bcrypt later bound
+
+try:
+    # Attempt to import bcrypt instance from server if available
+    from server import bcrypt as _bcrypt_instance  # type: ignore
+    email_login_service_api.bcrypt = _bcrypt_instance
+except Exception:
+    pass
 
 # Third party libraries
 from flask import Flask, redirect, request, url_for
@@ -208,33 +230,71 @@ def is_logged_in():
         return False
 
 
-def login_required(fn):
+# ---------------- JWT SUPPORT -----------------
+JWT_SECRET = os.getenv('JWT_SECRET', os.getenv('SECRET_KEY', 'dev-secret'))
+JWT_ALG = 'HS256'
+JWT_EXP_SECONDS = 60 * 60 * 24  # 24h
+
+def create_jwt(email: str, user_id: str | None = None):
+    now = int(time.time())
+    payload = {'sub': email,'uid': user_id,'iat': now,'exp': now + JWT_EXP_SECONDS}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+def decode_jwt(token: str):
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+    except jwt.ExpiredSignatureError:
+        return {'error': 'token_expired'}
+    except Exception:
+        return {'error': 'invalid_token'}
+
+def jwt_required(fn):
     @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if is_logged_in():
-            return fn(*args, **kwargs)
-        else:
-            return redirect(url_for("skala_api_app.fsgtlogin"))
-    return decorated_function
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header[7:].strip() if auth_header.startswith('Bearer ') else None
+        if not token:
+            return jsonify({'error': 'missing_token'}), 401
+        decoded = decode_jwt(token)
+        if 'error' in decoded:
+            return jsonify({'error': decoded['error']}), 401
+        request.jwt_email = decoded.get('sub')  # type: ignore
+        return fn(*args, **kwargs)
+    return wrapper
 
-
+def session_or_jwt_required(fn):
+    """Allow either JWT (Authorization: Bearer) or existing session email."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        email = None
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            decoded = decode_jwt(auth_header[7:].strip())
+            if isinstance(decoded, dict) and 'error' not in decoded:
+                email = decoded.get('sub')
+        if not email and session is not None:
+            email = session.get('email')
+        if not email:
+            return jsonify({'error': 'unauthorized'}), 401
+        g.auth_email = email  # type: ignore
+        return fn(*args, **kwargs)
+    return wrapper
 
 def admin_required(fn):
     @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None:
-            user = competitionsEngine.get_user_by_email(session['email'])
-            if user is not None:
-                permissions = user.get('permissions')
-                if 'create_gym' in permissions['general'] or permissions['godmode'] == True:
+    def wrapper(*args, **kwargs):
+        email = session.get('email') if session else None
+        if email:
+            user = competitionsEngine.get_user_by_email(email)
+            if user:
+                perms = user.get('permissions', {}) or {}
+                if perms.get('godmode') or user.get('godmode'):
                     return fn(*args, **kwargs)
- 
-                if session.get('name') == 'David Mossakowski' or session.get('name') == 'Sebastiao Correia':
+                gen = perms.get('general') or []
+                if isinstance(gen, list) and ('create_gym' in gen or 'manage_users' in gen):
                     return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("app_ui.fsgtlogin"))
-    return decorated_function
+        return jsonify({'error': 'admin_required'}), 403
+    return wrapper
 
 
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
@@ -244,7 +304,7 @@ def testapi():
 
 
 @skala_api_app.post('/competitionRawAdmin')
-@login_required
+@session_or_jwt_required
 def fsgtadmin():
     edittype = request.form.get('edittype')
     id = request.form.get('id')
@@ -310,9 +370,278 @@ def fsgtadmin():
                            id=id)
 
 
+@skala_api_app.post('/auth/login')
+def api_email_login():
+    """Email/password login returning JSON.
+    Body form or JSON: {"email":"...","password":"..."}
+    """
+    data = request.get_json(silent=True) or request.form
+    email = data.get('email') if data else None
+    password = data.get('password') if data else None
+    # Ensure bcrypt available
+    if email_login_service_api.bcrypt is None:
+        from flask_bcrypt import Bcrypt
+        email_login_service_api.bcrypt = Bcrypt()
+    result = email_login_service_api.login_with_password(email, password, apply_session=True)
+    if result.get('success'):
+        user = result.get('user') or {}
+        user_obj = competitionsEngine.get_user_by_email(user.get('email')) if user else None
+        token = create_jwt(user.get('email'), user_obj.get('id') if user_obj else None)
+        result['token'] = token
+    status = 200 if result.get('success') else 401
+    return jsonify(result), status
+
+
+@skala_api_app.post('/auth/google/login')
+def api_google_login():
+    """Exchange Google ID token for local JWT.
+    Input JSON: {"id_token": "<google id token>"}
+    """
+    if not GOOGLE_AUTH_AVAILABLE:
+        return jsonify({'success': False, 'error': 'google_auth_not_available'}), 501
+    data = request.get_json(silent=True) or {}
+    id_token_str = data.get('id_token')
+    if not id_token_str:
+        return jsonify({'success': False, 'error': 'missing_id_token'}), 400
+    client_id = os.getenv('GOOGLE_WEB_CLIENT_ID') or os.getenv('GOOGLE_CLIENT_ID')
+    try:
+        info = google_id_token.verify_oauth2_token(id_token_str, google_requests.Request(), client_id)
+        if info.get('iss') not in ('accounts.google.com', 'https://accounts.google.com'):
+            return jsonify({'success': False, 'error': 'invalid_issuer'}), 401
+        if not info.get('email'):
+            return jsonify({'success': False, 'error': 'no_email'}), 400
+        if info.get('email_verified') is False:
+            return jsonify({'success': False, 'error': 'email_not_verified'}), 401
+    except Exception as e:
+        logging.warning(f"Google token verification failed: {e}")
+        return jsonify({'success': False, 'error': 'invalid_token'}), 401
+
+    email = info['email'].lower()
+    sub = info.get('sub')
+    firstname = info.get('given_name')
+    lastname = info.get('family_name')
+    picture = info.get('picture')
+
+    user = competitionsEngine.get_user_by_email(email)
+    created = False
+    if not user:
+        # Minimal user record; adapt fields based on competitionsEngine expectations
+        user = {
+            'email': email,
+            'firstname': firstname,
+            'lastname': lastname,
+            'is_confirmed': True,
+            'auth_provider': 'google',
+            'google_sub': sub,
+            'gpictureurl': picture,
+            'permissions': {'general': []}
+        }
+        try:
+            competitionsEngine.upsert_user(user)
+            created = True
+        except Exception as e:
+            logging.error(f"Failed to create google user {email}: {e}")
+            return jsonify({'success': False, 'error': 'user_creation_failed'}), 500
+    else:
+        # Update picture / names if changed
+        updated = False
+        if picture and picture != user.get('gpictureurl'):
+            user['gpictureurl'] = picture; updated = True
+        if firstname and firstname != user.get('firstname'):
+            user['firstname'] = firstname; updated = True
+        if lastname and lastname != user.get('lastname'):
+            user['lastname'] = lastname; updated = True
+        if not user.get('is_confirmed'):
+            user['is_confirmed'] = True; updated = True
+        if updated:
+            try:
+                competitionsEngine.upsert_user(user)
+            except Exception as e:
+                logging.warning(f"Failed to update google user {email}: {e}")
+
+    # Issue JWT
+    db_user = competitionsEngine.get_user_by_email(email) or user
+    token = create_jwt(email, db_user.get('id'))
+    return jsonify({
+        'success': True,
+        'token': token,
+        'created': created,
+        'user': {
+            'email': db_user.get('email'),
+            'firstname': db_user.get('firstname'),
+            'lastname': db_user.get('lastname'),
+            'picture': db_user.get('gpictureurl') or db_user.get('fpictureurl') or picture
+        }
+    })
+
+@skala_api_app.post('/auth/logout')
+def api_logout():
+    """Clear server-side session (logout). Always returns success."""
+    try:
+        # Remove typical auth keys but fall back to full clear.
+        for k in list(session.keys()):
+            session.pop(k, None)
+        session.clear()
+    except Exception:
+        pass
+    return jsonify({'success': True})
+
+
+# ---------------- Additional Email Auth API Endpoints -----------------
+
+def _extract_json_or_form():
+    return request.get_json(silent=True) or request.form or {}
+
+
+@skala_api_app.post('/auth/register')
+def api_email_register():
+    """Initiate registration (or resend confirmation / password reset) via email.
+    Input JSON/Form: {"email": "user@example.com"}
+    Always returns 200 to avoid user enumeration besides obvious validation errors.
+    """
+    data = _extract_json_or_form()
+    email = (data.get('email') or '').strip().lower()
+    if not email or '@' not in email:
+        return jsonify({
+            'success': False,
+            'error_key': 'invalid_email',
+            'error': 'Invalid email'
+        }), 400
+    # Reuse service.register logic by crafting a form-like object
+    service_result = email_login_service_api.register({'email': email})
+    ctx = service_result.get('context', {})
+    message = ctx.get('error')  # service uses 'error' key for human message
+    # Heuristics for success (email dispatched)
+    dispatched_messages = {
+        'Please_check_your_email_for_confirmation_link',
+        'Link_to_reset_password_sent_to_email'
+    }
+    success = False
+    if message:
+        # Compare against translation keys if available
+        for key in dispatched_messages:
+            if key in message:
+                success = True
+                break
+    return jsonify({
+        'success': success,
+        'stage': 'register',
+        'email': email,
+        'message': message,
+    }), 200 if success else 400
+
+
+@skala_api_app.post('/auth/password/reset/request')
+def api_request_password_reset():
+    """Request password reset link (works even if user unconfirmed - resends confirm)."""
+    data = _extract_json_or_form()
+    email = (data.get('email') or '').strip().lower()
+    if not email or '@' not in email:
+        return jsonify({'success': False, 'error_key': 'invalid_email', 'error': 'Invalid email'}), 400
+    user = competitionsEngine.get_user_by_email(email)
+    # Always respond success (prevent enumeration) but trigger appropriate email
+    if user is None:
+        pass  # pretend to send
+    elif user.get('is_confirmed') is False:
+        # resend confirmation
+        email_login_service_api._send_registration_email(email)
+    else:
+        # confirmed -> send reset password email
+        token = email_login_service_api._generate_token(email)
+        confirm_url = url_for('confirm_email', type='reset_password', token=token, _external=True)
+        email_login_service_api.email_sender.send_password_reset_email(email, confirm_url)
+    return jsonify({
+        'success': True,
+        'stage': 'password_reset_request',
+        'message': 'If the email exists a message has been sent.'
+    })
+
+
+@skala_api_app.get('/auth/confirm/<type>/<token>')
+def api_confirm_email(type, token):
+    """Confirm registration or reset password token. Returns JSON indicating next step."""
+    service_result = email_login_service_api.confirm_email(type, token)
+    ctx = service_result.get('context', {})
+    template = service_result.get('template')
+    if template == 'change_password.html':
+        # Session now holds email granting ability to set password
+        email = session.get('email')
+        return jsonify({
+            'success': True,
+            'stage': 'confirm',
+            'require_password_change': True,
+            'email': email,
+            'message': 'Token valid. Please set password.'
+        })
+    error_msg = ctx.get('error') or 'Invalid or expired token'
+    return jsonify({
+        'success': False,
+        'stage': 'confirm',
+        'error': error_msg
+    }), 400
+
+
+@skala_api_app.post('/auth/password/change')
+def api_change_password():
+    """Change password after confirmation (requires session email set by confirm)."""
+    data = _extract_json_or_form()
+    password = data.get('password')
+    password2 = data.get('password2') or data.get('password_confirm')
+    # Ensure bcrypt available
+    if email_login_service_api.bcrypt is None:
+        from flask_bcrypt import Bcrypt
+        email_login_service_api.bcrypt = Bcrypt()
+    service_result = email_login_service_api.change_password(password, password2)
+    template = service_result.get('template')
+    ctx = service_result.get('context', {})
+    if template == 'competitionLogin.html':
+        return jsonify({
+            'success': True,
+            'stage': 'change_password',
+            'message': ctx.get('error'),  # service uses error slot for info message
+        })
+    return jsonify({
+        'success': False,
+        'stage': 'change_password',
+        'error': ctx.get('error') or 'Unable to change password'
+    }), 400
+
+
+@skala_api_app.get('/auth/status')
+def api_auth_status():
+    """Return authentication status (session or JWT)."""
+    # Check JWT first
+    auth_header = request.headers.get('Authorization', '')
+    status_source = None
+    user_email = None
+    if auth_header.startswith('Bearer '):
+        decoded = decode_jwt(auth_header[7:])
+        if 'error' not in decoded:
+            user_email = decoded.get('sub')
+            status_source = 'jwt'
+    # Fallback to session
+    if not user_email and session.get('email'):
+        user_email = session.get('email')
+        status_source = 'session'
+    if not user_email:
+        return jsonify({'authenticated': False}), 200
+    user = competitionsEngine.get_user_by_email(user_email) or {}
+    return jsonify({
+        'authenticated': True,
+        'source': status_source,
+        'user': {
+            'email': user.get('email'),
+            'firstname': user.get('firstname'),
+            'lastname': user.get('lastname'),
+            'club': user.get('club'),
+            'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode'))
+        }
+    })
+
+
 
 @skala_api_app.get('/activities')
-@login_required
+@session_or_jwt_required
 def get_activities():
     user = competitionsEngine.get_user_by_email(session['email'])
     activitiesA = activities_db.get_activities(user.get('id'))
@@ -415,7 +744,7 @@ def get_activities_all():
 
 
 @skala_api_app.post('/activity')
-@login_required
+@session_or_jwt_required
 def journey_add():
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -442,7 +771,7 @@ def journey_add():
 
 
 @skala_api_app.delete('/activity/<activity_id>')
-@login_required
+@session_or_jwt_required
 def delete_activity(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -462,7 +791,7 @@ def delete_activity(activity_id):
 
 
 @skala_api_app.get('/activity/<activity_id>')
-@login_required
+@session_or_jwt_required
 def get_activity(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -481,7 +810,7 @@ def get_activity(activity_id):
 
 # add a route to an activity
 @skala_api_app.post('/activity/<activity_id>')
-@login_required
+@session_or_jwt_required
 def add_activity_route(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -508,20 +837,17 @@ def add_activity_route(activity_id):
 
 
 @skala_api_app.get('/activity/user/<user_id>')
-@login_required
+@session_or_jwt_required
 def get_activities_by_user(user_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-
-    activity = activities_db.get_activities_by_gym_routes(activity_id)
-    if (activity is None):
-        return {"error":"activity not found"}   
-    #a = Activity1(**data)
-
-    
-    # journey_id = user.get('journey_id')
-    # calculate_activity_stats(activity)
-    #journeys = activities_db.get_activities(user.get('id'))
-    return {}
+    # Fetch activities for provided user_id (authorization: allow only self unless admin)
+    if str(user.get('id')) != str(user_id):
+        # basic permission check: only allow self for now
+        return jsonify({'error': 'forbidden'}), 403
+    activities = activities_db.get_activities(user.get('id'))
+    if activities is None:
+        activities = []
+    return json.dumps(activities)
 
 
 
@@ -539,17 +865,10 @@ def get_activities_by_gym_by_routes(gym_id, routes_id):
     return json.dumps(activities)
 
 
-@skala_api_app.route('/journey/<journey_id>', methods=['GET'])
-@login_required
-def journey_session(journey_id):
-    journey = activities_db.get_journey_session(journey_id)
-
-    return journey
-
 
 
 @skala_api_app.delete('/activity/<activity_id>/route/<route_id>')
-@login_required
+@session_or_jwt_required
 def delete_activity_route(activity_id, route_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -616,7 +935,7 @@ def avg_grade(routes, flash_weight=2, climb_weight=1, attempt_weight=0.1):
 
 
 @skala_api_app.route('/journey/<journey_id>/add', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def journey_session_entry_add(journey_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
@@ -641,7 +960,7 @@ def journey_session_entry_add(journey_id):
 
 
 @skala_api_app.route('/journey/<journey_id>/<route_id>/remove', methods=['GET'])
-@login_required
+@session_or_jwt_required
 def journey_session_remove(journey_id, route_id):
     user = competitionsEngine.get_user_by_email(session['email'])
     journey = activities_db.get_journey_session(journey_id)
@@ -738,7 +1057,7 @@ def competitions_by_year(year):
 
 
 @skala_api_app.route('/competition/create', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def new_competition_post():
     username = session.get('username')
 
@@ -767,14 +1086,14 @@ def new_competition_post():
 
 
 @skala_api_app.route('/competition/<competitionId>/register')
-#@login_required
+#@session_or_jwt_required
 def addCompetitionClimber(competitionId):
     return None
 
 
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/stats')
-#@login_required
+#@session_or_jwt_required
 def getCompetitionStats(competitionId):
     competition = None
 
@@ -783,27 +1102,24 @@ def getCompetitionStats(competitionId):
 
     if competition is None:
         return render_template('competitionDashboard.html', sortedA=None,
-                            subheader_message="No competition found",
-                            **session)
+                               subheader_message="No competition found",
+                               **session)
     elif competition is LookupError:
         return render_template('index.html', sortedA=None,
-                                getPlaylistError="Playlist was not found",
-                                library={},
-                                **session)
+                               getPlaylistError="Playlist was not found",
+                               library={},
+                               **session)
     elif len(competition) == 0:
         return render_template('index.html', sortedA=None,
-                                getPlaylistError="Playlist has no tracks or it was not found",
-                                library={},
-                                **session)
+                               getPlaylistError="Playlist has no tracks or it was not found",
+                               library={},
+                               **session)
 
     routesid = competition.get('routesid')
     routesDict = competitionsEngine.get_routes(routesid)
-    routes = routesDict['routes']
-
-    #rankings = competitionsEngine.get_sorted_rankings(competition)
-    # we need 6 categories:
+    routes = routesDict['routes'] if routesDict else []
+    # Categories used for statistics (mirrors other endpoint logic)
     categories = ["F0","F1","F2","M0","M1","M2"]
-    #category_names =  [reference_data['current_language'].ranking_diament_women,
 #				reference_data['current_language'].ranking_titan_women,
 #				reference_data['current_language'].ranking_senior_women,
 #				reference_data['current_language'].ranking_diament_men,
@@ -838,7 +1154,7 @@ def getCompetitionStats(competitionId):
 
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/fullresults')
-#@login_required
+#@session_or_jwt_required
 def getCompetitionFlatFullTable(competitionId):
     competition = None
 
@@ -920,18 +1236,26 @@ def getCompetitionFlatFullTable(competitionId):
 
 ### USER
 @skala_api_app.route('/user')
+@session_or_jwt_required
 def get_user():
-    if session is None or session.get('email') is None:
-        return {}
-    
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    if user is None:
-        return {}
-    
-
-    
-    return json.dumps(user)
+    """Return basic user profile (requires JWT or session)."""
+    email = getattr(g, 'auth_email', None)
+    if not email:
+        return jsonify({'error': 'unauthorized'}), 401
+    user = competitionsEngine.get_user_by_email(email)
+    if not user:
+        return jsonify({'error': 'not_found'}), 404
+    picture = user.get('gpictureurl') or user.get('fpictureurl') or user.get('picture')
+    return jsonify({
+        'email': user.get('email'),
+        'firstname': user.get('firstname'),
+        'lastname': user.get('lastname'),
+        'club': user.get('club'),
+        'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode')),
+        'picture': picture,
+        'permissions': user.get('permissions', {}),
+        'gymid': user.get('gymid')
+    })
 
 
 @skala_api_app.route('/user/email')  
@@ -1071,7 +1395,7 @@ def update_user():
 ## RESULTS
 
 @skala_api_app.route('/competition_results/<competitionId>')
-#@login_required
+#@session_or_jwt_required
 def get_competition_results(competitionId):
     competition = None
 
@@ -1158,11 +1482,12 @@ def getCompetitionClimber(competitionId, climberId):
     #                       library=None,
     #                       **session))
 
-    return render_template("competitionDashboard.html", climberId=climberId, climber=climber,
-                           subheader_message=subheader_message,
-                           competitionId=competitionId,
-                           reference_data=competitionsEngine.reference_data,
-                           **session)
+    #return render_template("competitionDashboard.html", climberId=climberId, climber=climber,
+    #                       subheader_message=subheader_message,
+    #                       competitionId=competitionId,
+    #                       reference_data=competitionsEngine.reference_data,
+    #                       **session)
+    return ""
 
 
 @skala_api_app.route('/competition_results/<competitionId>/csv')
@@ -1405,7 +1730,7 @@ def get_competition_stats(competitionId):
 
 
 @skala_api_app.route('/climber/stats')
-@login_required
+@session_or_jwt_required
 def get_myskala():
     username = session.get('username')
     stats = {}
@@ -1631,7 +1956,7 @@ def transform_jsonold(input_json):
     # Sort male and female data by grade
     male_data.sort(key=lambda x: x['x'])
     female_data.sort(key=lambda x: x['x'])
-    
+
     # Combine male and female data into the output series JSON
     series_json = [
         {'name': 'Male', 'data': male_data},
@@ -1863,6 +2188,8 @@ def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
     gym = competitionsEngine.get_gym(gymid)
     routes = competitionsEngine.get_routes(routesid)
 
+
+
     activities = activities_db.get_activity_routes_by_gym_id(gymid)
 
     #routes2 = activitiy_engine.enhance_routes(routes)
@@ -1877,7 +2204,7 @@ def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
 
 
 @skala_api_app.route('/gym/<gymid>/<routesid>/add', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def route_add(gymid, routesid):
 
     routedata = request.get_json()
@@ -1906,7 +2233,7 @@ def route_add(gymid, routesid):
 # the response is all the routes as they have been saved
 # this should be made thread safe but it isn't right now
 @skala_api_app.route('/gym/<gymid>/<routesid>/saveone', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def route_save(gymid, routesid):
 
     routedata = request.get_json()
@@ -1955,7 +2282,7 @@ def route_save(gymid, routesid):
 
 
 @skala_api_app.route('/gym/<gymid>/<routesid>/rate', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def route_rating(gymid, routesid):
 
     data = request.get_json()
@@ -2021,7 +2348,7 @@ def get_activity_routes_by_gym_id(gym_id):
 
 
 @skala_api_app.route('/gym/<gymid>/save', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def gym_save(gymid):
 
     formdata = request.form.to_dict(flat=False)
@@ -2079,7 +2406,7 @@ def gym_save(gymid):
 
 
 @skala_api_app.route('/gyms/<gymid>/<routesid>/save', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def gym_routes_save(gymid, routesid):
     formdata = request.form.to_dict(flat=False)
 
@@ -2145,7 +2472,7 @@ def gym_routes_save(gymid, routesid):
 
 
 @skala_api_app.route('/gyms/<gym_id>/update', methods=['POST'])
-@login_required
+@session_or_jwt_required
 def gyms_update(gym_id):
     user = competitionsEngine.get_user_by_email(session['email'])
     formdata = request.form.to_dict(flat=False)

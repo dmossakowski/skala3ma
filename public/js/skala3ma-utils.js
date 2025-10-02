@@ -14,6 +14,101 @@ class App {
 // Initialize the App class
 const app = new App();
 
+// ================= JWT HANDLING =================
+// Key used in localStorage for the JWT
+const JWT_STORAGE_KEY = 'skala3ma_jwt';
+
+function setJwtToken(token) {
+    if (token) {
+        localStorage.setItem(JWT_STORAGE_KEY, token);
+    }
+}
+
+function getJwtToken() {
+    return localStorage.getItem(JWT_STORAGE_KEY);
+}
+
+function clearJwtToken() {
+    localStorage.removeItem(JWT_STORAGE_KEY);
+}
+
+// Decode JWT payload without verifying signature (client-side convenience only)
+function decodeJwtPayload(token) {
+    try {
+        const payloadPart = token.split('.')[1];
+        const json = atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(decodeURIComponent(escape(json)));
+    } catch (e) { return null; }
+}
+
+// Unified fetch wrapper that automatically adds Authorization header if token exists
+async function apiFetch(url, options = {}) {
+    const opts = { ...options };
+    opts.headers = { 'Accept': 'application/json', ...(options.headers || {}) };
+    const token = getJwtToken();
+    if (token) {
+        opts.headers['Authorization'] = 'Bearer ' + token;
+    }
+    // Default: send JSON if body is plain object
+    if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(opts.body);
+    }
+    const response = await fetch(url, opts);
+    // Auto clear token on 401
+    if (response.status === 401) {
+        clearJwtToken();
+    }
+    return response;
+}
+
+// Attach to window for other inline scripts/templates
+window.setJwtToken = setJwtToken;
+window.getJwtToken = getJwtToken;
+window.clearJwtToken = clearJwtToken;
+window.apiFetch = apiFetch;
+window.decodeJwtPayload = decodeJwtPayload;
+
+// Helper to wire a standard email/password login form to /api1/auth/login
+// Expected fields: input[name=email], input[name=password]
+// Add attribute data-jwt-login="true" to the form to auto-enable.
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForms = document.querySelectorAll('form[data-jwt-login="true"]');
+    loginForms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = form.querySelector('input[name=email]')?.value?.trim();
+            const password = form.querySelector('input[name=password]')?.value;
+            if (!email || !password) {
+                showAlert('missing_credentials', 'danger');
+                return;
+            }
+            try {
+                const resp = await apiFetch('/api1/auth/login', {
+                    method: 'POST',
+                    body: { email, password }
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data.token) {
+                    setJwtToken(data.token);
+                    const payload = decodeJwtPayload(data.token);
+                    // Optionally show a success notification
+                    showAlert('login_success', 'success', 5000);
+                    // Redirect: honor data.redirect or data.next or a data-redirect attribute
+                    const redirectTo = data.redirect || data.next || form.getAttribute('data-redirect') || '/';
+                    window.location.assign(redirectTo);
+                } else {
+                    const msg = data.error || (data.errors && data.errors.join(', ')) || 'login_failed';
+                    showAlert(msg, 'danger');
+                }
+            } catch (err) {
+                console.error('login error', err);
+                showAlert('network_error', 'danger');
+            }
+        });
+    });
+});
+
 
 
 function getColorByBgColor(bgColor) 
@@ -195,7 +290,7 @@ function resetFlashImage()
                 return;
             }
 
-            fetch('/api1/users/search?q=' + query)
+            apiFetch('/api1/users/search?q=' + encodeURIComponent(query))
                 .then(response => response.json())
                 .then(data => {
 
@@ -255,7 +350,7 @@ function loadLanguagePack(force = false) {
             resolve();
         } else {
             // Fetch the language pack from the API
-            fetch('/api1/langpack')
+            apiFetch('/api1/langpack')
                 .then(response => response.json())
                 .then(data => {
                     translations = data;
