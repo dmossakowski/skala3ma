@@ -27,43 +27,50 @@
        <br>
                 <h1  class="display-4"> {{ gym['name'] }}</h1> 
                 
-                <div class="row">
-                    <div class="col-1 text-end">
-                         <label for="default_routes" class="col-form-label">{{ reference_data['current_language'].routes }}:  </label>
-                     </div>
-                     <div class="col">
-                         <select name="default_routes" class="form-select" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
-             
-                         {% for route in all_routes %}
-                             <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
-                         {% endfor %}
-             
-                         </select>
-                     </div>
-                 </div>
-                 <div class="row mt-2 align-items-center g-2" id="disc-controls">
-                    <div class="col-auto text-end">
-                        <label for="min_per_disc" class="col-form-label small mb-0">Min / Max</label>
-                    </div>
-                    <div class="col-auto">
-                        <input type="number" class="form-control form-control-sm" id="min_per_disc" min="3" max="15" step="1" value="4" />
-                    </div>
-                    <div class="col-auto">
-                        <input type="number" class="form-control form-control-sm" id="max_per_disc" min="4" max="15" step="1" value="8" />
-                    </div>
-                    <div class="col-auto small text-muted" id="disc-controls-msg"></div>
-                    <div class="col d-flex">
-                        <button type="button" id="print_discs_btn" class="btn btn-sm btn-outline-secondary ms-auto w-100 text-start text-nowrap" title="Print discs (one per page)">
-                            <i class="icon-print"></i> Print
-                        </button>
-                    </div>
-                 </div>
+                <!-- Controls moved below header for better mobile layout -->
 
         </div>
       
     </div>
     
     
+</div>
+<!-- Redesigned controls: first line dropdown, second line unified controls -->
+<div class="container-fluid mb-2" id="disc-controls-wrapper">
+    <div id="disc-controls" class="disc-controls-block">
+        <div class="route-select-line control-unit mb-2">
+            <!--label for="default_routes" class="form-label small mb-1 d-inline-block">:</label-->
+            
+            <select name="default_routes" class="form-select form-select-sm unified-ctl" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
+                {% for route in all_routes %}
+                <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}>{{all_routes[route]['name']}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="controls-line d-flex flex-nowrap flex-wrap gap-2 align-items-stretch">
+            <div class="control-unit spinner-unit" role="group" aria-label="Minimum routes spinner">
+                <div class="ctl-label">Min</div>
+                <div class="spinner-shell d-inline-flex align-items-stretch">
+                    <button type="button" class="spinner-btn" id="min_minus" aria-label="Decrease minimum">&#x25C0;</button>
+                    <div class="spinner-value" id="min_display" aria-live="polite">4</div>
+                    <button type="button" class="spinner-btn" id="min_plus" aria-label="Increase minimum">&#x25B6;</button>
+                </div>
+            </div>
+            <div class="control-unit spinner-unit" role="group" aria-label="Maximum routes spinner">
+                <div class="ctl-label">Max</div>
+                <div class="spinner-shell d-inline-flex align-items-stretch">
+                    <button type="button" class="spinner-btn" id="max_minus" aria-label="Decrease maximum">&#x25C0;</button>
+                    <div class="spinner-value" id="max_display" aria-live="polite">8</div>
+                    <button type="button" class="spinner-btn" id="max_plus" aria-label="Increase maximum">&#x25B6;</button>
+                </div>
+            </div>
+            <div class="control-unit print-unit d-flex align-items-stretch">
+                <button type="button" id="print_discs_btn" class="unified-btn" title="Print discs (one per page)">
+                    <i class="icon-print me-1"></i><span>Print</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
     
 
@@ -390,34 +397,38 @@
                         .catch(err=>console.error('Error fetching routes data:', err));
 
                     function initDiscControls() {
-                        const minInput = document.getElementById('min_per_disc');
-                        const maxInput = document.getElementById('max_per_disc');
-                        const msg = document.getElementById('disc-controls-msg');
-                        if (!minInput || !maxInput) return;
+                        // Mobile friendly +/- controls
+                        const minDisplay = document.getElementById('min_display');
+                        const maxDisplay = document.getElementById('max_display');
+                        const btns = {
+                            minMinus: document.getElementById('min_minus'),
+                            minPlus: document.getElementById('min_plus'),
+                            maxMinus: document.getElementById('max_minus'),
+                            maxPlus: document.getElementById('max_plus')
+                        };
+                        if (!minDisplay || !maxDisplay) return;
+                        let minVal = userConfig.minPerDisc;
+                        let maxVal = userConfig.maxPerDisc;
 
-                        function validateAndRender() {
-                            let minVal = parseInt(minInput.value,10);
-                            let maxVal = parseInt(maxInput.value,10);
-                            if (isNaN(minVal) || isNaN(maxVal)) return;
+                        function clamp() {
                             if (minVal < 1) minVal = 1;
                             if (maxVal < minVal) maxVal = minVal;
-                            // apply simple practical limits
-                            if (minVal > 15) minVal = 15;
-                            if (maxVal > 15) maxVal = 15;
-                            minInput.value = minVal;
-                            maxInput.value = maxVal;
+                            if (minVal > 20) minVal = 20; // extended upper bound flexibility
+                            if (maxVal > 20) maxVal = 20;
+                        }
+                        function render() {
+                            clamp();
+                            minDisplay.textContent = minVal;
+                            maxDisplay.textContent = maxVal;
                             userConfig.minPerDisc = minVal;
                             userConfig.maxPerDisc = maxVal;
-                            //msg.textContent = `Grouping: ${minVal}-${maxVal}`;
                             displayRouteDiscs(__cachedRoutes, userConfig);
                         }
-
-                        minInput.addEventListener('input', validateAndRender);
-                        maxInput.addEventListener('input', validateAndRender);
-                        // Up/down arrow immediate effect already via input event; also handle wheel accidentally
-                        minInput.addEventListener('change', validateAndRender);
-                        maxInput.addEventListener('change', validateAndRender);
-                        validateAndRender();
+                        btns.minMinus?.addEventListener('click', ()=>{minVal--; render();});
+                        btns.minPlus?.addEventListener('click', ()=>{minVal++; render();});
+                        btns.maxMinus?.addEventListener('click', ()=>{maxVal--; render();});
+                        btns.maxPlus?.addEventListener('click', ()=>{maxVal++; render();});
+                        render();
                     }
 
                     // Print logic: one disc per page
@@ -449,6 +460,27 @@
                         .disc-svg { max-width: 100%; height: auto; }
                         .disc-svg text { font-weight: 600; }
                         .disc-svg image { pointer-events: none; }
+                                                /* controls wrapper intentionally inherits layout; custom background could be added */
+                                                #disc-controls { font-size:.85rem; }
+                                                #disc-controls .route-select-line select { width:100%; max-width:none; }
+                                                #disc-controls .unified-ctl { background:#fff; border:1px solid #c9cfd4; box-shadow:0 1px 1px rgba(0,0,0,0.04) inset; }
+                                                /* controls-line flex container styles handled by utility classes */
+                                                #disc-controls .control-unit { position:relative; background:#ffffff; border:1px solid #c9cfd4; border-radius:.55rem; padding:.4rem .55rem .55rem; display:flex; flex-direction:column; justify-content:center; min-width:92px; box-shadow:0 1px 2px rgba(0,0,0,0.08); }
+                                                #disc-controls .control-unit .ctl-label { position:absolute; top:4px; left:8px; font-size:.6rem; letter-spacing:.07em; text-transform:uppercase; font-weight:600; color:#6c757d; }
+                                                #disc-controls .spinner-shell { margin-top:.65rem; border:1px solid #ced4da; border-radius:.4rem; overflow:hidden; width:100%; }
+                                                #disc-controls .spinner-btn { background:#f1f3f5; color:#444; border:0; padding:.25rem .55rem; line-height:1; display:flex; align-items:center; justify-content:center; font-size:.85rem; min-width:1.75rem; cursor:pointer; font-weight:600; }
+                                                #disc-controls .spinner-btn:hover,#disc-controls .spinner-btn:focus { background:#6c757d; color:#fff; outline:none; }
+                                                #disc-controls .spinner-btn:active { background:#5a6268; color:#fff; }
+                                                #disc-controls .spinner-value { min-width:2.2rem; padding:.25rem .4rem; text-align:center; background:#fff; font-weight:600; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+                                                #disc-controls .unified-btn { background:linear-gradient(180deg,#f8f9fa 0%,#eceeef 100%); color:#444; border:1px solid #c9cfd4; border-radius:.55rem; padding:.55rem 1rem; font-size:.85rem; font-weight:600; width:100%; display:flex; align-items:center; justify-content:center; transition:background-color .15s,color .15s,border-color .15s; }
+                                                #disc-controls .unified-btn:hover,#disc-controls .unified-btn:focus { background:#6c757d; color:#fff; border-color:#6c757d; }
+                                                #disc-controls .unified-btn:active { background:#5a6268!important; color:#fff!important; box-shadow:inset 0 2px 4px rgba(0,0,0,0.25); }
+                                                #disc-controls .print-unit { min-width:110px; flex:1 1 0; }
+                                                @media (max-width: 575.98px) {
+                                                    #disc-controls .controls-line { gap:.55rem; }
+                                                    #disc-controls .control-unit { flex:1 1 calc(33.33% - .55rem); min-width:0; }
+                                                    #disc-controls .print-unit { flex:1 1 100%; }
+                                                }
                         /* Controls layout enhancements */
                         #disc-controls { --disc-gap: .5rem; }
                         #disc-controls input { min-width: 70px; }
