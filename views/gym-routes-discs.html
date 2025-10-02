@@ -1,0 +1,421 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% include "gym-menu.html" %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+
+
+
+<div class=" container-fluid " >
+    <div class="row">
+
+      
+        <div class="col text-end justify-content-end p-4">
+            <img src="/image/{{  gym.get('logo_img_id') }}"  width="250"/>
+            </div>
+            <div class="col justify-content-left align-items-center">
+       <br>
+                <h1  class="display-4"> {{ gym['name'] }}</h1> 
+                
+                <div class="row">
+                    <div class="col-1 text-end">
+                         <label for="default_routes" class="col-form-label">{{ reference_data['current_language'].routes }}:  </label>
+                     </div>
+                     <div class="col">
+                         <select name="default_routes" class="form-select" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
+             
+                         {% for route in all_routes %}
+                             <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
+                         {% endfor %}
+             
+                         </select>
+                     </div>
+                 </div>
+                 <div class="row mt-2 align-items-center g-2" id="disc-controls">
+                    <div class="col-auto text-end">
+                        <label for="min_per_disc" class="col-form-label small">Min / Max</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="number" class="form-control form-control-sm" id="min_per_disc" min="3" max="15" step="1" value="4" />
+                    </div>
+                    <div class="col-auto">
+                        <input type="number" class="form-control form-control-sm" id="max_per_disc" min="4" max="15" step="1" value="8" />
+                    </div>
+                    <div class="col-auto small text-muted" id="disc-controls-msg"></div>
+                    <div class="col-auto">
+                        <button type="button" id="print_discs_btn" class="btn btn-sm btn-outline-secondary" title="Print discs (one per page)">
+                            <i class="icon-print"></i> Print Discs
+                        </button>
+                    </div>
+                 </div>
+
+        </div>
+      
+    </div>
+    
+    
+</div>
+    
+
+
+
+<div class="container-fluid text-center justify-content-left">  
+   
+
+            <div class="row">
+                    <script>
+                    // Disc visualization logic for gym routes
+                    // Requirements implemented:
+                    //  * Maintain original route order
+                    //  * Group into discs of 5..10 routes (soft preferred size)
+                    //  * Each disc: no duplicate color1, at most 2 distinct lines
+                    //  * Render each disc as an SVG radial chart ("disc") with slices colored
+                    //  * color_modifier "marble" -> gradient / mixed look
+                    //  * Provide small badges for quick route reference
+                    //  * Responsive card grid
+
+                    const userConfig = {
+                        gymid: "{{gymid}}",
+                        routeListId: "{{routesid}}",
+                        preferredRoutesPerDisc: 8, // soft target
+                        minPerDisc: 4,
+                        maxPerDisc: 8,
+                        discSizePx: 220,
+                        faviconPath: '/public/images/favicon.png'
+                    };
+
+                    let __cachedRoutes = [];
+
+                    function lightenColor(hex, amt = 30) {
+                        if(!hex) return '#cccccc';
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        let nums = [0,2,4].map(i=>parseInt(h.substring(i,i+2),16));
+                        nums = nums.map(v=>Math.min(255,Math.max(0,v+amt)));
+                        return '#'+nums.map(v=>v.toString(16).padStart(2,'0')).join('');
+                    }
+
+                    function getLuminance(hex) {
+                        if(!hex) return 0.5;
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        const r = parseInt(h.slice(0,2),16)/255;
+                        const g = parseInt(h.slice(2,4),16)/255;
+                        const b = parseInt(h.slice(4,6),16)/255;
+                        const a=[r,g,b].map(v=> v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4));
+                        return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+                    }
+
+                    function getContrastLineColor(base) {
+                        const lum = getLuminance(base||'#888888');
+                        // choose dark for light backgrounds and light for dark backgrounds
+                        return lum > 0.55 ? 'rgba(30,30,30,0.55)' : 'rgba(255,255,255,0.55)';
+                    }
+
+                    function groupRoutesIntoDiscs(routes, cfg) {
+                        const discs = [];
+                        let current = [];
+                        let colors = new Set();
+                        let lines = new Set();
+
+                        function reset() { current = []; colors = new Set(); lines = new Set(); }
+                        function finalize() { if (current.length) { discs.push(current); reset(); } }
+
+                        for (let i=0;i<routes.length;i++) {
+                            const rt = routes[i];
+                            const color = (rt.color1||'#888888').trim();
+                            const line = (rt.line||'na').trim();
+                            const colorConflict = colors.has(color);
+                            const lineLimit = !lines.has(line) && lines.size === 2;
+                            const sizeLimit = current.length >= cfg.maxPerDisc;
+
+                            if (current.length === 0) {
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            if (!colorConflict && !lineLimit && !sizeLimit) {
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            if (current.length >= cfg.minPerDisc) {
+                                finalize();
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            // Need to reach minimum size but blocked: attempt limited look-ahead reorder
+                            if (colorConflict || lineLimit) {
+                                let inserted = false;
+                                for (let j=i+1; j<routes.length && j<i+6; j++) { // peek ahead a few
+                                    const cand = routes[j];
+                                    const cColor = (cand.color1||'#888888').trim();
+                                    const cLine = (cand.line||'na').trim();
+                                    if (!colors.has(cColor) && (lines.has(cLine) || lines.size < 2)) {
+                                        routes.splice(j,1);
+                                        routes.splice(i,0,cand);
+                                        inserted = true; i--; // reprocess this index with candidate
+                                        break;
+                                    }
+                                }
+                                if (inserted) continue;
+                            }
+
+                            // Fallback: try merge with previous disc if possible, else finalize early
+                            if (current.length < cfg.minPerDisc) {
+                                const prev = discs[discs.length-1];
+                                if (prev) {
+                                    let prevColors = new Set(prev.map(r=> (r.color1||'#888888').trim()));
+                                    let prevLines = new Set(prev.map(r=> (r.line||'na').trim()));
+                                    let canMerge = true;
+                                    if (prev.length + current.length > cfg.maxPerDisc) canMerge = false;
+                                    if (canMerge) {
+                                        for (const r of current) {
+                                            const c = (r.color1||'#888888').trim();
+                                            const l = (r.line||'na').trim();
+                                            if (prevColors.has(c)) { canMerge = false; break; }
+                                            if (!prevLines.has(l) && prevLines.size===2) { canMerge = false; break; }
+                                        }
+                                    }
+                                    if (canMerge) {
+                                        current.forEach(r=>{ prev.push(r); prevColors.add((r.color1||'#888888').trim()); prevLines.add((r.line||'na').trim()); });
+                                        reset();
+                                    } else {
+                                        finalize();
+                                    }
+                                } else {
+                                    finalize();
+                                }
+                                // Start new disc with rt
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+                        }
+                        finalize();
+                        return discs;
+                    }
+
+                    function createDiscSVG(discRoutes, cfg, discIndex) {
+                        const size = cfg.discSizePx;
+                        const r = size/2;
+                        const cx=r, cy=r;
+                        const n = discRoutes.length;
+                        const anglePer = 2*Math.PI / n;
+                        const svg = [];
+                        const defs = [];
+                        svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="disc-svg" data-disc="${discIndex}">`);
+                        svg.push('<defs>');
+                        const faviconSize = r * 0.45; // relative size of center icon
+                        // Clip path for favicon so it stays circular
+                        defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
+                        discRoutes.forEach((rt,i)=>{
+                            if (rt.color_modifier === 'marble') {
+                                const base = (rt.color1||'#999999').trim();
+                                const light = lightenColor(base,55);
+                                const id = `grad_${discIndex}_${i}`;
+                                defs.push(`<linearGradient id="${id}" gradientTransform="rotate(${(i*360/n).toFixed(1)})">`
+                                    +`<stop offset="0%" stop-color="${light}" stop-opacity="0.9"/>`
+                                    +`<stop offset="45%" stop-color="${base}" stop-opacity="0.95"/>`
+                                    +`<stop offset="100%" stop-color="${light}" stop-opacity="0.9"/>`
+                                    +`</linearGradient>`);
+                            }
+                        });
+                        svg.push(defs.join(''));
+                        svg.push('</defs>');
+                        discRoutes.forEach((rt,i)=>{
+                            const start = i*anglePer - Math.PI/2;
+                            const end = start + anglePer;
+                            const x1 = cx + r*Math.cos(start);
+                            const y1 = cy + r*Math.sin(start);
+                            const x2 = cx + r*Math.cos(end);
+                            const y2 = cy + r*Math.sin(end);
+                            const largeArc = anglePer > Math.PI ? 1 : 0;
+                            const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                            const fill = rt.color_modifier === 'marble' ? `url(#grad_${discIndex}_${i})` : (rt.color1 || '#999999');
+                            const routeNum = rt.routenum || (i+1);
+                            const label = (rt.grade || '').trim() || '?';
+                            const mid = start + anglePer/2;
+                            const lr = r*0.62;
+                            const lx = cx + lr*Math.cos(mid);
+                            const ly = cy + lr*Math.sin(mid);
+                            const fontSize = Math.max(10,(r/6));
+                            const textWidth = Math.max(label.length * fontSize * 0.6, fontSize*1.4);
+                            const textHeight = fontSize * 1.1;
+                            const rectX = lx - textWidth/2 - 3;
+                            const rectY = ly - textHeight/2 - 2;
+                            const rectW = textWidth + 6;
+                            const rectH = textHeight + 4;
+                            svg.push(`<path d="${d}" fill="${fill}" stroke="#222" stroke-width="1" data-route-id="${rt.id}"><title>#${routeNum} ${rt.grade||''} line:${rt.line||''}</title></path>`);
+                            // Topography-like contour lines if marble
+                            if (rt.color_modifier === 'marble') {
+                                const contourColor = getContrastLineColor(rt.color1||'#999999');
+                                const linesGroup = [];
+                                const numLines = 10; // adjustable density
+                                const innerStart = r * 0.25;
+                                const innerEnd = r * 0.92;
+                                for (let k=0; k<numLines; k++) {
+                                    const rr = innerStart + (innerEnd-innerStart) * (k/(numLines-1));
+                                    const sx = cx + rr*Math.cos(start);
+                                    const sy = cy + rr*Math.sin(start);
+                                    const ex = cx + rr*Math.cos(end);
+                                    const ey = cy + rr*Math.sin(end);
+                                    const arcD = `M ${sx} ${sy} A ${rr} ${rr} 0 ${largeArc} 1 ${ex} ${ey}`;
+                                    linesGroup.push(`<path d="${arcD}" fill="none" stroke="${contourColor}" stroke-width="${Math.max(3, r*0.01).toFixed(2)}" stroke-linecap="round" stroke-dasharray="9 ${Math.max(2, rr*0.12).toFixed(1)}" />`);
+                                }
+                                svg.push(`<g pointer-events="none">${linesGroup.join('')}</g>`);
+                            }
+                            svg.push(`<g pointer-events="none">`+
+                                     `<rect x="${rectX.toFixed(1)}" y="${rectY.toFixed(1)}" rx="4" ry="4" width="${rectW.toFixed(1)}" height="${rectH.toFixed(1)}" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`+
+                                     `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:600;">${label}</text>`+
+                                     `</g>`);
+                        });
+                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${r-0.5}" fill="none" stroke="#555" stroke-width="2"/>`);
+                        // Base circle backdrop (slightly larger than favicon) for contrast
+                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${(faviconSize/2 + 4).toFixed(2)}" fill="#ffffffdd" stroke="#444" stroke-width="1"/>`);
+                        // Favicon image (will fail silently if not found)
+                        svg.push(`<image href="${cfg.faviconPath}" x="${(cx - faviconSize/2).toFixed(2)}" y="${(cy - faviconSize/2).toFixed(2)}" width="${faviconSize.toFixed(2)}" height="${faviconSize.toFixed(2)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#clip_favicon_${discIndex})" />`);
+                        svg.push('</svg>');
+                        return svg.join('');
+                    }
+
+                    function displayRouteDiscs(routes, cfg) {
+                        const container = document.getElementById('discs-gallery');
+                        if (!container) return;
+                        if (!Array.isArray(routes)) { console.warn('No routes array'); return; }
+                        const discs = groupRoutesIntoDiscs([...routes], cfg);
+                        container.innerHTML = '';
+                        discs.forEach((discRoutes, idx) => {
+                            const col = document.createElement('div');
+                            col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+                            const lines = [...new Set(discRoutes.map(r=>r.line))].filter(Boolean).join(', ');
+                                                        col.innerHTML = `
+                                                            <div class="card shadow-sm h-100">
+                                                                <div class="card-header p-1 text-center">Disc ${idx+1} <small class="text-muted">(${discRoutes.length} | line: ${lines||'n/a'})</small></div>
+                                                                <div class="card-body d-flex flex-column align-items-center justify-content-center">${createDiscSVG(discRoutes, cfg, idx)}</div>
+                                                            </div>`;
+                            container.appendChild(col);
+                        });
+                    }
+
+                    fetch(`/api1/gym/${userConfig.gymid}/${userConfig.routeListId}`)
+                        .then(r=>r.json())
+                        .then(data=>{
+                            console.log('Fetched routes:', data?.routes?.length);
+                            __cachedRoutes = data.routes || [];
+                            displayRouteDiscs(__cachedRoutes, userConfig);
+                            initDiscControls();
+                            initPrintDiscs();
+                        })
+                        .catch(err=>console.error('Error fetching routes data:', err));
+
+                    function initDiscControls() {
+                        const minInput = document.getElementById('min_per_disc');
+                        const maxInput = document.getElementById('max_per_disc');
+                        const msg = document.getElementById('disc-controls-msg');
+                        if (!minInput || !maxInput) return;
+
+                        function validateAndRender() {
+                            let minVal = parseInt(minInput.value,10);
+                            let maxVal = parseInt(maxInput.value,10);
+                            if (isNaN(minVal) || isNaN(maxVal)) return;
+                            if (minVal < 1) minVal = 1;
+                            if (maxVal < minVal) maxVal = minVal;
+                            // apply simple practical limits
+                            if (minVal > 15) minVal = 15;
+                            if (maxVal > 15) maxVal = 15;
+                            minInput.value = minVal;
+                            maxInput.value = maxVal;
+                            userConfig.minPerDisc = minVal;
+                            userConfig.maxPerDisc = maxVal;
+                            //msg.textContent = `Grouping: ${minVal}-${maxVal}`;
+                            displayRouteDiscs(__cachedRoutes, userConfig);
+                        }
+
+                        minInput.addEventListener('input', validateAndRender);
+                        maxInput.addEventListener('input', validateAndRender);
+                        // Up/down arrow immediate effect already via input event; also handle wheel accidentally
+                        minInput.addEventListener('change', validateAndRender);
+                        maxInput.addEventListener('change', validateAndRender);
+                        validateAndRender();
+                    }
+
+                    // Print logic: one disc per page
+                    function initPrintDiscs() {
+                        const btn = document.getElementById('print_discs_btn');
+                        if(!btn) return;
+                        btn.addEventListener('click', () => {
+                            document.body.classList.add('print-discs-mode');
+                            // Optionally enlarge SVGs dynamically by scaling attribute if needed
+                            const originalSizes = [];
+                            document.querySelectorAll('.print-discs-mode .disc-svg').forEach(svg => {
+                                originalSizes.push({svg, w: svg.getAttribute('width'), h: svg.getAttribute('height')});
+                                svg.setAttribute('width','700');
+                                svg.setAttribute('height','700');
+                            });
+                            const cleanup = () => {
+                                document.body.classList.remove('print-discs-mode');
+                                originalSizes.forEach(({svg,w,h})=>{ if (w) svg.setAttribute('width',w); if (h) svg.setAttribute('height',h); });
+                                window.removeEventListener('afterprint', cleanup);
+                            };
+                            window.addEventListener('afterprint', cleanup);
+                            window.print();
+                        });
+                    }
+                    </script>
+                    <style>
+                        #discs-gallery .card { transition: box-shadow .2s, transform .2s; }
+                        #discs-gallery .card:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); transform: translateY(-3px); }
+                        .disc-svg { max-width: 100%; height: auto; }
+                        .disc-svg text { font-weight: 600; }
+                        .disc-svg image { pointer-events: none; }
+                        @media print {
+                            body.print-discs-mode #disc-controls, 
+                            body.print-discs-mode nav, 
+                            body.print-discs-mode header, 
+                            body.print-discs-mode footer, 
+                            body.print-discs-mode .navbar { display: none !important; }
+                            /* Hide any gym menu structures */
+                            body.print-discs-mode #gym-menu,
+                            body.print-discs-mode .gym-menu,
+                            body.print-discs-mode [class*='menu'],
+                            body.print-discs-mode [id*='menu'] { display: none !important; }
+                            /* Hide the first container (logo / header block) to avoid blank first page */
+                            body.print-discs-mode .container-fluid:first-of-type { display: none !important; }
+                            /* Explicitly hide logo, gym name, and route selector if still present */
+                            body.print-discs-mode img[src*='/image/'][width],
+                            body.print-discs-mode h1.display-4,
+                            body.print-discs-mode select#default_routes,
+                            body.print-discs-mode label[for='default_routes'],
+                            body.print-discs-mode #default_routes { display: none !important; }
+                            body.print-discs-mode .row:has(#default_routes) { display: none !important; }
+                            /* Hide print button itself */
+                            body.print-discs-mode #print_discs_btn { display:none !important; }
+                            body.print-discs-mode #discs-gallery { display: block; }
+                            body.print-discs-mode #discs-gallery > div { page-break-after: always; break-after: page; width: 100% !important; margin: 0 !important; }
+                            body.print-discs-mode #discs-gallery > div:last-child { page-break-after: auto; break-after: auto; }
+                            body.print-discs-mode #discs-gallery .card { box-shadow: none !important; border: none !important; }
+                            body.print-discs-mode #discs-gallery .card-header { text-align: center; font-size: 18pt; border: none; }
+                            body.print-discs-mode #discs-gallery .card-body { display: flex; justify-content: center; align-items: center; min-height: auto; padding: 1rem 0; }
+                        }
+                    </style>
+                
+                    <div class="row mt-3" id="discs-gallery" aria-live="polite"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+{% endblock %}
