@@ -94,13 +94,55 @@
                         minPerDisc: 4,
                         maxPerDisc: 8,
                         discSizePx: 220,
-                        faviconPath: '/public/images/favicon.png'
+                        faviconPath: '/public/images/favicon.png',
+                        // Optional positional array of per-disc size overrides (string or number); empty entries mean no override.
+                        discSizeOverrides: []
                     };
 
                     let __cachedRoutes = [];
                     // Per-disc target overrides (index => desired size)
                     let __perDiscTargets = {}; // e.g., {0:6, 2:9}
                     let __currentDiscs = [];
+                    let __suppressURLSync = false; // guard to avoid redundant history updates
+
+                    function parseDiscSizeOverridesFromURL() {
+                        const params = new URLSearchParams(window.location.search);
+                        const ds = params.get('ds');
+                        if (!ds) return;
+                        const parts = ds.split(',');
+                        userConfig.discSizeOverrides = parts; // store raw (may contain blanks)
+                        parts.forEach((val, idx) => {
+                            if (val && /^\d+$/.test(val)) {
+                                const num = parseInt(val,10);
+                                if (num > 0) __perDiscTargets[idx] = num; // initialize mapping
+                            }
+                        });
+                    }
+
+                    function buildDiscSizeOverridesArray() {
+                        // Build array aligned with current discs length
+                        const arr = new Array(__currentDiscs.length).fill('');
+                        for (let i=0;i<__currentDiscs.length;i++) {
+                            if (__perDiscTargets[i]) arr[i] = String(__perDiscTargets[i]);
+                        }
+                        // Trim trailing empty entries for shorter URL
+                        while (arr.length && arr[arr.length-1] === '') arr.pop();
+                        userConfig.discSizeOverrides = arr;
+                        return arr;
+                    }
+
+                    function serializeDiscSizeOverridesToURL() {
+                        if (__suppressURLSync) return;
+                        const arr = buildDiscSizeOverridesArray();
+                        const params = new URLSearchParams(window.location.search);
+                        if (arr.length === 0 || arr.every(v=>v==='')) {
+                            params.delete('ds');
+                        } else {
+                            params.set('ds', arr.join(','));
+                        }
+                        const newUrl = `${window.location.pathname}?${params.toString()}`;
+                        window.history.replaceState({}, '', newUrl);
+                    }
 
                     function lightenColor(hex, amt = 30) {
                         if(!hex) return '#cccccc';
@@ -456,6 +498,8 @@
                                 </div>`;
                             container.appendChild(col);
                         });
+                        // After rendering we can sync URL (building array requires __currentDiscs length)
+                        serializeDiscSizeOverridesToURL();
                     }
 
                     fetch(`/api1/gym/${userConfig.gymid}/${userConfig.routeListId}`)
@@ -463,6 +507,8 @@
                         .then(data=>{
                             console.log('Fetched routes:', data?.routes?.length);
                             __cachedRoutes = data.routes || [];
+                            // Parse overrides from URL before initial display so they influence grouping
+                            parseDiscSizeOverridesFromURL();
                             displayRouteDiscs(__cachedRoutes, userConfig);
                             initDiscControls();
                             initPrintDiscs();
@@ -519,7 +565,7 @@
                             if (next < 1) next = 1;
                             if (next > 20) next = 20;
                             __perDiscTargets[idx] = next;
-                            displayRouteDiscs(__cachedRoutes, userConfig);
+                            displayRouteDiscs(__cachedRoutes, userConfig); // will trigger serialization
                         });
                     }
 
