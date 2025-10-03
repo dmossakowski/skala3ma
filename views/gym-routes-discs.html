@@ -43,24 +43,6 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="spinners-group">
-                        <div class="control-unit spinner-unit" role="group" aria-label="Minimum routes spinner">
-                            <div class="spinner-shell uniform-ctl d-inline-flex align-items-stretch">
-                        <span class="spinner-label">Min</span>
-                        <button type="button" class="spinner-btn" id="min_minus" aria-label="Decrease minimum">&#x25C0;</button>
-                        <div class="spinner-value" id="min_display" aria-live="polite">4</div>
-                        <button type="button" class="spinner-btn" id="min_plus" aria-label="Increase minimum">&#x25B6;</button>
-                    </div>
-                </div>
-                        <div class="control-unit spinner-unit" role="group" aria-label="Maximum routes spinner">
-                            <div class="spinner-shell uniform-ctl d-inline-flex align-items-stretch">
-                        <span class="spinner-label">Max</span>
-                        <button type="button" class="spinner-btn" id="max_minus" aria-label="Decrease maximum">&#x25C0;</button>
-                        <div class="spinner-value" id="max_display" aria-live="polite">8</div>
-                        <button type="button" class="spinner-btn" id="max_plus" aria-label="Increase maximum">&#x25B6;</button>
-                    </div>
-                </div>
-            </div>
                     <div class="print-unit d-flex align-items-stretch">
                         <button type="button" id="print_discs_btn" class="uniform-ctl w-100 print-btn" title="Print discs (one per page)">
                     <i class="icon-print me-1"></i><span>Print</span>
@@ -81,7 +63,7 @@
                     // Requirements implemented:
                     //  * Maintain original route order
                     //  * Group into discs of 5..10 routes (soft preferred size)
-                    //  * Each disc: no duplicate color1, at most 2 distinct lines
+                    //  * Each disc: no duplicate color1 (line count no longer limited)
                     //  * Render each disc as an SVG radial chart ("disc") with slices colored
                     //  * color_modifier "marble" -> gradient / mixed look
                     //  * Provide small badges for quick route reference
@@ -270,6 +252,7 @@
                         const discs = [];
                         let current = [];
                         let colors = new Set();
+                        // Lines are tracked only for informational display now (no limitation)
                         let lines = new Set();
 
                         function reset() { current = []; colors = new Set(); lines = new Set(); }
@@ -280,14 +263,13 @@
                             const color = (rt.color1||'#888888').trim();
                             const line = (rt.line||'na').trim();
                             const colorConflict = colors.has(color);
-                            const lineLimit = !lines.has(line) && lines.size === 2;
                             const sizeLimit = current.length >= cfg.maxPerDisc;
 
                             if (current.length === 0) {
                                 current.push(rt); colors.add(color); lines.add(line); continue;
                             }
 
-                            if (!colorConflict && !lineLimit && !sizeLimit) {
+                            if (!colorConflict && !sizeLimit) {
                                 current.push(rt); colors.add(color); lines.add(line); continue;
                             }
 
@@ -296,17 +278,16 @@
                                 current.push(rt); colors.add(color); lines.add(line); continue;
                             }
 
-                            // Need to reach minimum size but blocked: attempt limited look-ahead reorder
-                            if (colorConflict || lineLimit) {
+                            // Need to reach minimum size but blocked only by color conflict: attempt limited look-ahead reorder
+                            if (colorConflict) {
                                 let inserted = false;
                                 for (let j=i+1; j<routes.length && j<i+6; j++) { // peek ahead a few
                                     const cand = routes[j];
                                     const cColor = (cand.color1||'#888888').trim();
-                                    const cLine = (cand.line||'na').trim();
-                                    if (!colors.has(cColor) && (lines.has(cLine) || lines.size < 2)) {
+                                    if (!colors.has(cColor)) {
                                         routes.splice(j,1);
                                         routes.splice(i,0,cand);
-                                        inserted = true; i--; // reprocess this index with candidate
+                                        inserted = true; i--; // reprocess with candidate
                                         break;
                                     }
                                 }
@@ -318,19 +299,16 @@
                                 const prev = discs[discs.length-1];
                                 if (prev) {
                                     let prevColors = new Set(prev.map(r=> (r.color1||'#888888').trim()));
-                                    let prevLines = new Set(prev.map(r=> (r.line||'na').trim()));
                                     let canMerge = true;
                                     if (prev.length + current.length > cfg.maxPerDisc) canMerge = false;
                                     if (canMerge) {
                                         for (const r of current) {
                                             const c = (r.color1||'#888888').trim();
-                                            const l = (r.line||'na').trim();
                                             if (prevColors.has(c)) { canMerge = false; break; }
-                                            if (!prevLines.has(l) && prevLines.size===2) { canMerge = false; break; }
                                         }
                                     }
                                     if (canMerge) {
-                                        current.forEach(r=>{ prev.push(r); prevColors.add((r.color1||'#888888').trim()); prevLines.add((r.line||'na').trim()); });
+                                        current.forEach(r=>{ prev.push(r); prevColors.add((r.color1||'#888888').trim()); });
                                         reset();
                                     } else {
                                         finalize();
@@ -409,14 +387,11 @@
                     }
 
                     function applyPerDiscTargets(discs) {
-                        // Adjust discs sequentially according to per-disc targets while preserving order & constraints best-effort
+                        // Adjust discs sequentially according to per-disc targets while preserving order & constraints (only color uniqueness now)
                         function canAdd(disc, route) {
                             const color = (route.color1||'#').trim();
                             if (disc.some(r => (r.color1||'#').trim() === color)) return false;
-                            const lines = new Set(disc.map(r => (r.line||'na').trim()));
-                            const rLine = (route.line||'na').trim();
-                            if (!lines.has(rLine) && lines.size === 2) return false;
-                            return true;
+                            return true; // line count no longer restricted
                         }
                         // Work on mutable copy
                         for (let i=0; i<discs.length; i++) {
@@ -487,7 +462,7 @@
                             col.innerHTML = `
                                 <div class="card shadow-sm h-100">
                                     <div class="card-header p-1 d-flex align-items-center justify-content-between gap-2">
-                                        <div class="disc-title">Disc ${idx+1} <small class="text-muted">(${discRoutes.length} | line: ${lines||'n/a'})</small></div>
+                                        <div class="disc-title"> ${idx+1} <small class="text-muted">(line: ${lines||'n/a'})</small></div>
                                         <div class="disc-size-spinner" data-disc-index="${idx}" aria-label="Disc ${idx+1} size override">
                                             <button type="button" class="disc-size-btn" data-delta="dec" data-disc-index="${idx}" aria-label="Decrease disc ${idx+1} size">&#x25C0;</button>
                                             <div class="disc-size-value" id="disc_size_${idx}" aria-live="polite">${targetVal}</div>
@@ -510,46 +485,13 @@
                             // Parse overrides from URL before initial display so they influence grouping
                             parseDiscSizeOverridesFromURL();
                             displayRouteDiscs(__cachedRoutes, userConfig);
-                            initDiscControls();
+                            // Global min/max controls removed
                             initPrintDiscs();
                             initPerDiscSizeControls();
                         })
                         .catch(err=>console.error('Error fetching routes data:', err));
 
-                    function initDiscControls() {
-                        // Mobile friendly +/- controls
-                        const minDisplay = document.getElementById('min_display');
-                        const maxDisplay = document.getElementById('max_display');
-                        const btns = {
-                            minMinus: document.getElementById('min_minus'),
-                            minPlus: document.getElementById('min_plus'),
-                            maxMinus: document.getElementById('max_minus'),
-                            maxPlus: document.getElementById('max_plus')
-                        };
-                        if (!minDisplay || !maxDisplay) return;
-                        let minVal = userConfig.minPerDisc;
-                        let maxVal = userConfig.maxPerDisc;
 
-                        function clamp() {
-                            if (minVal < 1) minVal = 1;
-                            if (maxVal < minVal) maxVal = minVal;
-                            if (minVal > 20) minVal = 20; // extended upper bound flexibility
-                            if (maxVal > 20) maxVal = 20;
-                        }
-                        function render() {
-                            clamp();
-                            minDisplay.textContent = minVal;
-                            maxDisplay.textContent = maxVal;
-                            userConfig.minPerDisc = minVal;
-                            userConfig.maxPerDisc = maxVal;
-                            displayRouteDiscs(__cachedRoutes, userConfig);
-                        }
-                        btns.minMinus?.addEventListener('click', ()=>{minVal--; render();});
-                        btns.minPlus?.addEventListener('click', ()=>{minVal++; render();});
-                        btns.maxMinus?.addEventListener('click', ()=>{maxVal--; render();});
-                        btns.maxPlus?.addEventListener('click', ()=>{maxVal++; render();});
-                        render();
-                    }
 
                     function initPerDiscSizeControls() {
                         const gallery = document.getElementById('discs-gallery');
@@ -607,22 +549,17 @@
                                                 /* controls wrapper intentionally inherits layout; custom background could be added */
                                                 #disc-controls { font-size:.85rem; }
                                                                                                 /* Responsive layout container */
-                                                                                                #disc-controls .controls-responsive { display:flex; flex-wrap:wrap; gap:.6rem; align-items:stretch; }
-                                                                                                #disc-controls .controls-responsive > .ctl { flex:1 1 260px; min-width:220px; }
-                                                                                                #disc-controls .controls-responsive .dropdown-ctl { display:flex; }
+                                                                                                #disc-controls .controls-responsive { display:flex; flex-wrap:nowrap; gap:.6rem; align-items:stretch; }
+                                                                                                #disc-controls .controls-responsive > .ctl { flex:1 1 auto; min-width:160px; }
+                                                                                                #disc-controls .controls-responsive .dropdown-ctl { display:flex; flex:1 1 auto; }
                                                                                                 #disc-controls .controls-responsive .dropdown-ctl select { width:100%; }
-                                                                                                #disc-controls .controls-responsive .spinners-group { display:flex; gap:.6rem; justify-content:center; align-items:center; flex:0 1 auto; }
-                                                                                                #disc-controls .controls-responsive .spinners-group .control-unit { flex:0 0 auto; }
-                                                                                                #disc-controls .controls-responsive .print-unit { flex:0 0 110px; }
+                                                                                                /* Removed global spinners-group (min/max) */
+                                                                                                #disc-controls .controls-responsive .print-unit { flex:0 0 110px; display:flex; }
                                                                                                 /* Center min/max group on its line for narrow widths */
-                                                                                                @media (max-width: 900px) {
-                                                                                                    #disc-controls .controls-responsive .dropdown-ctl { flex:1 1 100%; }
-                                                                                                    #disc-controls .controls-responsive .print-unit { order:3; }
-                                                                                                    #disc-controls .controls-responsive .spinners-group { flex:1 1 100%; order:2; justify-content:center; }
-                                                                                                }
+                                                                                                /* Keep dropdown & print button on one line even on narrow screens */
                                                                                                 @media (max-width: 575.98px) {
-                                                                                                    #disc-controls .controls-responsive { gap:.55rem; }
-                                                                                                    #disc-controls .controls-responsive .print-unit { flex:0 0 90px; }
+                                                                                                    #disc-controls .controls-responsive { gap:.4rem; }
+                                                                                                    #disc-controls .controls-responsive .print-unit { flex:0 0 95px; }
                                                                                                 }
                                                 #disc-controls .uniform-ctl { background:#fff; border:1px solid #c0c7cc; border-radius:.55rem; box-shadow:0 1px 1px rgba(0,0,0,0.05) inset; height:40px; display:flex; align-items:center; padding:0 .6rem; }
                                                 #disc-controls select.uniform-ctl { padding:0 .6rem; line-height:1.2; }
@@ -631,11 +568,7 @@
                                                 #disc-controls .print-btn:hover,#disc-controls .print-btn:focus { background:#6c757d; color:#fff; border-color:#6c757d; }
                                                 #disc-controls .print-btn:active { background:#5a6268!important; color:#fff!important; box-shadow:inset 0 2px 4px rgba(0,0,0,0.25); }
                                                 /* controls-line flex container styles handled by utility classes */
-                                                #disc-controls .control-unit { position:relative; background:transparent; border:0; padding:0; display:flex; flex-direction:column; justify-content:center; min-width:120px; }
-                                                #disc-controls .spinner-shell { border:1px solid #c0c7cc; border-radius:.55rem; overflow:hidden; width:100%; background:#fff; display:flex; padding:0; height:40px; }
-                                                #disc-controls .spinner-label { background:#eef1f3; color:#495057; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; padding:0 .55rem; border-right:1px solid #c0c7cc; flex:1 1 auto; min-width:2.2rem; height:100%; }
-                                                #disc-controls .spinner-btn { background:#f1f3f5; color:#444; border:0; padding:0 .55rem; line-height:1; display:flex; align-items:center; justify-content:center; font-size:.85rem; width:1.9rem; flex:0 0 1.9rem; cursor:pointer; font-weight:600; height:100%; }
-                                                #disc-controls .spinner-value { width:2.6rem; flex:0 0 2.6rem; padding:0 .2rem; text-align:center; background:#fff; font-weight:600; font-size:.9rem; display:flex; align-items:center; justify-content:center; height:100%; }
+                                                /* Removed global spinner control styling (#disc-controls .spinner-*) */
                                                 #disc-controls .print-unit { min-width:90px; flex:0 0 90px; }
                                                 @media (max-width: 575.98px) {
                                                     #disc-controls .controls-line { gap:.55rem; }

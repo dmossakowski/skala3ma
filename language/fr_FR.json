@@ -215,6 +215,8 @@
   "Email_sent": "Email envoyé",
   "Contact": "Contact",
   "Contact_us": "Contactez-nous",
+    "Discs": "Disques",
+    "Disc": "Disque",
   
   "error5314": "La mise à jour des voies n'est pas autorisée pour cet utilisateur ou la compétition n'est pas dans le bon état",
   "error5315": "Pas de permission pour éditer le mur",
