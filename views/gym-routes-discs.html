@@ -1,6 +1,3 @@
-
-
-
 {% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
@@ -35,39 +32,39 @@
     
     
 </div>
-<!-- Redesigned controls: first line dropdown, second line unified controls -->
+<!-- Responsive controls: wide = single line (dropdown, min, max, print). Narrow = dropdown line + min/max/print line -->
 <div class="container-fluid mb-2" id="disc-controls-wrapper">
     <div id="disc-controls" class="disc-controls-block">
-        <div class="route-select-line d-flex flex-nowrap gap-2 mb-2 align-items-stretch">
-            <div class="flex-grow-1 d-flex">
-                <select name="default_routes" class="form-select form-select-sm unified-ctl w-100" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
+        <div class="controls-responsive">
+            <div class="ctl dropdown-ctl">
+                <select name="default_routes" class="form-select form-select-sm unified-ctl" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
                     {% for route in all_routes %}
                     <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}>{{all_routes[route]['name']}}</option>
                     {% endfor %}
                 </select>
             </div>
+            <div class="spinners-group">
+                <div class="control-unit spinner-unit" role="group" aria-label="Minimum routes spinner">
+                    <div class="spinner-shell d-inline-flex align-items-stretch">
+                        <span class="spinner-label">Min</span>
+                        <button type="button" class="spinner-btn" id="min_minus" aria-label="Decrease minimum">&#x25C0;</button>
+                        <div class="spinner-value" id="min_display" aria-live="polite">4</div>
+                        <button type="button" class="spinner-btn" id="min_plus" aria-label="Increase minimum">&#x25B6;</button>
+                    </div>
+                </div>
+                <div class="control-unit spinner-unit" role="group" aria-label="Maximum routes spinner">
+                    <div class="spinner-shell d-inline-flex align-items-stretch">
+                        <span class="spinner-label">Max</span>
+                        <button type="button" class="spinner-btn" id="max_minus" aria-label="Decrease maximum">&#x25C0;</button>
+                        <div class="spinner-value" id="max_display" aria-live="polite">8</div>
+                        <button type="button" class="spinner-btn" id="max_plus" aria-label="Increase maximum">&#x25B6;</button>
+                    </div>
+                </div>
+            </div>
             <div class="print-unit d-flex align-items-stretch">
                 <button type="button" id="print_discs_btn" class="unified-btn w-100" title="Print discs (one per page)">
                     <i class="icon-print me-1"></i><span>Print</span>
                 </button>
-            </div>
-        </div>
-        <div class="controls-line d-flex flex-nowrap flex-wrap gap-2 align-items-stretch">
-            <div class="control-unit spinner-unit" role="group" aria-label="Minimum routes spinner">
-                <div class="spinner-shell d-inline-flex align-items-stretch">
-                    <span class="spinner-label">Min</span>
-                    <button type="button" class="spinner-btn" id="min_minus" aria-label="Decrease minimum">&#x25C0;</button>
-                    <div class="spinner-value" id="min_display" aria-live="polite">4</div>
-                    <button type="button" class="spinner-btn" id="min_plus" aria-label="Increase minimum">&#x25B6;</button>
-                </div>
-            </div>
-            <div class="control-unit spinner-unit" role="group" aria-label="Maximum routes spinner">
-                <div class="spinner-shell d-inline-flex align-items-stretch">
-                    <span class="spinner-label">Max</span>
-                    <button type="button" class="spinner-btn" id="max_minus" aria-label="Decrease maximum">&#x25C0;</button>
-                    <div class="spinner-value" id="max_display" aria-live="polite">8</div>
-                    <button type="button" class="spinner-btn" id="max_plus" aria-label="Increase maximum">&#x25B6;</button>
-                </div>
             </div>
         </div>
     </div>
@@ -462,16 +459,31 @@
                         .disc-svg image { pointer-events: none; }
                                                 /* controls wrapper intentionally inherits layout; custom background could be added */
                                                 #disc-controls { font-size:.85rem; }
-                                                #disc-controls .route-select-line select { width:100%; max-width:none; }
+                                                                                                /* Responsive layout container */
+                                                                                                #disc-controls .controls-responsive { display:flex; flex-wrap:wrap; gap:.6rem; align-items:stretch; }
+                                                                                                #disc-controls .controls-responsive > .ctl { flex:1 1 260px; min-width:220px; }
+                                                                                                #disc-controls .controls-responsive .dropdown-ctl { display:flex; }
+                                                                                                #disc-controls .controls-responsive .dropdown-ctl select { width:100%; }
+                                                                                                #disc-controls .controls-responsive .spinners-group { display:flex; gap:.6rem; justify-content:center; align-items:center; flex:0 1 auto; }
+                                                                                                #disc-controls .controls-responsive .spinners-group .control-unit { flex:0 0 auto; }
+                                                                                                #disc-controls .controls-responsive .print-unit { flex:0 0 110px; }
+                                                                                                /* Center min/max group on its line for narrow widths */
+                                                                                                @media (max-width: 900px) {
+                                                                                                    #disc-controls .controls-responsive .dropdown-ctl { flex:1 1 100%; }
+                                                                                                    #disc-controls .controls-responsive .print-unit { order:3; }
+                                                                                                    #disc-controls .controls-responsive .spinners-group { flex:1 1 100%; order:2; justify-content:center; }
+                                                                                                }
+                                                                                                @media (max-width: 575.98px) {
+                                                                                                    #disc-controls .controls-responsive { gap:.55rem; }
+                                                                                                    #disc-controls .controls-responsive .print-unit { flex:0 0 90px; }
+                                                                                                }
                                                 #disc-controls .unified-ctl { background:#fff; border:1px solid #c9cfd4; box-shadow:0 1px 1px rgba(0,0,0,0.04) inset; }
                                                 /* controls-line flex container styles handled by utility classes */
                                                 #disc-controls .control-unit { position:relative; background:transparent; border:0; padding:0; display:flex; flex-direction:column; justify-content:center; min-width:120px; }
-                                                #disc-controls .spinner-shell { border:1px solid #ced4da; border-radius:.5rem; overflow:hidden; width:100%; background:#fff; display:flex; }
-                                                #disc-controls .spinner-label { background:#e9ecef; color:#495057; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; padding:.25rem .45rem; border-right:1px solid #ced4da; }
-                                                #disc-controls .spinner-btn { background:#f1f3f5; color:#444; border:0; padding:.35rem .55rem; line-height:1; display:flex; align-items:center; justify-content:center; font-size:.85rem; min-width:1.85rem; cursor:pointer; font-weight:600; }
-                                                #disc-controls .spinner-btn:hover,#disc-controls .spinner-btn:focus { background:#6c757d; color:#fff; outline:none; }
-                                                #disc-controls .spinner-btn:active { background:#5a6268; color:#fff; }
-                                                #disc-controls .spinner-value { min-width:2.3rem; padding:.35rem .45rem; text-align:center; background:#fff; font-weight:600; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+                                                #disc-controls .spinner-shell { border:1px solid #ced4da; border-radius:.5rem; overflow:hidden; width:100%; background:#fff; display:flex; padding:0; }
+                                                #disc-controls .spinner-label { background:#e9ecef; color:#495057; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; padding:.25rem .6rem; border-right:1px solid #ced4da; flex:1 1 auto; min-width:2.2rem; }
+                                                #disc-controls .spinner-btn { background:#f1f3f5; color:#444; border:0; padding:.35rem .55rem; line-height:1; display:flex; align-items:center; justify-content:center; font-size:.85rem; width:1.9rem; flex:0 0 1.9rem; cursor:pointer; font-weight:600; }
+                                                #disc-controls .spinner-value { width:2.6rem; flex:0 0 2.6rem; padding:.35rem .2rem; text-align:center; background:#fff; font-weight:600; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
                                                 #disc-controls .unified-btn { background:linear-gradient(180deg,#f8f9fa 0%,#eceeef 100%); color:#444; border:1px solid #c9cfd4; border-radius:.55rem; padding:.55rem 1rem; font-size:.85rem; font-weight:600; width:100%; display:flex; align-items:center; justify-content:center; transition:background-color .15s,color .15s,border-color .15s; }
                                                 #disc-controls .unified-btn:hover,#disc-controls .unified-btn:focus { background:#6c757d; color:#fff; border-color:#6c757d; }
                                                 #disc-controls .unified-btn:active { background:#5a6268!important; color:#fff!important; box-shadow:inset 0 2px 4px rgba(0,0,0,0.25); }
