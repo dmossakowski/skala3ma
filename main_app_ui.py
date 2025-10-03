@@ -2576,10 +2576,19 @@ def image_route(img_id):
 
 @app_ui.route('/gym/<gymid>/qr', methods=['GET'])
 def gym_qr(gymid):
+    return gym_routes_qr(gymid, '')
+
+
+@app_ui.route('/gym/<gymid>/<routesid>/qr', methods=['GET'] )
+def gym_routes_qr(gymid, routesid):
     try:
          # Construct the URL
         base_url = request.url_root
-        url = f"{base_url}gyms/{gymid}"
+
+        if routesid is None or len(routesid)==0:
+            url = f"{base_url}gyms/{gymid}"
+        else:
+            url = f"{base_url}gyms/{gymid}/{routesid}"
 
         qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
         qr.add_data(url)
@@ -2587,7 +2596,7 @@ def gym_qr(gymid):
         #img_1 = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer())
         #img_2 = qr.make_image(image_factory=StyledPilImage, color_mask=RadialGradiantColorMask())
         img_1 = qr.make_image(image_factory=StyledPilImage, embeded_image_path="public/images/favicon.png")
-
+        
         #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, image_factory=StyledPilImage)
         #qr.add_data('Some data')
 

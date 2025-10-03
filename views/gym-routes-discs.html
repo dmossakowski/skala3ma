@@ -77,6 +77,7 @@
                         maxPerDisc: 8,
                         discSizePx: 220,
                         faviconPath: '/public/images/favicon.png',
+                        //faviconPath: '/gym/{{gymid}}/{{routesid}}/qr',
                         // Optional positional array of per-disc size overrides (string or number); empty entries mean no override.
                         discSizeOverrides: []
                     };
@@ -334,7 +335,7 @@
                         const defs = [];
                         svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="disc-svg" data-disc="${discIndex}">`);
                         svg.push('<defs>');
-                        const faviconSize = r * 0.45; // relative size of center icon
+                        const faviconSize = r * 0.44; // relative size of center icon (20% larger than previous 0.45r)
                         // Clip path for favicon so it stays circular
                         defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
                         discRoutes.forEach((rt,i)=>{
