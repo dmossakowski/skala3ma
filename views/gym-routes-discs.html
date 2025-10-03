@@ -98,6 +98,9 @@
                     };
 
                     let __cachedRoutes = [];
+                    // Per-disc target overrides (index => desired size)
+                    let __perDiscTargets = {}; // e.g., {0:6, 2:9}
+                    let __currentDiscs = [];
 
                     function lightenColor(hex, amt = 30) {
                         if(!hex) return '#cccccc';
@@ -363,21 +366,94 @@
                         return svg.join('');
                     }
 
+                    function applyPerDiscTargets(discs) {
+                        // Adjust discs sequentially according to per-disc targets while preserving order & constraints best-effort
+                        function canAdd(disc, route) {
+                            const color = (route.color1||'#').trim();
+                            if (disc.some(r => (r.color1||'#').trim() === color)) return false;
+                            const lines = new Set(disc.map(r => (r.line||'na').trim()));
+                            const rLine = (route.line||'na').trim();
+                            if (!lines.has(rLine) && lines.size === 2) return false;
+                            return true;
+                        }
+                        // Work on mutable copy
+                        for (let i=0; i<discs.length; i++) {
+                            let target = __perDiscTargets[i];
+                            if (!target || target < 1) continue;
+                            let disc = discs[i];
+                            if (target > disc.length) {
+                                // expand by borrowing from subsequent discs
+                                let needed = target - disc.length;
+                                let lookIdx = i+1;
+                                while (needed > 0 && lookIdx < discs.length) {
+                                    let donor = discs[lookIdx];
+                                    if (!donor.length) { lookIdx++; continue; }
+                                    // Try first movable route or scan for candidate
+                                    let moved = false;
+                                    for (let di=0; di<donor.length; di++) {
+                                        const cand = donor[di];
+                                        if (canAdd(disc, cand)) {
+                                            disc.push(cand);
+                                            donor.splice(di,1);
+                                            needed--; moved=true; break;
+                                        }
+                                    }
+                                    if (!moved) lookIdx++; // can't take from this donor currently
+                                    if (donor.length === 0) {
+                                        discs.splice(lookIdx,1); // remove empty donor; indices shift
+                                    }
+                                }
+                            } else if (target < disc.length) {
+                                // shrink by moving last routes forward to next disc (create if needed)
+                                while (disc.length > target) {
+                                    const moved = disc.pop();
+                                    let nextDisc;
+                                    if (i === discs.length-1) {
+                                        nextDisc = [];
+                                        discs.push(nextDisc);
+                                    } else {
+                                        nextDisc = discs[i+1];
+                                    }
+                                    nextDisc.unshift(moved);
+                                }
+                            }
+                        }
+                        // Cleanup empty discs if any
+                        return discs.filter(d=>d.length>0);
+                    }
+
+                    function computeDiscs(routes, cfg) {
+                        let base = groupRoutesIntoDiscs([...routes], cfg);
+                        if (Object.keys(__perDiscTargets).length) {
+                            base = applyPerDiscTargets(base);
+                        }
+                        return base;
+                    }
+
                     function displayRouteDiscs(routes, cfg) {
                         const container = document.getElementById('discs-gallery');
                         if (!container) return;
                         if (!Array.isArray(routes)) { console.warn('No routes array'); return; }
-                        const discs = groupRoutesIntoDiscs([...routes], cfg);
+                        const discs = computeDiscs(routes, cfg);
+                        __currentDiscs = discs;
                         container.innerHTML = '';
                         discs.forEach((discRoutes, idx) => {
                             const col = document.createElement('div');
                             col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
                             const lines = [...new Set(discRoutes.map(r=>r.line))].filter(Boolean).join(', ');
-                                                        col.innerHTML = `
-                                                            <div class="card shadow-sm h-100">
-                                                                <div class="card-header p-1 text-center">Disc ${idx+1} <small class="text-muted">(${discRoutes.length} | line: ${lines||'n/a'})</small></div>
-                                                                <div class="card-body d-flex flex-column align-items-center justify-content-center">${createDiscSVG(discRoutes, cfg, idx)}</div>
-                                                            </div>`;
+                            const targetVal = __perDiscTargets[idx] || discRoutes.length;
+                            col.innerHTML = `
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header p-1 d-flex align-items-center justify-content-between gap-2">
+                                        <div class="disc-title">Disc ${idx+1} <small class="text-muted">(${discRoutes.length} | line: ${lines||'n/a'})</small></div>
+                                        <div class="disc-size-spinner" data-disc-index="${idx}" aria-label="Disc ${idx+1} size override">
+                                            <button type="button" class="disc-size-btn" data-delta="dec" data-disc-index="${idx}" aria-label="Decrease disc ${idx+1} size">&#x25C0;</button>
+                                            <div class="disc-size-value" id="disc_size_${idx}" aria-live="polite">${targetVal}</div>
+                                            <button type="button" class="disc-size-btn" data-delta="inc" data-disc-index="${idx}" aria-label="Increase disc ${idx+1} size">&#x25B6;</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center">${createDiscSVG(discRoutes, cfg, idx)}</div>
+                                </div>`;
                             container.appendChild(col);
                         });
                     }
@@ -390,6 +466,7 @@
                             displayRouteDiscs(__cachedRoutes, userConfig);
                             initDiscControls();
                             initPrintDiscs();
+                            initPerDiscSizeControls();
                         })
                         .catch(err=>console.error('Error fetching routes data:', err));
 
@@ -428,6 +505,24 @@
                         render();
                     }
 
+                    function initPerDiscSizeControls() {
+                        const gallery = document.getElementById('discs-gallery');
+                        if (!gallery) return;
+                        gallery.addEventListener('click', (e) => {
+                            const btn = e.target.closest('.disc-size-btn');
+                            if (!btn) return;
+                            const idx = parseInt(btn.dataset.discIndex,10);
+                            if (isNaN(idx)) return;
+                            const delta = btn.dataset.delta === 'inc' ? 1 : -1;
+                            const current = __perDiscTargets[idx] || (__currentDiscs[idx]?.length || 1);
+                            let next = current + delta;
+                            if (next < 1) next = 1;
+                            if (next > 20) next = 20;
+                            __perDiscTargets[idx] = next;
+                            displayRouteDiscs(__cachedRoutes, userConfig);
+                        });
+                    }
+
                     // Print logic: one disc per page
                     function initPrintDiscs() {
                         const btn = document.getElementById('print_discs_btn');
@@ -457,6 +552,12 @@
                         .disc-svg { max-width: 100%; height: auto; }
                         .disc-svg text { font-weight: 600; }
                         .disc-svg image { pointer-events: none; }
+                        /* Per-disc size spinner */
+                        .card-header .disc-size-spinner { display:inline-flex; align-items:stretch; border:1px solid #c0c7cc; border-radius:.45rem; overflow:hidden; background:#fff; font-size:.75rem; }
+                        .card-header .disc-size-btn { background:#f1f3f5; color:#444; border:0; padding:.2rem .45rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:600; font-size:.75rem; min-width:1.55rem; }
+                        .card-header .disc-size-btn:hover, .card-header .disc-size-btn:focus { background:#6c757d; color:#fff; outline:none; }
+                        .card-header .disc-size-btn:active { background:#5a6268; color:#fff; }
+                        .card-header .disc-size-value { min-width:1.9rem; padding:.2rem .4rem; display:flex; align-items:center; justify-content:center; font-weight:600; background:#fff; }
                                                 /* controls wrapper intentionally inherits layout; custom background could be added */
                                                 #disc-controls { font-size:.85rem; }
                                                                                                 /* Responsive layout container */
