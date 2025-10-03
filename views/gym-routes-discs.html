@@ -462,7 +462,7 @@
                             col.innerHTML = `
                                 <div class="card shadow-sm h-100">
                                     <div class="card-header p-1 d-flex align-items-center justify-content-between gap-2">
-                                        <div class="disc-title"> ${idx+1} <small class="text-muted">(line: ${lines||'n/a'})</small></div>
+                                        <div class="disc-title">{{ reference_data['current_language'].Disc }} ${idx+1} <small class="text-muted">(line: ${lines||'n/a'})</small></div>
                                         <div class="disc-size-spinner" data-disc-index="${idx}" aria-label="Disc ${idx+1} size override">
                                             <button type="button" class="disc-size-btn" data-delta="dec" data-disc-index="${idx}" aria-label="Decrease disc ${idx+1} size">&#x25C0;</button>
                                             <div class="disc-size-value" id="disc_size_${idx}" aria-live="polite">${targetVal}</div>
