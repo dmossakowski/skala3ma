@@ -1,0 +1,642 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% include "gym-menu.html" %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+
+
+
+<div class=" container-fluid " >
+    <div class="row">
+
+      
+        <div class="col text-end justify-content-end p-4">
+            <img src="/image/{{  gym.get('logo_img_id') }}"  width="250"/>
+            </div>
+            <div class="col justify-content-left align-items-center">
+       <br>
+                <h1  class="display-4"> {{ gym['name'] }}</h1> 
+                
+                <!-- Controls moved below header for better mobile layout -->
+
+        </div>
+      
+    </div>
+    
+    
+</div>
+<!-- Responsive controls: wide = single line (dropdown, min, max, print). Narrow = dropdown line + min/max/print line -->
+<div class="container-fluid mb-2" id="disc-controls-wrapper">
+    <div id="disc-controls" class="disc-controls-block">
+        <div class="controls-responsive">
+                    <div class="ctl dropdown-ctl">
+                        <select name="default_routes" class="form-select form-select-sm uniform-ctl" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
+                    {% for route in all_routes %}
+                    <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}>{{all_routes[route]['name']}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+                    <div class="print-unit d-flex align-items-stretch">
+                        <button type="button" id="print_discs_btn" class="uniform-ctl w-100 print-btn" title="Print discs (one per page)">
+                    <i class="icon-print me-1"></i><span>{{ reference_data['current_language'].Print }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+
+
+
+<div class="container-fluid text-center justify-content-left">  
+   
+
+                   <script>
+                    // Disc visualization logic for gym routes
+                    // Requirements implemented:
+                    //  * Maintain original route order
+                    //  * Group into discs of 5..10 routes (soft preferred size)
+                    //  * Each disc: no duplicate color1 (line count no longer limited)
+                    //  * Render each disc as an SVG radial chart ("disc") with slices colored
+                    //  * color_modifier "marble" -> gradient / mixed look
+                    //  * Provide small badges for quick route reference
+                    //  * Responsive card grid
+
+                    const userConfig = {
+                        gymid: "{{gymid}}",
+                        routeListId: "{{routesid}}",
+                        preferredRoutesPerDisc: 8, // soft target
+                        minPerDisc: 4,
+                        maxPerDisc: 8,
+                        discSizePx: 220,
+                        faviconPath: '/public/images/favicon.png',
+                        //faviconPath: '/gym/{{gymid}}/{{routesid}}/qr',
+                        // Optional positional array of per-disc size overrides (string or number); empty entries mean no override.
+                        discSizeOverrides: []
+                    };
+
+                    let __cachedRoutes = [];
+                    // Per-disc target overrides (index => desired size)
+                    let __perDiscTargets = {}; // e.g., {0:6, 2:9}
+                    let __currentDiscs = [];
+                    let __suppressURLSync = false; // guard to avoid redundant history updates
+
+                    function parseDiscSizeOverridesFromURL() {
+                        const params = new URLSearchParams(window.location.search);
+                        const ds = params.get('ds');
+                        if (!ds) return;
+                        const parts = ds.split(',');
+                        userConfig.discSizeOverrides = parts; // store raw (may contain blanks)
+                        parts.forEach((val, idx) => {
+                            if (val && /^\d+$/.test(val)) {
+                                const num = parseInt(val,10);
+                                if (num > 0) __perDiscTargets[idx] = num; // initialize mapping
+                            }
+                        });
+                    }
+
+                    function buildDiscSizeOverridesArray() {
+                        // Build array aligned with current discs length
+                        const arr = new Array(__currentDiscs.length).fill('');
+                        for (let i=0;i<__currentDiscs.length;i++) {
+                            if (__perDiscTargets[i]) arr[i] = String(__perDiscTargets[i]);
+                        }
+                        // Trim trailing empty entries for shorter URL
+                        while (arr.length && arr[arr.length-1] === '') arr.pop();
+                        userConfig.discSizeOverrides = arr;
+                        return arr;
+                    }
+
+                    function serializeDiscSizeOverridesToURL() {
+                        if (__suppressURLSync) return;
+                        const arr = buildDiscSizeOverridesArray();
+                        const params = new URLSearchParams(window.location.search);
+                        if (arr.length === 0 || arr.every(v=>v==='')) {
+                            params.delete('ds');
+                        } else {
+                            params.set('ds', arr.join(','));
+                        }
+                        const newUrl = `${window.location.pathname}?${params.toString()}`;
+                        window.history.replaceState({}, '', newUrl);
+                    }
+
+                    function lightenColor(hex, amt = 30) {
+                        if(!hex) return '#cccccc';
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        let nums = [0,2,4].map(i=>parseInt(h.substring(i,i+2),16));
+                        nums = nums.map(v=>Math.min(255,Math.max(0,v+amt)));
+                        return '#'+nums.map(v=>v.toString(16).padStart(2,'0')).join('');
+                    }
+
+                    function darkenColor(hex, amt = 30) {
+                        if(!hex) return '#666666';
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        let nums = [0,2,4].map(i=>parseInt(h.substring(i,i+2),16));
+                        nums = nums.map(v=>Math.min(255,Math.max(0,v-amt)));
+                        return '#'+nums.map(v=>v.toString(16).padStart(2,'0')).join('');
+                    }
+
+                    // Deterministic pseudo random for repeatable patterns per disc/slice
+                    function prng(seed) {
+                        return function() {
+                            seed = (seed * 9301 + 49297) % 233280;
+                            return seed / 233280;
+                        }
+                    }
+
+                    function hexToRgb(hex) {
+                        if(!hex) return {r:128,g:128,b:128};
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        return {r:parseInt(h.slice(0,2),16), g:parseInt(h.slice(2,4),16), b:parseInt(h.slice(4,6),16)};
+                    }
+                    function rgbToHex(r,g,b){return '#'+[r,g,b].map(v=>Math.min(255,Math.max(0,Math.round(v))).toString(16).padStart(2,'0')).join('');}
+                    function getRelLumFromRgb(r,g,b){
+                        const sr=[r,g,b].map(v=>{v/=255;return v<=0.03928? v/12.92:Math.pow((v+0.055)/1.055,2.4)});
+                        return 0.2126*sr[0]+0.7152*sr[1]+0.0722*sr[2];
+                    }
+                    function contrastRatioHex(a,b){
+                        const ar=hexToRgb(a), br=hexToRgb(b);
+                        const l1=getRelLumFromRgb(ar.r,ar.g,ar.b), l2=getRelLumFromRgb(br.r,br.g,br.b);
+                        const hi=Math.max(l1,l2), lo=Math.min(l1,l2);
+                        return (hi+0.05)/(lo+0.05);
+                    }
+                    function shiftTowards(hex, target='light', amount=60){
+                        return target==='light'? lightenColor(hex,amount): darkenColor(hex,amount);
+                    }
+                    function generateVariantColors(base){
+                        // ensure at least one variant with adequate contrast ratio
+                        const variants = [];
+                        const baseLum = getLuminance(base);
+                        // Primary variant direction opposite of base brightness
+                        let primary = baseLum < 0.45 ? shiftTowards(base,'light',70) : shiftTowards(base,'dark',70);
+                        // Adjust until contrast ratio threshold reached
+                        let step = 10; let attempts=0;
+                        while (contrastRatioHex(base, primary) < 3 && attempts<6){
+                            primary = baseLum < 0.45 ? shiftTowards(primary,'light',step) : shiftTowards(primary,'dark',step);
+                            attempts++;
+                        }
+                        variants.push(primary);
+                        // Secondary variant mid-tone between base and primary for more texture
+                        const br = hexToRgb(base); const pr = hexToRgb(primary);
+                        const mid = rgbToHex((br.r+pr.r)/2,(br.g+pr.g)/2,(br.b+pr.b)/2);
+                        // If mid too close to base choose stronger alt
+                        const midContrast = contrastRatioHex(base, mid);
+                        variants.push(midContrast < 2.2 ? (baseLum<0.45? shiftTowards(base,'light',40): shiftTowards(base,'dark',40)) : mid);
+                        return variants;
+                    }
+
+                    function generateCamoPattern(baseColor, discIndex, sliceIndex, size) {
+                        const patId = `camo_${discIndex}_${sliceIndex}`;
+                        const rand = prng((discIndex+1)*1000 + sliceIndex*97 + baseColor.length*31);
+                        // Derive variant colors with enforced contrast
+                        const [varA, varB] = generateVariantColors(baseColor);
+                        const darkRef = contrastRatioHex(baseColor,varA) > contrastRatioHex(baseColor,varB) ? varA: varB;
+                        const patchCount = 8 + Math.floor(rand()*6); // 8-13 patches for richer texture
+                        // We'll build organic-ish blobs using path composed of arcs (simplified) or circles with slight scale.
+                        const w = size, h = size; // pattern size in user units
+                        let shapes = [`<rect width="${w}" height="${h}" fill="${baseColor}"/>`];
+                        for (let i=0; i<patchCount; i++) {
+                            const color = rand() > 0.45 ? varA : varB;
+                            const cx = (rand()*w);
+                            const cy = (rand()*h);
+                            const rBase = (Math.min(w,h) * (0.12 + rand()*0.18));
+                            // Create blobby path by overlapping 3 circles (simplified union look)
+                            const offset1x = cx + rBase*0.6*(rand()-0.5);
+                            const offset1y = cy + rBase*0.6*(rand()-0.5);
+                            const offset2x = cx + rBase*0.6*(rand()-0.5);
+                            const offset2y = cy + rBase*0.6*(rand()-0.5);
+                            shapes.push(`<g fill="${color}" fill-opacity="0.9">`+
+                                        `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rBase.toFixed(1)}"/>`+
+                                        `<circle cx="${offset1x.toFixed(1)}" cy="${offset1y.toFixed(1)}" r="${(rBase*0.8).toFixed(1)}"/>`+
+                                        `<circle cx="${offset2x.toFixed(1)}" cy="${offset2y.toFixed(1)}" r="${(rBase*0.65).toFixed(1)}"/>`+
+                                        `</g>`);
+                        }
+                        // Add higher-contrast speckles to increase visibility on very dark colors
+                        const speckCount = 22;
+                        for (let s=0; s<speckCount; s++) {
+                            const scx = rand()*w;
+                            const scy = rand()*h;
+                            const sr = 1 + rand()*2.4;
+                            shapes.push(`<circle cx="${scx.toFixed(1)}" cy="${scy.toFixed(1)}" r="${sr.toFixed(1)}" fill="${darkRef}" fill-opacity="0.55"/>`);
+                        }
+                        return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${w}" height="${h}">`+ shapes.join('') + `</pattern>`;
+                    }
+
+                    function getLuminance(hex) {
+                        if(!hex) return 0.5;
+                        let h = hex.replace('#','');
+                        if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+                        const r = parseInt(h.slice(0,2),16)/255;
+                        const g = parseInt(h.slice(2,4),16)/255;
+                        const b = parseInt(h.slice(4,6),16)/255;
+                        const a=[r,g,b].map(v=> v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4));
+                        return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+                    }
+
+                    function getContrastLineColor(base) {
+                        const lum = getLuminance(base||'#888888');
+                        // choose dark for light backgrounds and light for dark backgrounds
+                        return lum > 0.55 ? 'rgba(30,30,30,0.55)' : 'rgba(255,255,255,0.55)';
+                    }
+
+                    function groupRoutesIntoDiscs(routes, cfg) {
+                        const discs = [];
+                        let current = [];
+                        let colors = new Set();
+                        // Lines are tracked only for informational display now (no limitation)
+                        let lines = new Set();
+
+                        function reset() { current = []; colors = new Set(); lines = new Set(); }
+                        function finalize() { if (current.length) { discs.push(current); reset(); } }
+
+                        for (let i=0;i<routes.length;i++) {
+                            const rt = routes[i];
+                            const color = (rt.color1||'#888888').trim();
+                            const line = (rt.line||'na').trim();
+                            const colorConflict = colors.has(color);
+                            const sizeLimit = current.length >= cfg.maxPerDisc;
+
+                            if (current.length === 0) {
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            if (!colorConflict && !sizeLimit) {
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            if (current.length >= cfg.minPerDisc) {
+                                finalize();
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+
+                            // Need to reach minimum size but blocked only by color conflict: attempt limited look-ahead reorder
+                            if (colorConflict) {
+                                let inserted = false;
+                                for (let j=i+1; j<routes.length && j<i+6; j++) { // peek ahead a few
+                                    const cand = routes[j];
+                                    const cColor = (cand.color1||'#888888').trim();
+                                    if (!colors.has(cColor)) {
+                                        routes.splice(j,1);
+                                        routes.splice(i,0,cand);
+                                        inserted = true; i--; // reprocess with candidate
+                                        break;
+                                    }
+                                }
+                                if (inserted) continue;
+                            }
+
+                            // Fallback: try merge with previous disc if possible, else finalize early
+                            if (current.length < cfg.minPerDisc) {
+                                const prev = discs[discs.length-1];
+                                if (prev) {
+                                    let prevColors = new Set(prev.map(r=> (r.color1||'#888888').trim()));
+                                    let canMerge = true;
+                                    if (prev.length + current.length > cfg.maxPerDisc) canMerge = false;
+                                    if (canMerge) {
+                                        for (const r of current) {
+                                            const c = (r.color1||'#888888').trim();
+                                            if (prevColors.has(c)) { canMerge = false; break; }
+                                        }
+                                    }
+                                    if (canMerge) {
+                                        current.forEach(r=>{ prev.push(r); prevColors.add((r.color1||'#888888').trim()); });
+                                        reset();
+                                    } else {
+                                        finalize();
+                                    }
+                                } else {
+                                    finalize();
+                                }
+                                // Start new disc with rt
+                                current.push(rt); colors.add(color); lines.add(line); continue;
+                            }
+                        }
+                        finalize();
+                        return discs;
+                    }
+
+                    function createDiscSVG(discRoutes, cfg, discIndex) {
+                        const size = cfg.discSizePx;
+                        const r = size/2;
+                        const cx=r, cy=r;
+                        const n = discRoutes.length;
+                        const anglePer = 2*Math.PI / n;
+                        const svg = [];
+                        const defs = [];
+                        svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="disc-svg" data-disc="${discIndex}">`);
+                        svg.push('<defs>');
+                        const faviconSize = r * 0.44; // relative size of center icon (20% larger than previous 0.45r)
+                        // Clip path for favicon so it stays circular
+                        defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
+                        discRoutes.forEach((rt,i)=>{
+                            if (rt.color_modifier === 'marble') {
+                                const base = (rt.color1||'#999999').trim();
+                                // pattern size relative to full disc to have a few patches per slice
+                                const patternSize = size * 0.4; 
+                                defs.push(generateCamoPattern(base, discIndex, i, patternSize));
+                            }
+                        });
+                        svg.push(defs.join(''));
+                        svg.push('</defs>');
+                        discRoutes.forEach((rt,i)=>{
+                            const start = i*anglePer - Math.PI/2;
+                            const end = start + anglePer;
+                            const x1 = cx + r*Math.cos(start);
+                            const y1 = cy + r*Math.sin(start);
+                            const x2 = cx + r*Math.cos(end);
+                            const y2 = cy + r*Math.sin(end);
+                            const largeArc = anglePer > Math.PI ? 1 : 0;
+                            const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                            const fill = rt.color_modifier === 'marble' ? `url(#camo_${discIndex}_${i})` : (rt.color1 || '#999999');
+                            const routeNum = rt.routenum || (i+1);
+                            const label = (rt.grade || '').trim() || '?';
+                            const mid = start + anglePer/2;
+                            const lr = r*0.62;
+                            const lx = cx + lr*Math.cos(mid);
+                            const ly = cy + lr*Math.sin(mid);
+                            const fontSize = Math.max(10,(r/6));
+                            const textWidth = Math.max(label.length * fontSize * 0.6, fontSize*1.4);
+                            const textHeight = fontSize * 1.1;
+                            const rectX = lx - textWidth/2 - 3;
+                            const rectY = ly - textHeight/2 - 2;
+                            const rectW = textWidth + 6;
+                            const rectH = textHeight + 4;
+                            svg.push(`<path d="${d}" fill="${fill}" stroke="#222" stroke-width="1" data-route-id="${rt.id}"><title>#${routeNum} ${rt.grade||''} line:${rt.line||''}</title></path>`);
+                            // (Removed contour lines for marble to emphasize camouflage pattern)
+                            svg.push(`<g pointer-events="none">`+
+                                     `<rect x="${rectX.toFixed(1)}" y="${rectY.toFixed(1)}" rx="4" ry="4" width="${rectW.toFixed(1)}" height="${rectH.toFixed(1)}" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`+
+                                     `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:600;">${label}</text>`+
+                                     `</g>`);
+                        });
+                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${r-0.5}" fill="none" stroke="#555" stroke-width="2"/>`);
+                        // Base circle backdrop (slightly larger than favicon) for contrast
+                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${(faviconSize/2 + 4).toFixed(2)}" fill="#ffffffdd" stroke="#444" stroke-width="1"/>`);
+                        // Favicon image (will fail silently if not found)
+                        svg.push(`<image href="${cfg.faviconPath}" x="${(cx - faviconSize/2).toFixed(2)}" y="${(cy - faviconSize/2).toFixed(2)}" width="${faviconSize.toFixed(2)}" height="${faviconSize.toFixed(2)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#clip_favicon_${discIndex})" />`);
+                        svg.push('</svg>');
+                        return svg.join('');
+                    }
+
+                    function applyPerDiscTargets(discs) {
+                        // Adjust discs sequentially according to per-disc targets while preserving order & constraints (only color uniqueness now)
+                        function canAdd(disc, route) {
+                            const color = (route.color1||'#').trim();
+                            if (disc.some(r => (r.color1||'#').trim() === color)) return false;
+                            return true; // line count no longer restricted
+                        }
+                        // Work on mutable copy
+                        for (let i=0; i<discs.length; i++) {
+                            let target = __perDiscTargets[i];
+                            if (!target || target < 1) continue;
+                            let disc = discs[i];
+                            if (target > disc.length) {
+                                // expand by borrowing from subsequent discs
+                                let needed = target - disc.length;
+                                let lookIdx = i+1;
+                                while (needed > 0 && lookIdx < discs.length) {
+                                    let donor = discs[lookIdx];
+                                    if (!donor.length) { lookIdx++; continue; }
+                                    // Try first movable route or scan for candidate
+                                    let moved = false;
+                                    for (let di=0; di<donor.length; di++) {
+                                        const cand = donor[di];
+                                        if (canAdd(disc, cand)) {
+                                            disc.push(cand);
+                                            donor.splice(di,1);
+                                            needed--; moved=true; break;
+                                        }
+                                    }
+                                    if (!moved) lookIdx++; // can't take from this donor currently
+                                    if (donor.length === 0) {
+                                        discs.splice(lookIdx,1); // remove empty donor; indices shift
+                                    }
+                                }
+                            } else if (target < disc.length) {
+                                // shrink by moving last routes forward to next disc (create if needed)
+                                while (disc.length > target) {
+                                    const moved = disc.pop();
+                                    let nextDisc;
+                                    if (i === discs.length-1) {
+                                        nextDisc = [];
+                                        discs.push(nextDisc);
+                                    } else {
+                                        nextDisc = discs[i+1];
+                                    }
+                                    nextDisc.unshift(moved);
+                                }
+                            }
+                        }
+                        // Cleanup empty discs if any
+                        return discs.filter(d=>d.length>0);
+                    }
+
+                    function computeDiscs(routes, cfg) {
+                        let base = groupRoutesIntoDiscs([...routes], cfg);
+                        if (Object.keys(__perDiscTargets).length) {
+                            base = applyPerDiscTargets(base);
+                        }
+                        return base;
+                    }
+
+                    function displayRouteDiscs(routes, cfg) {
+                        const container = document.getElementById('discs-gallery');
+                        if (!container) return;
+                        if (!Array.isArray(routes)) { console.warn('No routes array'); return; }
+                        const discs = computeDiscs(routes, cfg);
+                        __currentDiscs = discs;
+                        container.innerHTML = '';
+                        discs.forEach((discRoutes, idx) => {
+                            const col = document.createElement('div');
+                            col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+                            const lines = [...new Set(discRoutes.map(r=>r.line))].filter(Boolean).join(', ');
+                            const targetVal = __perDiscTargets[idx] || discRoutes.length;
+                            col.innerHTML = `
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header p-1 d-flex align-items-center justify-content-between gap-2">
+                                        <div class="disc-title">{{ reference_data['current_language'].Disc }} ${idx+1} <small class="text-muted">(line: ${lines||'n/a'})</small></div>
+                                        <div class="disc-size-spinner" data-disc-index="${idx}" aria-label="Disc ${idx+1} size override">
+                                            <button type="button" class="disc-size-btn" data-delta="dec" data-disc-index="${idx}" aria-label="Decrease disc ${idx+1} size">&#x25C0;</button>
+                                            <div class="disc-size-value" id="disc_size_${idx}" aria-live="polite">${targetVal}</div>
+                                            <button type="button" class="disc-size-btn" data-delta="inc" data-disc-index="${idx}" aria-label="Increase disc ${idx+1} size">&#x25B6;</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-center">${createDiscSVG(discRoutes, cfg, idx)}</div>
+                                </div>`;
+                            container.appendChild(col);
+                        });
+                        // After rendering we can sync URL (building array requires __currentDiscs length)
+                        serializeDiscSizeOverridesToURL();
+                    }
+
+                    fetch(`/api1/gym/${userConfig.gymid}/${userConfig.routeListId}`)
+                        .then(r=>r.json())
+                        .then(data=>{
+                            console.log('Fetched routes:', data?.routes?.length);
+                            __cachedRoutes = data.routes || [];
+                            // Parse overrides from URL before initial display so they influence grouping
+                            parseDiscSizeOverridesFromURL();
+                            displayRouteDiscs(__cachedRoutes, userConfig);
+                            // Global min/max controls removed
+                            initPrintDiscs();
+                            initPerDiscSizeControls();
+                        })
+                        .catch(err=>console.error('Error fetching routes data:', err));
+
+
+
+                    function initPerDiscSizeControls() {
+                        const gallery = document.getElementById('discs-gallery');
+                        if (!gallery) return;
+                        gallery.addEventListener('click', (e) => {
+                            const btn = e.target.closest('.disc-size-btn');
+                            if (!btn) return;
+                            const idx = parseInt(btn.dataset.discIndex,10);
+                            if (isNaN(idx)) return;
+                            const delta = btn.dataset.delta === 'inc' ? 1 : -1;
+                            const current = __perDiscTargets[idx] || (__currentDiscs[idx]?.length || 1);
+                            let next = current + delta;
+                            if (next < 1) next = 1;
+                            if (next > 20) next = 20;
+                            __perDiscTargets[idx] = next;
+                            displayRouteDiscs(__cachedRoutes, userConfig); // will trigger serialization
+                        });
+                    }
+
+                    // Print logic: one disc per page
+                    function initPrintDiscs() {
+                        const btn = document.getElementById('print_discs_btn');
+                        if(!btn) return;
+                        btn.addEventListener('click', () => {
+                            document.body.classList.add('print-discs-mode');
+                            // Optionally enlarge SVGs dynamically by scaling attribute if needed
+                            const originalSizes = [];
+                            document.querySelectorAll('.print-discs-mode .disc-svg').forEach(svg => {
+                                originalSizes.push({svg, w: svg.getAttribute('width'), h: svg.getAttribute('height')});
+                                svg.setAttribute('width','700');
+                                svg.setAttribute('height','700');
+                            });
+                            const cleanup = () => {
+                                document.body.classList.remove('print-discs-mode');
+                                originalSizes.forEach(({svg,w,h})=>{ if (w) svg.setAttribute('width',w); if (h) svg.setAttribute('height',h); });
+                                window.removeEventListener('afterprint', cleanup);
+                            };
+                            window.addEventListener('afterprint', cleanup);
+                            window.print();
+                        });
+                    }
+                    </script>
+                    <style>
+                        #discs-gallery .card { transition: box-shadow .2s, transform .2s; }
+                        #discs-gallery .card:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); transform: translateY(-3px); }
+                        .disc-svg { max-width: 100%; height: auto; }
+                        .disc-svg text { font-weight: 600; }
+                        .disc-svg image { pointer-events: none; }
+                        /* Per-disc size spinner */
+                        .card-header .disc-size-spinner { display:inline-flex; align-items:stretch; border:1px solid #c0c7cc; border-radius:.45rem; overflow:hidden; background:#fff; font-size:.75rem; }
+                        .card-header .disc-size-btn { background:#f1f3f5; color:#444; border:0; padding:.2rem .45rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:600; font-size:.75rem; min-width:1.55rem; }
+                        .card-header .disc-size-btn:hover, .card-header .disc-size-btn:focus { background:#6c757d; color:#fff; outline:none; }
+                        .card-header .disc-size-btn:active { background:#5a6268; color:#fff; }
+                        .card-header .disc-size-value { min-width:1.9rem; padding:.2rem .4rem; display:flex; align-items:center; justify-content:center; font-weight:600; background:#fff; }
+                                                /* controls wrapper intentionally inherits layout; custom background could be added */
+                                                #disc-controls { font-size:.85rem; }
+                                                                                                /* Responsive layout container */
+                                                                                                #disc-controls .controls-responsive { display:flex; flex-wrap:nowrap; gap:.6rem; align-items:stretch; }
+                                                                                                #disc-controls .controls-responsive > .ctl { flex:1 1 auto; min-width:160px; }
+                                                                                                #disc-controls .controls-responsive .dropdown-ctl { display:flex; flex:1 1 auto; }
+                                                                                                #disc-controls .controls-responsive .dropdown-ctl select { width:100%; }
+                                                                                                /* Removed global spinners-group (min/max) */
+                                                                                                #disc-controls .controls-responsive .print-unit { flex:0 0 110px; display:flex; }
+                                                                                                /* Center min/max group on its line for narrow widths */
+                                                                                                /* Keep dropdown & print button on one line even on narrow screens */
+                                                                                                @media (max-width: 575.98px) {
+                                                                                                    #disc-controls .controls-responsive { gap:.4rem; }
+                                                                                                    #disc-controls .controls-responsive .print-unit { flex:0 0 95px; }
+                                                                                                }
+                                                #disc-controls .uniform-ctl { background:#fff; border:1px solid #c0c7cc; border-radius:.55rem; box-shadow:0 1px 1px rgba(0,0,0,0.05) inset; height:40px; display:flex; align-items:center; padding:0 .6rem; }
+                                                #disc-controls select.uniform-ctl { padding:0 .6rem; line-height:1.2; }
+                                                #disc-controls .spinner-shell.uniform-ctl { padding:0; }
+                                                #disc-controls .print-btn { justify-content:center; font-weight:600; background:linear-gradient(180deg,#f8f9fa 0%,#eceeef 100%); transition:background .15s,color .15s,border-color .15s; }
+                                                #disc-controls .print-btn:hover,#disc-controls .print-btn:focus { background:#6c757d; color:#fff; border-color:#6c757d; }
+                                                #disc-controls .print-btn:active { background:#5a6268!important; color:#fff!important; box-shadow:inset 0 2px 4px rgba(0,0,0,0.25); }
+                                                /* controls-line flex container styles handled by utility classes */
+                                                /* Removed global spinner control styling (#disc-controls .spinner-*) */
+                                                #disc-controls .print-unit { min-width:90px; flex:0 0 90px; }
+                                                @media (max-width: 575.98px) {
+                                                    #disc-controls .controls-line { gap:.55rem; }
+                                                    #disc-controls .control-unit.spinner-unit { flex:1 1 auto; min-width:130px; }
+                                                    #disc-controls .print-unit { flex:0 0 90px; }
+                                                }
+                        /* Controls layout enhancements */
+                        #disc-controls { --disc-gap: .5rem; }
+                        #disc-controls input { min-width: 70px; }
+                        #print_discs_btn { transition: background-color .15s, color .15s, box-shadow .15s; }
+                        #print_discs_btn.btn-outline-secondary { 
+                            background: linear-gradient(180deg, #f8f9fa 0%, #eceeef 100%);
+                            color: #444;
+                            border-color: #adb5bd;
+                        }
+                        #print_discs_btn.btn-outline-secondary:hover,
+                        #print_discs_btn.btn-outline-secondary:focus { 
+                            background: #6c757d; 
+                            color: #fff; 
+                            border-color: #6c757d; 
+                        }
+                        #print_discs_btn:active { 
+                            background:#5a6268!important; 
+                            color:#fff!important; 
+                            box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+                        }
+                        #print_discs_btn i { margin-right: .35rem; }
+                        @media print {
+                            body.print-discs-mode #disc-controls, 
+                            body.print-discs-mode nav, 
+                            body.print-discs-mode header, 
+                            body.print-discs-mode footer, 
+                            body.print-discs-mode .navbar { display: none !important; }
+                            /* Hide any gym menu structures */
+                            body.print-discs-mode #gym-menu,
+                            body.print-discs-mode .gym-menu,
+                            body.print-discs-mode [class*='menu'],
+                            body.print-discs-mode [id*='menu'] { display: none !important; }
+                            /* Hide the first container (logo / header block) to avoid blank first page */
+                            body.print-discs-mode .container-fluid:first-of-type { display: none !important; }
+                            /* Explicitly hide logo, gym name, and route selector if still present */
+                            body.print-discs-mode img[src*='/image/'][width],
+                            body.print-discs-mode h1.display-4,
+                            body.print-discs-mode select#default_routes,
+                            body.print-discs-mode label[for='default_routes'],
+                            body.print-discs-mode #default_routes { display: none !important; }
+                            body.print-discs-mode .row:has(#default_routes) { display: none !important; }
+                            /* Hide print button itself */
+                            body.print-discs-mode #print_discs_btn { display:none !important; }
+                            body.print-discs-mode #discs-gallery { display: block; }
+                            body.print-discs-mode #discs-gallery > div { page-break-after: always; break-after: page; width: 100% !important; margin: 0 !important; }
+                            body.print-discs-mode #discs-gallery > div:last-child { page-break-after: auto; break-after: auto; }
+                            body.print-discs-mode #discs-gallery .card { box-shadow: none !important; border: none !important; }
+                            body.print-discs-mode #discs-gallery .card-header { text-align: center; font-size: 18pt; border: none; }
+                            body.print-discs-mode #discs-gallery .card-body { display: flex; justify-content: center; align-items: center; min-height: auto; padding: 1rem 0; }
+                        }
+                    </style>
+                
+                    <div class="row mt-3" id="discs-gallery" aria-live="polite"></div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+
+
+{% endblock %}
