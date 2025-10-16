@@ -195,8 +195,8 @@
                         return variants;
                     }
 
-                    function generateCamoPattern(baseColor, discIndex, sliceIndex, size) {
-                        const patId = `camo_${discIndex}_${sliceIndex}`;
+                    function generateCamoPattern(baseColor, discIndex, sliceIndex, size, customId) {
+                        const patId = customId || `camo_${discIndex}_${sliceIndex}`;
                         const rand = prng((discIndex+1)*1000 + sliceIndex*97 + baseColor.length*31);
                         // Derive variant colors with enforced contrast
                         const [varA, varB] = generateVariantColors(baseColor);
@@ -335,7 +335,7 @@
                         const defs = [];
                         svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="disc-svg" data-disc="${discIndex}">`);
                         svg.push('<defs>');
-                        const faviconSize = r * 0.44; // relative size of center icon (20% larger than previous 0.45r)
+                        const faviconSize = r * 0.55; // relative size of center icon (20% larger than previous 0.45r)
                         // Clip path for favicon so it stays circular
                         defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
                         discRoutes.forEach((rt,i)=>{
@@ -455,6 +455,47 @@
                         const discs = computeDiscs(routes, cfg);
                         __currentDiscs = discs;
                         container.innerHTML = '';
+                        function buildRouteTable(discRoutes, discIndex) {
+                            // Build a two-column table where each cell holds one route's data block
+                            if (!discRoutes || !discRoutes.length) return '';
+                            const rows = [];
+                            for (let i=0; i<discRoutes.length; i+=2) {
+                                const left = discRoutes[i];
+                                const right = discRoutes[i+1];
+                                function routeCell(rt, routeIdx) {
+                                    if (!rt) return '<td class="rt-cell empty"></td>';
+                                    const color = (rt.color1 || '#888888').trim();
+                                    const openedBy = rt.openedby || '';
+                                    const openDate = rt.opendate || '';
+                                    const grade = rt.grade || '';
+                                    const name = rt.name || '';
+                                    const routeNum = rt.routenum || '';
+                                    const isMarble = rt.color_modifier === 'marble';
+                                    const CHIP_W = 30; // wider chip column for new layout
+                                    let colorBar = '';
+                                    if (isMarble) {
+                                        const patSize = 36; // pattern tile size for chip texture
+                                        const patId = `chip_${discIndex}_${routeIdx}`;
+                                        colorBar = `<svg class="color-chip-svg" viewBox="0 0 ${CHIP_W} 70" preserveAspectRatio="none" aria-hidden="true" role="img" aria-label="route color">`+
+                                                   `<defs>${generateCamoPattern(color, discIndex, routeIdx, patSize, patId)}</defs>`+
+                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${patId})" /></svg>`;
+                                    } else {
+                                        const lighter = lightenColor(color, 35);
+                                        const darker = darkenColor(color, 25);
+                                        const gradId = `chip_grad_${discIndex}_${routeIdx}`;
+                                        colorBar = `<svg class="color-chip-svg" viewBox="0 0 ${CHIP_W} 70" preserveAspectRatio="none" aria-hidden="true" role="img" aria-label="route color">`+
+                                                   `<defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">`+
+                                                   `<stop offset="0%" stop-color="${lighter}"/>`+
+                                                   `<stop offset="55%" stop-color="${color}"/>`+
+                                                   `<stop offset="100%" stop-color="${darker}"/></linearGradient></defs>`+
+                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${gradId})" /></svg>`;
+                                    }
+                                    return `<td class=\"rt-cell\">\n                                        <div class=\"rt-flex\" style=\"--chip-w:${CHIP_W}px;\">\n                                            <div class=\"rt-chip-col\">${colorBar}</div>\n                                            <div class=\"rt-details\">\n                                                <div class=\"rt-row1\"><span class=\"rt-grade\">${grade}</span><span class=\"rt-name\">${name}</span></div>\n                                                <div class=\"rt-row2\">${openedBy ? `<span class=\"rt-openedby\">${openedBy}</span>`: ''}${openDate ? `${openedBy? ' · ': ''}<span class=\"rt-opendate\">${openDate}</span>`:''}</div>\n                                            </div>\n                                        </div>\n                                    </td>`;
+                                }
+                                rows.push(`<tr>${routeCell(left, i)}${routeCell(right, i+1)}</tr>`);
+                            }
+                            return `<div class="disc-routes-table-wrapper"><table class="disc-routes-table" aria-label="Routes list"><tbody>${rows.join('')}</tbody></table></div>`;
+                        }
                         discs.forEach((discRoutes, idx) => {
                             const col = document.createElement('div');
                             col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
@@ -470,7 +511,7 @@
                                             <button type="button" class="disc-size-btn" data-delta="inc" data-disc-index="${idx}" aria-label="Increase disc ${idx+1} size">&#x25B6;</button>
                                         </div>
                                     </div>
-                                    <div class="card-body d-flex flex-column align-items-center justify-content-center">${createDiscSVG(discRoutes, cfg, idx)}</div>
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-start">${createDiscSVG(discRoutes, cfg, idx)}${buildRouteTable(discRoutes, idx)}</div>
                                 </div>`;
                             container.appendChild(col);
                         });
@@ -541,6 +582,38 @@
                         .disc-svg { max-width: 100%; height: auto; }
                         .disc-svg text { font-weight: 600; }
                         .disc-svg image { pointer-events: none; }
+                        /* Route table styles */
+                        .disc-routes-table-wrapper { width:100%; margin-top:.1rem; }
+                        .disc-routes-table { width:100%; border-collapse:separate; border-spacing:.24rem .2rem; font-size:.9rem; }
+                        .disc-routes-table td.rt-cell { vertical-align:top; background:#fff; border:1px solid #c8ccd0; border-radius:.18rem;  width:50%; position:relative; }
+                        .disc-routes-table td.rt-cell.empty { background:transparent; border:none; }
+                        .disc-routes-table .rt-flex { display:flex; flex-direction:row; align-items:stretch; gap:.4rem; min-height:100%; }
+                        .disc-routes-table .rt-chip-col { flex:0 0 var(--chip-w,20px); display:flex; }
+                        .disc-routes-table .rt-chip-col .color-chip-svg { width:100%; height:100%; display:block; border-radius:.14rem 0 0 .14rem; overflow:hidden; }
+                        .disc-routes-table .rt-details { flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; gap:.15rem; min-width:0; }
+                        .disc-routes-table .rt-row1 { display:flex; gap:.4rem; align-items:baseline; flex-wrap:nowrap; }
+                        .disc-routes-table .rt-row2 { font-size:.62rem; color:#333; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                        .disc-routes-table .rt-name { flex:1 1 auto; font-size:.7rem; font-weight:600; line-height:1.05; overflow:hidden; text-overflow:ellipsis; }
+                        .disc-routes-table .rt-grade { font-size:.68rem; font-weight:700; color:#111; letter-spacing:.5px; padding-right: 0.1rem; }
+                        .disc-routes-table .rt-openedby, .disc-routes-table .rt-opendate { font-weight:500; }
+                        /* Remove old color chip styles (legacy) */
+                        .disc-routes-table .rt-color, .disc-routes-table .color-chip { display:none; }
+                        
+                        /* Print adjustments */
+                        @media print {
+                            html { font-size: 18pt; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            .disc-routes-table { font-size:.95rem; border-spacing:3pt 2.5pt; }
+                            .disc-routes-table td.rt-cell { border:0.6pt solid #000; padding:.16rem .14rem .16rem .14rem; }
+                            .disc-routes-table .rt-flex { gap:.3rem; }
+                            .disc-routes-table .rt-name { font-size:.88rem; }
+                            .disc-routes-table .rt-grade { font-size:.95rem; }
+                            .disc-routes-table .rt-row2 { font-size:.62rem; }
+                            .disc-routes-table .rt-color-bar .color-chip-svg { filter:contrast(1.05) saturate(1.05); }
+                            /* Optional: allow slightly larger chip in print for visibility */
+                            .disc-routes-table td.rt-cell { --chip-w: 34px; }
+                            body.print-discs-mode .disc-routes-table-wrapper { max-width:720px; }
+                        }
                         /* Per-disc size spinner */
                         .card-header .disc-size-spinner { display:inline-flex; align-items:stretch; border:1px solid #c0c7cc; border-radius:.45rem; overflow:hidden; background:#fff; font-size:.75rem; }
                         .card-header .disc-size-btn { background:#f1f3f5; color:#444; border:0; padding:.2rem .45rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:600; font-size:.75rem; min-width:1.55rem; }
@@ -623,7 +696,7 @@
                             body.print-discs-mode #discs-gallery > div { page-break-after: always; break-after: page; width: 100% !important; margin: 0 !important; }
                             body.print-discs-mode #discs-gallery > div:last-child { page-break-after: auto; break-after: auto; }
                             body.print-discs-mode #discs-gallery .card { box-shadow: none !important; border: none !important; }
-                            body.print-discs-mode #discs-gallery .card-header { text-align: center; font-size: 18pt; border: none; }
+                            body.print-discs-mode #discs-gallery .card-header { display:none !important; }
                             body.print-discs-mode #discs-gallery .card-body { display: flex; justify-content: center; align-items: center; min-height: auto; padding: 1rem 0; }
                         }
                     </style>
