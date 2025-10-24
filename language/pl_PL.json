@@ -155,6 +155,8 @@
   "admin_guide": "Instrukcja dla administratorów",
   "competition_type_0": "Dorośli FSGT",
   "competition_type_1": "Młodzi FSGT",
+  "competition_type_adult_fsgt": "Dorośli FSGT",
+  "competition_type_ado_fsgt": "Młodzi FSGT",
   "adult_contest_rules": "Adult contest rules",
   "ado_contest_rules": "Ado contest rules",
   "contact_email": "Skontaktuj się",

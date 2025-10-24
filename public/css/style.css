@@ -220,7 +220,6 @@ figure {
 #fh5co-primary-menu > li > .sf-with-ul:after {
   border: none !important;
   font-family: 'icomoon';
-  speak: none;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
@@ -242,7 +241,6 @@ figure {
 #fh5co-primary-menu > li > ul li > .sf-with-ul:after {
   border: none !important;
   font-family: 'icomoon';
-  speak: none;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
@@ -483,7 +481,7 @@ div.cs-select span {
   background-size: cover;
   background-position: center center;
   position: relative;
-  height222: 400px;
+  height: 400px;
   width: 100%;
   float: left;
   margin-bottom: 2em;
@@ -783,8 +781,7 @@ div.cs-select span {
 } 
 .fh5co-blog .blog-text {
   margin-bottom: 50px;
-  positionaaa: relative;
-  
+  position: relative;
   width: 100%;
   padding: 6px;
   float: right;
@@ -989,10 +986,7 @@ div.cs-select span {
   -o-transform: translateX(-240px);
   transform: translateX(-240px); }
 
-@media screen and (max-width: 768px) {
-  #fh5co-menu-wrap {
-    /* display: none; */
-    } }
+/* Removed empty media query block for #fh5co-menu-wrap (was only comments) */
 
 #offcanvas-menu {
   position: fixed;
@@ -1197,3 +1191,35 @@ div.cs-select span {
 }
 
 /*# sourceMappingURL=style.css.map */
+
+/* --------------------------------------------------
+   Print layout adjustments to remove unexpected top space
+   and hide non-essential UI components.
+-------------------------------------------------- */
+@media print {
+  @page {
+    margin: 6mm 8mm 10mm 8mm; /* adjust as desired; set 0 for full bleed if supported */
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  /* Hide navigation, footers, mobile bars, alerts, and controls not needed on paper */
+  nav.navbar,
+  footer,
+  .fixed-bottom,
+  #disc-controls-wrapper,
+  #offcanvasNavbar,
+  #alertPlaceholder,
+  #top-gym-header,
+  .top-gym-header {
+    display: none !important;
+  }
+  /* Remove excessive padding from common utility classes that could push content */
+  .p-4 { padding-top: 0.5rem !important; }
+  h1.display-4 { margin-top: 0 !important; }
+  /* Prevent accidental page breaks inside discs */
+  .disc-svg, .disc-card, .disc-wrapper { page-break-inside: avoid; break-inside: avoid; }
+}
+

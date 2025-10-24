@@ -51,6 +51,13 @@
                                             <input type="date" class="form-control" id="date" name="date" placeholder="Date" size="30">
                                             <label for="date">{{ reference_data['current_language'].date }}:</label>
                                         </div>
+                                         <div class="form-floating mb-3">
+                                            <select class="form-control" id="competition_type" name="competition_type">
+                                                <option value="0">{{ reference_data['current_language'].competition_type_adult_fsgt }}</option>
+                                                <option value="1">{{ reference_data['current_language'].competition_type_ado_fsgt }}</option>
+                                            </select>
+                                            <label for="competition_type">{{ reference_data['current_language'].competition_type_adult_fsgt }} / {{ reference_data['current_language'].competition_type_ado_fsgt }}</label>
+                                        </div>
                                         <div class="form-floating mb-3">
                                             <input type="number" class="form-control" id="max_participants" name="max_participants" placeholder="Max Participants" size="30" value="80">
                                             <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
@@ -67,6 +74,7 @@
                                             </select>
                                             <label for="routes">{{ reference_data['current_language'].gym }} - {{ reference_data['current_language'].routes }}:</label>
                                         </div>
+                                       
                                     </div>
                                     <!-- Right Column -->
                                     <div class="col-md-6">

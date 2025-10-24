@@ -256,8 +256,8 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="routenum">{{reference_data['current_language'].route_num}}:</label>
-                          <input type="text" id="routenum" name="routenum" value="1">
+                          <!--label for="routenum">{{reference_data['current_language'].route_num}}:</label-->
+                          <input type="hidden" id="routenum" name="routenum" value="1">
                         </div>
                       
                         <div class="form-row">
@@ -487,7 +487,7 @@
             }
             document.getElementById('routenum').disabled = true;
 
-            document.getElementById('line').value = '';
+            //document.getElementById('line').value = '';
             document.getElementById('colorfr').value = '#aaffaa';
             document.getElementById('color1').value = '#aaffaa';
             //document.getElementById('color1').style.backgroundImage="url(data:image/svg+xml, "+getColorSVGDiv('#00FF00', 'solid', '80px', '15px')+")";
@@ -545,7 +545,7 @@
             var hatchColor = data.color1;
             var backgroundColor = 'transparent'; // or any other color
             var hatchedBackground = `repeating-linear-gradient(45deg, ${hatchColor}, ${hatchColor} 15px, ${backgroundColor} 5px, ${backgroundColor} 20px)`;
-            
+            var average_user_grade = data.average_user_grade || '';
             document.getElementById('routeid').value = data.id;
             document.getElementById('routenum').value = data.routenum;
             document.getElementById('line').value = data.line;
@@ -574,7 +574,8 @@
 //            document.getElementById('route-color1').style.background = data.color1;
             document.getElementById('route-name').innerHTML = data.name;
             document.getElementById('route-routenum').innerHTML = data.routenum;
-            document.getElementById('route-grade').innerHTML = data.grade + data.average_user_grade;
+            // Protect against undefined/null average_user_grade so we don't render "undefined" in UI
+            document.getElementById('route-grade').innerHTML = data.grade + average_user_grade;
             modalBoxDiv.style.border="5px solid "+data.color1;
             document.getElementById('route-openedby').innerHTML = data.openedby;
             document.getElementById('route-opendate').innerHTML = data.opendate;
@@ -843,7 +844,7 @@
 
           {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false, 
           formatter:function(cell, formatterParams, onRendered){
-                return `${cell.getValue()}   ${cell.getRow().getData().average_user_grade} `
+                return `${cell.getValue()}   ${cell.getRow().getData().average_user_grade || ''} `
                      //"<img src='/image/cad113945fd14e589feac6464b4ce792logo-ESN-HD-copy-1030x1030.png' width='20'>";
             },
 
@@ -895,7 +896,7 @@
                 for (let i = 0; i < count; i++) {
                     // Concatenate the result of getColorSVGDiv to colorDivs
                     colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '20px')+
-                    `${data[i].grade}${data[i].average_user_grade}  &nbsp;&nbsp;&nbsp;`;
+                    `${data[i].grade}${data[i].average_user_grade||''}  &nbsp;&nbsp;&nbsp;`;
                 }
                 // Wrap the colorDivs in an encompassing div with flexbox styling
                 const encompassingDiv = `<div style="display: flex; gap: 3px;">${colorDivs}</div>`;
