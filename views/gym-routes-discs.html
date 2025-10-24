@@ -13,7 +13,7 @@
 
 
 
-<div class=" container-fluid " >
+<div class=" container-fluid " id="top-gym-header">
     <div class="row">
 
       
@@ -21,8 +21,7 @@
             <img src="/image/{{  gym.get('logo_img_id') }}"  width="250"/>
             </div>
             <div class="col justify-content-left align-items-center">
-       <br>
-                <h1  class="display-4"> {{ gym['name'] }}</h1> 
+                <h1 class="display-4 mt-2"> {{ gym['name'] }}</h1> 
                 
                 <!-- Controls moved below header for better mobile layout -->
 
@@ -468,17 +467,38 @@
                                     const openedBy = rt.openedby || '';
                                     const openDate = rt.opendate || '';
                                     const grade = rt.grade || '';
+                                    const line = rt.line || '';
+                                    const noteRaw = rt.note || rt.notes || rt.comment;
+                                    const note = noteRaw == null ? '' : (typeof noteRaw === 'string' ? noteRaw : String(noteRaw));
+                                    
                                     const name = rt.name || '';
                                     const routeNum = rt.routenum || '';
                                     const isMarble = rt.color_modifier === 'marble';
                                     const CHIP_W = 30; // wider chip column for new layout
                                     let colorBar = '';
+                                    // Add grade overlay inside the color chip similar to disc slice label
+                                    const gradeLabel = (grade||'').trim() || '?';
+                                    const chipHeight = 70; // matches viewBox height
+                                    // Approximate text width to size background pill; clamp within chip
+                                    const approxCharW = 7; // rough average for chosen font-size
+                                    const fontSize = 14; // readable within 70px height
+                                    const labelPaddingX = 8;
+                                    const labelPaddingY = 5;
+                                    const estTextW = gradeLabel.length * approxCharW;
+                                    const rectW = Math.min(CHIP_W - 4, Math.max(estTextW + labelPaddingX, 18));
+                                    const rectH = fontSize + labelPaddingY; // vertical padding
+                                    const rectX = (CHIP_W - rectW) / 2;
+                                    const rectY = (chipHeight - rectH) / 2;
+                                    const gradeOverlay = `<g class="chip-grade" pointer-events="none">`
+                                            + `<rect x="${rectX.toFixed(1)}" y="${rectY.toFixed(1)}" width="${rectW.toFixed(1)}" height="${rectH.toFixed(1)}" rx="6" ry="6" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`
+                                            + `<text x="${(CHIP_W/2).toFixed(1)}" y="${(chipHeight/2).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize}" font-family="Arial,sans-serif" font-weight="600" fill="#111">${gradeLabel}</text>`
+                                        + `</g>`;
                                     if (isMarble) {
                                         const patSize = 36; // pattern tile size for chip texture
                                         const patId = `chip_${discIndex}_${routeIdx}`;
                                         colorBar = `<svg class="color-chip-svg" viewBox="0 0 ${CHIP_W} 70" preserveAspectRatio="none" aria-hidden="true" role="img" aria-label="route color">`+
                                                    `<defs>${generateCamoPattern(color, discIndex, routeIdx, patSize, patId)}</defs>`+
-                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${patId})" /></svg>`;
+                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${patId})" />${gradeOverlay}</svg>`;
                                     } else {
                                         const lighter = lightenColor(color, 35);
                                         const darker = darkenColor(color, 25);
@@ -488,9 +508,30 @@
                                                    `<stop offset="0%" stop-color="${lighter}"/>`+
                                                    `<stop offset="55%" stop-color="${color}"/>`+
                                                    `<stop offset="100%" stop-color="${darker}"/></linearGradient></defs>`+
-                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${gradId})" /></svg>`;
+                                                   `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${gradId})" />${gradeOverlay}</svg>`;
                                     }
-                                    return `<td class=\"rt-cell\">\n                                        <div class=\"rt-flex\" style=\"--chip-w:${CHIP_W}px;\">\n                                            <div class=\"rt-chip-col\">${colorBar}</div>\n                                            <div class=\"rt-details\">\n                                                <div class=\"rt-row1\"><span class=\"rt-grade\">${grade}</span><span class=\"rt-name\">${name}</span></div>\n                                                <div class=\"rt-row2\">${openedBy ? `<span class=\"rt-openedby\">${openedBy}</span>`: ''}${openDate ? `${openedBy? ' · ': ''}<span class=\"rt-opendate\">${openDate}</span>`:''}</div>\n                                            </div>\n                                        </div>\n                                    </td>`;
+                                    // Truncate note to 80 chars (logical characters) before sanitizing for display
+                                    const truncateNote = (txt, max=80) => {
+                                        if (!txt || typeof txt !== 'string') return txt;
+                                        return txt.length > max ? txt.slice(0,max) : txt;
+                                    };
+                                    const sanitize = txt => {
+                                        if (txt == null) return '';
+                                        if (typeof txt !== 'string') txt = String(txt);
+                                        return txt.replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+                                    };
+                                    const truncated = note ? truncateNote(note,80) : '';
+                                    const safeNote = truncated ? sanitize(truncated) : '';
+                                    return `<td class="rt-cell">
+                                        <div class="rt-flex" style="--chip-w:${CHIP_W}px;">
+                                            <div class="rt-chip-col">${colorBar}</div>
+                                            <div class="rt-details">
+                                                <div class="rt-row1"><span class="rt-grade">${line}</span><span class="rt-name">${name}</span></div>
+                                                <div class="rt-row2">${openedBy ? `<span class=\"rt-openedby\">${openedBy}</span>`: ''}${openDate ? `${openedBy? ' · ': ''}<span class=\"rt-opendate\">${openDate}</span>`:''}</div>
+                                                ${safeNote ? `<div class=\"rt-note\" title=\"${safeNote}\">${safeNote}</div>` : ''}
+                                            </div>
+                                        </div>
+                                    </td>`;
                                 }
                                 rows.push(`<tr>${routeCell(left, i)}${routeCell(right, i+1)}</tr>`);
                             }
@@ -598,7 +639,23 @@
                         .disc-routes-table .rt-openedby, .disc-routes-table .rt-opendate { font-weight:500; }
                         /* Remove old color chip styles (legacy) */
                         .disc-routes-table .rt-color, .disc-routes-table .color-chip { display:none; }
-                        
+                        .disc-routes-table .rt-note { 
+                            font-size:.55rem; 
+                            font-style:italic; 
+                            color:#555; 
+                            line-height:1.05; 
+                            overflow:hidden; 
+                            display:-webkit-box; 
+                            -webkit-line-clamp:2; 
+                            line-clamp:2; /* draft spec */
+                            -webkit-box-orient:vertical; 
+                            text-overflow:ellipsis; 
+                            white-space:normal; 
+                            max-height:2.15em; /* fallback for non-webkit */
+                            word-break:break-word;
+                        }
+         
+               
                         /* Print adjustments */
                         @media print {
                             html { font-size: 18pt; }
@@ -607,11 +664,11 @@
                             .disc-routes-table td.rt-cell { border:0.6pt solid #000; padding:.16rem .14rem .16rem .14rem; }
                             .disc-routes-table .rt-flex { gap:.3rem; }
                             .disc-routes-table .rt-name { font-size:.88rem; }
-                            .disc-routes-table .rt-grade { font-size:.95rem; }
+                            .disc-routes-table .rt-grade { font-size:.110rem; }
                             .disc-routes-table .rt-row2 { font-size:.62rem; }
                             .disc-routes-table .rt-color-bar .color-chip-svg { filter:contrast(1.05) saturate(1.05); }
-                            /* Optional: allow slightly larger chip in print for visibility */
-                            .disc-routes-table td.rt-cell { --chip-w: 34px; }
+                            /* Optional: allow slightly larger chip in print for visibility (widened) */
+                            .disc-routes-table td.rt-cell { --chip-w: 100px; }
                             body.print-discs-mode .disc-routes-table-wrapper { max-width:720px; }
                         }
                         /* Per-disc size spinner */
