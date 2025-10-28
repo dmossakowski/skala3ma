@@ -1490,11 +1490,9 @@ def downloadCompetitionCsv(competitionId):
                 grades.append("N/A")
                 print(f"Warning: routenum {routenum} is out of bounds for the routes list.")
                         
-        
-        #data['grades'] = data['grades']+ routes[routenum-1]['grade'] + " "
-        #grades.append(routes[routenum-1]['grad e'])
         grades = sorted(grades)
-        data['grades'] = ' '.join(grades)
+        data['grades'] = grades
+        #data['grades'] = ', '.join(map(str, grades))
         data['newscore'] = competitionsEngine.calculate_score(grades)
 
         for i in range(100):

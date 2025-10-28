@@ -635,7 +635,21 @@
                         .disc-routes-table .rt-row1 { display:flex; gap:.4rem; align-items:baseline; flex-wrap:nowrap; }
                         .disc-routes-table .rt-row2 { font-size:.62rem; color:#333; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                         .disc-routes-table .rt-name { flex:1 1 auto; font-size:.7rem; font-weight:600; line-height:1.05; overflow:hidden; text-overflow:ellipsis; }
-                        .disc-routes-table .rt-grade { font-size:.68rem; font-weight:700; color:#111; letter-spacing:.5px; padding-right: 0.1rem; }
+                        /* Line number chip now positioned in the upper-right corner of each cell */
+                        .disc-routes-table .rt-grade { 
+                            position:absolute; 
+                            top:2px; 
+                            right:4px; 
+                            font-size:.68rem; 
+                            font-weight:700; 
+                            color:#111; 
+                            letter-spacing:.5px; 
+                            background:rgba(255,255,255,0.92); 
+                            padding:0 .25rem; 
+                            border-radius:.05rem; 
+                            box-shadow:0 0 0 1px rgba(0,0,0,0.1); 
+                            z-index:2; 
+                        }
                         .disc-routes-table .rt-openedby, .disc-routes-table .rt-opendate { font-weight:500; }
                         /* Remove old color chip styles (legacy) */
                         .disc-routes-table .rt-color, .disc-routes-table .color-chip { display:none; }
@@ -664,7 +678,8 @@
                             .disc-routes-table td.rt-cell { border:0.6pt solid #000; padding:.16rem .14rem .16rem .14rem; }
                             .disc-routes-table .rt-flex { gap:.3rem; }
                             .disc-routes-table .rt-name { font-size:.88rem; }
-                            .disc-routes-table .rt-grade { font-size:.110rem; }
+                            /* Fix: line number (stored in .rt-grade span) was effectively hidden in print due to a typo (.110rem -> 0.110rem). Set to readable size. */
+                            .disc-routes-table .rt-grade { font-size:.85rem; font-weight:700; top:3pt; right:5pt; padding:0 .3rem; }
                             .disc-routes-table .rt-row2 { font-size:.62rem; }
                             .disc-routes-table .rt-color-bar .color-chip-svg { filter:contrast(1.05) saturate(1.05); }
                             /* Optional: allow slightly larger chip in print for visibility (widened) */
