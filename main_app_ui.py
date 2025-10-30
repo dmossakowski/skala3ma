@@ -568,6 +568,7 @@ def activities():
                            )
 
 
+
 #@app_ui.route('/activities/<activity_id>', methods=['GET'], description='returns activity-detail.html')
 @app_ui.route('/activities/<activity_id>', methods=['GET'])
 #@login_required
@@ -1144,6 +1145,7 @@ def myskala():
 
 
 
+
 @app_ui.route('/mygyms')
 @login_required
 def get_mygyms():
@@ -1176,6 +1178,18 @@ def get_mygyms():
                            logged_email=email,
                            logged_name=email,
                             **session)
+
+
+@app_ui.route('/myactivities', methods=['GET'])
+@login_required
+def my_activities():
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    return render_template('user-activity.html',
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           today=date.today()
+                           )
 
 
 @app_ui.route('/competitionDetails/<competitionId>')

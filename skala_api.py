@@ -640,9 +640,35 @@ def api_auth_status():
 
 
 
+#---------------- Activities API -----------------
+# returns all activities for all users
+
 @skala_api_app.get('/activities')
-@session_or_jwt_required
 def get_activities():
+   
+    allActivities = activities_db.get_activities_all_anonymous()
+
+    activities = {}
+    activities['activities'] = allActivities
+
+    avg_stats = []
+    user_stats = []
+    all_activities_stats = calculate_activities_stats(allActivities)
+
+
+    # Create a dictionary for all_activities_stats for quick lookups
+    all_activities_dict = {date: count for date, count in zip(all_activities_stats['dates'], all_activities_stats['routes_done'])}
+
+    activities['stats'] = {}
+    activities['stats']['routes_done'] = user_stats
+    activities['stats']['routes_avg'] = avg_stats
+    return json.dumps(activities)
+
+
+
+@skala_api_app.get('/myactivities')
+@session_or_jwt_required
+def get_useractivities():
     user = competitionsEngine.get_user_by_email(session['email'])
     activitiesA = activities_db.get_activities(user.get('id'))
 
