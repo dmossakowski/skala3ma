@@ -35,8 +35,14 @@
     .timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
     .status-icon { width:20px; height:20px; vertical-align:middle; }
     .status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-    .route-row { display:flex; align-items:center; gap:.5rem; font-size:.85rem; padding:.3rem 0; border-bottom:1px dashed #e1e4e5; }
+    .route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
     .route-row:last-child { border-bottom:none; }
+    .route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
+    .route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.8rem; }
+    .route-original .ro-name { font-size:.9rem; font-weight:600; }
+    .route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.7rem; }
+    .route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
+    .route-climb .note-snippet { font-size:.65rem; }
     .soft { color:#2e86de; font-weight:600; }
     .hard { color:#c0392b; font-weight:600; }
     .flash { font-style:italic; }
@@ -252,7 +258,7 @@
     }
 
     let showLeaderboard = false;
-    let showTimeline = false;
+    let showTimeline = true; // default: show sessions timeline on initial load
     let showControversial = false;
 
     function renderSummary(){
@@ -280,19 +286,21 @@
                         <div style='font-size:.55rem; opacity:.75;'>Gym: ${controversial.gym_name}</div>
                         ${openedMeta}
                         <div style='font-size:.6rem;'>Set grade: <strong>${controversial.grade}</strong></div>
+                        <div style='font-size:.55rem; margin-top:.4rem;'>Disagreements: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} touches</div>
+                        <div style='font-size:.55rem;'>Status mix: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}</div>
                     </div>
                     <div style='flex:1 1 220px; min-width:200px;'>
                         <div style='font-size:.6rem; margin-bottom:.25rem;'>User grades</div>
                         <div style='display:flex; flex-wrap:wrap; gap:.4rem;'>${userGrades.map(g=> `<span class='distribution-pill'>${g}</span>`).join('')}</div>
+                        <div style='font-size:.55rem; margin-top:.5rem; text-decoration:underline;'>Click to view all disputed routes</div>
                     </div>
                 </div>
-                <div style='font-size:.55rem; margin-top:.5rem; text-decoration:underline;'>Click to view all disputed routes</div>
             `;
         } else {
             controversialHtml = `<h5 style='margin:0 0 .4rem;'>Most Controversial Route</h5><div style='font-size:.6rem; opacity:.7;'>No controversial routes in current range.</div>`;
         }
         const html = [
-            `<div class='summary-card highlight cursor-pointer' id='mostActiveGymCard' role='button' aria-label='Show gym activity leaderboard'>
+            `<div class='summary-card cursor-pointer' id='mostActiveGymCard' role='button' aria-label='Show gym activity leaderboard'>
                 <h5>Most Active Gym</h5>
                 <div style='display:flex; align-items:center; gap:.75rem; margin:.35rem 0;'>
                     ${topGym.logo_img_id ? `<img src='/image/${topGym.logo_img_id}' alt='${topGym.gym_name} logo' class='summary-gym-logo' loading='lazy'>` : ''}
@@ -337,6 +345,7 @@
                 showTimeline = false;
                 renderControversialDetails();
                 updateSectionsVisibility();
+                updateCardHighlights();
             });
         }
         const sessionsCard = document.getElementById('sessionsOutcomesCard');
@@ -346,6 +355,7 @@
                 showLeaderboard = false;
                 showControversial = false;
                 updateSectionsVisibility();
+                updateCardHighlights();
             });
         }
         const mostActiveCard = document.getElementById('mostActiveGymCard');
@@ -355,7 +365,29 @@
                 showTimeline = false;
                 showControversial = false;
                 updateSectionsVisibility();
+                updateCardHighlights();
             });
+        }
+        // initial highlight after first render
+        updateCardHighlights();
+    }
+
+    function updateCardHighlights(){
+        const cards = [
+            document.getElementById('mostActiveGymCard'),
+            document.getElementById('sessionsOutcomesCard'),
+            document.getElementById('controversialTopCard')
+        ];
+        cards.forEach(c => { if(c) c.classList.remove('highlight'); });
+        if(showTimeline){
+            const c = document.getElementById('sessionsOutcomesCard');
+            if(c) c.classList.add('highlight');
+        } else if(showLeaderboard){
+            const c = document.getElementById('mostActiveGymCard');
+            if(c) c.classList.add('highlight');
+        } else if(showControversial){
+            const c = document.getElementById('controversialTopCard');
+            if(c) c.classList.add('highlight');
         }
     }
 
@@ -410,15 +442,21 @@
             const dateStr = act.date || act.starttime;
             const routesHtml = (act.routes||[]).map(r => {
                 const disagree = r.user_grade && r.user_grade !== r.grade;
+                const colorDiv = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px;'></div>`;
                 return `<div class='route-row'>
-                    <img class='status-icon' src='${statusIcon(r.status)}' alt='${r.status}'>
-                    <span style='min-width:48px; font-weight:600;'>#${r.routenum||''}</span>
-                    <span>${r.name || ''}</span>
-                    <span class='status-label'>${r.status}</span>
-                    <span>${r.grade}</span>
-                    ${r.user_grade ? `<span class='${r.user_grade !== r.grade ? (gradeHarder(r.user_grade,r.grade)?'hard':'soft') : ''}'>${r.user_grade}</span>`: ''}
-                    ${disagree ? `<span style='font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px;'>diff</span>`:''}
-                    ${r.note ? `<span class='note-snippet'>${r.note.substring(0,40)}</span>`:''}
+                    ${colorDiv}
+                    <div class='route-original'>
+                        <span class='ro-num'>#${r.routenum||''}${r.line?` · L${r.line}`:''}</span>
+                        <span class='ro-name'>${r.name || ''}</span>
+                        ${r.openedby ? `<span class='ro-openedby'>by ${r.openedby}</span>`:''}
+                    </div>
+                    <div class='route-climb'>
+                        <img class='status-icon' src='${statusIcon(r.status)}' alt='${r.status}'>
+                        <span class='status-label'>${r.status}</span>
+                        ${r.user_grade ? `<span class='${r.user_grade !== r.grade ? (gradeHarder(r.user_grade,r.grade)?'hard':'soft') : ''}'>${r.user_grade}</span>`: ''}
+                        ${disagree ? `<span style='font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px;'>diff</span>`:''}
+                        ${r.note ? `<span class='note-snippet'>${r.note.substring(0,40)}</span>`:''}
+                    </div>
                 </div>`;
             }).join('');
             return `<div class='timeline-item'>
