@@ -557,12 +557,11 @@ def fsgtlogin(error=None):
 
 
 @app_ui.route('/activities', methods=['GET'])
-@login_required
 def activities():
-    user = competitionsEngine.get_user_by_email(session['email'])
+    #user = competitionsEngine.get_user_by_email(session['email'])
 
     return render_template('activities.html',
-                           user=user,
+                           #user=user,
                            reference_data=competitionsEngine.reference_data,
                            today=date.today()
                            )

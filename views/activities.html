@@ -13,161 +13,615 @@
     
 	<div name='container'>
 
-		{% include "competition-menu.html" %}
+<style>
+    .activities-summary { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.2rem; }
+    .summary-card { flex:1 1 220px; background:#f8f9fa; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+    .summary-card.highlight { border:2px solid #2ecc71; }
+    .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+    .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+    /* Hover indicator for clickable summary cards */
+    .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+    .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
+    .summary-card.cursor-pointer:hover::after { content:'CLICK'; position:absolute; top:8px; right:10px; background:#53be6b; color:#fff; font-size:.55rem; font-weight:600; padding:.22rem .45rem; border-radius:6px; letter-spacing:.6px; box-shadow:0 2px 4px rgba(0,0,0,.2); }
+    @media (prefers-color-scheme: dark) {
+        .summary-card.cursor-pointer:hover::after { background:#2e8b57; }
+    }
+    .controversial { background:#fff3cd; border:2px solid #ffbf00; }
+    .route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#eef2f3; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
+    .route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
+    .grade-original { font-weight:600; }
+    .timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
+    .timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
+    .timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
+    .status-icon { width:20px; height:20px; vertical-align:middle; }
+    .status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .route-row { display:flex; align-items:center; gap:.5rem; font-size:.85rem; padding:.3rem 0; border-bottom:1px dashed #e1e4e5; }
+    .route-row:last-child { border-bottom:none; }
+    .soft { color:#2e86de; font-weight:600; }
+    .hard { color:#c0392b; font-weight:600; }
+    .flash { font-style:italic; }
+    .note-snippet { font-size:.7rem; color:#444; background:#f1f3f4; padding:.25rem .45rem; border-radius:6px; }
+    .leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
+    .leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
+    .leaderboard-card.top { border:2px solid #53be6b; }
+    .gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+    .summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+    .badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
+    .badge.flashes { background:#ffeaa7; }
+    .badge.attempts { background:#fab1a0; }
+    .badge.climbs { background:#a8e6cf; }
+    .contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
+    .distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
+    .empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
+    .section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
+    .big-number { font-size:2.2rem; font-weight:800; }
+    .scroll-h { overflow-x:auto; }
+    @media (prefers-color-scheme: dark) {
+        .summary-card, .leaderboard-card, .timeline-item { background:#1f2428; box-shadow:0 2px 4px rgba(0,0,0,.4); }
+        .route-chip { background:#2d3439; }
+        .route-chip.disagree { background:#442b2b; border-color:#ff6b6b; }
+        .note-snippet { background:#2d3439; color:#bbb; }
+    }
+        /* Overlay & disagreement details */
+            .disagreements-grid { display:grid; grid-template-columns:minmax(230px, 320px) minmax(140px,220px) minmax(100px,130px) minmax(110px,140px) 1fr; gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+        .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+        .dis-row { display:contents; }
+        .dis-cell { background:#f7f9fa; padding:.55rem .55rem; border-radius:10px; }
+        .chip-grade { display:inline-block; padding:.18rem .45rem; border-radius:14px; font-size:.58rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
+        .chip-grade.up { background:#ffd9d9; color:#c0392b; }
+        .chip-grade.down { background:#d9ecff; color:#1e5fa3; }
+        .tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
+        .badge-mini { background:#eceff1; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
+        .disagreements-summary-bar { height:6px; width:100%; background:#eceff1; border-radius:4px; position:relative; margin-top:.3rem; }
+        .disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
+        .bar-attempted { background:#fab1a0; left:0; }
+        .bar-flashed { background:#ffeaa7; }
+        .bar-climbed { background:#a8e6cf; }
+        .cursor-pointer { cursor:pointer; }
+        @media (prefers-color-scheme: dark) {
+            .overlay-content { background:#1f2428; }
+            .dis-cell { background:#222a2f; }
+            .chip-grade { background:#2d3439; }
+            .chip-grade.up { background:#432727; }
+            .chip-grade.down { background:#1e3d59; }
+            .tiny-note { background:#3a3020; }
+            .disagreements-summary-bar { background:#2d3439; }
+        }
+</style>
 
-		<div class="text-center heading-section" >
-            
-            <h3>{{ reference_data['current_language'].activities}}
-                <!--div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-            outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
-            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
-            </div-->
-            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #53be6b;"></i></a>
-            </h3>
-		</div>
-            
-		<div class="container text-center heading-section" >
-        	
-            <div  id="activitiesChart"></div>
+        <!-- Filter moved to top -->
+        <div id="monthFilter" style="margin:.4rem 0 1.2rem; background:#f4f6f7; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08);">
+            <div style="display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end;">
+                <div style="flex:1 1 auto; min-width:180px;">
+                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">From (month)</label>
+                    <input type="month" id="fromMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
+                </div>
+                <div style="flex:1 1 auto; min-width:180px;">
+                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">To (month)</label>
+                    <input type="month" id="toMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
+                </div>
+                <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end;">
+                    <button id="applyMonthFilter" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#53be6b; color:#fff; border-radius:8px; font-weight:600;">Apply</button>
+                    <button id="resetRange" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#e0e0e0; color:#222; border-radius:8px; font-weight:600;">Reset</button>
+                    <div style="min-width:180px;">
+                        <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">Gym</label>
+                        <select id="gymFilter" style="font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff;"></select>
+                    </div>
+                </div>
+                <div style="flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7;" id="activeRangeIndicator"></div>
+            </div>
         </div>
-            
-        
-        <div class="container heading-section">
-        
-            <div id="activities"></div>
-        </div>
-              
-             
-			 
 
-		</div>
+      </div>
 
+    <div id="summary" class="activities-summary"></div>
 
-        <br>
+    <div id="leaderboardSection" style="display:none;">
+        <h4 class="section-title">Gym Activity Leaderboard</h4>
+        <div id="gymLeaderboard" class="leaderboard"></div>
     </div>
 
+    <!-- Removed standalone controversial route section; now part of top summary card -->
+
+    <div id="timelineSection" style="display:none;">
+        <h4 class="section-title">Recent Sessions Timeline</h4>
+        <div id="timeline"></div>
+    </div>
+
+    <div id="controversialSection" style="display:none;">
+        <h4 class="section-title">Controversial Routes</h4>
+        <div id="controversialDetails"></div>
+    </div>
+
+
+    <div id="rawActivities" style="display:none"></div>
 </div>
-
-</div>
-
-
 
 <script>
-   
+        let activitiesData = [];
+        let gymsData = [];
+        let currentActivitiesView = []; // may hold filtered subset
+        let lastFilter = null; // {from:{y,m}, to:{y,m}}
+
+    async function fetchJson(url){
+        const r = await fetch(url);
+        if(!r.ok) throw new Error("Failed to fetch " + url);
+        return r.json();
+    }
+
+        async function loadAll(){
+        try {
+            [gymsData, activitiesData] = await Promise.all([
+                fetchJson('/api1/gyms'),
+                fetchJson('/api1/activities')
+            ]);
+            // Enrich gyms with logo images from individual gym endpoint
+            if(Array.isArray(gymsData) && gymsData.length){
+                await enrichGymsWithLogos();
+            }
+            // activities endpoint shape assumption: { activities: [ ... ] }
+            if(activitiesData.activities) activitiesData = activitiesData.activities; // normalize
+                currentActivitiesView = activitiesData;
+                setDefaultMonthInputs();
+                populateGymFilter();
+                renderEverything();
+                attachMonthEvents();
+        } catch(e){
+            console.error(e);
+            document.getElementById('summary').innerHTML = `<div class='empty-state'>Error loading activity data.</div>`;
+        }
+    }
+
+    async function enrichGymsWithLogos(){
+        // Fetch each gym detail to obtain logoimg; ignore failures gracefully
+        await Promise.all(gymsData.map(async g => {
+            if(!g || !g.id) return;
+            try {
+                const detail = await fetchJson(`/api1/gym/${g.id}`);
+                // Expect field logoimg like "logo-ESN-HD-copy-1030x1030.png"
+                if(detail && detail.logoimg){
+                    g.logoimg = detail.logoimg;
+                    // normalize to logo_img_id expected by rendering logic
+                    g.logo_img_id = detail.logo_img_id || detail.logoimg;
+                }
+            } catch(err){
+                console.warn('Failed to fetch gym detail/logo for id', g.id, err.message);
+            }
+        }));
+    }
+
+        function computeStats(sourceActivities){
+            const acts = sourceActivities || currentActivitiesView || activitiesData;
+            const gymMap = {}; // gym_id -> stats
+        const routeDisagreements = {}; // route_id -> { grade, gym_id, occurrences, disagreements, userGrades:Set, notes:[], name }
+        let earliest = null, latest = null;
+
+            acts.forEach(act => {
+            const dateStr = act.date || act.starttime; // variable naming differences
+            const d = new Date(dateStr);
+            if(!earliest || d < earliest) earliest = d;
+            if(!latest || d > latest) latest = d;
+
+            if(!gymMap[act.gym_id]){
+                const gymRef = gymsData.find(g=> g.id == act.gym_id) || {};
+                gymMap[act.gym_id] = { gym_id: act.gym_id, gym_name: act.gym_name || gymRef.name || 'Unknown', activities:0, climbs:0, flashes:0, attempts:0, uniqueRoutes:new Set(), logo_img_id: gymRef.logo_img_id || gymRef.logoimg };
+            }
+            const g = gymMap[act.gym_id];
+            g.activities++;
+            (act.routes || []).forEach(r => {
+                g.uniqueRoutes.add(r.route_id || r.id);
+                if(r.status === 'climbed') g.climbs++;
+                else if(r.status === 'flashed') g.flashes++;
+                else if(r.status === 'attempted') g.attempts++;
+
+                const key = r.route_id || r.id;
+                if(!routeDisagreements[key]){
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), notes:[], name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 } };
+                } else {
+                    // Fill openedby/opendate if missing and present on this route occurrence
+                    if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
+                    if(!routeDisagreements[key].opendate && r.opendate) routeDisagreements[key].opendate = r.opendate;
+                }
+                const rd = routeDisagreements[key];
+                rd.occurrences++;
+                rd.statuses[r.status] = (rd.statuses[r.status]||0)+1;
+                if(r.note) rd.notes.push(r.note.trim());
+                if(r.user_grade) rd.userGrades.add(r.user_grade);
+                if(r.user_grade && r.user_grade !== r.grade){
+                    rd.disagreements++;
+                }
+            });
+        });
+
+        // determine most active gym
+        const gymsArr = Object.values(gymMap).map(g => ({...g, uniqueRouteCount: g.uniqueRoutes.size}));
+        gymsArr.sort((a,b)=> b.activities - a.activities);
+        const topGym = gymsArr[0];
+
+        // most controversial route: highest disagreements ratio or count
+        const controversial = Object.values(routeDisagreements)
+            .filter(r=>r.occurrences>1)
+            .sort((a,b)=> {
+                const aMetric = a.disagreements; // could refine by ratio
+                const bMetric = b.disagreements;
+                if(bMetric === aMetric) return b.occurrences - a.occurrences;
+                return bMetric - aMetric;
+            })[0];
+
+            return { gymsArr, topGym, controversial, timeframe: { earliest, latest }, routeDisagreements };
+    }
+
+    let showLeaderboard = false;
+    let showTimeline = false;
+    let showControversial = false;
+
+    function renderSummary(){
+        const { gymsArr, topGym, controversial, timeframe } = computeStats();
+        if(!gymsArr.length){
+            document.getElementById('summary').innerHTML = `<div class='empty-state'>No recorded public sessions yet.</div>`; return;
+        }
+        const totalActivities = gymsArr.reduce((s,g)=> s+g.activities,0);
+        const totalClimbs = gymsArr.reduce((s,g)=> s+g.climbs,0);
+        const totalFlashes = gymsArr.reduce((s,g)=> s+g.flashes,0);
+        const totalAttempts = gymsArr.reduce((s,g)=> s+g.attempts,0);
+    const totalTouches = totalClimbs + totalFlashes + totalAttempts;
+        const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
+        const disagreeCount = controversial ? controversial.disagreements : 0;
+        // Build combined controversial route card
+        let controversialHtml = '';
+        if(controversial){
+            const userGrades = Array.from(controversial.userGrades).sort();
+            const openedMeta = (controversial.openedby || controversial.opendate) ? `<div style='font-size:.55rem; margin:.35rem 0 .5rem; background:#f1f3f4; padding:.3rem .5rem; border-radius:6px;'>Opened by <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · Set: ${controversial.opendate}`:''}</div>` : '';
+            controversialHtml = `
+                <h5 style='margin:0 0 .4rem;'>Most Controversial Route</h5>
+                <div style='display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start;'>
+                    <div style='flex:1 1 200px; min-width:180px;'>
+                        <div style='font-size:.8rem; font-weight:600;'>${controversial.name || 'Unnamed Route'}</div>
+                        <div style='font-size:.55rem; opacity:.75;'>Gym: ${controversial.gym_name}</div>
+                        ${openedMeta}
+                        <div style='font-size:.6rem;'>Set grade: <strong>${controversial.grade}</strong></div>
+                    </div>
+                    <div style='flex:1 1 220px; min-width:200px;'>
+                        <div style='font-size:.6rem; margin-bottom:.25rem;'>User grades</div>
+                        <div style='display:flex; flex-wrap:wrap; gap:.4rem;'>${userGrades.map(g=> `<span class='distribution-pill'>${g}</span>`).join('')}</div>
+                    </div>
+                </div>
+                <div style='font-size:.55rem; margin-top:.5rem; text-decoration:underline;'>Click to view all disputed routes</div>
+            `;
+        } else {
+            controversialHtml = `<h5 style='margin:0 0 .4rem;'>Most Controversial Route</h5><div style='font-size:.6rem; opacity:.7;'>No controversial routes in current range.</div>`;
+        }
+        const html = [
+            `<div class='summary-card highlight cursor-pointer' id='mostActiveGymCard' role='button' aria-label='Show gym activity leaderboard'>
+                <h5>Most Active Gym</h5>
+                <div style='display:flex; align-items:center; gap:.75rem; margin:.35rem 0;'>
+                    ${topGym.logo_img_id ? `<img src='/image/${topGym.logo_img_id}' alt='${topGym.gym_name} logo' class='summary-gym-logo' loading='lazy'>` : ''}
+                    <div>
+                        <div class='summary-metric' style='line-height:1;'>${topGym.gym_name}</div>
+                        <div style='font-size:.6rem; opacity:.75; margin-top:.25rem;'>${topGym.activities} sessions · ${topGym.uniqueRouteCount} unique routes touched</div>
+                        <div style='font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline;'>Click to view leaderboard</div>
+                    </div>
+                </div>
+            </div>`,
+            `<div class='summary-card cursor-pointer' id='sessionsOutcomesCard' role='button' aria-label='Show recent sessions timeline'>
+                <h5>Sessions & Route Outcomes</h5>
+                <div style='display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem;'>
+                    <div style='min-width:120px;'>
+                        <div class='big-number' style='line-height:1;'>${totalTouches}</div>
+                        <div style='font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem;'>Touches</div>
+                    </div>
+                    <div style='min-width:100px;'>
+                        <div style='font-size:1.3rem; font-weight:700; line-height:1;'>${totalActivities}</div>
+                        <div style='font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem;'>Sessions</div>
+                    </div>
+                    <div style='font-size:.55rem; opacity:.65;'>Across ${gymsArr.length} gym${gymsArr.length!==1?'s':''}</div>
+                </div>
+                <div style='display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem;'>
+                    <span class='badge climbs' style='font-size:.7rem;'>Climbed ${totalClimbs}</span>
+                    <span class='badge flashes' style='font-size:.7rem;'>Flashed ${totalFlashes}</span>
+                    <span class='badge attempts' style='font-size:.7rem;'>Attempted ${totalAttempts}</span>
+                </div>
+                <div style='font-size:.5rem; opacity:.65; margin-top:.25rem;'>Touches = climbs + flashes + attempts</div>
+                <div style='font-size:.5rem; opacity:.55; margin-top:.3rem; text-decoration:underline;'>Click to view recent sessions timeline</div>
+            </div>`,
+            `<div class='summary-card controversial cursor-pointer' id='controversialTopCard' aria-label='Open list of all controversial routes'>
+                ${controversialHtml}
+            </div>`
+        ].join('');
+        document.getElementById('summary').innerHTML = html;
+        const controCard = document.getElementById('controversialTopCard');
+        if(controCard){
+            controCard.addEventListener('click', () => {
+                showControversial = true;
+                showLeaderboard = false;
+                showTimeline = false;
+                renderControversialDetails();
+                updateSectionsVisibility();
+            });
+        }
+        const sessionsCard = document.getElementById('sessionsOutcomesCard');
+        if(sessionsCard){
+            sessionsCard.addEventListener('click', () => {
+                showTimeline = true;
+                showLeaderboard = false;
+                showControversial = false;
+                updateSectionsVisibility();
+            });
+        }
+        const mostActiveCard = document.getElementById('mostActiveGymCard');
+        if(mostActiveCard){
+            mostActiveCard.addEventListener('click', () => {
+                showLeaderboard = true;
+                showTimeline = false;
+                showControversial = false;
+                updateSectionsVisibility();
+            });
+        }
+    }
+
+        function renderGymLeaderboard(){
+            const { gymsArr, topGym } = computeStats();
+        const container = document.getElementById('gymLeaderboard');
+        container.innerHTML = gymsArr.map(g => `
+            <div class='leaderboard-card ${g.gym_id === topGym.gym_id ? 'top' : ''}'>
+                <div style='display:flex; flex-direction:column; gap:.6rem;'>
+                    ${g.logo_img_id ? `<img src="/image/${g.logo_img_id}" alt='${g.gym_name} logo' class='gym-logo' loading='lazy'>` : ''}
+                    <div style='display:flex; justify-content:space-between; align-items:center;'>
+                        <strong style='font-size:.9rem;'>${g.gym_name}</strong>
+                        <span style='font-size:.6rem; opacity:.7;'>${g.activities} sessions</span>
+                    </div>
+                </div>
+                <div style='margin:.4rem 0 .3rem;'>
+                    <span class='badge climbs'>Climbs ${g.climbs}</span>
+                    <span class='badge flashes'>Flashes ${g.flashes}</span>
+                    <span class='badge attempts'>Attempts ${g.attempts}</span>
+                </div>
+                <div style='font-size:.6rem; opacity:.7;'>${g.uniqueRouteCount} unique routes</div>
+            </div>
+        `).join('');
+    }
+
+        function renderControversialRoute(){
+            const { controversial } = computeStats();
+        const el = document.getElementById('controversialRoute');
+        if(!controversial){ el.innerHTML = '<div class="empty-state" style="padding:1rem;">No grade disagreements yet.</div>'; return; }
+        const userGrades = Array.from(controversial.userGrades).sort();
+        const openedMeta = (controversial.openedby || controversial.opendate) ? `<div style='font-size:.6rem; margin:.3rem 0 .6rem; background:#f1f3f4; padding:.3rem .5rem; border-radius:6px;'>Opened by: <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · Set: ${controversial.opendate}`:''}</div>` : '';
+        el.innerHTML = `
+            <h5 style='margin:0 0 .3rem;'>${controversial.name || 'Unnamed Route'}</h5>
+            <div style='font-size:.7rem; margin-bottom:.2rem;'>Gym: ${controversial.gym_name}</div>
+            ${openedMeta}
+            <div style='display:flex; flex-wrap:wrap; gap:.6rem;'>
+                <div><span class='grade-original'>Set grade:</span> ${controversial.grade}</div>
+                <div>Disagreements: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} touches</div>
+                <div>Status mix: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}</div>
+            </div>
+            <div style='margin-top:.4rem;'>User grades:</div>
+            <div class='contro-route-distribution'>${userGrades.map(g=> `<span class='distribution-pill'>${g}</span>`).join('')}</div>
+            ${controversial.notes.length ? `<div style='margin-top:.4rem; font-size:.6rem;'>Notes: ${controversial.notes.slice(0,4).map(n=>`<span class='note-snippet'>${n.substring(0,50)}</span>`).join('')}</div>` : ''}
+        `;
+    }
+
+        function renderTimeline(){
+            // Sort activities newest first
+            const sorted = [...currentActivitiesView].sort((a,b)=> new Date(b.date||b.starttime) - new Date(a.date||a.starttime));
+        const container = document.getElementById('timeline');
+        container.innerHTML = sorted.map(act => {
+            const dateStr = act.date || act.starttime;
+            const routesHtml = (act.routes||[]).map(r => {
+                const disagree = r.user_grade && r.user_grade !== r.grade;
+                return `<div class='route-row'>
+                    <img class='status-icon' src='${statusIcon(r.status)}' alt='${r.status}'>
+                    <span style='min-width:48px; font-weight:600;'>#${r.routenum||''}</span>
+                    <span>${r.name || ''}</span>
+                    <span class='status-label'>${r.status}</span>
+                    <span>${r.grade}</span>
+                    ${r.user_grade ? `<span class='${r.user_grade !== r.grade ? (gradeHarder(r.user_grade,r.grade)?'hard':'soft') : ''}'>${r.user_grade}</span>`: ''}
+                    ${disagree ? `<span style='font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px;'>diff</span>`:''}
+                    ${r.note ? `<span class='note-snippet'>${r.note.substring(0,40)}</span>`:''}
+                </div>`;
+            }).join('');
+            return `<div class='timeline-item'>
+                <div class='timeline-date'>${dateStr}</div>
+                <div style='font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem;'>${act.gym_name || 'Unknown Gym'} · ${(act.routes||[]).length} route${(act.routes||[]).length!==1?'s':''}</div>
+                ${routesHtml}
+            </div>`;
+        }).join('');
+    }
+
+    function statusIcon(status){
+        if(status==='climbed') return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+        if(status==='attempted') return '/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png';
+        if(status==='flashed') return '/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png';
+        return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+    }
+
+    // Simplistic grade comparison: treat string order; improvement: parse into numeric difficulty scale
+    function gradeHarder(user, original){
+        // Heuristic: if user grade string length > original OR lexical > original treat as harder
+        if(user === original) return false;
+        return user > original; // works for common French grades ordering lexically mostly
+    }
 
 
 
-        
+    function renderEverything(){
+        renderSummary();
+        renderGymLeaderboard();
+        renderTimeline();
+        updateSectionsVisibility();
+    }
 
-    
-var activities;
-var gyms;
+    function updateSectionsVisibility(){
+        const lb = document.getElementById('leaderboardSection');
+        const tl = document.getElementById('timelineSection');
+        const cr = document.getElementById('controversialSection');
+        if(lb) lb.style.display = showLeaderboard ? 'block' : 'none';
+        if(tl) tl.style.display = showTimeline ? 'block' : 'none';
+        if(cr) cr.style.display = showControversial ? 'block' : 'none';
+    }
 
-function getData()
-{
+    // ----- Gym Filter Functions -----
+    function populateGymFilter(){
+        const sel = document.getElementById('gymFilter');
+        if(!sel) return;
+        const gymsSorted = [...gymsData].sort((a,b)=> a.name.localeCompare(b.name));
+        sel.innerHTML = `<option value="">All Gyms</option>` + gymsSorted.map(g=> `<option value="${g.id}">${g.name}</option>`).join('');
+    }
 
-    /*
-    Example gym data is a list:
-    routesid is the id of the currently default set of routes for the given gym
+    function applyCombinedFilters(){
+        // Month filtering already applied when lastFilter set; start from base dataset
+        let base = activitiesData;
+        if(lastFilter){
+            base = filterActivitiesByMonthRange(lastFilter.from, lastFilter.to);
+        }
+        const sel = document.getElementById('gymFilter');
+        const gymId = sel ? sel.value : '';
+        if(gymId){
+            base = base.filter(a => String(a.gym_id) === String(gymId));
+        }
+        currentActivitiesView = base;
+        renderEverything();
+        updateRangeIndicatorWithGym();
+    }
 
-    [{"id": "1", "routesid": "35576371427d4a6ca5d0f590795cdeb1", "name": "Nanterre Grimpe",  "logoimg": "logo-ESN-HD-copy-1030x1030.png", "homepage": "https://www.esnanterre.com/escalade/", "address": "14 Av. du Mar\u00e9chal Joffre, 92000 Nanterre", "organization": "FSGT", "logo_img_id": "1", "lat": 48.885579, "lon": 2.20922, "status": 2, "ref_id": 1},
-    
+    function updateRangeIndicatorWithGym(){
+        const indicator = document.getElementById('activeRangeIndicator');
+        if(!indicator) return;
+        const sel = document.getElementById('gymFilter');
+        const gymLabel = sel && sel.value ? (gymsData.find(g=> String(g.id) === String(sel.value))?.name || 'Selected Gym') : 'All Gyms';
+        if(!lastFilter){
+            indicator.textContent = `Showing: full data · ${gymLabel}`;
+            return;
+        }
+        indicator.textContent = `Showing: ${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
+    }
 
-    */
-    fetch(`/api1/gyms`)
-    .then(response => response.json())
-    .then(data => {
-        // use the retrieved data here
-        //console.log("retrieved data in activities.js")
-        //console.log(data);
-        gyms=data
-        processGyms(gyms);
-    })
-    .catch(error => console.error(error));
-    
+        function renderControversialDetails(){
+            const { routeDisagreements } = computeStats();
+            const container = document.getElementById('controversialDetails');
+            if(!container) return;
+            const list = Object.values(routeDisagreements).filter(r=> r.disagreements>0).sort((a,b)=> b.disagreements - a.disagreements);
+            if(!list.length){ container.innerHTML = `<div class='empty-state' style='padding:2rem 1rem;'>No grade disagreements in current range.</div>`; return; }
+            const rowsHtml = list.map(r => {
+                const userGrades = Array.from(r.userGrades).sort();
+                const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
+                const downgrades = userGrades.filter(g=> g!==r.grade && !gradeHarder(g,r.grade)).length;
+                const statusTotal = r.statuses.climbed + r.statuses.flashed + r.statuses.attempted;
+                const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
+                const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
+                const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
+                return `<div class='dis-row'>
+                    <div class='dis-cell'><strong>${r.name || 'Unnamed'}</strong><br>
+                      <span style='font-size:.55rem; opacity:.75;'>${r.gym_name}</span><br>
+                      <span style='font-size:.55rem;'>Grade: <strong>${r.grade}</strong></span><br>
+                      <span style='font-size:.5rem; opacity:.7;'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</span>
+                    </div>
+                    <div class='dis-cell'>${userGrades.map(g=> `<span class='chip-grade ${g===r.grade?'':(gradeHarder(g,r.grade)?'up':'down')}'>${g}</span>`).join('')}<div style='margin-top:.25rem; font-size:.5rem;'>Up ${upgrades} · Down ${downgrades}</div></div>
+                    <div class='dis-cell'>Disagreements<br><span class='badge-mini'>${r.disagreements}</span> / ${r.occurrences}</div>
+                    <div class='dis-cell'>Statuses
+                        <div class='disagreements-summary-bar'>
+                            <span class='bar-attempted' style='width:${attemptPct}%;'></span>
+                            <span class='bar-flashed' style='left:${attemptPct}%; width:${flashPct}%;'></span>
+                            <span class='bar-climbed' style='left:${attemptPct*1 + flashPct*1}%; width:${climbedPct}%;'></span>
+                        </div>
+                        <div style='font-size:.5rem; margin-top:.25rem;'>A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}</div>
+                    </div>
+                    <div class='dis-cell'>${r.notes.slice(0,3).map(n=> `<span class='tiny-note'>${n.substring(0,60)}</span>`).join('')}</div>
+                </div>`;
+            }).join('');
+            container.innerHTML = `<p style='font-size:.65rem; max-width:760px; margin:.2rem 0 1rem; opacity:.75;'>Routes with at least one ascent where a climber proposed a different grade. Up = proposed harder; Down = proposed easier. Status bar shades: attempts (left) → flashes → climbed.</p>
+            <div class='disagreements-grid'>
+                <div class='head'>Route Details</div>
+                <div class='head'>User Grades</div>
+                <div class='head'>Disagreements</div>
+                <div class='head'>Status Mix</div>
+                <div class='head'>Notes</div>
+                ${rowsHtml}
+            </div>`;
+        }
 
-    /*
+        // -------- Month Filtering ---------
+        function setDefaultMonthInputs(){
+            if(!activitiesData.length) return;
+            const dates = activitiesData.map(a=> new Date(a.date||a.starttime)).filter(d=> !isNaN(d.getTime()));
+            dates.sort((a,b)=> b-a);
+            const latest = dates[0];
+            // Default: last 6 full months including current if present in data
+            const endYear = latest.getFullYear();
+            const endMonth = latest.getMonth(); // 0-based
+            const startDate = new Date(endYear, endMonth-5, 1); // six-month window
+            const fromVal = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}`;
+            const toVal = `${endYear}-${String(endMonth+1).padStart(2,'0')}`;
+            document.getElementById('fromMonth').value = fromVal;
+            document.getElementById('toMonth').value = toVal;
+            // Apply immediately
+            const from = { y:startDate.getFullYear(), m:startDate.getMonth()+1 };
+            const to = { y:endYear, m:endMonth+1 };
+            currentActivitiesView = filterActivitiesByMonthRange(from,to);
+            lastFilter = { from, to };
+            updateRangeIndicator();
+        }
 
-    Example activity data: 
-    routes_id is the id of the set of routes for the given gym
-    id inside the routes list is the id of the actual route within the routes set
-    
-    {"id": "f589a3195dd84483a7643500c3173692", "gym_id": "1", "routes_id": "35576371427d4a6ca5d0f590795cdeb1", "starttime": "2025-09-26", "gym_name": "Nanterre Grimpe", 
-    "routes": [
-        {"id": "adc97f20c2f94166bb2c8c486fe9643f", "routenum": "27", "line": "8", "colorfr": "#00ff7b", "color1": "#00ff7b", "color_modifier": "solid", "grade": "5c+", "name": "La coul\u00e9e verte", "openedby": "Sebastien, Yohan", "opendate": "", "notes": "", "route_id": "86ee3273-26c1-4f49-bd7f-907401327c9c", "status": "climbed", "note": "", "user_grade": "5c+"}, 
-        {"id": "7e48d0986e1e428b9a0adf82193a20e1", "routenum": "29", "line": "9", "colorfr": "#000000", "color1": "#000000", "color_modifier": "solid", "grade": "5a+", "name": "", "openedby": "", "opendate": "", "notes": "", "route_id": "2d60a065-0280-4c8b-a6aa-25ca5de663a6", "status": "climbed", "note": "", "user_grade": "5a+"}, 
-        {"id": "6f1e9df67130429495f955ff0328cde5", "routenum": "63", "line": "18", "colorfr": "#78d973", "color1": "#78d973", "color_modifier": "solid", "grade": "5c", "name": "La v\u00e9ridique ", "openedby": "Alex", "opendate": "2024-09-14", "notes": "Sans di\u00e8dres", "route_id": "c1d98bc4a5184a76b58bddd4131d7e70", "status": "climbed", "note": "", "user_grade": "5c"}, 
-        {"id": "fc974a5e0e8a4546a05e44e871df19f6", "routenum": "65", "line": "18", "colorfr": "#ffe436", "color1": "#ffe436", "color_modifier": "solid", "grade": "6a+", "name": "yellowstone", "openedby": "Alex", "opendate": "2023-09-21", "notes": "Sans di\u00e8dres", "route_id": "4adac2a5-0643-4f08-baad-3e29ae03b311", "status": "climbed", "note": "", "user_grade": "6a+"}
-        ], 
-        "date": "2025-09-26"}
-    **/
+        function parseMonthValue(val){
+            if(!val) return null; // expects yyyy-mm
+            const [y,m] = val.split('-').map(Number);
+            if(!y || !m) return null;
+            return { y, m };
+        }
 
-    fetch(`/api1/activities`)
-    .then(response => response.json())
-    .then(data => {
-        // use the retrieved data here
-        //console.log(data);
-        activities=data
-        processActivities(activities);
+        function monthCompare(a,b){ // a < b => -1
+            if(a.y === b.y) return a.m - b.m;
+            return a.y - b.y;
+        }
 
-            
+        function inRange(monthObj, start, end){
+            return monthCompare(monthObj,start) >=0 && monthCompare(monthObj,end) <=0;
+        }
 
-    })
-    .catch(error => console.error(error));
+        function filterActivitiesByMonthRange(start, end){
+            return activitiesData.filter(act => {
+                const d = new Date(act.date || act.starttime);
+                const mo = { y: d.getFullYear(), m: d.getMonth()+1 };
+                return inRange(mo,start,end);
+            });
+        }
 
+        function attachMonthEvents(){
+            document.getElementById('applyMonthFilter').addEventListener('click', () => {
+                const from = parseMonthValue(document.getElementById('fromMonth').value);
+                const to = parseMonthValue(document.getElementById('toMonth').value);
+                if(!from || !to) return;
+                if(monthCompare(from,to) > 0){ // swap if reversed
+                    const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m;
+                }
+                lastFilter = { from, to };
+                applyCombinedFilters();
+            });
+            document.getElementById('resetRange').addEventListener('click', () => {
+                lastFilter = null;
+                document.getElementById('gymFilter').value = '';
+                applyCombinedFilters();
+            });
+            const gymSel = document.getElementById('gymFilter');
+            if(gymSel){
+                gymSel.addEventListener('change', () => {
+                    applyCombinedFilters();
+                });
+            }
+        }
 
-    /*
-    to retrieve the routes for a given gym and a specific routeset id:
-    fetch(`/api1/gym/{gymid}/routes/{routesid}`)'
-    Example response:
-    {
-    "gym_id":"1","id":"35576371427d4a6ca5d0f590795cdeb1","name":"Juin 2025","routes":[{"color1":"#fefc78","color_modifier":"solid","colorfr":"#fefc78","grade":"6b","id":"e126a8e212314357b34f59ea113c1525","line":"1","name":"","notes":"","opendate":"2025-06-25","openedby":"Franck","routenum":1},{"color1":"#2e8b57","color_modifier":"solid","colorfr":"#2e8b57","grade":"4c","id":"9cb85a6d-1f48-427e-99a9-5762176d9bc9","line":"1","name":"","notes":"très facile","opendate":"","openedby":"","routenum":2},{"color1":"#ff0000","color_modifier":"solid","colorfr":"#ff0000","grade":"5a+","id":"64068aca-6a8f-4709-9e0b-c4e10de2129f","line":"1","name":"L'égyptienne","notes":"Départ bas / horizontal","opendate":"","openedby":"Sebastiao","routenum":3},{"color1":"#b0b0b0","color_modifier":"solid","colorfr":"#b0b0b0","grade":"5b","id":"025f8412c86f426388f197519b2340d5","line":"1","name":"","notes":"","opendate":"2024-06-01","openedby":"Pablo","routenum":4},
+        function updateRangeIndicator(){
+            const indicator = document.getElementById('activeRangeIndicator');
+            if(!lastFilter){ indicator.textContent = 'Showing: full data'; return; }
+            indicator.textContent = `Showing: ${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions)`;
+        }
 
-    */
-}
-
-function processActivities(activities)
-{
-   
-
-    for (var i = 0; i < activities.activities.length; i++) {
-        // placeholder for processing each activity
-    }	  
-}
-
-function processGyms(gyms)
-{
-    for (var i = 0; i < gyms.length; i++) {
-        //add gym option to gym_id select field
-        var option = document.createElement("option");
-        option.text = gyms[i].name;
-        option.value = gyms[i].id;
-        var select = document.getElementById("gym_id");
-        select.appendChild(option);
-
-    }	  
-}	
-
-
-
-window.addEventListener('load', () => {
-  
-  var now = new Date();
-  document.getElementById('date').value  = now.toISOString().split('T')[0];
-  getData();
-  
-});
-
-
-
-
-
+    // Load activities on window load
+    window.addEventListener('load', loadAll);
+    // ESC to close overlay
+        // ESC key handling for overlay removed (overlay no longer used)
 </script>
-
-
-
-					
-
 
 	
 {% endblock %}
