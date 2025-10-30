@@ -70,7 +70,8 @@ function getData()
     Example gym data is a list:
     routesid is the id of the currently default set of routes for the given gym
 
-    [{"id": "1", "routesid": "35576371427d4a6ca5d0f590795cdeb1", "name": "Nanterre Grimpe", "routes": [], "logoimg": "logo-ESN-HD-copy-1030x1030.png", "homepage": "https://www.esnanterre.com/escalade/", "address": "14 Av. du Mar\u00e9chal Joffre, 92000 Nanterre", "organization": "FSGT", "logo_img_id": "1", "lat": 48.885579, "lon": 2.20922, "status": 2, "ref_id": 1}
+    [{"id": "1", "routesid": "35576371427d4a6ca5d0f590795cdeb1", "name": "Nanterre Grimpe",  "logoimg": "logo-ESN-HD-copy-1030x1030.png", "homepage": "https://www.esnanterre.com/escalade/", "address": "14 Av. du Mar\u00e9chal Joffre, 92000 Nanterre", "organization": "FSGT", "logo_img_id": "1", "lat": 48.885579, "lon": 2.20922, "status": 2, "ref_id": 1},
+    
 
     */
     fetch(`/api1/gyms`)
@@ -91,7 +92,14 @@ function getData()
     routes_id is the id of the set of routes for the given gym
     id inside the routes list is the id of the actual route within the routes set
     
-    {"id": "f589a3195dd84483a7643500c3173692", "gym_id": "1", "routes_id": "35576371427d4a6ca5d0f590795cdeb1", "starttime": "2025-09-26", "gym_name": "Nanterre Grimpe", "routes": [{"id": "adc97f20c2f94166bb2c8c486fe9643f", "routenum": "27", "line": "8", "colorfr": "#00ff7b", "color1": "#00ff7b", "color_modifier": "solid", "grade": "5c+", "name": "La coul\u00e9e verte", "openedby": "Sebastien, Yohan", "opendate": "", "notes": "", "route_id": "86ee3273-26c1-4f49-bd7f-907401327c9c", "status": "climbed", "note": "", "user_grade": "5c+"}, {"id": "7e48d0986e1e428b9a0adf82193a20e1", "routenum": "29", "line": "9", "colorfr": "#000000", "color1": "#000000", "color_modifier": "solid", "grade": "5a+", "name": "", "openedby": "", "opendate": "", "notes": "", "route_id": "2d60a065-0280-4c8b-a6aa-25ca5de663a6", "status": "climbed", "note": "", "user_grade": "5a+"}, {"id": "6f1e9df67130429495f955ff0328cde5", "routenum": "63", "line": "18", "colorfr": "#78d973", "color1": "#78d973", "color_modifier": "solid", "grade": "5c", "name": "La v\u00e9ridique ", "openedby": "Alex", "opendate": "2024-09-14", "notes": "Sans di\u00e8dres", "route_id": "c1d98bc4a5184a76b58bddd4131d7e70", "status": "climbed", "note": "", "user_grade": "5c"}, {"id": "fc974a5e0e8a4546a05e44e871df19f6", "routenum": "65", "line": "18", "colorfr": "#ffe436", "color1": "#ffe436", "color_modifier": "solid", "grade": "6a+", "name": "yellowstone", "openedby": "Alex", "opendate": "2023-09-21", "notes": "Sans di\u00e8dres", "route_id": "4adac2a5-0643-4f08-baad-3e29ae03b311", "status": "climbed", "note": "", "user_grade": "6a+"}], "date": "2025-09-26"}
+    {"id": "f589a3195dd84483a7643500c3173692", "gym_id": "1", "routes_id": "35576371427d4a6ca5d0f590795cdeb1", "starttime": "2025-09-26", "gym_name": "Nanterre Grimpe", 
+    "routes": [
+        {"id": "adc97f20c2f94166bb2c8c486fe9643f", "routenum": "27", "line": "8", "colorfr": "#00ff7b", "color1": "#00ff7b", "color_modifier": "solid", "grade": "5c+", "name": "La coul\u00e9e verte", "openedby": "Sebastien, Yohan", "opendate": "", "notes": "", "route_id": "86ee3273-26c1-4f49-bd7f-907401327c9c", "status": "climbed", "note": "", "user_grade": "5c+"}, 
+        {"id": "7e48d0986e1e428b9a0adf82193a20e1", "routenum": "29", "line": "9", "colorfr": "#000000", "color1": "#000000", "color_modifier": "solid", "grade": "5a+", "name": "", "openedby": "", "opendate": "", "notes": "", "route_id": "2d60a065-0280-4c8b-a6aa-25ca5de663a6", "status": "climbed", "note": "", "user_grade": "5a+"}, 
+        {"id": "6f1e9df67130429495f955ff0328cde5", "routenum": "63", "line": "18", "colorfr": "#78d973", "color1": "#78d973", "color_modifier": "solid", "grade": "5c", "name": "La v\u00e9ridique ", "openedby": "Alex", "opendate": "2024-09-14", "notes": "Sans di\u00e8dres", "route_id": "c1d98bc4a5184a76b58bddd4131d7e70", "status": "climbed", "note": "", "user_grade": "5c"}, 
+        {"id": "fc974a5e0e8a4546a05e44e871df19f6", "routenum": "65", "line": "18", "colorfr": "#ffe436", "color1": "#ffe436", "color_modifier": "solid", "grade": "6a+", "name": "yellowstone", "openedby": "Alex", "opendate": "2023-09-21", "notes": "Sans di\u00e8dres", "route_id": "4adac2a5-0643-4f08-baad-3e29ae03b311", "status": "climbed", "note": "", "user_grade": "6a+"}
+        ], 
+        "date": "2025-09-26"}
     **/
 
     fetch(`/api1/activities`)
