@@ -284,7 +284,9 @@
   "notes_label": "Notes",
   "climbs": "Enchaînements",
   "flashes": "Flashes",
-  "attempts": "Essais"
-  ,
-    "all_gyms": "Toutes les salles"
+  "attempts": "Essais",
+    "all_gyms": "Toutes les salles",
+  "overview": "Aperçu",
+
+  "Last": "Dernier"
 }

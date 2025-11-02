@@ -287,7 +287,9 @@
   "notes_label": "Notatki",
   "climbs": "Przejścia",
   "flashes": "Flashe",
-  "attempts": "Podejścia"
-  ,
-    "all_gyms": "Wszystkie ścianki"
+  "attempts": "Podejścia",
+  "all_gyms": "Wszystkie ścianki",
+  "overview": "Przegląd",
+  
+  "last": "Ostatni"
 }

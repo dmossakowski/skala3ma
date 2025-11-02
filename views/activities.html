@@ -11,119 +11,183 @@
 
 
     
-	<div name='container'>
+<div name='container' style="  margin: 0.1rem 0.1rem ">
 
 <style>
-    .activities-summary { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.2rem; }
-    .summary-card { flex:1 1 220px; background:#f8f9fa; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
-    .summary-card.highlight { border:2px solid #2ecc71; }
-    .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
-    .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
-    /* Hover indicator for clickable summary cards */
-    .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
-    .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
-    /* Removed hover 'CLICK' badge */
-    /* .controversial styling handled by dynamic classes; empty rule removed */
-    .route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#eef2f3; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
-    .route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
-    .grade-original { font-weight:600; }
-    .timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
-    .timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
-    .timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
-    .status-icon { width:20px; height:20px; vertical-align:middle; }
-    .status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-    .route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
-    .route-row:last-child { border-bottom:none; }
-    .route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
-    .route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.8rem; }
-    .route-original .ro-name { font-size:.9rem; font-weight:600; }
-    .route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.7rem; }
-    .route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
-    .route-climb .note-snippet { font-size:.65rem; }
-    .soft { color:#2e86de; font-weight:600; }
-    .hard { color:#c0392b; font-weight:600; }
-    .flash { font-style:italic; }
-    .note-snippet { font-size:.7rem; color:#444; background:#f1f3f4; padding:.25rem .45rem; border-radius:6px; }
-    .leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
-    .leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
-    .leaderboard-card.top { border:2px solid #53be6b; }
-    .gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-    .summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
-    .badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
-    .badge.flashes { background:#efcc05; }
-    .badge.attempts { background:#d73038; }
-    .badge.climbs { background:#41ac49; }
-    .contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
-    .distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
-    .empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
-    .section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
-    .big-number { font-size:2.2rem; font-weight:800; }
-    .scroll-h { overflow-x:auto; }
-    @media (prefers-color-scheme: dark) {
-        .summary-card, .leaderboard-card, .timeline-item { background:#1f2428; box-shadow:0 2px 4px rgba(0,0,0,.4); }
-        .route-chip { background:#2d3439; }
-        .route-chip.disagree { background:#442b2b; border-color:#ff6b6b; }
-        .note-snippet { background:#2d3439; color:#bbb; }
-    }
-        /* Overlay & disagreement details */
-        .disagreements-grid { display:grid; grid-template-columns:minmax(230px, 320px) minmax(140px,220px) minmax(100px,130px) minmax(110px,140px) 1fr; gap:.5rem .75rem; align-items:start; font-size:.65rem; }
-        .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
-        .dis-row { display:contents; }
-        .dis-cell { background:#f7f9fa; padding:.45rem .45rem; border-radius:10px; }
-        .route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; }
-        .route-dis-flex .route-color-box { flex:0 0 auto; display:flex; align-items:center; }
-        .route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
-        .route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
-        .route-dis-flex .route-meta .route-gym { opacity:.85; }
-        .route-dis-flex .route-meta .route-open { opacity:.85; }
-        .chip-grade { display:inline-block; padding:.18rem .45rem; border-radius:14px; font-size:.58rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
-        .chip-grade.up { background:#ffd9d9; color:#c0392b; }
-        .chip-grade.down { background:#d9ecff; color:#1e5fa3; }
-        .tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
-        .badge-mini { background:#eceff1; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
-        .disagreements-summary-bar { height:6px; width:100%; background:#eceff1; border-radius:4px; position:relative; margin-top:.3rem; }
-        .disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
-    /* Bar segment colors aligned with badge color palette */
-    .disagreements-summary-bar span.attempts { background:#d73038; left:0; }
-    .disagreements-summary-bar span.flashes { background:#efcc05; }
-    .disagreements-summary-bar span.climbs { background:#41ac49; }
-        .cursor-pointer { cursor:pointer; }
-        @media (prefers-color-scheme: dark) {
-            .overlay-content { background:#1f2428; }
-            .dis-cell { background:#222a2f; }
-            .chip-grade { background:#2d3439; }
-            .chip-grade.up { background:#432727; }
-            .chip-grade.down { background:#1e3d59; }
-            .tiny-note { background:#3a3020; }
-            .disagreements-summary-bar { background:#2d3439; }
-        }
+/* Base summary & activity styles */
+.activities-summary { display:flex; flex-wrap:wrap; gap:1rem;}
+.summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+.summary-card.highlight { border:2px solid #2ecc71; }
+.summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+.summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+.summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+.summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
+.route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#f1f3f4; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
+.route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
+.grade-original { font-weight:600; }
+.timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
+.timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
+.timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
+.status-icon { width:20px; height:20px; vertical-align:middle; }
+.status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
+.route-row:last-child { border-bottom:none; }
+.route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
+.route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.85rem; }
+.route-original .ro-name { font-size:.9rem; font-weight:600; }
+.route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.75rem; }
+.route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
+.route-climb .note-snippet { font-size:.7rem; }
+.soft { color:#2e86de; font-weight:600; }
+.hard { color:#c0392b; font-weight:600; }
+.flash { font-style:italic; }
+.note-snippet { font-size:.7rem; color:#444; background:#f1f3f4; padding:.25rem .45rem; border-radius:6px; }
+.leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
+.leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
+
+.gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
+.badge.flashes { background:#efcc05; }
+.badge.attempts { background:#d73038; }
+.badge.climbs { background:#41ac49; }
+.contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
+.distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
+.empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
+.section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
+.big-number { font-size:2.2rem; font-weight:800; }
+.scroll-h { overflow-x:auto; }
+/* Summary (renderSummary) refactored styles */
+.gym-flex { display:flex; align-items:center; gap:.75rem; margin:.35rem 0; }
+.lh-1 { line-height:1; }
+.gym-meta { font-size:.6rem; opacity:.75; margin-top:.25rem; }
+.gym-click-line { font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline; }
+.outcomes-flex { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
+.touches-block { min-width:120px; }
+.sessions-block { min-width:100px; }
+.stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
+.across-line { font-size:.55rem; opacity:.65; }
+.status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
+.status-badge { font-size:.7rem; }
+.touches-def { font-size:.5rem; opacity:.65; margin-top:.25rem; }
+.click-recent { font-size:.5rem; opacity:.55; margin-top:.3rem; text-decoration:underline; }
+/* Controversial route top card */
+.contro-title { margin:0 0 .4rem; }
+.contro-none { font-size:.6rem; opacity:.7; }
+.contro-flex { display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start; }
+.contro-left { flex:1 1 200px; min-width:180px; }
+.contro-right { flex:1 1 220px; min-width:200px; }
+.contro-name { font-size:.8rem; font-weight:600; }
+.contro-gym { font-size:.55rem; opacity:.75; }
+.opened-meta { font-size:.55rem; margin:.35rem 0 .5rem; padding:.3rem .5rem; border-radius:6px; }
+.contro-set-grade { font-size:.6rem; }
+.contro-disagreements { font-size:.55rem; margin-top:.4rem; }
+.contro-status-mix { font-size:.55rem; }
+.grades-label { font-size:.6rem; margin-bottom:.25rem; }
+.grades-wrap { display:flex; flex-wrap:wrap; gap:.4rem; }
+.click-view-all { font-size:.55rem; margin-top:.5rem; text-decoration:underline; }
+/* Additional detail section styles */
+.leaderboard-col { display:flex; flex-direction:column; gap:.6rem; }
+.leaderboard-name-row { display:flex; justify-content:space-between; align-items:center; }
+.leaderboard-gym-name { font-size:.9rem; }
+.leaderboard-session-count { font-size:.6rem; opacity:.7; }
+.leaderboard-badges { margin:.4rem 0 .3rem; }
+.leaderboard-unique { font-size:.6rem; opacity:.7; }
+.contro-route-title { margin:0 0 .3rem; }
+.contro-route-gymline { font-size:.7rem; margin-bottom:.2rem; }
+.opened-meta { background:#f1f3f4; }
+.contro-flex-min { display:flex; flex-wrap:wrap; gap:.6rem; }
+.contro-grades-label { margin-top:.4rem; }
+.contro-notes { margin-top:.4rem; font-size:.6rem; }
+/* Overlay & disagreement details */
+.disagreements-grid { display:grid; grid-template-columns:minmax(230px, 320px) minmax(140px,220px) minmax(110px,140px) 1fr; gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+.disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+.dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
+.route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
+.route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
+.route-dis-flex .route-meta .route-gym { opacity:.85; }
+.route-dis-flex .route-meta .route-open { opacity:.85; }
+.chip-grade { display:inline-block; padding:.18rem .35rem; border-radius:14px; font-size:.8rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
+.chip-grade.up { background:#ffd9d9; color:#c0392b; }
+.chip-grade.down { background:#d9ecff; color:#1e5fa3; }
+.tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
+.badge-mini { background:#f1f3f4; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
+.disagreements-summary-bar { height:6px; width:100%; background:#f1f3f4; border-radius:4px; position:relative; margin-top:.3rem; }
+.disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
+.route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; flex-wrap:nowrap; }
+.route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
+.route-meta { flex:1 1 auto; }
+@media (max-width: 600px) { /* stack route details vertically on narrow screens */
+    .route-dis-flex { flex-direction:column; align-items:flex-start; }
+    .route-color-box { margin-bottom:.4rem; }
+}
+.disagreements-summary-bar span.attempts { background:#d73038; left:0; }
+.disagreements-summary-bar span.flashes { background:#efcc05; }
+.disagreements-summary-bar span.climbs { background:#41ac49; }
+/* Month filter extracted styles */
+#monthFilter { margin:.4rem 0 1.2rem; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+#monthFilter .filter-grid { display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end; }
+#monthFilter .filter-group { flex:1 1 auto; min-width:180px; }
+.filter-label { font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem; }
+.filter-input-month { font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px; }
+.filter-select { font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff; }
+.filter-btn { font-size:.65rem; padding:.45rem .85rem; border:0; border-radius:8px; font-weight:600; cursor:pointer; }
+.filter-btn.primary { background:#53be6b; color:#fff; }
+.filter-btn.secondary { background:#f1f3f4; color:#222; }
+.filter-range-indicator { flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7; }
+/* Consolidated dark mode styles */
+@media (prefers-color-scheme: dark) {
+    .summary-card, .leaderboard-card, .timeline-item { background:#1f2428; box-shadow:0 2px 4px rgba(0,0,0,.4); }
+    .route-chip { background:#2d3439; }
+    .route-chip.disagree { background:#442b2b; border-color:#ff6b6b; }
+    .note-snippet { background:#2d3439; color:#bbb; }
+    .contro-none { opacity:.75; }
+    .opened-meta { background:#2d3439; }
+    .overlay-content { background:#1f2428; }
+    .dis-cell { background:#222a2f; }
+    .chip-grade { background:#2d3439; }
+    .chip-grade.up { background:#432727; }
+    .chip-grade.down { background:#1e3d59; }
+    .tiny-note { background:#3a3020; }
+    .disagreements-summary-bar { background:#2d3439; }
+    #monthFilter { background:#1f2428; box-shadow:0 1px 3px rgba(0,0,0,.5); }
+    .filter-input-month, .filter-select { background:#2d3439; border:1px solid #444; color:#ddd; }
+    .filter-btn.secondary { background:#3a3a3a; color:#eee; }
+}
+/* Timeline & controversial details refactor */
+.timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
+.diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
+.route-color-fallback { width:55px; height:20px; background:#ddd; border-radius:4px; }
+.empty-state.pad-medium { padding:2rem 1rem; }
+.disagreements-explainer { font-size:.65rem; max-width:760px; margin:.2rem 0 1rem; opacity:.75; }
+.dis-updown { margin-top:.25rem; font-size:.5rem; }
+.statuses-label { display:block; margin-bottom:.25rem; }
+.status-breakdown { font-size:.5rem; margin-top:.25rem; }
+.route-color-box .route-color-fallback { margin-bottom:.3rem; }
 </style>
 
         <!-- Filter moved to top -->
-        <div id="monthFilter" style="margin:.4rem 0 1.2rem; background:#f4f6f7; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08);">
-            <div style="display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end;">
-                <div style="flex:1 1 auto; min-width:180px;">
-                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
-                    <input type="month" id="fromMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
+        <div id="monthFilter">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="fromMonth" class="filter-input-month" />
                 </div>
-                <div style="flex:1 1 auto; min-width:180px;">
-                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
-                    <input type="month" id="toMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="toMonth" class="filter-input-month" />
                 </div>
-                <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end;">
-                    <button id="applyMonthFilter" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#53be6b; color:#fff; border-radius:8px; font-weight:600;" data-translate-key="Apply">Apply translation</button>
-                    <button id="resetRange" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#e0e0e0; color:#222; border-radius:8px; font-weight:600;" data-translate-key="Reset">Reset translation</button>
-                    <div style="min-width:180px;">
-                        <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
-                        <select id="gymFilter" style="font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff;"></select>
+                <div class="filter-grid" style="gap:.5rem; align-items:flex-end;">
+                    <button id="applyMonthFilter" class="filter-btn primary" data-translate-key="Apply">Apply translation</button>
+                    <button id="resetRange" class="filter-btn secondary" data-translate-key="Reset">Reset translation</button>
+                    <div class="filter-group">
+                        <label class="filter-label"></label>
+                        <select id="gymFilter" class="filter-select"></select>
                     </div>
                 </div>
-                <div style="flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7;" id="activeRangeIndicator"></div>
+                <div id="activeRangeIndicator" class="filter-range-indicator"></div>
             </div>
         </div>
-
-      </div>
-
     <div id="summary" class="activities-summary"></div>
 
     <div id="leaderboardSection" style="display:none;">
@@ -131,8 +195,7 @@
         <div id="gymLeaderboard" class="leaderboard"></div>
     </div>
 
-    <!-- Removed standalone controversial route section; now part of top summary card -->
-
+    <!-- Recent Sessions Timeline (wrapped for visibility control) -->
     <div id="timelineSection" style="display:none;">
         <h4 class="section-title" data-translate-key="recent_sessions_timeline">Recent Sessions Timeline</h4>
         <div id="timeline"></div>
@@ -298,31 +361,80 @@
         const totalTouches = totalClimbs + totalFlashes + totalAttempts;
         const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
         const disagreeCount = controversial ? controversial.disagreements : 0;
-        // Build combined controversial route card
-        let controversialHtml = '';
-        if(controversial){
+        // Build combined controversial route card with DOM nodes (no innerHTML template)
+        function buildControversialDom(){
+            const frag = document.createDocumentFragment();
+            const title = document.createElement('h5');
+            title.className = 'contro-title';
+            title.dataset.translateKey = 'most_controversial_route';
+            title.textContent = 'Most Controversial Route';
+            frag.appendChild(title);
+            if(!controversial){
+                const noneDiv = document.createElement('div');
+                noneDiv.className = 'contro-none';
+                noneDiv.dataset.translateKey = 'no_controversial_routes';
+                noneDiv.textContent = 'No controversial routes in current range.';
+                frag.appendChild(noneDiv);
+                return frag;
+            }
+            const flexWrap = document.createElement('div');
+            flexWrap.className = 'contro-flex';
+            // Left block
+            const left = document.createElement('div');
+            left.className = 'contro-left';
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'contro-name';
+            nameDiv.textContent = controversial.name || 'Unnamed Route';
+            left.appendChild(nameDiv);
+            const gymDiv = document.createElement('div');
+            gymDiv.className = 'contro-gym';
+            gymDiv.innerHTML = `<span data-translate-key="gym">Gym</span>: ${controversial.gym_name}`;
+            left.appendChild(gymDiv);
+            if(controversial.openedby || controversial.opendate){
+                const openedMetaDiv = document.createElement('div');
+                openedMetaDiv.className = 'opened-meta';
+                openedMetaDiv.innerHTML = `<span data-translate-key="opened_by">Opened by</span> <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate?` · <span data-translate-key="set">Set</span>: ${controversial.opendate}`:''}`;
+                left.appendChild(openedMetaDiv);
+            }
+            const setGradeDiv = document.createElement('div');
+            setGradeDiv.className = 'contro-set-grade';
+            setGradeDiv.innerHTML = `<span data-translate-key="set_grade">Set grade</span>: <strong>${controversial.grade}</strong>`;
+            left.appendChild(setGradeDiv);
+            //const disagreementsDiv = document.createElement('div');
+            //disagreementsDiv.className = 'contro-disagreements';
+            //disagreementsDiv.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span>`;
+            //left.appendChild(disagreementsDiv);
+            const statusMixDiv = document.createElement('div');
+            statusMixDiv.className = 'contro-status-mix';
+            statusMixDiv.innerHTML = `<span data-translate-key="status_mix">Status mix</span>: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}`;
+            left.appendChild(statusMixDiv);
+            flexWrap.appendChild(left);
+            // Right block
+            const right = document.createElement('div');
+            right.className = 'contro-right';
+            const gradesLabel = document.createElement('div');
+            gradesLabel.className = 'grades-label';
+            gradesLabel.dataset.translateKey = 'user_grades_label';
+            gradesLabel.textContent = 'User grades';
+            right.appendChild(gradesLabel);
+            const gradesWrap = document.createElement('div');
+            gradesWrap.className = 'grades-wrap';
             const userGrades = Array.from(controversial.userGrades).sort();
-            const openedMeta = (controversial.openedby || controversial.opendate) ? `<div style='font-size:.55rem; margin:.35rem 0 .5rem;  padding:.3rem .5rem; border-radius:6px;'><span data-translate-key="opened_by">Opened by</span> <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · <span data-translate-key="set">Set</span>: ${controversial.opendate}`:''}</div>` : '';
-            controversialHtml = `
-                <h5 style='margin:0 0 .4rem;' data-translate-key="most_controversial_route">Most Controversial Route</h5>
-                <div style='display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start;'>
-                    <div style='flex:1 1 200px; min-width:180px;'>
-                        <div style='font-size:.8rem; font-weight:600;'>${controversial.name || 'Unnamed Route'}</div>
-                        <div style='font-size:.55rem; opacity:.75;'><span data-translate-key="gym">Gym</span>: ${controversial.gym_name}</div>
-                        ${openedMeta}
-                        <div style='font-size:.6rem;'><span data-translate-key="set_grade">Set grade</span>: <strong>${controversial.grade}</strong></div>
-                        <div style='font-size:.55rem; margin-top:.4rem;'><span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span></div>
-                        <div style='font-size:.55rem;'><span data-translate-key="status_mix">Status mix</span>: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}</div>
-                    </div>
-                    <div style='flex:1 1 220px; min-width:200px;'>
-                        <div style='font-size:.6rem; margin-bottom:.25rem;' data-translate-key="user_grades_label">User grades</div>
-                        <div style='display:flex; flex-wrap:wrap; gap:.4rem;'>${userGrades.map(g=> `<span class='distribution-pill'>${g}</span>`).join('')}</div>
-                        <div style='font-size:.55rem; margin-top:.5rem; text-decoration:underline;' data-translate-key="click_view_all_disputed">Click to view all disputed routes</div>
-                    </div>
-                </div>
-            `;
-        } else {
-            controversialHtml = `<h5 style='margin:0 0 .4rem;' data-translate-key="most_controversial_route">Most Controversial Route</h5><div style='font-size:.6rem; opacity:.7;' data-translate-key="no_controversial_routes">No controversial routes in current range.</div>`;
+            userGrades.forEach(g=> {
+                const pill = document.createElement('span');
+                pill.className = 'distribution-pill';
+                pill.textContent = g;
+                gradesWrap.appendChild(pill);
+            });
+            right.appendChild(gradesWrap);
+            const clickViewAll = document.createElement('div');
+            clickViewAll.className = 'click-view-all';
+            clickViewAll.dataset.translateKey = 'click_view_all_disputed';
+            clickViewAll.textContent = 'Click to view all disputed routes';
+            right.appendChild(clickViewAll);
+            flexWrap.appendChild(right);
+            frag.appendChild(flexWrap);
+            return frag;
         }
         const summaryEl = document.getElementById('summary');
         summaryEl.innerHTML = ''; // clear
@@ -335,11 +447,8 @@
         h5Gym.dataset.translateKey = 'most_active_gym';
         h5Gym.textContent = 'Most Active Gym';
         gymCard.appendChild(h5Gym);
-        const gymFlex = document.createElement('div');
-        gymFlex.style.display = 'flex';
-        gymFlex.style.alignItems = 'center';
-        gymFlex.style.gap = '.75rem';
-        gymFlex.style.margin = '.35rem 0';
+    const gymFlex = document.createElement('div');
+    gymFlex.className = 'gym-flex';
         if(topGym.logo_img_id){
             const img = document.createElement('img');
             img.src = `/image/${topGym.logo_img_id}`;
@@ -350,21 +459,15 @@
         }
         const gymInfo = document.createElement('div');
         const metricDiv = document.createElement('div');
-        metricDiv.className = 'summary-metric';
-        metricDiv.style.lineHeight = '1';
+    metricDiv.className = 'summary-metric lh-1';
         metricDiv.textContent = topGym.gym_name;
         gymInfo.appendChild(metricDiv);
-        const metaLine = document.createElement('div');
-        metaLine.style.fontSize = '.6rem';
-        metaLine.style.opacity = '.75';
-        metaLine.style.marginTop = '.25rem';
+    const metaLine = document.createElement('div');
+    metaLine.className = 'gym-meta';
         metaLine.innerHTML = `${topGym.touches} <span data-translate-key="touches">touches</span> · ${topGym.activities} <span data-translate-key="sessions_label">sessions</span> · ${topGym.uniqueRouteCount} <span data-translate-key="unique_routes">unique routes</span>`;
         gymInfo.appendChild(metaLine);
-        const clickLine = document.createElement('div');
-        clickLine.style.fontSize = '.5rem';
-        clickLine.style.opacity = '.55';
-        clickLine.style.marginTop = '.25rem';
-        clickLine.style.textDecoration = 'underline';
+    const clickLine = document.createElement('div');
+    clickLine.className = 'gym-click-line';
         clickLine.dataset.translateKey = 'click_view_leaderboard';
         clickLine.textContent = 'Click to view leaderboard';
         gymInfo.appendChild(clickLine);
@@ -380,60 +483,46 @@
         h5Sessions.dataset.translateKey = 'sessions_route_outcomes';
         h5Sessions.textContent = 'Sessions & Route Outcomes';
         sessionsCard.appendChild(h5Sessions);
-        const outcomesFlex = document.createElement('div');
-        outcomesFlex.style.display = 'flex';
-        outcomesFlex.style.alignItems = 'flex-end';
-        outcomesFlex.style.gap = '1.1rem';
-        outcomesFlex.style.flexWrap = 'wrap';
-        outcomesFlex.style.margin = '.25rem 0 .55rem';
-        const touchesBlock = document.createElement('div');
-        touchesBlock.style.minWidth = '120px';
-        touchesBlock.innerHTML = `<div class='big-number' style='line-height:1;'>${totalTouches}</div><div style='font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem;' data-translate-key="touches">Touches</div>`;
+    const outcomesFlex = document.createElement('div');
+    outcomesFlex.className = 'outcomes-flex';
+    const touchesBlock = document.createElement('div');
+    touchesBlock.className = 'touches-block';
+    touchesBlock.innerHTML = `<div class='big-number lh-1'>${totalTouches}</div><div class='stat-label' data-translate-key="touches">Touches</div>`;
         outcomesFlex.appendChild(touchesBlock);
-        const sessionsBlock = document.createElement('div');
-        sessionsBlock.style.minWidth = '100px';
-        sessionsBlock.innerHTML = `<div style='font-size:1.3rem; font-weight:700; line-height:1;'>${totalActivities}</div><div style='font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem;' data-translate-key="sessions_label">Sessions</div>`;
+    const sessionsBlock = document.createElement('div');
+    sessionsBlock.className = 'sessions-block';
+    sessionsBlock.innerHTML = `<div class='lh-1' style='font-size:1.3rem; font-weight:700;'>${totalActivities}</div><div class='stat-label' data-translate-key="sessions_label">Sessions</div>`;
         outcomesFlex.appendChild(sessionsBlock);
-        const acrossLine = document.createElement('div');
-        acrossLine.style.fontSize = '.55rem';
-        acrossLine.style.opacity = '.65';
+    const acrossLine = document.createElement('div');
+    acrossLine.className = 'across-line';
         acrossLine.innerHTML = `<span data-translate-key="across">Across</span> ${gymsArr.length} <span data-translate-key="gyms">gym${gymsArr.length!==1?'s':''}</span>`;
         outcomesFlex.appendChild(acrossLine);
         sessionsCard.appendChild(outcomesFlex);
         const statusStrip = document.createElement('div');
-        statusStrip.style.display = 'flex';
-        statusStrip.style.gap = '.5rem';
-        statusStrip.style.flexWrap = 'wrap';
-        statusStrip.style.margin = '.2rem 0 .1rem';
+        statusStrip.className = 'status-strip';
         statusStrip.innerHTML = `
-            <img class='status-icon' src='${statusIcon("climbed")}' alt='climbed'><span class='badge climbs' style='font-size:.7rem;'> ${totalClimbs}</span>
-            <img class='status-icon' src='${statusIcon("flashed")}' alt='flashed'><span class='badge flashes' style='font-size:.7rem;'> ${totalFlashes}</span>
-            <img class='status-icon' src='${statusIcon("attempted")}' alt='attempted'><span class='badge attempts' style='font-size:.7rem;'> ${totalAttempts}</span>`;
+            <img class='status-icon' src='${statusIcon("climbed")}' alt='climbed'><span class='badge climbs status-badge'> ${totalClimbs}</span>
+            <img class='status-icon' src='${statusIcon("flashed")}' alt='flashed'><span class='badge flashes status-badge'> ${totalFlashes}</span>
+            <img class='status-icon' src='${statusIcon("attempted")}' alt='attempted'><span class='badge attempts status-badge'> ${totalAttempts}</span>`;
         sessionsCard.appendChild(statusStrip);
-        const touchesDef = document.createElement('div');
-        touchesDef.style.fontSize = '.5rem';
-        touchesDef.style.opacity = '.65';
-        touchesDef.style.marginTop = '.25rem';
+    const touchesDef = document.createElement('div');
+    touchesDef.className = 'touches-def';
         touchesDef.dataset.translateKey = 'touches_definition';
         touchesDef.textContent = 'Touches = climbs + flashes + attempts 111';
         sessionsCard.appendChild(touchesDef);
-        const clickRecent = document.createElement('div');
-        clickRecent.style.fontSize = '.5rem';
-        clickRecent.style.opacity = '.55';
-        clickRecent.style.marginTop = '.3rem';
-        clickRecent.style.textDecoration = 'underline';
+    const clickRecent = document.createElement('div');
+    clickRecent.className = 'click-recent';
         clickRecent.dataset.translateKey = 'click_view_recent_sessions';
         clickRecent.textContent = 'Click to view recent sessions timeline';
         sessionsCard.appendChild(clickRecent);
         summaryEl.appendChild(sessionsCard);
-        // Controversial top card
-        const controCard = document.createElement('div');
-        controCard.className = 'summary-card controversial cursor-pointer';
-        controCard.id = 'controversialTopCard';
-        controCard.setAttribute('aria-label','Open list of all controversial routes');
-        // Inject previously built HTML fragment (controversialHtml already includes data-translate-key spans)
-        controCard.innerHTML = controversialHtml;
-        summaryEl.appendChild(controCard);
+    // Controversial top card
+    const controCard = document.createElement('div');
+    controCard.className = 'summary-card controversial cursor-pointer';
+    controCard.id = 'controversialTopCard';
+    controCard.setAttribute('aria-label','Open list of all controversial routes');
+    controCard.appendChild(buildControversialDom());
+    summaryEl.appendChild(controCard);
         if(controCard){
             controCard.addEventListener('click', () => {
                 showControversial = true;
@@ -494,11 +583,9 @@
         container.textContent = '';
         gymsArr.forEach(g => {
             const card = document.createElement('div');
-            card.className = 'leaderboard-card' + (g.gym_id === topGym.gym_id ? ' top' : '');
+            card.className = 'leaderboard-card';
             const colFlex = document.createElement('div');
-            colFlex.style.display = 'flex';
-            colFlex.style.flexDirection = 'column';
-            colFlex.style.gap = '.6rem';
+            colFlex.className = 'leaderboard-col';
             if(g.logo_img_id){
                 const img = document.createElement('img');
                 img.src = `/image/${g.logo_img_id}`;
@@ -508,29 +595,25 @@
                 colFlex.appendChild(img);
             }
             const nameRow = document.createElement('div');
-            nameRow.style.display = 'flex';
-            nameRow.style.justifyContent = 'space-between';
-            nameRow.style.alignItems = 'center';
+            nameRow.className = 'leaderboard-name-row';
             const strong = document.createElement('strong');
-            strong.style.fontSize = '.9rem';
+            strong.className = 'leaderboard-gym-name';
             strong.textContent = g.gym_name;
             const sessionSpan = document.createElement('span');
-            sessionSpan.style.fontSize = '.6rem';
-            sessionSpan.style.opacity = '.7';
+            sessionSpan.className = 'leaderboard-session-count';
             sessionSpan.innerHTML = `${g.activities} <span data-translate-key="sessions_label">sessions</span>`;
             nameRow.appendChild(strong);
             nameRow.appendChild(sessionSpan);
             colFlex.appendChild(nameRow);
             card.appendChild(colFlex);
             const badges = document.createElement('div');
-            badges.style.margin = '.4rem 0 .3rem';
+            badges.className = 'leaderboard-badges';
             badges.innerHTML = `<span class='badge climbs'><span data-translate-key="climbs">Climbs</span> ${g.climbs}</span>
                 <span class='badge flashes'><span data-translate-key="flashes">Flashes</span> ${g.flashes}</span>
                 <span class='badge attempts'><span data-translate-key="attempts">Attempts</span> ${g.attempts}</span>`;
             card.appendChild(badges);
             const uniqueLine = document.createElement('div');
-            uniqueLine.style.fontSize = '.6rem';
-            uniqueLine.style.opacity = '.7';
+            uniqueLine.className = 'leaderboard-unique';
             uniqueLine.innerHTML = `${g.uniqueRouteCount} <span data-translate-key="unique_routes">unique routes</span>`;
             card.appendChild(uniqueLine);
             container.appendChild(card);
@@ -555,40 +638,33 @@
         }
         const userGrades = Array.from(controversial.userGrades).sort();
         const title = document.createElement('h5');
-        title.style.margin = '0 0 .3rem';
+        title.className = 'contro-route-title';
         title.textContent = controversial.name || 'Unnamed Route';
         el.appendChild(title);
         const gymLine = document.createElement('div');
-        gymLine.style.fontSize = '.7rem';
-        gymLine.style.marginBottom = '.2rem';
+        gymLine.className = 'contro-route-gymline';
         gymLine.innerHTML = `<span data-translate-key="gym">Gym</span>: ${controversial.gym_name}`;
         el.appendChild(gymLine);
         if(controversial.openedby || controversial.opendate){
             const openedMeta = document.createElement('div');
-            openedMeta.style.fontSize = '.6rem';
-            openedMeta.style.margin = '.3rem 0 .6rem';
-            openedMeta.style.background = '#f1f3f4';
-            openedMeta.style.padding = '.3rem .5rem';
-            openedMeta.style.borderRadius = '6px';
+            openedMeta.className = 'opened-meta';
             openedMeta.innerHTML = `<span data-translate-key="opened_by">Opened by</span>: <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · <span data-translate-key="set">Set</span>: ${controversial.opendate}`:''}`;
             el.appendChild(openedMeta);
         }
         const flexWrap = document.createElement('div');
-        flexWrap.style.display = 'flex';
-        flexWrap.style.flexWrap = 'wrap';
-        flexWrap.style.gap = '.6rem';
+        flexWrap.className = 'contro-flex-min';
         const setGrade = document.createElement('div');
         setGrade.innerHTML = `<span class='grade-original' data-translate-key="set_grade">Set grade</span>: ${controversial.grade}`;
-        const disagreementsDiv = document.createElement('div');
-        disagreementsDiv.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span>`;
+        //const disagreementsDiv = document.createElement('div');
+        //disagreementsDiv.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span>`;
         const statusMix = document.createElement('div');
         statusMix.innerHTML = `<span data-translate-key="status_mix">Status mix</span>: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}`;
         flexWrap.appendChild(setGrade);
-        flexWrap.appendChild(disagreementsDiv);
+        //flexWrap.appendChild(disagreementsDiv);
         flexWrap.appendChild(statusMix);
         el.appendChild(flexWrap);
-        const gradesLabel = document.createElement('div');
-        gradesLabel.style.marginTop = '.4rem';
+    const gradesLabel = document.createElement('div');
+    gradesLabel.className = 'contro-grades-label';
         gradesLabel.dataset.translateKey = 'user_grades_label';
         gradesLabel.textContent = 'User grades 22';
         el.appendChild(gradesLabel);
@@ -603,9 +679,8 @@
         el.appendChild(dist);
         if(controversial.notes.length){
             const notesDiv = document.createElement('div');
-            notesDiv.style.marginTop = '.4rem';
-            notesDiv.style.fontSize = '.6rem';
-            notesDiv.innerHTML = `<span data-translate-key="notes_label">Notes</span>: ${controversial.notes.slice(0,4).map(n=>`<span class='note-snippet'>${n.substring(0,50)}</span>`).join('')}`;
+            notesDiv.className = 'contro-notes';
+            notesDiv.innerHTML = `<span data-translate-key=\"notes_label\">Notes</span>: ${controversial.notes.slice(0,4).map(n=>`<span class='note-snippet'>${n.substring(0,50)}</span>`).join('')}`;
             el.appendChild(notesDiv);
         }
         if(typeof replaceTranslations === 'function') {
@@ -627,9 +702,7 @@
             dateDiv.textContent = dateStr;
             item.appendChild(dateDiv);
             const header = document.createElement('div');
-            header.style.fontSize = '.75rem';
-            header.style.fontWeight = '600';
-            header.style.margin = '.15rem 0 .35rem';
+            header.className = 'timeline-header';
             header.innerHTML = `${act.gym_name || 'Unknown Gym'} · ${(act.routes||[]).length} <span data-translate-key="routes_label">route${(act.routes||[]).length!==1?'s':''}</span>`;
             item.appendChild(header);
             (act.routes||[]).forEach(r => {
@@ -637,7 +710,7 @@
                 const row = document.createElement('div');
                 row.className = 'route-row';
                 const colorDivWrapper = document.createElement('div');
-                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px;'></div>`;
+                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
                 row.appendChild(colorDivWrapper);
                 const orig = document.createElement('div');
                 orig.className = 'route-original';
@@ -671,10 +744,7 @@
                 }
                 if(disagree){
                     const diffSpan = document.createElement('span');
-                    diffSpan.style.fontSize = '.55rem';
-                    diffSpan.style.background = '#ffdddd';
-                    diffSpan.style.padding = '.15rem .3rem';
-                    diffSpan.style.borderRadius = '4px';
+                    diffSpan.className = 'diff-badge';
                     diffSpan.textContent = 'diff';
                     climbDiv.appendChild(diffSpan);
                 }
@@ -789,18 +859,14 @@
             container.textContent = '';
             if(!list.length){
                 const empty = document.createElement('div');
-                empty.className = 'empty-state';
-                empty.style.padding = '2rem 1rem';
+                empty.className = 'empty-state pad-medium';
                 empty.dataset.translateKey = 'no_grade_disagreements_range';
                 empty.textContent = 'No grade disagreements in current range.';
                 container.appendChild(empty);
                 return;
             }
             const explainer = document.createElement('p');
-            explainer.style.fontSize = '.65rem';
-            explainer.style.maxWidth = '760px';
-            explainer.style.margin = '.2rem 0 1rem';
-            explainer.style.opacity = '.75';
+            explainer.className = 'disagreements-explainer';
             explainer.dataset.translateKey = 'disagreements_explainer';
             explainer.textContent = '';
             container.appendChild(explainer);
@@ -809,7 +875,6 @@
             const headers = [
                 { key:'route_details', text:'' },
                 { key:'user_grades_label', text:'' },
-                { key:'disagreements_label', text:'' },
                 { key:'status_mix', text:'' },
                 { key:'notes_label', text:'' }
             ];
@@ -848,14 +913,10 @@
                     chip.textContent = gVal;
                     cGrades.appendChild(chip);
                 });
-                const upDown = document.createElement('div'); upDown.style.marginTop = '.25rem'; upDown.style.fontSize = '.5rem'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
-                // Disagreements cell
-                const cDis = document.createElement('div'); cDis.className = 'dis-cell';
-                cDis.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span><br><span class='badge-mini'>${r.disagreements}</span> / ${r.occurrences}`;
-                grid.appendChild(cDis);
-                // Status cell
+                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
+                // Status cell (formerly followed disagreements column)
                 const cStatus = document.createElement('div'); cStatus.className = 'dis-cell';
-                const statusLabel = document.createElement('span'); statusLabel.style.display = 'block'; statusLabel.style.marginBottom = '.25rem'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
+                const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
                 cStatus.appendChild(statusLabel);
                 const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
                 const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
@@ -863,7 +924,7 @@
                 const barClimbed = document.createElement('span'); barClimbed.className = 'climbs'; barClimbed.style.left = `${attemptPct*1 + flashPct*1}%`; barClimbed.style.width = `${climbedPct}%`;
                 barWrapper.appendChild(barAttempt); barWrapper.appendChild(barFlashed); barWrapper.appendChild(barClimbed);
                 cStatus.appendChild(barWrapper);
-                const statusBreakdown = document.createElement('div'); statusBreakdown.style.fontSize = '.5rem'; statusBreakdown.style.marginTop = '.25rem'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
+                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
                 grid.appendChild(cStatus);
                 // Notes cell
                 const cNotes = document.createElement('div'); cNotes.className = 'dis-cell';
