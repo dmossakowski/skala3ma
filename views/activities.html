@@ -136,24 +136,7 @@
 .filter-btn.secondary { background:#f1f3f4; color:#222; }
 .filter-range-indicator { flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7; }
 /* Consolidated dark mode styles */
-@media (prefers-color-scheme: dark) {
-    .summary-card, .leaderboard-card, .timeline-item { background:#1f2428; box-shadow:0 2px 4px rgba(0,0,0,.4); }
-    .route-chip { background:#2d3439; }
-    .route-chip.disagree { background:#442b2b; border-color:#ff6b6b; }
-    .note-snippet { background:#2d3439; color:#bbb; }
-    .contro-none { opacity:.75; }
-    .opened-meta { background:#2d3439; }
-    .overlay-content { background:#1f2428; }
-    .dis-cell { background:#222a2f; }
-    .chip-grade { background:#2d3439; }
-    .chip-grade.up { background:#432727; }
-    .chip-grade.down { background:#1e3d59; }
-    .tiny-note { background:#3a3020; }
-    .disagreements-summary-bar { background:#2d3439; }
-    #monthFilter { background:#1f2428; box-shadow:0 1px 3px rgba(0,0,0,.5); }
-    .filter-input-month, .filter-select { background:#2d3439; border:1px solid #444; color:#ddd; }
-    .filter-btn.secondary { background:#3a3a3a; color:#eee; }
-}
+
 /* Timeline & controversial details refactor */
 .timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
 .diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
@@ -164,6 +147,13 @@
 .statuses-label { display:block; margin-bottom:.25rem; }
 .status-breakdown { font-size:.5rem; margin-top:.25rem; }
 .route-color-box .route-color-fallback { margin-bottom:.3rem; }
+/* Mobile layout override for controversial routes grid: allow wrapping with route detail cell spanning full width */
+@media (max-width: 700px) {
+    .disagreements-grid { display:flex; flex-wrap:wrap; }
+    .disagreements-grid .head { flex:1 1 140px; min-width:140px; }
+    .disagreements-grid .dis-cell.route-detail { flex:1 1 100%; min-width:100%; }
+    .disagreements-grid .dis-cell:not(.route-detail) { flex:1 1 160px; min-width:140px; }
+}
 </style>
 
         <!-- Filter moved to top -->
@@ -895,7 +885,7 @@
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
                 const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
                 // Route details cell
-                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell';
+                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell route-detail';
                 const flex = document.createElement('div'); flex.className = 'route-dis-flex';
                 const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
                 const meta = document.createElement('div'); meta.className = 'route-meta';
