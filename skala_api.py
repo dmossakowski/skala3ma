@@ -206,6 +206,15 @@ def set_language(language=None):
 
 
 @skala_api_app.route('/language')
+def get_translations():
+    language = session.get('language')
+    if language is None:
+        language = 'fr_FR'
+    langpack = competitionsEngine.reference_data['languages'].get(language)
+    return langpack
+    
+
+@skala_api_app.route('/language')
 def get_language():
     if not session.get('language'):
         return json.dumps({'language': 'fr_FR'})
@@ -640,9 +649,35 @@ def api_auth_status():
 
 
 
+#---------------- Activities API -----------------
+# returns all activities for all users
+
 @skala_api_app.get('/activities')
-@session_or_jwt_required
 def get_activities():
+   
+    allActivities = activities_db.get_activities_all_anonymous()
+
+    activities = {}
+    activities['activities'] = allActivities
+
+    avg_stats = []
+    user_stats = []
+    all_activities_stats = calculate_activities_stats(allActivities)
+
+
+    # Create a dictionary for all_activities_stats for quick lookups
+    all_activities_dict = {date: count for date, count in zip(all_activities_stats['dates'], all_activities_stats['routes_done'])}
+
+    activities['stats'] = {}
+    activities['stats']['routes_done'] = user_stats
+    activities['stats']['routes_avg'] = avg_stats
+    return json.dumps(activities)
+
+
+
+@skala_api_app.get('/myactivities')
+@session_or_jwt_required
+def get_useractivities():
     user = competitionsEngine.get_user_by_email(session['email'])
     activitiesA = activities_db.get_activities(user.get('id'))
 
@@ -767,7 +802,9 @@ def journey_add():
     # journey_id = user.get('journey_id')
     
     #journeys = activities_db.get_activities(user.get('id'))
-    return json.dumps(activity)
+    return activity.to_dict()
+
+
 
 
 @skala_api_app.delete('/activity/<activity_id>')
@@ -804,7 +841,8 @@ def get_activity(activity_id):
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
-    return json.dumps(activity)
+    return activity.to_dict()
+    #return json.dumps(activity)
     
 
 
@@ -834,6 +872,8 @@ def add_activity_route(activity_id):
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
     return json.dumps(activity)
+
+
 
 
 @skala_api_app.get('/activity/user/<user_id>')
@@ -882,6 +922,101 @@ def delete_activity_route(activity_id, route_id):
     
     #journeys = activities_db.get_activities(user.get('id'))
     return activity
+
+
+# Update whole activity (currently supports updating name only)
+@skala_api_app.put('/activity/<activity_id>')
+@session_or_jwt_required
+def update_activity_meta(activity_id):
+    """Update Activity level fields (e.g., name).
+
+    JSON body may include:
+      - name: new activity name/title
+    Returns updated Activity (lean representation if attempts present).
+    """
+    data = request.get_json(silent=True) or {}
+    activity = activities_db.get_activity(activity_id)
+    if activity is None:
+        return jsonify({'error': 'activity_not_found'}), 404
+    # Allow name change
+    if 'name' in data:
+        new_name = (data.get('name') or '').strip()
+        if not new_name:
+            return jsonify({'error': 'invalid_name'}), 400
+        activity.name = new_name[:200]  # basic length guard
+    # Persist (legacy flattened to preserve current storage format)
+    activities_db.update_activity(activity)
+    return jsonify(activity.to_dict())
+
+
+# update a specific route attempt inside an activity using attempt_id (no creation on miss)
+@skala_api_app.put('/activity/<activity_id>/attempt/<attempt_id>')
+@session_or_jwt_required
+def update_activity_route(activity_id, attempt_id):
+    """Update a single existing RouteAttempt within an Activity by attempt_id.
+
+    Path: /activity/{activity_id}/attempt/{attempt_id}
+
+    JSON body fields accepted (all optional):
+      - status: one of VALID_STATUSES or a recognized synonym
+      - user_grade: user proposed grade (string)
+      - note: free-form note (string)
+      - attempt_time: ISO8601 timestamp (e.g. 2025-10-30T18:42:00Z)
+
+    Behavior changes vs previous version:
+      - Lookup is by RouteAttempt.attempt_id only (not route id)
+      - Will NOT create a new attempt if not found (returns 404)
+      - Still rehydrates legacy flattened 'routes' list into attempts once if needed
+    Returns updated Activity (lean form: distinct routes + attempts arrays).
+    """
+    from src.RouteAttempt import VALID_STATUSES, STATUS_SYNONYMS, RouteAttempt  # local import to avoid circular
+
+    data = request.get_json(silent=True) or {}
+
+    activity = activities_db.get_activity(activity_id)
+    if activity is None:
+        return jsonify({'error': 'activity_not_found'}), 404
+
+    # Attempt lookup by attempt_id
+    attempt = next((a for a in activity.attempts if a.attempt_id == attempt_id), None)
+
+    # Lazy rehydrate from legacy flattened list if attempts list empty and attempt not found
+    if attempt is None and not activity.attempts and activity.routes:
+        for rdict in activity.routes:
+            try:
+                activity.attempts.append(RouteAttempt.from_dict(rdict))
+            except Exception:
+                pass
+        attempt = next((a for a in activity.attempts if a.attempt_id == attempt_id), None)
+
+    if attempt is None:
+        return jsonify({'error': 'route_attempt_not_found'}), 404
+
+    # Apply field updates
+    if 'status' in data and data.get('status') is not None:
+        raw_status = (data.get('status') or '').strip().lower()
+        norm = STATUS_SYNONYMS.get(raw_status, raw_status)
+        if norm not in VALID_STATUSES:
+            return jsonify({'error': 'invalid_status', 'allowed': list(VALID_STATUSES)}), 400
+        attempt.status = norm
+
+    if 'user_grade' in data:
+        attempt.user_grade = data.get('user_grade') or None
+
+    if 'note' in data:
+        attempt.note = data.get('note') or ''
+
+    if 'attempt_time' in data and data.get('attempt_time'):
+        try:
+            iso = data.get('attempt_time').replace('Z', '')
+            attempt.attempt_time = datetime.fromisoformat(iso)
+        except Exception:
+            return jsonify({'error': 'invalid_attempt_time_format'}), 400
+
+    # Persist (legacy flattened to keep storage backward compatible)
+    activities_db.update_activity(activity)
+
+    return jsonify(activity.to_dict())
 
 
 def calculate_activity_stats(activity):
@@ -2190,7 +2325,7 @@ def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
 
 
 
-    activities = activities_db.get_activity_routes_by_gym_id(gymid)
+    #activities = activities_db.get_activity_routes_by_gym_id(gymid)
 
     #routes2 = activitiy_engine.enhance_routes(routes)
     #routes2 = activitiy_engine.enhance_routes(routes)
@@ -2221,10 +2356,17 @@ def route_add(gymid, routesid):
     allroutes = all_routes.get(routesid)
 
     routeset = allroutes.get('routes')
-    
-    for route in routes:
-        if route['id'] == routedata['id']:
-            routeset.insert(routeset['routenum'], routesdata)
+    if not isinstance(routeset, list):
+        return jsonify({'error': 'routeset_not_list'}), 400
+    # Update or append the route by id
+    updated = False
+    for idx, existing in enumerate(routeset):
+        if existing.get('id') == routedata.get('id'):
+            routeset[idx] = routedata
+            updated = True
+            break
+    if not updated:
+        routeset.append(routedata)
 
     return json.dumps(allroutes)
 
@@ -2336,7 +2478,7 @@ def route_rating(gymid, routesid):
 @skala_api_app.route('/activity/gym/<gym_id>', methods=['GET'])
 def get_activity_routes_by_gym_id(gym_id):
     # Assuming activities is a list of all activities
-    activities = activities_db.get_activity_routes_by_gym_id(gym_id)
+    activities = activities_db.get_activities_by_gym_id(gym_id)
 
     # List to store matching session entries
     matching_entries = []
@@ -2533,9 +2675,10 @@ def gyms_update(gym_id):
 # this doesn't work so well... there is a main_app_ui version that works better
 @skala_api_app.route('/image/<img_id>')
 def image_route(img_id):
-    #bytes_io = competitionsEngine.get_img(img_id)
-    #return send_file(bytes_io, mimetype='image/png')
-
+    # Attempt to infer mime type from extension
+    ext = os.path.splitext(img_id)[1].lower()
+    mime_map = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif'}
+    mime_type = mime_map.get(ext, 'application/octet-stream')
     return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)
 
 

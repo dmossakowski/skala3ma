@@ -216,6 +216,10 @@
   "Discs": "Discs",
   "Disc": "Disc",
   "Print": "Print",
+  "my_activities": "My activities",
+  "Apply": "Apply",
+  "Reset": "Reset",
+  
   
   "error5314": "Updating routes is not permitted for this user or the competition is not in the right status",
   "error5315": "No permission to edit gym",
@@ -243,6 +247,41 @@
 "Bad_captcha": "Bad CAPTCHA. Please try again.",
 "Contact_us_text1": "Do you like this app? Get in touch!   ",
 
-  "last": "Last"
-  
+"last": "Last",
+"no_public_sessions": "No recorded public sessions yet.",
+"opened_by": "Opened by",
+"set": "Set",
+"most_controversial_route": "Most Controversial Route",
+"set_grade": "Set grade",
+"disagreements_label": "Disagreements",
+"touches": "Touches",
+"sessions_label": "Sessions",
+"unique_routes": "Unique routes",
+  "gym_activity_leaderboard": "Gym Activity Leaderboard",
+  "recent_sessions_timeline": "Recent Sessions Timeline",
+  "controversial_routes": "Controversial Routes",
+"click_view_leaderboard": "Click to view leaderboard",
+"sessions_route_outcomes": "Sessions & Route Outcomes",
+"across": "Across",
+"touches_definition": "Touches = climbs + flashes + attempts",
+"click_view_recent_sessions": "Click to view recent sessions timeline",
+"user_grades_label": "User grades",
+"click_view_all_disputed": "Click to view all disputed routes",
+"no_controversial_routes": "No controversial routes in current range.",
+"status_mix": "Status mix",
+"most_active_gym": "Most Active Gym",
+"routes_label": "routes",
+"no_grade_disagreements_yet": "No grade disagreements yet.",
+"no_grade_disagreements_range": "No grade disagreements in current range.",
+"disagreements_explainer": "Routes with at least one ascent where a climber proposed a different grade. Up = proposed harder; Down = proposed easier. Status bar shades: attempts (left) → flashes → climbed.",
+"route_details": "Route Details",
+"notes_label": "Notes",
+"climbs": "Climbs",
+"flashes": "Flashes",
+"attempts": "Attempts",
+"all_gyms": "All Gyms",
+"overview": "Overview",
+
+
+"Last": "Last"
 }

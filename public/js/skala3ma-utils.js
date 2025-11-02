@@ -375,8 +375,6 @@ function replaceTranslations() {
         const key = element.getAttribute('data-translate-key');
         element.innerHTML = translations[key] || key;
     });
-
-    
 }
 
 function getTranslation(key) {

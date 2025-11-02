@@ -22,6 +22,12 @@ import csv
 import skala_db
 import logging
 import os
+from typing import List
+try:
+    from src.Activity import Activity
+except ImportError:
+    # If running in a context where src isn't a top-level package, adjust as needed.
+    from .src.Activity import Activity  # type: ignore
 
 sql_lock = RLock()
 
@@ -75,7 +81,22 @@ def add_activity(user, gym, routesid, name, date):
     return activity_id
 
 
-def get_activity(session_id):
+def get_activity(session_id) -> Activity | None:
+    """Return an Activity domain object for the given session id.
+
+    For backward compatibility with code expecting the raw dict, use get_activity_raw().
+    """
+    raw = _get_activity(session_id)
+    if raw is None:
+        return None
+    try:
+        return Activity.from_json(raw)
+    except Exception as e:
+        logging.warning(f"Failed to parse Activity {session_id}: {e}; returning None")
+        return None
+
+def get_activity_raw(session_id):
+    """Legacy accessor returning the stored JSON dict for an activity."""
     return _get_activity(session_id)
 
 
@@ -104,28 +125,73 @@ def get_activities_by_gym_routes(gym_id, routes_id):
 
 # add an entry to an existing session
 def add_activity_entry(activity_id, route, status, note, user_grade):
-    entry_id = str(uuid.uuid4().hex)
+    """Add a route attempt to an activity using the domain model.
 
-    route_id = route.get('id')  
-    grade = route.get('grade')
+    Parameters:
+      activity_id: str - the session/activity identifier
+      route: dict - legacy route metadata dict (must contain at least 'id' and 'grade')
+      status: str - attempt status (attempted|climbed|flashed)
+      note: str - optional user note
+      user_grade: str - optional proposed grade
+    Returns: updated Activity as lean dict (with attempts + distinct routes)
+    """
+    from src.RouteAttempt import RouteAttempt  # local import to avoid circulars if any
+    from src.Route import Route
 
     activity = get_activity(activity_id)
-    session_entry = {"id": entry_id, "route_id": route_id, "status": status, "note": note, 
-                     "grade": grade, "user_grade": user_grade,
-                   }
-    session_entry = {**route, **session_entry}
-    activity.get('routes').append(session_entry)
-    # write this competition to db
-    _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
+    if activity is None:
+        return None
 
+    # Build a Route object from incoming route dict (minimal fields tolerated)
+    route_obj = Route(
+        id=route.get('id', route.get('route_id', '')),
+        routenum=str(route.get('routenum', '')),
+        line=str(route.get('line', '')),
+        colorfr=route.get('colorfr', ''),
+        color1=route.get('color1', ''),
+        color2=route.get('color2', ''),
+        grade=route.get('grade', ''),
+        color_modifier=route.get('color_modifier', 'solid'),
+        name=route.get('name', ''),
+        openedby=route.get('openedby', ''),
+        opendate=route.get('opendate', ''),
+        notes=route.get('notes', ''),
+    )
+
+    attempt = RouteAttempt.from_route(
+        route_obj,
+        status=status,
+        user_grade=user_grade,
+        note=note,
+    )
+
+    # Use Activity.add_route_attempt (appends to attempts list; legacy flattened handled on persist)
+    activity.add_route_attempt(attempt)
+
+    # Persist (default legacy flattened to maintain storage format)
+    update_activity(activity)
+
+    return activity.to_dict()
+
+
+def update_activity(activity: Activity, *, legacy_flatten: bool = True) -> Activity | None:
+    """Persist an Activity domain object.
+
+    By default writes the legacy flattened representation (routes list with attempts merged) to avoid
+    breaking existing stored format. Set legacy_flatten=False to store lean form with separate attempts.
+    """
+    if activity is None or not isinstance(activity, Activity):
+        return None
+    payload = activity.to_dict(legacy_flatten=legacy_flatten)
+    _update_activity_jsondata(activity.id, payload)
     return activity
 
-
-def update_activity(activity_id, activity_json):
-    if activity_json is None or activity_id is None:
+def update_activity_legacy(activity_id: str, activity_json: dict):
+    """Backward compatible wrapper using original signature (activity_id, activity_json)."""
+    if activity_id is None or activity_json is None:
         return None
-    # write this competition to db
     _update_activity_jsondata(activity_id, activity_json)
+    return activity_json
 
 
 def delete_activity(activity_id):
@@ -154,15 +220,12 @@ def delete_activity(activity_id):
 
 def delete_activity_route(activity_id, entry_id):
     activity = get_activity(activity_id)
-
     if activity is None:
         return None
-    for route_index, route in enumerate(activity['routes']):
-        if route['id'] == entry_id:
-            activity['routes'].pop(int(route_index))
-    _update_activity(activity_id, activity.get("user_id"), activity.get("gym_id"), activity.get("routes_id"), activity);
-
-    return activity
+    activity.delete_route_attempt(entry_id)
+    # Persist changes
+    update_activity(activity)  # default flattened persist
+    return activity.to_dict()
 
 
 def get_activities_by_routes_id(routes_id):
@@ -215,25 +278,25 @@ def get_activity_routes_by_gym_id(gym_id):
         sql_lock.release()
 
 
-def get_activities_by_gym_id(gym_id):
+def get_activities_by_gym_id(gym_id) -> List[Activity]:
+    """Return list of Activity domain objects for a given gym_id.
+
+    Each row's JSON is parsed via Activity.from_json, which also constructs structured RouteAttempt objects
+    from the legacy flattened 'routes' list.
+    """
+    activities: List[Activity] = []
     try:
         sql_lock.acquire()
-
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
-
-        # Query to retrieve activities that contain the given route_id
         cursor.execute(f"SELECT jsondata FROM {activities_TABLE} WHERE gym_id = ?", [str(gym_id)])
-        rows = cursor.fetchall()
-
-        matching_entries = []
-
-        for row in rows:
-            activity = json.loads(row[0])
-            matching_entries.append(activity)
-
-        return matching_entries
-
+        for row in cursor.fetchall():
+            raw = json.loads(row[0])
+            try:
+                activities.append(Activity.from_json(raw))
+            except Exception as e:
+                logging.warning(f"Failed to parse Activity for gym {gym_id}: {e}")
+        return activities
     finally:
         db.close()
         sql_lock.release()

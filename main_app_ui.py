@@ -557,15 +557,15 @@ def fsgtlogin(error=None):
 
 
 @app_ui.route('/activities', methods=['GET'])
-@login_required
 def activities():
-    user = competitionsEngine.get_user_by_email(session['email'])
+    #user = competitionsEngine.get_user_by_email(session['email'])
 
     return render_template('activities.html',
-                           user=user,
+                           #user=user,
                            reference_data=competitionsEngine.reference_data,
                            today=date.today()
                            )
+
 
 
 #@app_ui.route('/activities/<activity_id>', methods=['GET'], description='returns activity-detail.html')
@@ -574,14 +574,14 @@ def activities():
 def activity_detail(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
     activity = activity_engine.get_activity(activity_id)
-    gym = competitionsEngine.get_gym(activity['gym_id'])
+    gym = competitionsEngine.get_gym(activity.gym_id)
 
     #gym = competitionsEngine.get_gym(journey['gym_id'])
 
-    if activity.get('routes_id') is None:
+    if activity.routes_id is None:
         routes = competitionsEngine.get_routes("7134a8ef-fa2e-4672-a247-115773183bcd")  # should return  Nanterre routes
     else:
-        routes = competitionsEngine.get_routes(activity['routes_id'])
+        routes = competitionsEngine.get_routes(activity.routes_id)
 
     return render_template('activity-detail.html',
                            user=user,
@@ -1144,6 +1144,7 @@ def myskala():
 
 
 
+
 @app_ui.route('/mygyms')
 @login_required
 def get_mygyms():
@@ -1176,6 +1177,18 @@ def get_mygyms():
                            logged_email=email,
                            logged_name=email,
                             **session)
+
+
+@app_ui.route('/myactivities', methods=['GET'])
+@login_required
+def my_activities():
+    user = competitionsEngine.get_user_by_email(session['email'])
+
+    return render_template('user-activity.html',
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           today=date.today()
+                           )
 
 
 @app_ui.route('/competitionDetails/<competitionId>')

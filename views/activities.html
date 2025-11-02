@@ -10,540 +10,1022 @@
 
 
 
-    <style>
-        /* Style for the modal dialog container */
-        .modal-container {
-            display: none;
-            position: fixed;
-            z-index: 1023;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        /* Style for the modal dialog box */
-        .modal-box {
-            background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width:max-content;
-            
-            display: flex;
-            
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-        }
-
-        /* Style for the close button */
-        .close-button {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 30px;
-            color: #aaa;
-            font-weight: bold;
-            cursor: pointer;
-        }
-    </style>
-
     
+<div name='container' style="  margin: 0.1rem 0.1rem ">
 
+<style>
+/* Base summary & activity styles */
+.activities-summary { display:flex; flex-wrap:wrap; gap:1rem;}
+.summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+.summary-card.highlight { border:2px solid #2ecc71; }
+.summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+.summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+.summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+.summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
+.route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#f1f3f4; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
+.route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
+.grade-original { font-weight:600; }
+.timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
+.timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
+.timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
+.status-icon { width:20px; height:20px; vertical-align:middle; }
+.status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
+.route-row:last-child { border-bottom:none; }
+.route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
+.route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.85rem; }
+.route-original .ro-name { font-size:.9rem; font-weight:600; }
+.route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.75rem; }
+.route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
+.route-climb .note-snippet { font-size:.7rem; }
+.soft { color:#2e86de; font-weight:600; }
+.hard { color:#c0392b; font-weight:600; }
+.flash { font-style:italic; }
+.note-snippet { font-size:.7rem; color:#444; background:#f1f3f4; padding:.25rem .45rem; border-radius:6px; }
+.leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
+.leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
 
-    
-    <div id="modal" class="modal-container">
-        
-        <div id="modal-box" class="modal-box">
-           
-            <form action="#" enctype="multipart/form-data"  method="POST">
-                <style>
-                    .form-row-heading {
-                      display: flex;
-                      justify-content: center;
-                      align-items: baseline;
-                      margin: 10px;
-                      font-size: 20px;
-                      color: #292424;
-                      font-weight: bold;
-                      vertical-align: bottom;
-                    }
-                    .form-row {
-                      display: flex;
-                      justify-content: center;
-                      align-items: center;
-                      margin: 10px;
-                    }
-                  
-                    .form-row label {
-                      text-align: right;
-                      margin-right: 6px;
-                      flex: 1;
-                    }
-                  
-                    .form-row input,
-                    .form-row select,
-                    .form-row textarea {
-                      flex: 1;
-                    }
-                  </style>
+.gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
+.badge.flashes { background:#efcc05; }
+.badge.attempts { background:#d73038; }
+.badge.climbs { background:#41ac49; }
+.contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
+.distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
+.empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
+.section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
+.big-number { font-size:2.2rem; font-weight:800; }
+.scroll-h { overflow-x:auto; }
+/* Summary (renderSummary) refactored styles */
+.gym-flex { display:flex; align-items:center; gap:.75rem; margin:.35rem 0; }
+.lh-1 { line-height:1; }
+.gym-meta { font-size:.6rem; opacity:.75; margin-top:.25rem; }
+.gym-click-line { font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline; }
+.outcomes-flex { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
+.touches-block { min-width:120px; }
+.sessions-block { min-width:100px; }
+.stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
+.across-line { font-size:.55rem; opacity:.65; }
+.status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
+.status-badge { font-size:.7rem; }
+.touches-def { font-size:.5rem; opacity:.65; margin-top:.25rem; }
+.click-recent { font-size:.5rem; opacity:.55; margin-top:.3rem; text-decoration:underline; }
+/* Controversial route top card */
+.contro-title { margin:0 0 .4rem; }
+.contro-none { font-size:.6rem; opacity:.7; }
+.contro-flex { display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start; }
+.contro-left { flex:1 1 200px; min-width:180px; }
+.contro-right { flex:1 1 220px; min-width:200px; }
+.contro-name { font-size:.8rem; font-weight:600; }
+.contro-gym { font-size:.55rem; opacity:.75; }
+.opened-meta { font-size:.55rem; margin:.35rem 0 .5rem; padding:.3rem .5rem; border-radius:6px; }
+.contro-set-grade { font-size:.6rem; }
+.contro-disagreements { font-size:.55rem; margin-top:.4rem; }
+.contro-status-mix { font-size:.55rem; }
+.grades-label { font-size:.6rem; margin-bottom:.25rem; }
+.grades-wrap { display:flex; flex-wrap:wrap; gap:.4rem; }
+.click-view-all { font-size:.55rem; margin-top:.5rem; text-decoration:underline; }
+/* Additional detail section styles */
+.leaderboard-col { display:flex; flex-direction:column; gap:.6rem; }
+.leaderboard-name-row { display:flex; justify-content:space-between; align-items:center; }
+.leaderboard-gym-name { font-size:.9rem; }
+.leaderboard-session-count { font-size:.6rem; opacity:.7; }
+.leaderboard-badges { margin:.4rem 0 .3rem; }
+.leaderboard-unique { font-size:.6rem; opacity:.7; }
+.contro-route-title { margin:0 0 .3rem; }
+.contro-route-gymline { font-size:.7rem; margin-bottom:.2rem; }
+.opened-meta { background:#f1f3f4; }
+.contro-flex-min { display:flex; flex-wrap:wrap; gap:.6rem; }
+.contro-grades-label { margin-top:.4rem; }
+.contro-notes { margin-top:.4rem; font-size:.6rem; }
+/* Overlay & disagreement details */
+.disagreements-grid { display:grid; grid-template-columns:minmax(230px, 320px) minmax(140px,220px) minmax(110px,140px) 1fr; gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+.disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+.dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
+.route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
+.route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
+.route-dis-flex .route-meta .route-gym { opacity:.85; }
+.route-dis-flex .route-meta .route-open { opacity:.85; }
+.chip-grade { display:inline-block; padding:.18rem .35rem; border-radius:14px; font-size:.8rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
+.chip-grade.up { background:#ffd9d9; color:#c0392b; }
+.chip-grade.down { background:#d9ecff; color:#1e5fa3; }
+.tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
+.badge-mini { background:#f1f3f4; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
+.disagreements-summary-bar { height:6px; width:100%; background:#f1f3f4; border-radius:4px; position:relative; margin-top:.3rem; }
+.disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
+.route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; flex-wrap:nowrap; }
+.route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
+.route-meta { flex:1 1 auto; }
+@media (max-width: 600px) { /* stack route details vertically on narrow screens */
+    .route-dis-flex { flex-direction:column; align-items:flex-start; }
+    .route-color-box { margin-bottom:.4rem; }
+}
+.disagreements-summary-bar span.attempts { background:#d73038; left:0; }
+.disagreements-summary-bar span.flashes { background:#efcc05; }
+.disagreements-summary-bar span.climbs { background:#41ac49; }
+/* Month filter extracted styles */
+#monthFilter { margin:.4rem 0 1.2rem; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+#monthFilter .filter-grid { display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end; }
+#monthFilter .filter-group { flex:1 1 auto; min-width:180px; }
+.filter-label { font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem; }
+.filter-input-month { font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px; }
+.filter-select { font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff; }
+.filter-btn { font-size:.65rem; padding:.45rem .85rem; border:0; border-radius:8px; font-weight:600; cursor:pointer; }
+.filter-btn.primary { background:#53be6b; color:#fff; }
+.filter-btn.secondary { background:#f1f3f4; color:#222; }
+.filter-range-indicator { flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7; }
+/* Consolidated dark mode styles */
 
-            <div id="hidden_message" class="form-row" style=" font: bold 24px;color: red; align-content: center;"></div>
-           
-            <div id="mainModalMenu">
-                
-            
-                <div class="form-row">
-                <span class="close-button" onclick="hideModal()">&times;</span>
-                <h2>{{ reference_data['current_language'].add_activity }}</h2>
+/* Timeline & controversial details refactor */
+.timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
+.diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
+.route-color-fallback { width:55px; height:20px; background:#ddd; border-radius:4px; }
+.empty-state.pad-medium { padding:2rem 1rem; }
+.disagreements-explainer { font-size:.65rem; max-width:760px; margin:.2rem 0 1rem; opacity:.75; }
+.dis-updown { margin-top:.25rem; font-size:.5rem; }
+.statuses-label { display:block; margin-bottom:.25rem; }
+.status-breakdown { font-size:.5rem; margin-top:.25rem; }
+.route-color-box .route-color-fallback { margin-bottom:.3rem; }
+/* Mobile layout override for controversial routes grid: allow wrapping with route detail cell spanning full width */
+@media (max-width: 700px) {
+    .disagreements-grid { display:flex; flex-wrap:wrap; }
+    .disagreements-grid .head { flex:1 1 140px; min-width:140px; }
+    .disagreements-grid .dis-cell.route-detail { flex:1 1 100%; min-width:100%; }
+    .disagreements-grid .dis-cell:not(.route-detail) { flex:1 1 160px; min-width:140px; }
+}
+</style>
+
+        <!-- Filter moved to top -->
+        <div id="monthFilter">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="fromMonth" class="filter-input-month" />
                 </div>
-                <div class="form-row">
-                <label for="gym_id">{{ reference_data['current_language'].where }}:</label>
-                <select name="gym_id" id="gym_id">
-                    <option value="-1" size="20" >{{reference_data['clubs'][gym_id]}} -- {{gym_id}}</option>
-                    
-        
-                </select>
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="toMonth" class="filter-input-month" />
                 </div>
-                <div class="form-row">
-           
-                        <label for="activity_name">Name:</label>
-                        <input type="text" id="activity_name" name="activitiy_name" value="{{ reference_data['current_language'].activity}}" size="40">
-                      </div>
-                      <div class="form-row">
-                    
-                <label for="date">{{ reference_data['current_language'].date }}:</label> <input id='date' name="date" size="30" type="date" value="{{today}}"/>
-                        </div>
-
-
-                <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData();">Create</button>&nbsp;
-                
-                <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
-            </div> 
+                <div class="filter-grid" style="gap:.5rem; align-items:flex-end;">
+                    <button id="applyMonthFilter" class="filter-btn primary" data-translate-key="Apply">Apply translation</button>
+                    <button id="resetRange" class="filter-btn secondary" data-translate-key="Reset">Reset translation</button>
+                    <div class="filter-group">
+                        <label class="filter-label"></label>
+                        <select id="gymFilter" class="filter-select"></select>
+                    </div>
+                </div>
+                <div id="activeRangeIndicator" class="filter-range-indicator"></div>
             </div>
-
-                  
-                    </form>
-            </form>
-            
         </div>
-        
+    <div id="summary" class="activities-summary"></div>
+
+    <div id="leaderboardSection" style="display:none;">
+        <h4 class="section-title" data-translate-key="gym_activity_leaderboard">Gym Activity Leaderboard</h4>
+        <div id="gymLeaderboard" class="leaderboard"></div>
+    </div>
+
+    <!-- Recent Sessions Timeline (wrapped for visibility control) -->
+    <div id="timelineSection" style="display:none;">
+        <h4 class="section-title" data-translate-key="recent_sessions_timeline">Recent Sessions Timeline</h4>
+        <div id="timeline"></div>
+    </div>
+
+    <div id="controversialSection" style="display:none;">
+        <h4 class="section-title" data-translate-key="controversial_routes">Controversial Routes</h4>
+        <div id="controversialDetails"></div>
     </div>
 
 
-
-
-	<div name='container'>
-
-		{% include "competition-menu.html" %}
-
-		<div class="text-center heading-section" >
-            
-            <h3>{{ reference_data['current_language'].activities}}
-                <!--div id="toggl-icon" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-            outline-style:solid; width: 45px; height: 45px; padding: 0px 8px 8px 8px; border-radius: 32%;display: inline-block; margin: 6px 4px; background: #eff3ef ">
-            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #46cb86;"></i></a>
-            </div-->
-            <a href="#" onClick="showModal()"><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #53be6b;"></i></a>
-            </h3>
-		</div>
-            
-		<div class="container text-center heading-section" >
-        	
-            <div  id="activitiesChart"></div>
-        </div>
-            
-        
-        <div class="container heading-section">
-        
-            <div id="activities"></div>
-        </div>
-              
-             
-			 
-
-		</div>
-
-
-        <br>
-    </div>
-
+    <div id="rawActivities" style="display:none"></div>
 </div>
-<!-- fh5co-blog-section -->
-
-</div>
-
-
 
 <script>
-    // Get the modal dialog container
-    var modal = document.getElementById("modal");
-    var mainModalMenuDiv = document.getElementById('mainModalMenu');
-    var modalBoxDiv = document.getElementById('modal-box');
-    var currentRow;
-    var mod_type;
+        let activitiesData = [];
+        let gymsData = [];
+        let currentActivitiesView = []; // may hold filtered subset
+        let lastFilter = null; // {from:{y,m}, to:{y,m}}
+        // (Removed dynamic translation scheduler; we now create real DOM nodes early for static translation pass.)
 
-
-    function showEditDiv(){
-        mainModalMenuDiv.style.display='none'
-        editDiv.style.display='block';
+    async function fetchJson(url){
+        const r = await fetch(url);
+        if(!r.ok) throw new Error("Failed to fetch " + url);
+        return r.json();
     }
 
-    function editContent(){
-        mod_type='save'
-        showEditDiv();
-        return false;
-    }
-
-    function deleteContent(){
-        mod_type='delete'
-        document.getElementById('routenum').value=-1
-        var data = getFormData();
-        
-        postData(data)
-        //mainModalMenuDiv.style.display='none'
-        //editDiv.style.display='none';
-        //modal.style.display='none'
-        
-    }
-
-    // Function to display the modal dialog
-    function showModal() {
-        
-        mainModalMenuDiv.style.display='block'
-        
-        modal.style.display = "block";
-    }
-
-    // Function to hide the modal dialog
-    function hideModal() {
-        modal.style.display = "none";
-    }
-
-    function clearModal(){
-        document.getElementById('hidden_message').textContent='';
-        
-        document.getElementById('activity_name').value = '{{ reference_data['current_language'].activity}}';
-        
-    }
-
-
-    function closeDialog(){
-        clearModal();
-        hideModal();
-    }
-    
-    function saveData() {
-            var data = getFormData();
-            if (Object.keys(data).length === 0) 
-                return;
-            postData(data)
-
-        }
-
-    function getFormData() {
-        const formData = {};
-
-        //console.log('getFormData')
-        
-        const gym_id = document.getElementById('gym_id').value;
-        formData['gym_id'] = gym_id;
-        if (gym_id == -1){
-            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5324'] }}";
-            return {};
-        }
-
-        const activity_name = document.getElementById('activity_name').value;
-        formData['activity_name'] = activity_name;
-
-        const date = document.getElementById('date').value;
-        formData['date'] = date;
-  
-        return formData;
-    }
-        
-
-    function postJsonDataToServer() {
-        var data = getFormData();
-        if (data == {}) return;
-            postData(data)
-
-        
-        
-    }
-
-    function postData(data){
-        fetch('/api1/activity', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                //console.log('error response',response.json)
-                //return Promise.reject(response);
-                throw new Error('Network response was not ok');
+    async function loadAll(){
+        try {
+            [gymsData, activitiesData] = await Promise.all([
+                fetchJson('/api1/gyms'),
+                fetchJson('/api1/activities')
+            ]);
+            // Enrich gyms with logo images from individual gym endpoint
+            if(Array.isArray(gymsData) && gymsData.length){
+                await enrichGymsWithLogos();
             }
-            return response.json();
-        })
-        .then(data => {
-            // redirect to the new activity page
-            window.location.href = "/activities/"+data.id;
-    
-        })
-        .catch(error => {
-            console.error('catch error:', error);
-            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+            // activities endpoint shape assumption: { activities: [ ... ] }
+            if(activitiesData.activities) activitiesData = activitiesData.activities; // normalize
+                currentActivitiesView = activitiesData;
+                setDefaultMonthInputs();
+                populateGymFilter();
+                renderEverything();
+                attachMonthEvents();
+                enhanceMonthInputs();
+                replaceTranslations();
+        } catch(e){
+            console.error(e);
+            const sum = document.getElementById('summary');
+            if(sum){
+                sum.textContent='';
+                const errDiv = document.createElement('div');
+                errDiv.className='empty-state';
+                errDiv.textContent='Error loading activity data.';
+                sum.appendChild(errDiv);
+            }
+        }
+    }
 
-            
-            
+    async function enrichGymsWithLogos(){
+        // Fetch each gym detail to obtain logoimg; ignore failures gracefully
+        await Promise.all(gymsData.map(async g => {
+            if(!g || !g.id) return;
+            try {
+                const detail = await fetchJson(`/api1/gym/${g.id}`);
+                // Expect field logoimg like "logo-ESN-HD-copy-1030x1030.png"
+                if(detail && detail.logoimg){
+                    g.logoimg = detail.logoimg;
+                    // normalize to logo_img_id expected by rendering logic
+                    g.logo_img_id = detail.logo_img_id || detail.logoimg;
+                }
+            } catch(err){
+                console.warn('Failed to fetch gym detail/logo for id', g.id, err.message);
+            }
+        }));
+    }
+
+        function computeStats(sourceActivities){
+            const acts = sourceActivities || currentActivitiesView || activitiesData;
+            const gymMap = {}; // gym_id -> stats
+        const routeDisagreements = {}; // route_id -> { grade, gym_id, occurrences, disagreements, userGrades:Set, notes:[], name }
+        let earliest = null, latest = null;
+
+            acts.forEach(act => {
+            const dateStr = act.date || act.starttime; // variable naming differences
+            const d = new Date(dateStr);
+            if(!earliest || d < earliest) earliest = d;
+            if(!latest || d > latest) latest = d;
+
+            if(!gymMap[act.gym_id]){
+                const gymRef = gymsData.find(g=> g.id == act.gym_id) || {};
+                gymMap[act.gym_id] = { gym_id: act.gym_id, gym_name: act.gym_name || gymRef.name || 'Unknown', activities:0, climbs:0, flashes:0, attempts:0, uniqueRoutes:new Set(), logo_img_id: gymRef.logo_img_id || gymRef.logoimg };
+            }
+            const g = gymMap[act.gym_id];
+            g.activities++;
+            (act.routes || []).forEach(r => {
+                g.uniqueRoutes.add(r.route_id || r.id);
+                if(r.status === 'climbed') g.climbs++;
+                else if(r.status === 'flashed') g.flashes++;
+                else if(r.status === 'attempted') g.attempts++;
+
+                const key = r.route_id || r.id;
+                if(!routeDisagreements[key]){
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), notes:[], name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
+                } else {
+                    // Fill openedby/opendate if missing and present on this route occurrence
+                    if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
+                    if(!routeDisagreements[key].opendate && r.opendate) routeDisagreements[key].opendate = r.opendate;
+                    if(!routeDisagreements[key].color1 && r.color1) routeDisagreements[key].color1 = r.color1;
+                    if(!routeDisagreements[key].color_modifier && r.color_modifier) routeDisagreements[key].color_modifier = r.color_modifier;
+                }
+                const rd = routeDisagreements[key];
+                rd.occurrences++;
+                rd.statuses[r.status] = (rd.statuses[r.status]||0)+1;
+                if(r.note) rd.notes.push(r.note.trim());
+                if(r.user_grade) rd.userGrades.add(r.user_grade);
+                if(r.user_grade && r.user_grade !== r.grade){
+                    rd.disagreements++;
+                }
+            });
         });
 
-       
+        // determine most active gym by total route touches (climbs + flashes + attempts)
+        const gymsArr = Object.values(gymMap).map(g => ({...g, uniqueRouteCount: g.uniqueRoutes.size, touches: g.climbs + g.flashes + g.attempts }));
+        gymsArr.sort((a,b)=> (b.touches) - (a.touches));
+        const topGym = gymsArr[0];
+
+        // most controversial route: highest disagreements ratio or count
+        const controversial = Object.values(routeDisagreements)
+            .filter(r=>r.occurrences>1)
+            .sort((a,b)=> {
+                const aMetric = a.disagreements; // could refine by ratio
+                const bMetric = b.disagreements;
+                if(bMetric === aMetric) return b.occurrences - a.occurrences;
+                return bMetric - aMetric;
+            })[0];
+
+            return { gymsArr, topGym, controversial, timeframe: { earliest, latest }, routeDisagreements };
     }
 
+    let showLeaderboard = false;
+    let showTimeline = true; // default: show sessions timeline on initial load
+    let showControversial = false;
 
-    
-var activities;
-var gyms;
-
-function getData()
-{
-    fetch(`/api1/gyms`)
-    .then(response => response.json())
-    .then(data => {
-        // use the retrieved data here
-        //console.log("retrieved data in activities.js")
-        //console.log(data);
-        gyms=data
-        processGyms(gyms);
-    })
-    .catch(error => console.error(error));
-    
-
-    fetch(`/api1/activities`)
-    .then(response => response.json())
-    .then(data => {
-        // use the retrieved data here
-        //console.log(data);
-        activities=data
-        processActivities(activities);
-
-            
-
-    })
-    .catch(error => console.error(error));
-
-}
-
-function processActivities(activities)
-{
-    if (activities.activities.length == 0){
-        // add class btn-block to competition_update_button 
-        //var button = document.getElementById("competition_update_button");
-        //button.className += " btn-block";
-       // return;
-       showModal();
-       
-
-    }
-    //console.log(activities)
-
-    getActivityChart();
-    processActivityChartData(activities)
-
-    for (var i = 0; i < activities.activities.length; i++) {
-        addActivityEntry(activities.activities[i]);
-    }	  
-}
-
-function processGyms(gyms)
-{
-    for (var i = 0; i < gyms.length; i++) {
-        //add gym option to gym_id select field
-        var option = document.createElement("option");
-        option.text = gyms[i].name;
-        option.value = gyms[i].id;
-        var select = document.getElementById("gym_id");
-        select.appendChild(option);
-
-    }	  
-}	
-
-
-function addActivityEntry(text) 
-{
-    //console.log(text)
-    if (!text) return;
-    // Create a new row div
-    date = text.date
-    var row = document.createElement('div');
-    row.addEventListener('click', function() {
-        location.href = `/activities/${text.id}`
-        }, false);
-    row.className = 'row activity-entry ';
-
-    // Create a new activity-entry div
-    var entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = date;
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col-2';
-    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.name+'</a>';
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.routes.length+'</a>';
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = text.gym_name;
-    row.appendChild(entry);
-
-    
-    // Append the row to the activities container
-    var activities = document.getElementById('activities');
-    activities.appendChild(row);
-}
-
-
-    var dateChartOptions;
-
-    function getActivityChart()
-    {
-        dateChartOptions = {
-          series: [{
-          name: 'your_route_count',
-          data: [
-            ]
-        },{
-          name: 'average_route_count',
-          data: [
-            ]
-        }
-    ],
-          chart: {
-          type: 'bar',
-          height: 280
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '100%',
-            endingShape: 'rounded'
-          },
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          show: true,
-          width: 2,
-          colors: ['transparent']
-        },
-        xaxis: {
-          categories: [],
-        },
-        yaxis: {
-          title: {
-            text: ''
-          },
-          labels: {
-            show: true,
-            formatter: function (val) {
-              return val + " oo ";
+    function renderSummary(){
+        const { gymsArr, topGym, controversial, timeframe } = computeStats();
+        if(!gymsArr.length){
+            const sum = document.getElementById('summary');
+            if(sum){
+                sum.textContent='';
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className='empty-state';
+                emptyDiv.dataset.translateKey='no_public_sessions';
+                emptyDiv.textContent='No recorded public sessions yet.';
+                sum.appendChild(emptyDiv);
             }
-          }
-        },
-        fill: {
-          opacity: 1
-        },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return "" + getTranslation(val) 
-            },
-            title: {
-              formatter: (seriesName) => getTranslation(seriesName),
-          },
-          }
-        },
-        labels: {
-            show: false,
-            formatter: function (val) {
-              return val + "%";
-            }
-          },
-          
-        legend: {
-          position: 'bottom',
-          horizontalAlign: 'center',
-          offsetX: 40,
-          formatter: function( val) {
-            return getTranslation(val) + " "
-            }
+            return;
         }
-        };
-        //var datesChart = new ApexCharts(document.getElementById("activitychart"), dateChartOptions);
-        //datesChart.render()
+        const totalActivities = gymsArr.reduce((s,g)=> s+g.activities,0);
+        const totalClimbs = gymsArr.reduce((s,g)=> s+g.climbs,0);
+        const totalFlashes = gymsArr.reduce((s,g)=> s+g.flashes,0);
+        const totalAttempts = gymsArr.reduce((s,g)=> s+g.attempts,0);
+        const totalTouches = totalClimbs + totalFlashes + totalAttempts;
+        const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
+        const disagreeCount = controversial ? controversial.disagreements : 0;
+        // Build combined controversial route card with DOM nodes (no innerHTML template)
+        function buildControversialDom(){
+            const frag = document.createDocumentFragment();
+            const title = document.createElement('h5');
+            title.className = 'contro-title';
+            title.dataset.translateKey = 'most_controversial_route';
+            title.textContent = 'Most Controversial Route';
+            frag.appendChild(title);
+            if(!controversial){
+                const noneDiv = document.createElement('div');
+                noneDiv.className = 'contro-none';
+                noneDiv.dataset.translateKey = 'no_controversial_routes';
+                noneDiv.textContent = 'No controversial routes in current range.';
+                frag.appendChild(noneDiv);
+                return frag;
+            }
+            const flexWrap = document.createElement('div');
+            flexWrap.className = 'contro-flex';
+            // Left block
+            const left = document.createElement('div');
+            left.className = 'contro-left';
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'contro-name';
+            nameDiv.textContent = controversial.name || 'Unnamed Route';
+            left.appendChild(nameDiv);
+            const gymDiv = document.createElement('div');
+            gymDiv.className = 'contro-gym';
+            gymDiv.innerHTML = `<span data-translate-key="gym">Gym</span>: ${controversial.gym_name}`;
+            left.appendChild(gymDiv);
+            if(controversial.openedby || controversial.opendate){
+                const openedMetaDiv = document.createElement('div');
+                openedMetaDiv.className = 'opened-meta';
+                openedMetaDiv.innerHTML = `<span data-translate-key="opened_by">Opened by</span> <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate?` · <span data-translate-key="set">Set</span>: ${controversial.opendate}`:''}`;
+                left.appendChild(openedMetaDiv);
+            }
+            const setGradeDiv = document.createElement('div');
+            setGradeDiv.className = 'contro-set-grade';
+            setGradeDiv.innerHTML = `<span data-translate-key="set_grade">Set grade</span>: <strong>${controversial.grade}</strong>`;
+            left.appendChild(setGradeDiv);
+            //const disagreementsDiv = document.createElement('div');
+            //disagreementsDiv.className = 'contro-disagreements';
+            //disagreementsDiv.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span>`;
+            //left.appendChild(disagreementsDiv);
+            const statusMixDiv = document.createElement('div');
+            statusMixDiv.className = 'contro-status-mix';
+            statusMixDiv.innerHTML = `<span data-translate-key="status_mix">Status mix</span>: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}`;
+            left.appendChild(statusMixDiv);
+            flexWrap.appendChild(left);
+            // Right block
+            const right = document.createElement('div');
+            right.className = 'contro-right';
+            const gradesLabel = document.createElement('div');
+            gradesLabel.className = 'grades-label';
+            gradesLabel.dataset.translateKey = 'user_grades_label';
+            gradesLabel.textContent = 'User grades';
+            right.appendChild(gradesLabel);
+            const gradesWrap = document.createElement('div');
+            gradesWrap.className = 'grades-wrap';
+            const userGrades = Array.from(controversial.userGrades).sort();
+            userGrades.forEach(g=> {
+                const pill = document.createElement('span');
+                pill.className = 'distribution-pill';
+                pill.textContent = g;
+                gradesWrap.appendChild(pill);
+            });
+            right.appendChild(gradesWrap);
+            const clickViewAll = document.createElement('div');
+            clickViewAll.className = 'click-view-all';
+            clickViewAll.dataset.translateKey = 'click_view_all_disputed';
+            clickViewAll.textContent = 'Click to view all disputed routes';
+            right.appendChild(clickViewAll);
+            flexWrap.appendChild(right);
+            frag.appendChild(flexWrap);
+            return frag;
+        }
+        const summaryEl = document.getElementById('summary');
+        summaryEl.innerHTML = ''; // clear
+        // Most Active Gym card
+        const gymCard = document.createElement('div');
+        gymCard.className = 'summary-card cursor-pointer';
+        gymCard.id = 'mostActiveGymCard';
+        gymCard.setAttribute('role','button');
+        const h5Gym = document.createElement('h5');
+        h5Gym.dataset.translateKey = 'most_active_gym';
+        h5Gym.textContent = 'Most Active Gym';
+        gymCard.appendChild(h5Gym);
+    const gymFlex = document.createElement('div');
+    gymFlex.className = 'gym-flex';
+        if(topGym.logo_img_id){
+            const img = document.createElement('img');
+            img.src = `/image/${topGym.logo_img_id}`;
+            img.alt = `${topGym.gym_name} logo`;
+            img.className = 'summary-gym-logo';
+            img.loading = 'lazy';
+            gymFlex.appendChild(img);
+        }
+        const gymInfo = document.createElement('div');
+        const metricDiv = document.createElement('div');
+    metricDiv.className = 'summary-metric lh-1';
+        metricDiv.textContent = topGym.gym_name;
+        gymInfo.appendChild(metricDiv);
+    const metaLine = document.createElement('div');
+    metaLine.className = 'gym-meta';
+        metaLine.innerHTML = `${topGym.touches} <span data-translate-key="touches">touches</span> · ${topGym.activities} <span data-translate-key="sessions_label">sessions</span> · ${topGym.uniqueRouteCount} <span data-translate-key="unique_routes">unique routes</span>`;
+        gymInfo.appendChild(metaLine);
+    const clickLine = document.createElement('div');
+    clickLine.className = 'gym-click-line';
+        clickLine.dataset.translateKey = 'click_view_leaderboard';
+        clickLine.textContent = 'Click to view leaderboard';
+        gymInfo.appendChild(clickLine);
+        gymFlex.appendChild(gymInfo);
+        gymCard.appendChild(gymFlex);
+        summaryEl.appendChild(gymCard);
+        // Sessions & Outcomes card
+        const sessionsCard = document.createElement('div');
+        sessionsCard.className = 'summary-card cursor-pointer';
+        sessionsCard.id = 'sessionsOutcomesCard';
+        sessionsCard.setAttribute('role','button');
+        const h5Sessions = document.createElement('h5');
+        h5Sessions.dataset.translateKey = 'sessions_route_outcomes';
+        h5Sessions.textContent = 'Sessions & Route Outcomes';
+        sessionsCard.appendChild(h5Sessions);
+    const outcomesFlex = document.createElement('div');
+    outcomesFlex.className = 'outcomes-flex';
+    const touchesBlock = document.createElement('div');
+    touchesBlock.className = 'touches-block';
+    touchesBlock.innerHTML = `<div class='big-number lh-1'>${totalTouches}</div><div class='stat-label' data-translate-key="touches">Touches</div>`;
+        outcomesFlex.appendChild(touchesBlock);
+    const sessionsBlock = document.createElement('div');
+    sessionsBlock.className = 'sessions-block';
+    sessionsBlock.innerHTML = `<div class='lh-1' style='font-size:1.3rem; font-weight:700;'>${totalActivities}</div><div class='stat-label' data-translate-key="sessions_label">Sessions</div>`;
+        outcomesFlex.appendChild(sessionsBlock);
+    const acrossLine = document.createElement('div');
+    acrossLine.className = 'across-line';
+        acrossLine.innerHTML = `<span data-translate-key="across">Across</span> ${gymsArr.length} <span data-translate-key="gyms">gym${gymsArr.length!==1?'s':''}</span>`;
+        outcomesFlex.appendChild(acrossLine);
+        sessionsCard.appendChild(outcomesFlex);
+        const statusStrip = document.createElement('div');
+        statusStrip.className = 'status-strip';
+        statusStrip.innerHTML = `
+            <img class='status-icon' src='${statusIcon("climbed")}' alt='climbed'><span class='badge climbs status-badge'> ${totalClimbs}</span>
+            <img class='status-icon' src='${statusIcon("flashed")}' alt='flashed'><span class='badge flashes status-badge'> ${totalFlashes}</span>
+            <img class='status-icon' src='${statusIcon("attempted")}' alt='attempted'><span class='badge attempts status-badge'> ${totalAttempts}</span>`;
+        sessionsCard.appendChild(statusStrip);
+    const touchesDef = document.createElement('div');
+    touchesDef.className = 'touches-def';
+        touchesDef.dataset.translateKey = 'touches_definition';
+        touchesDef.textContent = 'Touches = climbs + flashes + attempts 111';
+        sessionsCard.appendChild(touchesDef);
+    const clickRecent = document.createElement('div');
+    clickRecent.className = 'click-recent';
+        clickRecent.dataset.translateKey = 'click_view_recent_sessions';
+        clickRecent.textContent = 'Click to view recent sessions timeline';
+        sessionsCard.appendChild(clickRecent);
+        summaryEl.appendChild(sessionsCard);
+    // Controversial top card
+    const controCard = document.createElement('div');
+    controCard.className = 'summary-card controversial cursor-pointer';
+    controCard.id = 'controversialTopCard';
+    controCard.setAttribute('aria-label','Open list of all controversial routes');
+    controCard.appendChild(buildControversialDom());
+    summaryEl.appendChild(controCard);
+        if(controCard){
+            controCard.addEventListener('click', () => {
+                showControversial = true;
+                showLeaderboard = false;
+                showTimeline = false;
+                renderControversialDetails();
+                updateSectionsVisibility();
+                updateCardHighlights();
+            });
+        }
+        if(sessionsCard){
+            sessionsCard.addEventListener('click', () => {
+                showTimeline = true;
+                showLeaderboard = false;
+                showControversial = false;
+                updateSectionsVisibility();
+                updateCardHighlights();
+            });
+        }
+        if(gymCard){
+            gymCard.addEventListener('click', () => {
+                showLeaderboard = true;
+                showTimeline = false;
+                showControversial = false;
+                updateSectionsVisibility();
+                updateCardHighlights();
+            });
+        }
+        updateCardHighlights();
+        // Re-run translation pass now that we've injected dynamic content with data-translate-key attributes
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
     }
 
-    function processActivityChartData(activities)
-	{
-		//console.log('here2');
-		//console.log(fullresponse['F0']);
-		//
-        if (activities == undefined) return;
-        stats=activities.stats
-
-        //console.log(stats)
-        //dateChartOptions.xaxis.title.text='{{ reference_data["current_language"].stat_title_competitions_attended}}';
-        //dateChartOptions.series[0].data[0].x=stats['routes_done']
-        //dateChartOptions.series[0].data[0].y=stats['dates']        
-
-        dateChartOptions.series[0].data= stats['routes_done']
-        dateChartOptions.series[1].data= stats['routes_avg']
-        dateChartOptions.xaxis.categories= stats['dates']
-        dateChartOptions.xaxis.tickAmount = 5
-        dateChartOptions.xaxis.labels = {
-             'rotate': 0
+    function updateCardHighlights(){
+        const cards = [
+            document.getElementById('mostActiveGymCard'),
+            document.getElementById('sessionsOutcomesCard'),
+            document.getElementById('controversialTopCard')
+        ];
+        cards.forEach(c => { if(c) c.classList.remove('highlight'); });
+        if(showTimeline){
+            const c = document.getElementById('sessionsOutcomesCard');
+            if(c) c.classList.add('highlight');
+        } else if(showLeaderboard){
+            const c = document.getElementById('mostActiveGymCard');
+            if(c) c.classList.add('highlight');
+        } else if(showControversial){
+            const c = document.getElementById('controversialTopCard');
+            if(c) c.classList.add('highlight');
         }
-        
-        var datesChart = new ApexCharts(document.getElementById("activitiesChart"), dateChartOptions);
-        datesChart.render();
+    }
+
+        function renderGymLeaderboard(){
+            const { gymsArr, topGym } = computeStats();
+        const container = document.getElementById('gymLeaderboard');
+        container.textContent = '';
+        gymsArr.forEach(g => {
+            const card = document.createElement('div');
+            card.className = 'leaderboard-card';
+            const colFlex = document.createElement('div');
+            colFlex.className = 'leaderboard-col';
+            if(g.logo_img_id){
+                const img = document.createElement('img');
+                img.src = `/image/${g.logo_img_id}`;
+                img.alt = `${g.gym_name} logo`;
+                img.className = 'gym-logo';
+                img.loading = 'lazy';
+                colFlex.appendChild(img);
+            }
+            const nameRow = document.createElement('div');
+            nameRow.className = 'leaderboard-name-row';
+            const strong = document.createElement('strong');
+            strong.className = 'leaderboard-gym-name';
+            strong.textContent = g.gym_name;
+            const sessionSpan = document.createElement('span');
+            sessionSpan.className = 'leaderboard-session-count';
+            sessionSpan.innerHTML = `${g.activities} <span data-translate-key="sessions_label">sessions</span>`;
+            nameRow.appendChild(strong);
+            nameRow.appendChild(sessionSpan);
+            colFlex.appendChild(nameRow);
+            card.appendChild(colFlex);
+            const badges = document.createElement('div');
+            badges.className = 'leaderboard-badges';
+            badges.innerHTML = `<span class='badge climbs'><span data-translate-key="climbs">Climbs</span> ${g.climbs}</span>
+                <span class='badge flashes'><span data-translate-key="flashes">Flashes</span> ${g.flashes}</span>
+                <span class='badge attempts'><span data-translate-key="attempts">Attempts</span> ${g.attempts}</span>`;
+            card.appendChild(badges);
+            const uniqueLine = document.createElement('div');
+            uniqueLine.className = 'leaderboard-unique';
+            uniqueLine.innerHTML = `${g.uniqueRouteCount} <span data-translate-key="unique_routes">unique routes</span>`;
+            card.appendChild(uniqueLine);
+            container.appendChild(card);
+        });
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
+
+        function renderControversialRoute(){
+            const { controversial } = computeStats();
+        const el = document.getElementById('controversialRoute');
+        el.textContent = '';
+        if(!controversial){
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.style.padding = '1rem';
+            empty.dataset.translateKey = 'no_grade_disagreements_yet';
+            empty.textContent = 'No grade disagreements yet.';
+            el.appendChild(empty);
+            return;
+        }
+        const userGrades = Array.from(controversial.userGrades).sort();
+        const title = document.createElement('h5');
+        title.className = 'contro-route-title';
+        title.textContent = controversial.name || 'Unnamed Route';
+        el.appendChild(title);
+        const gymLine = document.createElement('div');
+        gymLine.className = 'contro-route-gymline';
+        gymLine.innerHTML = `<span data-translate-key="gym">Gym</span>: ${controversial.gym_name}`;
+        el.appendChild(gymLine);
+        if(controversial.openedby || controversial.opendate){
+            const openedMeta = document.createElement('div');
+            openedMeta.className = 'opened-meta';
+            openedMeta.innerHTML = `<span data-translate-key="opened_by">Opened by</span>: <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · <span data-translate-key="set">Set</span>: ${controversial.opendate}`:''}`;
+            el.appendChild(openedMeta);
+        }
+        const flexWrap = document.createElement('div');
+        flexWrap.className = 'contro-flex-min';
+        const setGrade = document.createElement('div');
+        setGrade.innerHTML = `<span class='grade-original' data-translate-key="set_grade">Set grade</span>: ${controversial.grade}`;
+        //const disagreementsDiv = document.createElement('div');
+        //disagreementsDiv.innerHTML = `<span data-translate-key="disagreements_label">Disagreements</span>: <strong>${controversial.disagreements}</strong> / ${controversial.occurrences} <span data-translate-key="touches">touches</span>`;
+        const statusMix = document.createElement('div');
+        statusMix.innerHTML = `<span data-translate-key="status_mix">Status mix</span>: C ${controversial.statuses.climbed||0} · F ${controversial.statuses.flashed||0} · A ${controversial.statuses.attempted||0}`;
+        flexWrap.appendChild(setGrade);
+        //flexWrap.appendChild(disagreementsDiv);
+        flexWrap.appendChild(statusMix);
+        el.appendChild(flexWrap);
+    const gradesLabel = document.createElement('div');
+    gradesLabel.className = 'contro-grades-label';
+        gradesLabel.dataset.translateKey = 'user_grades_label';
+        gradesLabel.textContent = 'User grades 22';
+        el.appendChild(gradesLabel);
+        const dist = document.createElement('div');
+        dist.className = 'contro-route-distribution';
+        userGrades.forEach(g => {
+            const pill = document.createElement('span');
+            pill.className = 'distribution-pill';
+            pill.textContent = g;
+            dist.appendChild(pill);
+        });
+        el.appendChild(dist);
+        if(controversial.notes.length){
+            const notesDiv = document.createElement('div');
+            notesDiv.className = 'contro-notes';
+            notesDiv.innerHTML = `<span data-translate-key=\"notes_label\">Notes</span>: ${controversial.notes.slice(0,4).map(n=>`<span class='note-snippet'>${n.substring(0,50)}</span>`).join('')}`;
+            el.appendChild(notesDiv);
+        }
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
+
+        function renderTimeline(){
+            // Sort activities newest first
+            const sorted = [...currentActivitiesView].sort((a,b)=> new Date(b.date||b.starttime) - new Date(a.date||a.starttime));
+        const container = document.getElementById('timeline');
+        container.textContent = '';
+        sorted.forEach(act => {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            const dateStr = act.date || act.starttime;
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'timeline-date';
+            dateDiv.textContent = dateStr;
+            item.appendChild(dateDiv);
+            const header = document.createElement('div');
+            header.className = 'timeline-header';
+            header.innerHTML = `${act.gym_name || 'Unknown Gym'} · ${(act.routes||[]).length} <span data-translate-key="routes_label">route${(act.routes||[]).length!==1?'s':''}</span>`;
+            item.appendChild(header);
+            (act.routes||[]).forEach(r => {
+                const disagree = r.user_grade && r.user_grade !== r.grade;
+                const row = document.createElement('div');
+                row.className = 'route-row';
+                const colorDivWrapper = document.createElement('div');
+                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
+                row.appendChild(colorDivWrapper);
+                const orig = document.createElement('div');
+                orig.className = 'route-original';
+                const numSpan = document.createElement('span');
+                numSpan.className = 'ro-num';
+                numSpan.textContent = `#${r.routenum||''}${r.line?` · L${r.line}`:''}`;
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'ro-name';
+                nameSpan.textContent = r.name || '';
+                orig.appendChild(numSpan);
+                orig.appendChild(nameSpan);
+                if(r.openedby){
+                    const bySpan = document.createElement('span');
+                    bySpan.className = 'ro-openedby';
+                    bySpan.textContent = `by ${r.openedby}`;
+                    orig.appendChild(bySpan);
+                }
+                row.appendChild(orig);
+                const climbDiv = document.createElement('div');
+                climbDiv.className = 'route-climb';
+                const statusImg = document.createElement('img');
+                statusImg.className = 'status-icon';
+                statusImg.src = statusIcon(r.status);
+                statusImg.alt = r.status;
+                climbDiv.appendChild(statusImg);
+                if(r.user_grade){
+                    const gradeSpan = document.createElement('span');
+                    if(r.user_grade !== r.grade) gradeSpan.className = gradeHarder(r.user_grade,r.grade)?'hard':'soft';
+                    gradeSpan.textContent = r.user_grade;
+                    climbDiv.appendChild(gradeSpan);
+                }
+                if(disagree){
+                    const diffSpan = document.createElement('span');
+                    diffSpan.className = 'diff-badge';
+                    diffSpan.textContent = 'diff';
+                    climbDiv.appendChild(diffSpan);
+                }
+                if(r.note){
+                    const noteSpan = document.createElement('span');
+                    noteSpan.className = 'note-snippet';
+                    noteSpan.textContent = r.note.substring(0,40);
+                    climbDiv.appendChild(noteSpan);
+                }
+                row.appendChild(climbDiv);
+                item.appendChild(row);
+            });
+            container.appendChild(item);
+        });
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
+
+    function statusIcon(status){
+        if(status==='climbed') return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+        if(status==='attempted') return '/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png';
+        if(status==='flashed') return '/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png';
+        return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+    }
+
+    // Simplistic grade comparison: treat string order; improvement: parse into numeric difficulty scale
+    function gradeHarder(user, original){
+        // Heuristic: if user grade string length > original OR lexical > original treat as harder
+        if(user === original) return false;
+        return user > original; // works for common French grades ordering lexically mostly
     }
 
 
 
-window.addEventListener('load', () => {
-  
-  var now = new Date();
-  document.getElementById('date').value  = now.toISOString().split('T')[0];
-  getData();
-  
-});
+    function renderEverything(){
+        renderSummary();
+        renderGymLeaderboard();
+        renderTimeline();
+        updateSectionsVisibility();
+        // Final safeguard translation pass (in case earlier functions missed or future additions occur)
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
 
+    function updateSectionsVisibility(){
+        const lb = document.getElementById('leaderboardSection');
+        const tl = document.getElementById('timelineSection');
+        const cr = document.getElementById('controversialSection');
+        if(lb) lb.style.display = showLeaderboard ? 'block' : 'none';
+        if(tl) tl.style.display = showTimeline ? 'block' : 'none';
+        if(cr) cr.style.display = showControversial ? 'block' : 'none';
+    }
 
+    // ----- Gym Filter Functions -----
+    function populateGymFilter(){
+        const sel = document.getElementById('gymFilter');
+        if(!sel) return;
+        const gymsSorted = [...gymsData].sort((a,b)=> a.name.localeCompare(b.name));
+        // Build option elements so translation replacement picks up data-translate-key
+        while(sel.firstChild) sel.removeChild(sel.firstChild);
+        const optAll = document.createElement('option');
+        optAll.value = '';
+        optAll.dataset.translateKey = 'all_gyms';
+        optAll.textContent = 'All Gyms'; // fallback text
+        sel.appendChild(optAll);
+        gymsSorted.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            sel.appendChild(opt);
+        });
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
 
+    function applyCombinedFilters(){
+        // Month filtering already applied when lastFilter set; start from base dataset
+        let base = activitiesData;
+        if(lastFilter){
+            base = filterActivitiesByMonthRange(lastFilter.from, lastFilter.to);
+        }
+        const sel = document.getElementById('gymFilter');
+        const gymId = sel ? sel.value : '';
+        if(gymId){
+            base = base.filter(a => String(a.gym_id) === String(gymId));
+        }
+        currentActivitiesView = base;
+        renderEverything();
+        updateRangeIndicatorWithGym();
+    }
 
+    function updateRangeIndicatorWithGym(){
+        const indicator = document.getElementById('activeRangeIndicator');
+        if(!indicator) return;
+        const sel = document.getElementById('gymFilter');
+    const gymLabel = sel && sel.value ? (gymsData.find(g=> String(g.id) === String(sel.value))?.name || (document.querySelector('[data-translate-key="selected_gym"]')?.textContent || 'Selected Gym')) : (document.querySelector('[data-translate-key="all_gyms"]')?.textContent || 'All Gyms');
+        if(!lastFilter){
+            indicator.textContent = `Full data · ${gymLabel}`;
+            return;
+        }
+        indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
+    }
+
+        function renderControversialDetails(){
+            const { routeDisagreements } = computeStats();
+            const container = document.getElementById('controversialDetails');
+            if(!container) return;
+            const list = Object.values(routeDisagreements).filter(r=> r.disagreements>0).sort((a,b)=> b.disagreements - a.disagreements);
+            container.textContent = '';
+            if(!list.length){
+                const empty = document.createElement('div');
+                empty.className = 'empty-state pad-medium';
+                empty.dataset.translateKey = 'no_grade_disagreements_range';
+                empty.textContent = 'No grade disagreements in current range.';
+                container.appendChild(empty);
+                return;
+            }
+            const explainer = document.createElement('p');
+            explainer.className = 'disagreements-explainer';
+            explainer.dataset.translateKey = 'disagreements_explainer';
+            explainer.textContent = '';
+            container.appendChild(explainer);
+            const grid = document.createElement('div');
+            grid.className = 'disagreements-grid';
+            const headers = [
+                { key:'route_details', text:'' },
+                { key:'user_grades_label', text:'' },
+                { key:'status_mix', text:'' },
+                { key:'notes_label', text:'' }
+            ];
+            headers.forEach(h => {
+                const hd = document.createElement('div');
+                hd.className = 'head';
+                hd.dataset.translateKey = h.key;
+                hd.textContent = h.text;
+                grid.appendChild(hd);
+            });
+            list.forEach(r => {
+                const userGrades = Array.from(r.userGrades).sort();
+                const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
+                const downgrades = userGrades.filter(g=> g!==r.grade && !gradeHarder(g,r.grade)).length;
+                const statusTotal = r.statuses.climbed + r.statuses.flashed + r.statuses.attempted;
+                const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
+                const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
+                const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
+                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
+                // Route details cell
+                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell route-detail';
+                const flex = document.createElement('div'); flex.className = 'route-dis-flex';
+                const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
+                const meta = document.createElement('div'); meta.className = 'route-meta';
+                meta.innerHTML = `<div class='route-name'>${r.name || 'Unnamed'}</div>
+                    <div class='route-gym'>${r.gym_name}</div>
+                    <div>Grade: <strong>${r.grade}</strong></div>
+                    <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;
+                flex.appendChild(colorBox); flex.appendChild(meta); cRoute.appendChild(flex);
+                grid.appendChild(cRoute);
+                // User grades cell
+                const cGrades = document.createElement('div'); cGrades.className = 'dis-cell';
+                userGrades.forEach(gVal => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-grade ' + (gVal===r.grade?'':(gradeHarder(gVal,r.grade)?'up':'down'));
+                    chip.textContent = gVal;
+                    cGrades.appendChild(chip);
+                });
+                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
+                // Status cell (formerly followed disagreements column)
+                const cStatus = document.createElement('div'); cStatus.className = 'dis-cell';
+                const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
+                cStatus.appendChild(statusLabel);
+                const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
+                const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
+                const barFlashed = document.createElement('span'); barFlashed.className = 'flashes'; barFlashed.style.left = `${attemptPct}%`; barFlashed.style.width = `${flashPct}%`;
+                const barClimbed = document.createElement('span'); barClimbed.className = 'climbs'; barClimbed.style.left = `${attemptPct*1 + flashPct*1}%`; barClimbed.style.width = `${climbedPct}%`;
+                barWrapper.appendChild(barAttempt); barWrapper.appendChild(barFlashed); barWrapper.appendChild(barClimbed);
+                cStatus.appendChild(barWrapper);
+                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
+                grid.appendChild(cStatus);
+                // Notes cell
+                const cNotes = document.createElement('div'); cNotes.className = 'dis-cell';
+                r.notes.slice(0,3).forEach(n => {
+                    const tn = document.createElement('span'); tn.className = 'tiny-note'; tn.textContent = n.substring(0,60); cNotes.appendChild(tn);
+                });
+                grid.appendChild(cNotes);
+            });
+            container.appendChild(grid);
+        }
+
+        // -------- Month Filtering ---------
+        function setDefaultMonthInputs(){
+            if(!activitiesData.length) return;
+            const dates = activitiesData.map(a=> new Date(a.date||a.starttime)).filter(d=> !isNaN(d.getTime()));
+            dates.sort((a,b)=> b-a);
+            const latest = dates[0];
+            // Default: last 6 full months including current if present in data
+            const endYear = latest.getFullYear();
+            const endMonth = latest.getMonth(); // 0-based
+            const startDate = new Date(endYear, endMonth-5, 1); // six-month window
+            const fromVal = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}`;
+            const toVal = `${endYear}-${String(endMonth+1).padStart(2,'0')}`;
+            document.getElementById('fromMonth').value = fromVal;
+            document.getElementById('toMonth').value = toVal;
+            // Apply immediately
+            const from = { y:startDate.getFullYear(), m:startDate.getMonth()+1 };
+            const to = { y:endYear, m:endMonth+1 };
+            currentActivitiesView = filterActivitiesByMonthRange(from,to);
+            lastFilter = { from, to };
+            updateRangeIndicator();
+        }
+
+        function parseMonthValue(val){
+            if(!val) return null; // expects yyyy-mm
+            const [y,m] = val.split('-').map(Number);
+            if(!y || !m) return null;
+            return { y, m };
+        }
+
+        function monthCompare(a,b){ // a < b => -1
+            if(a.y === b.y) return a.m - b.m;
+            return a.y - b.y;
+        }
+
+        function inRange(monthObj, start, end){
+            return monthCompare(monthObj,start) >=0 && monthCompare(monthObj,end) <=0;
+        }
+
+        function filterActivitiesByMonthRange(start, end){
+            return activitiesData.filter(act => {
+                const d = new Date(act.date || act.starttime);
+                const mo = { y: d.getFullYear(), m: d.getMonth()+1 };
+                return inRange(mo,start,end);
+            });
+        }
+
+        function attachMonthEvents(){
+            document.getElementById('applyMonthFilter').addEventListener('click', () => {
+                const from = parseMonthValue(document.getElementById('fromMonth').value);
+                const to = parseMonthValue(document.getElementById('toMonth').value);
+                if(!from || !to) return;
+                if(monthCompare(from,to) > 0){ // swap if reversed
+                    const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m;
+                }
+                lastFilter = { from, to };
+                applyCombinedFilters();
+            });
+            document.getElementById('resetRange').addEventListener('click', () => {
+                lastFilter = null;
+                document.getElementById('gymFilter').value = '';
+                applyCombinedFilters();
+            });
+            const gymSel = document.getElementById('gymFilter');
+            if(gymSel){
+                gymSel.addEventListener('change', () => {
+                    applyCombinedFilters();
+                });
+            }
+        }
+
+        function updateRangeIndicator(){
+            const indicator = document.getElementById('activeRangeIndicator');
+            if(!lastFilter){ indicator.textContent = 'Full data'; return; }
+            indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions)`;
+        }
+
+        // Make clicking on the month inputs immediately open the picker (supported browsers)
+        function enhanceMonthInputs(){
+            ['fromMonth','toMonth'].forEach(id => {
+                const input = document.getElementById(id);
+                if(!input) return;
+                const openPicker = () => {
+                    if(typeof input.showPicker === 'function'){
+                        try { input.showPicker(); } catch(_) {}
+                    }
+                };
+                input.addEventListener('click', openPicker);
+                // Optional: also open on focus via keyboard navigation
+                input.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter' || e.key === ' '){
+                        e.preventDefault();
+                        openPicker();
+                    }
+                });
+            });
+        }
+
+     window.addEventListener('load', loadAll);
 
 </script>
-
-
-
-					
-
 
 	
 {% endblock %}
