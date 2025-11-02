@@ -622,8 +622,6 @@ function showModal() {
     
     
         
-</script>
-<script>
     function enterEditActivityName(){
         const current = activity?.name || '';
         document.getElementById('activityNameInput').value = current;
@@ -696,16 +694,13 @@ function showModal() {
     function openAttemptModalForRoute(routeData){
         ensureAttemptModal();
         if(!routeData || !routeData.id){ console.error('Route data missing'); return; }
-        // Try to find existing attempt
-        const existingAttempt = (activity?.attempts||[]).find(a => a.route_id === routeData.id);
-        currentAttemptKey = existingAttempt ? (existingAttempt.attempt_id || existingAttempt.route_id) : null;
         currentRouteId = routeData.id; // keep for creation
         const route = routesIndex[routeData.id] || routeData;
         // Prefill fields
-        document.getElementById('attemptModalStatus').value = existingAttempt ? existingAttempt.status : 'attempted';
-        document.getElementById('attemptModalGrade').value = existingAttempt ? (existingAttempt.user_grade || '') : (route.grade || '');
+        document.getElementById('attemptModalStatus').value = 'climbed';
+        document.getElementById('attemptModalGrade').value = (route.grade || '');
         
-        document.getElementById('attemptModalNote').value = existingAttempt ? (existingAttempt.note || '') : '';
+        document.getElementById('attemptModalNote').value = '';
         // Populate route info section for add/edit
         const colorEl = document.getElementById('attemptRouteColor');
         const gradeEl = document.getElementById('attemptRouteGrade');
@@ -714,10 +709,10 @@ function showModal() {
         if(gradeEl){ gradeEl.textContent = route.grade || ''; }
         if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
         const delBtn = document.getElementById('attemptModalDeleteBtn');
-        if(delBtn){ delBtn.style.display = existingAttempt ? '' : 'none'; }
+        if(delBtn){ delBtn.style.display = 'none'; }
         attemptModalEl.style.display='flex';
         attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-status') === (existingAttempt?existingAttempt.status:'attempted'));
+            btn.classList.toggle('active', btn.getAttribute('data-status') === 'climbed');
             btn.onclick = () => {
                 attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
                 btn.classList.add('active');
@@ -795,11 +790,9 @@ function showModal() {
 
 
 
-	<div name='bbb'>
+	<div name='activity_detail_content'>
 
-		{% include "competition-menu.html" %}
-     
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
+	 
 					<div class="text-center heading-section">
 					
 				<h3>
@@ -877,8 +870,6 @@ table.table thead th { white-space:nowrap; }
 			</div>
 
 		</div>
-		<!-- fh5co-blog-section -->
-
 	</div>
 
 
