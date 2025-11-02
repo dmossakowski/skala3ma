@@ -104,104 +104,6 @@
 
             <div id="tabulator-table" class="form-row"></div>
 
-            <div id="mainModalMenu">
-                
-            
-                <div class="form-row">
-                <span class="close-button" onclick="hideModal()"></span>
-
-                <div class="form-row-heading">
-                    <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; <div id="route-name"></div>
-                </div>
-
-            <div class="form-row-heading">
-                <div id="route-line" style="font-size:20px;"></div> &nbsp;&nbsp;&nbsp;
-                <div id="route-color1" >&nbsp;&nbsp;&nbsp;</div>&nbsp;&nbsp;  
-                <div style="font-size:20px;" id="route-grade"></div>
-            </div>
-            </div>
-            
-            <div class="form-row row">
-
-                    <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-                    outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
-                    <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
-                    
-                   
-
-                    </div>
-                    <div class="col">
-
-                    <select class="col form-select form-select-lg" id='route-grade-user' name="route-grade-user"  size="1" type="text" 
-                       style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-                       outline-style:solid; padding: 6px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px; 
-                       font-size:1.6em; font-weight: bold; color: #40ad48">
-                    <option value="?">?</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4a">4a</option>
-                    <option value="4b">4b</option>
-                    <option value="4c">4c</option>
-                    <option value="5a">5a</option>
-                    <option value="5a+">5a+</option>
-                    <option value="5b">5b</option>
-                    <option value="5b+">5b+</option>
-                    <option value="5c">5c</option>
-                    <option value="5c+">5c+</option>
-                    <option value="6a">6a</option>
-                    <option value="6a+">6a+</option>
-                    <option value="6b">6b</option>
-                    <option value="6b+">6b+</option>
-                    <option value="6c">6c</option>
-                    <option value="6c+">6c+</option>
-                    <option value="7a">7a</option>
-                    <option value="7a+">7a+</option>
-                    <option value="7b">7b</option>
-                    <option value="7b+">7b+</option>
-                    <option value="7c">7c</option>
-                    <option value="7c+">7c+</option>
-                    <option value="8a">8a</option>
-                    <option value="8a+">8a+</option>
-                    <option value="8b">8b</option>
-                    <option value="8b+">8b+</option>
-                    <option value="8c">8c</option>
-                    <option value="8c+">8c+</option>
-                    <option value="9a">9a</option>
-                    <option value="9a+">9a+</option>
-                    <option value="9b">9b</option>
-                    <option value="9b+">9b+</option>
-                    <option value="9c">9c</option>
-                  
-                    </select>
-
-                 
-                    
-                  
-                </div>
-                <div class="col">
-                   
-                    <input id='notes' name="notes" size="20" type="text" 
-                       style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-                       outline-style:solid; padding: 12px; border-radius: 2%;display: inline-block; margin: 1x 1px; border-width: 0px;"/>
-
-                 
-                    
-                  
-                </div>
-                </div>
-                <div class="form-row">
-             
-
-                        
-            
-
-                    <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData('climbed');">Save</button>&nbsp;
-                 
-                    <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
-                    
-            </div> 
-            </div>
 
                   
             
@@ -209,10 +111,96 @@
         
     </div>
 
+    <!-- Static attempt edit modal created at load time so translation keys exist before replaceTranslations() runs -->
+    <div id="attemptEditModal" class="modal-container" style="display:none;">
+        <div class="modal-box" style="max-width:520px; width:90%; flex-direction:column; align-items:stretch;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                 <h4 id="attemptModalTitle" style="margin:0; font-size:1.2rem;"></h4>
+                 <button type="button" onclick="closeAttemptModal()" class="btn btn-sm btn-outline-secondary">✕</button>
+            </div>
+            <div id="attemptRouteInfo" class="route-info" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+                <span id="attemptRouteColor"></span>
+                <span id="attemptRouteGrade" class="badge bg-secondary" style="font-size:0.9rem;"></span>
+                <span id="attemptRouteName" style="font-weight:600; font-size:0.95rem;"></span>
+            </div>
+            <form id="attemptEditForm" onsubmit="submitAttemptModal(event)">
+                <div class="mb-3">
+                    <label class="form-label" data-translate-key="status">status translation</label>
+                    <div class='status-picker btn-group w-100' role='group' style='display:flex; gap:8px; justify-content:space-between;'>
+                        <button type='button' class='btn btn-light status-btn' data-status='attempted' title='Attempted'><img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" width="40" height="40" alt="attempted" /></button>
+                        <button type='button' class='btn btn-light status-btn' data-status='climbed' title='Climbed'><img src="/public/images/1398911_correct_mark_success_tick_valid_icon.png" width="40" height="40" alt="climbed" /></button>
+                        <button type='button' class='btn btn-light status-btn' data-status='flashed' title='Flashed'><img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" width="40" height="40" alt="flashed" /></button>
+                    </div>
+                    <input type='hidden' id='attemptModalStatus' />
+                </div>
+                <div class="row g-2 mb-3">
+                    <label class="form-label" data-translate-key="grade">grade translation</label>
+                    <select id="attemptModalGrade" class="form-select" style="font-size:1rem; font-weight:600; color:#40ad48;">
+                        <option value="?">?</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4a">4a</option>
+                        <option value="4b">4b</option>
+                        <option value="4c">4c</option>
+                        <option value="5a">5a</option>
+                        <option value="5a+">5a+</option>
+                        <option value="5b">5b</option>
+                        <option value="5b+">5b+</option>
+                        <option value="5c">5c</option>
+                        <option value="5c+">5c+</option>
+                        <option value="6a">6a</option>
+                        <option value="6a+">6a+</option>
+                        <option value="6b">6b</option>
+                        <option value="6b+">6b+</option>
+                        <option value="6c">6c</option>
+                        <option value="6c+">6c+</option>
+                        <option value="7a">7a</option>
+                        <option value="7a+">7a+</option>
+                        <option value="7b">7b</option>
+                        <option value="7b+">7b+</option>
+                        <option value="7c">7c</option>
+                        <option value="7c+">7c+</option>
+                        <option value="8a">8a</option>
+                        <option value="8a+">8a+</option>
+                        <option value="8b">8b</option>
+                        <option value="8b+">8b+</option>
+                        <option value="8c">8c</option>
+                        <option value="8c+">8c+</option>
+                        <option value="9a">9a</option>
+                        <option value="9a+">9a+</option>
+                        <option value="9b">9b</option>
+                        <option value="9b+">9b+</option>
+                        <option value="9c">9c</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" data-translate-key="notes">notes translation</label>
+                    <textarea id="attemptModalNote" class="form-control" rows="3" placeholder=".."></textarea>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-success flex-grow-1" data-translate-key="save">save translation</button>
+                    <button type="button" id="attemptModalDeleteBtn" onclick="deleteAttemptFromModal()" class="btn btn-danger flex-grow-1" style="display:none;" data-translate-key="Delete">delete translation</button>
+                    <button type="button" onclick="closeAttemptModal()" class="btn btn-secondary flex-grow-1" data-translate-key="cancel">cancel translation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
 
 
 <script>
+    // Global constants
+    // Derive activity id from URL path: /activities/<id>
+    const ACTIVITY_ID = (function(){
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        const idx = parts.indexOf('activities');
+        if(idx !== -1 && parts.length > idx+1){ return parts[idx+1]; }
+        // fallback: query param ?activity_id=...
+        const qp = new URLSearchParams(window.location.search).get('activity_id');
+        return qp || '';
+    })();
 
     let queryParams = new URLSearchParams(window.location.search);
 
@@ -221,14 +209,14 @@
 
     // Get the modal dialog container
     var modal = document.getElementById("modal");
-    var mainModalMenuDiv = document.getElementById('mainModalMenu');
+    //var mainModalMenuDiv = document.getElementById('mainModalMenu');
     var modalBoxDiv = document.getElementById('modal-box');
     var currentRow;
     var mod_type;
 
 
     function showEditDiv(){
-        mainModalMenuDiv.style.display='none'
+        //mainModalMenuDiv.style.display='none'
         //editDiv.style.display='block';
     }
 
@@ -240,10 +228,12 @@
 
 // Function to display the modal dialog
 function showModal() {
-        mainModalMenuDiv.style.display='none';
-        document.getElementById('tabulator-table').style.display='block';
-        
-        modal.style.display = "block";
+        // default open: show table (route list), hide detail panel
+        //if(mainModalMenuDiv){ mainModalMenuDiv.style.display='none'; }
+        const tab = document.getElementById('tabulator-table');
+        if(tab){ tab.style.display='block'; }
+        // use flex so centering works (justify-content set in CSS)
+        modal.style.display = "flex";
     }
 
     // Function to hide the modal dialog
@@ -252,8 +242,8 @@ function showModal() {
     }
 
     function hideTable(){
-        document.getElementById('tabulator-table').style.display='none';
-        //tabulator-table.style.display = 'none';
+        const tab = document.getElementById('tabulator-table');
+        if(tab){ tab.style.display='none'; }
     }
 
     function clearModal(){
@@ -273,25 +263,21 @@ function showModal() {
 
     function deleteActivity()
     {
-        fetch(`/api1/activity/{{activity['id']}}`,
+    fetch(`/api1/activity/${ACTIVITY_ID}`,
         { method: 'DELETE'})
         .then(response => response.json())
         .then(data => {
             // use the retrieved data here
-            window.location.href = "/activities";
+            window.location.href = "/myactivities";
         })
         .catch(error => console.error(error));
-        
-        // redirect to /activities page
-        
-
     }
 
 
 
     var gym_id;
-    var routes;
-    var activity;
+    var routesIndex = {}; // map route_id -> route metadata from activity.routes
+    var activity; // lean activity object
     var table;
       
       function getData()
@@ -299,21 +285,10 @@ function showModal() {
         const gymid = "{{gym['gym_id']}}";
         const routeid = "{{routes['id']}}";
     
-        fetch(`/api1/activity/{{activity['id']}}`)
-        .then(response => response.json())
-        .then(data => {
-            // use the retrieved data here
-            //console.log(data);
-            activity=data.activities;
-            if (data.routes == 0)
-            {
-                showModal();
-            }
-            document.getElementById('activityName').innerHTML = data.name;
-            document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+data.gym_id+'">'+data.gym_name+'</a> - '+data.starttime;
-            
-        })
-        .catch(error => console.error(error));
+                fetch(`/api1/activity/${ACTIVITY_ID}`)
+                    .then(r => r.json())
+                    .then(data => handleActivityResponse(data))
+                    .catch(error => console.error(error));
     
 
         fetch(`/api1/gym/{{gym['id']}}/`)
@@ -435,8 +410,8 @@ function showModal() {
           });
 
           table.on("rowClick", function(e, row){
-            gymRouteDetail(row.getData());
-            
+                        // Instead of showing route detail modal, open attempt edit modal directly for new attempt
+                        openAttemptModalForRoute(row.getData());
           });
 
           table.on("tableBuilt", function(){
@@ -480,91 +455,341 @@ function showModal() {
 
       function gymRouteDetail(data) {
             resetFlashImage();
-
-            //console.log(data);
+            console.log("gymRouteDetail ");
+            console.log(data);
             currentRow=data;
             document.getElementById('route-routenum').innerHTML = data.routenum;
             document.getElementById('route-grade').innerHTML = data.grade;
             document.getElementById('route-name').innerHTML = data.name;
-            //document.getElementById('color1').style.backgroundColor = currentRow.color1;
             document.getElementById('route-color1').style.background = data.color1;
-            document.getElementById('mainModalMenu').style.display='block';
-            //mainModalMenuDiv.style.display='block';
-
-
             document.getElementById('route-grade-user').value = data.grade; 
-
             formData = {};
             formData['route_id'] = data.id;
-            
+            // switch from table view to route detail view inside same modal
             hideTable();
-            //hideModal();
-            //document.getElementById('id').value = data.id;
-
-      }
-
-
-
-    function saveData(status)
-    {
-        //console.log("saveData  ");
-        ///console.log(currentRow);
-        //console.log(status);
-        //console.log(document.getElementById('notes').value);
-
-        formData['note'] = document.getElementById('notes').value;
-        formData['route_finish_status'] = routeFinishStatus;
-        formData['gym_id'] = "{{gym['id']}}";
-        formData['routes_id'] = "{{routes['id']}}";
-        formData['route-grade'] = document.getElementById('route-grade').innerHTML;
-        formData['route-grade-user'] = document.getElementById('route-grade-user').value;
-
-        fetch('/api1/activity/{{activity['id']}}', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            // use the retrieved data here
-            //console.log('data after save')
-            //console.log(data);
-
-            hideModal();
-            window.location.href = "/activities/{{activity['id']}}";
-              
-        })
-        .catch(error => console.error(error));
+            //if(mainModalMenuDiv){
+            //    mainModalMenuDiv.style.display='block';
+            //}
+            // ensure modal is visible (if invoked directly)
+            if(modal && modal.style.display==='none'){
+                modal.style.display='flex';
+            }
     }
 
 
-    function deleteRoute(routeId)
+    function handleActivityResponse(data){
+        activity = data;
+        // Build route index; if lean form routes are distinct; if legacy flattened (no attempts) we can synthesize attempts later if needed
+        routesIndex = {};
+        (activity.routes || []).forEach(r => { if(r.id) routesIndex[r.id] = r; });
+        // If response lacks attempts but has flattened routes (legacy) convert them to pseudo attempts
+        if(!activity.attempts && Array.isArray(activity.routes)){
+            activity.attempts = activity.routes.map(r => ({
+                route_id: r.id,
+                status: r.status || 'attempted',
+                user_grade: r.user_grade || r.grade,
+                note: r.note || '',
+                attempt_time: r.attempt_time || r.datetime || ''
+            }));
+        }
+    const nameSpan = document.getElementById('activityName');
+    if(nameSpan){ nameSpan.textContent = activity.name || ''; }
+        document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+activity.gym_id+'">'+(activity.gym_name||'')+'</a> - '+(activity.starttime||'');
+        renderAttempts();
+    }
+
+    function deleteRoute(attemptId)
     {
-        //console.log("deleteActivity  "+routeId);
-        if (routeId == undefined || routeId.length == 0)
+        //console.log("delete attempt  "+attemptId);
+        if (attemptId == undefined || attemptId.length == 0)
         {
             return;
         }
+        // optimistic removal: hide row immediately
+        const rowEl = document.querySelector(`#attemptsBody tr td a[onclick*="${attemptId}"]`)?.parentElement?.parentElement;
+        if(rowEl){ rowEl.style.opacity='0.4'; }
+        fetch(`/api1/activity/${ACTIVITY_ID}/route/${attemptId}`, { method: 'DELETE'})
+          .then(r => r.json())
+          .then(data => {
+             if(data.error){ console.error(data.error); return; }
+             handleActivityResponse(data);
+          })
+          .catch(error => console.error(error));
+    }
 
-        fetch(`/api1/activity/{{activity['id']}}/route/`+routeId,
-        { method: 'DELETE'})
-        .then(response => response.json())
-        .then(data => {
-            // reload the activities page
-            window.location.href = "/activities/{{activity['id']}}";
-        })
-        .catch(error => console.error(error));
-        
-        // redirect to /activities page
-        
+    // Save (or create) an attempt for the currently selected route inside this activity.
+    // Called by the Save button with a status (e.g. 'climbed' or 'flashed').
+    function saveData(status){
+        // Legacy modal save: create new attempt if none exists for route, otherwise update existing attempt
+        try {
+            if(!currentRow || !currentRow.id){
+                console.error('No current route selected');
+                return;
+            }
+            const routeId = currentRow.id;
+            const userGrade = (document.getElementById('route-grade-user')?.value || '').trim();
+            const note = (document.getElementById('notes')?.value || '').trim();
+            const chosenStatus = status || 'attempted';
+            const existingAttempt = (activity?.attempts||[]).find(a => a.route_id === routeId);
+            if(existingAttempt && (existingAttempt.attempt_id || existingAttempt.route_id)){
+                const attemptId = existingAttempt.attempt_id || existingAttempt.route_id; // fallback to legacy route id
+                const payload = { status: chosenStatus, user_grade: userGrade, note }; 
+                fetch(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(r=>r.json())
+                .then(data => {
+                    if(data.error){
+                        document.getElementById('hidden_message').textContent = data.error;
+                        return;
+                    }
+                    handleActivityResponse(data);
+                    document.getElementById('hidden_message').textContent = '{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}';
+                }).catch(err => {
+                    console.error('update attempt failed', err);
+                    document.getElementById('hidden_message').textContent = 'error_saving';
+                });
+            } else {
+                // create new attempt via POST /activity/<activity_id>
+                const createPayload = {
+                    gym_id: activity?.gym_id,
+                    routes_id: activity?.routes_id,
+                    route_id: routeId,
+                    note: note,
+                    route_finish_status: chosenStatus, // map status -> route_finish_status legacy field
+                    'route-grade-user': userGrade
+                };
+                fetch(`/api1/activity/${ACTIVITY_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(createPayload)
+                }).then(r=>r.json()).then(data => {
+                    if(data.error){
+                        document.getElementById('hidden_message').textContent = data.error;
+                        return;
+                    }
+                    // data is singular activity? add_activity_route returns activity.to_dict()
+                    handleActivityResponse(data);
+                    document.getElementById('hidden_message').textContent = '{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}';
+                }).catch(err => {
+                    console.error('create attempt failed', err);
+                    document.getElementById('hidden_message').textContent = 'error_saving';
+                });
+            }
+        } catch(ex){
+            console.error('saveData exception', ex);
+        }
+    }
 
+    function statusIcon(status){
+        if(status === 'climbed') return '<img src="/public/images/1398911_correct_mark_success_tick_valid_icon.png" width="30" height="30" alt="climbed">';
+        if(status === 'flashed') return '<img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" width="30" height="30" alt="flashed">';
+        return '<img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" width="30" height="30" alt="attempted">';
+    }
+
+    function renderAttempts(){
+        const tbody = document.getElementById('attemptsBody');
+        if(!tbody) return;
+        tbody.innerHTML='';
+        const attempts = activity?.attempts || [];
+        attempts.forEach(att => {
+            const route = routesIndex[att.route_id] || {};
+            const disagreement = (att.user_grade && route.grade && att.user_grade !== route.grade);
+            const attemptKey = att.attempt_id || att.route_id;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class='route-cell'>
+                    <div class='route-cell-inner'>
+                        <span class='route-color'>${getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '50px','25px')}</span>
+                        <span class='route-grade'>${route.grade || ''}</span>
+                        <span class='route-name'>${route.name || ''}</span>
+                    </div>
+                </td>
+                <td class='status-cell'>${statusIcon(att.status)}</td>
+                <td class='user-grade-cell'>${disagreement?`<i>${att.user_grade}</i>`:(att.user_grade||'')}</td>
+                <td class='note-cell'><i>${att.note || ''}</i></td>
+                <td class='text-nowrap action-cell'>
+                    <a href='#' onclick="openAttemptModal('${attemptKey}');return false;" title='Edit attempt'>
+                        <i class='bi bi-pencil-square' style='font-size: 1.3rem; color:#198754;'></i>
+                    </a>
+                </td>`;
+            tbody.appendChild(tr);
+        });
     }
 
     
     
         
+</script>
+<script>
+    function enterEditActivityName(){
+        const current = activity?.name || '';
+        document.getElementById('activityNameInput').value = current;
+        document.getElementById('activityName').style.display='none';
+        document.getElementById('activityNameEdit').style.display='none';
+        document.getElementById('activityNameEditControls').style.display='inline-block';
+    }
+    function cancelEditActivityName(){
+        document.getElementById('activityName').style.display='inline';
+        document.getElementById('activityNameEdit').style.display='inline';
+        document.getElementById('activityNameEditControls').style.display='none';
+    }
+    function saveActivityName(){
+        const newName = document.getElementById('activityNameInput').value.trim();
+        if(!newName){ return; }
+        fetch(`/api1/activity/${ACTIVITY_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+        }).then(r=>r.json()).then(data => {
+            if(data.error){ console.error(data.error); return; }
+            activity = data;
+            document.getElementById('activityName').textContent = activity.name || '';
+            cancelEditActivityName();
+        }).catch(err => console.error(err));
+    }
+
+
+        // ---------- POPUP ATTEMPT EDIT (Mobile Friendly) ----------
+        let attemptModalEl;
+    let currentRouteId = null; // Used when creating a brand new attempt
+        function ensureAttemptModal(){
+            // Modal now exists statically in DOM; just cache reference
+            if(!attemptModalEl){
+                attemptModalEl = document.getElementById('attemptEditModal');
+            }
+        }
+        let currentAttemptKey = null;
+        function openAttemptModal(attemptKey){
+                ensureAttemptModal();
+                currentAttemptKey = attemptKey;
+                const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === attemptKey);
+                if(!attemptObj){ console.error('Attempt not found'); return; }
+                const route = routesIndex[attemptObj.route_id] || {};
+                document.getElementById('attemptModalStatus').value = attemptObj.status;
+                document.getElementById('attemptModalGrade').value = attemptObj.user_grade || '';
+                
+                document.getElementById('attemptModalNote').value = attemptObj.note || '';
+        // Populate route info section
+        const colorEl = document.getElementById('attemptRouteColor');
+        const gradeEl = document.getElementById('attemptRouteGrade');
+        const nameEl = document.getElementById('attemptRouteName');
+        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '55px','25px'); }
+        if(gradeEl){ gradeEl.textContent = route.grade || ''; }
+        if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
+        const delBtn = document.getElementById('attemptModalDeleteBtn');
+        if(delBtn){ delBtn.style.display=''; }
+                attemptModalEl.style.display='flex';
+                attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.getAttribute('data-status') === attemptObj.status);
+                        btn.onclick = () => {
+                                attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
+                                btn.classList.add('active');
+                                document.getElementById('attemptModalStatus').value = btn.getAttribute('data-status');
+                        };
+                });
+        }
+
+    // Open attempt modal for a route that may not yet have an attempt (creation flow)
+    function openAttemptModalForRoute(routeData){
+        ensureAttemptModal();
+        if(!routeData || !routeData.id){ console.error('Route data missing'); return; }
+        // Try to find existing attempt
+        const existingAttempt = (activity?.attempts||[]).find(a => a.route_id === routeData.id);
+        currentAttemptKey = existingAttempt ? (existingAttempt.attempt_id || existingAttempt.route_id) : null;
+        currentRouteId = routeData.id; // keep for creation
+        const route = routesIndex[routeData.id] || routeData;
+        // Prefill fields
+        document.getElementById('attemptModalStatus').value = existingAttempt ? existingAttempt.status : 'attempted';
+        document.getElementById('attemptModalGrade').value = existingAttempt ? (existingAttempt.user_grade || '') : (route.grade || '');
+        
+        document.getElementById('attemptModalNote').value = existingAttempt ? (existingAttempt.note || '') : '';
+        // Populate route info section for add/edit
+        const colorEl = document.getElementById('attemptRouteColor');
+        const gradeEl = document.getElementById('attemptRouteGrade');
+        const nameEl = document.getElementById('attemptRouteName');
+        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '55px','25px'); }
+        if(gradeEl){ gradeEl.textContent = route.grade || ''; }
+        if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
+        const delBtn = document.getElementById('attemptModalDeleteBtn');
+        if(delBtn){ delBtn.style.display = existingAttempt ? '' : 'none'; }
+        attemptModalEl.style.display='flex';
+        attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-status') === (existingAttempt?existingAttempt.status:'attempted'));
+            btn.onclick = () => {
+                attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('attemptModalStatus').value = btn.getAttribute('data-status');
+            };
+        });
+        // Hide the route selection modal if open
+        if(modal) modal.style.display='none';
+    }
+        function closeAttemptModal(){
+                if(attemptModalEl) attemptModalEl.style.display='none';
+                currentAttemptKey = null;
+        }
+        function submitAttemptModal(e){
+            e.preventDefault();
+            // For new attempt, currentAttemptKey may be null; fallback to currentRouteId
+            let attemptObj = null;
+            if(currentAttemptKey){
+                attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === currentAttemptKey);
+            }
+            const routeId = attemptObj?.route_id || currentRouteId;
+            if(!routeId){ console.error('route_id missing (creation/update)'); return; }
+            const statusVal = document.getElementById('attemptModalStatus').value;
+            const userGradeVal = document.getElementById('attemptModalGrade').value.trim();
+            const noteVal = document.getElementById('attemptModalNote').value.trim();
+            if(attemptObj && (attemptObj.attempt_id || attemptObj.route_id)){
+                // UPDATE existing attempt
+                const attemptId = attemptObj.attempt_id || attemptObj.route_id;
+                const payload = { status: statusVal, user_grade: userGradeVal, note: noteVal };
+                fetch(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(r=>r.json()).then(data => {
+                    if(data.error){ console.error(data.error); return; }
+                    closeAttemptModal();
+                    handleActivityResponse(data);
+                }).catch(err => console.error(err));
+            } else {
+                // CREATE new attempt via POST
+                const createPayload = {
+                    gym_id: activity?.gym_id,
+                    routes_id: activity?.routes_id,
+                    route_id: routeId,
+                    note: noteVal,
+                    route_finish_status: statusVal,
+                    'route-grade-user': userGradeVal
+                };
+                fetch(`/api1/activity/${ACTIVITY_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(createPayload)
+                }).then(r=>r.json()).then(data => {
+                    if(data.error){ console.error(data.error); return; }
+                    closeAttemptModal();
+                    handleActivityResponse(data);
+                }).catch(err => console.error(err));
+            }
+        }
+        function deleteAttemptFromModal(){
+        // Allow delete only if existing attempt
+        if(!currentAttemptKey){ return; }
+        const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === currentAttemptKey);
+        const routeId = attemptObj?.route_id;
+        if(!routeId){ console.error('route_id missing for delete'); return; }
+                fetch(`/api1/activity/${ACTIVITY_ID}/route/${routeId}`, { method:'DELETE' })
+                    .then(r=>r.json()).then(data => {
+                        if(data.error){ console.error(data.error); return; }
+                        closeAttemptModal();
+                        handleActivityResponse(data);
+                    }).catch(err=>console.error(err));
+        }
 </script>
 
 
@@ -577,107 +802,78 @@ function showModal() {
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="text-center heading-section">
 					
-				<h3><span id="activityName"></span>	
-                   
-						
-                       
+				<h3>
+                    <span id="activityName"></span>
+                    <span id="activityNameEdit" style="cursor:pointer; margin-left:8px;" title="Edit name" onclick="enterEditActivityName()">
+                        <i class="bi bi-pencil-square" style="font-size:1.1rem;"></i>
+                    </span>
+                    <span id="activityNameEditControls" style="display:none; margin-left:8px;">
+                        <input id="activityNameInput" type="text" style="padding:6px 14px; font-size:2.2rem; font-weight:600; width:clamp(340px,70%,900px); border:1px solid #bbb; border-radius:8px; line-height:1.1;" />
+                        <button class="btn btn-sm btn-primary" onclick="saveActivityName()">Save</button>
+                        <button class="btn btn-sm btn-secondary" onclick="cancelEditActivityName()">Cancel</button>
+                    </span>
                 </h3>
                          <div id="activityDate"></div>
+                                 
                          
 					</div>
                     
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 
+<style>
+/* Responsive styling for attempts table */
+table.table thead th { white-space:nowrap; }
+.route-cell-inner { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.route-color { flex:0 0 auto; }
+.route-grade { font-weight:600; color:#222; flex:0 0 auto; }
+.route-name { flex:1 1 40px; min-width:140px; }
+.status-cell img { display:block; margin:auto; }
+@media (max-width: 720px) {
+    .route-cell-inner { flex-direction:column; align-items:flex-start; gap:2px; }
+    .route-grade { font-size:0.95rem; }
+    .route-name { font-size:0.9rem; }
+    .note-cell { font-size:0.75rem; }
+    .user-grade-cell { font-size:0.8rem; }
+    table.table thead { font-size:0.75rem; }
+    table.table i.bi-plus-circle-fill { font-size:2.2rem !important; }
+}
+@media (max-width: 480px) {
+    .action-cell i { font-size:1.1rem !important; }
+    
+}
+</style>
+
                 
                 
-<table class="table thead-dark table-hover" >
-        
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-    				{% for route in activity['routes'] %}
-
-		 <tr>
-            <td> {% if route['status'] == 'climbed' %}
-                <img src="/public/images/1398911_correct_mark_success_tick_valid_icon.png" width="30" height="30" alt="climbed">
-                {% elif route['status'] == 'attempted' %}
-                <img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" width="30" height="30" alt="attempted">
-                {% elif route['status'] == 'flashed' %}
-                <img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" width="30" height="30" alt="flashed">
-                {% endif %}
-            </td>
-                <td>
-                    <script>
-                        document.write(''+getColorSVGDiv("{{route['color1']}}", '{{route['color_modifier']}}', '50px','25px')+' ');
-                      </script>
-                </td>
-                <td class="col-1">{{ route['grade'] }}  </td>
-               
-                <td class="col-5">{{ route['name'] }}</td>
-           
-                <td class="col-1"><i>
-                    {% if route['grade'] != route['user_grade'] %}
-                    {{ route['user_grade'] }}
-                    {% endif %} 
-                </i> 
-                
-                
-                </td>
-        <td class="col-5"><i> {{ route['note'] }}</i></td>
-			 <td>
-                <!--div style="box-sizing: border-box;outline-color: transparent;
-                outline-style:solid; padding: 5px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #d8303777 ">
-				 <a href="#" onclick="deleteRoute('{{route['id']}}')"><img src="/public/images/613_delete.png" width="30"/>
-                </a></div-->
-
-                <!--button id='deletebutton' type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRoute('{{route['id']}}')"-->
-                <a href="#" onclick="deleteRoute('{{route['id']}}')">
-                    <i class="bi bi-x-circle-fill" style="font-size: 1.5rem; color: rgb(246, 21, 21);"></i>
-                    
-                </a><!--/button-->
-<!--
-                <img src="/public/icons/x-circle.svg" 
-                    width="14" height="15" alt="{{ reference_data['current_language'].remove }}" class="text-success"/>
-
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-emoji-heart-eyes" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M11.315 10.014a.5.5 0 0 1 .548.736A4.498 4.498 0 0 1 7.965 13a4.498 4.498 0 0 1-3.898-2.25.5.5 0 0 1 .548-.736h.005l.017.005.067.015.252.055c.215.046.515.108.857.169.693.124 1.522.242 2.152.242.63 0 1.46-.118 2.152-.242a26.58 26.58 0 0 0 1.109-.224l.067-.015.017-.004.005-.002zM4.756 4.566c.763-1.424 4.02-.12.952 3.434-4.496-1.596-2.35-4.298-.952-3.434zm6.488 0c1.398-.864 3.544 1.838-.952 3.434-3.067-3.554.19-4.858.952-3.434z"/></svg>
-				
-               
-                  <i class="bi-x-circle" style="font-size: 2rem; color: rgb(234, 44, 44);"></i>
-
-                  
-                  <img src="/public/icons/bootstrap.svg" style="text-color:rgb(144, 107, 15)"  width="32" height="32">
--->
-			 </td>
-
-                    </tr>
-             {% endfor %}
-
-                    <tr><td class="text-center" colspan="7">    
-                         <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
-                    </td></tr>
-         </tbody>
-     </table>
+<table class="table thead-dark table-hover">
+    <thead>
+        <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="attemptsBody"></tbody>
+    <tfoot>
+        <tr><td class="text-center" colspan="5">
+            <a href="#" onClick="showModal()"> <i class="bi bi-plus-circle-fill" style="font-size: 2.5rem; color: #40ad48;"></i></a>
+        </td></tr>
+    </tfoot>
+</table>
 
 </div>
 <div class="text-center heading-section">
     <button id='deletebutton' type="button" class="btn btn-danger  btn-sm" onclick="deleteActivity()">{{ reference_data['current_language'].remove }} {{ reference_data['current_language'].activity }}</button>
+    
 
 </div>
 
 
 
 
-
-{% if activity is not none and activity is not undefined  %}
-
-
-				{% else %}
-
-
-				No journyes yet. Add your first!
-
-
-				{% endif %}
 			</div>
 
 		</div>

@@ -286,11 +286,27 @@ function initializeApp() {
 
             <ul class="navbar-nav ml-left">
 
-                <a class="nav-link fs-7 fw-semibold" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ reference_data['current_language'].activities }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="activitiesDropdown">
+                    <li><a class="dropdown-item fs-7" href="/activities">{{ reference_data['current_language'].activities }}</a></li>
+                    <li><a class="dropdown-item fs-7" href="/myactivities">{{ reference_data['current_language'].my_activities }}</a></li>
+                </ul>
+                </li>
                 &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                 &nbsp;&nbsp;&nbsp;
-                <a class="nav-link fs-7 fw-semibold" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ reference_data['current_language'].competitions }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">
+                    <li><a class="dropdown-item fs-7" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a></li>
+                    <li><a class="dropdown-item fs-7" href="/myresultats">{{ reference_data['current_language'].my_resultats }}</a></li>
+                </ul>
+                </li>
                 &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-9 fw-bold " href="/contact"> {{ reference_data['current_language'].Contact }} </a>
                 &nbsp;&nbsp;&nbsp;

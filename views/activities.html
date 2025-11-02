@@ -22,11 +22,8 @@
     /* Hover indicator for clickable summary cards */
     .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
     .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
-    .summary-card.cursor-pointer:hover::after { content:'CLICK'; position:absolute; top:8px; right:10px; background:#53be6b; color:#fff; font-size:.55rem; font-weight:600; padding:.22rem .45rem; border-radius:6px; letter-spacing:.6px; box-shadow:0 2px 4px rgba(0,0,0,.2); }
-    @media (prefers-color-scheme: dark) {
-        .summary-card.cursor-pointer:hover::after { background:#2e8b57; }
-    }
-    .controversial { background:#fff3cd; border:2px solid #ffbf00; }
+    /* Removed hover 'CLICK' badge */
+    /* .controversial styling handled by dynamic classes; empty rule removed */
     .route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#eef2f3; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
     .route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
     .grade-original { font-weight:600; }
@@ -53,9 +50,9 @@
     .gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
     .summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
     .badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
-    .badge.flashes { background:#ffeaa7; }
-    .badge.attempts { background:#fab1a0; }
-    .badge.climbs { background:#a8e6cf; }
+    .badge.flashes { background:#efcc05; }
+    .badge.attempts { background:#d73038; }
+    .badge.climbs { background:#41ac49; }
     .contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
     .distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
     .empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
@@ -73,6 +70,12 @@
         .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
         .dis-row { display:contents; }
         .dis-cell { background:#f7f9fa; padding:.55rem .55rem; border-radius:10px; }
+        .route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; }
+        .route-dis-flex .route-color-box { flex:0 0 auto; display:flex; align-items:center; }
+        .route-dis-flex .route-meta { flex:1 1 auto; font-size:.55rem; line-height:1.1; }
+        .route-dis-flex .route-meta .route-name { font-size:.65rem; font-weight:600; margin-bottom:.15rem; }
+        .route-dis-flex .route-meta .route-gym { opacity:.75; }
+        .route-dis-flex .route-meta .route-open { opacity:.7; }
         .chip-grade { display:inline-block; padding:.18rem .45rem; border-radius:14px; font-size:.58rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
         .chip-grade.up { background:#ffd9d9; color:#c0392b; }
         .chip-grade.down { background:#d9ecff; color:#1e5fa3; }
@@ -99,18 +102,18 @@
         <div id="monthFilter" style="margin:.4rem 0 1.2rem; background:#f4f6f7; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08);">
             <div style="display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end;">
                 <div style="flex:1 1 auto; min-width:180px;">
-                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">From (month)</label>
+                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
                     <input type="month" id="fromMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
                 </div>
                 <div style="flex:1 1 auto; min-width:180px;">
-                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">To (month)</label>
+                    <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
                     <input type="month" id="toMonth" style="font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px;" />
                 </div>
                 <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end;">
-                    <button id="applyMonthFilter" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#53be6b; color:#fff; border-radius:8px; font-weight:600;">Apply</button>
-                    <button id="resetRange" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#e0e0e0; color:#222; border-radius:8px; font-weight:600;">Reset</button>
+                    <button id="applyMonthFilter" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#53be6b; color:#fff; border-radius:8px; font-weight:600;" data-translate-key="Apply">Apply translation</button>
+                    <button id="resetRange" style="font-size:.65rem; padding:.45rem .85rem; border:0; background:#e0e0e0; color:#222; border-radius:8px; font-weight:600;" data-translate-key="Reset">Reset translation</button>
                     <div style="min-width:180px;">
-                        <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;">Gym</label>
+                        <label style="font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem;"></label>
                         <select id="gymFilter" style="font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff;"></select>
                     </div>
                 </div>
@@ -172,6 +175,7 @@
                 populateGymFilter();
                 renderEverything();
                 attachMonthEvents();
+                enhanceMonthInputs();
         } catch(e){
             console.error(e);
             document.getElementById('summary').innerHTML = `<div class='empty-state'>Error loading activity data.</div>`;
@@ -222,11 +226,13 @@
 
                 const key = r.route_id || r.id;
                 if(!routeDisagreements[key]){
-                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), notes:[], name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 } };
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), notes:[], name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
                 } else {
                     // Fill openedby/opendate if missing and present on this route occurrence
                     if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
                     if(!routeDisagreements[key].opendate && r.opendate) routeDisagreements[key].opendate = r.opendate;
+                    if(!routeDisagreements[key].color1 && r.color1) routeDisagreements[key].color1 = r.color1;
+                    if(!routeDisagreements[key].color_modifier && r.color_modifier) routeDisagreements[key].color_modifier = r.color_modifier;
                 }
                 const rd = routeDisagreements[key];
                 rd.occurrences++;
@@ -239,9 +245,9 @@
             });
         });
 
-        // determine most active gym
-        const gymsArr = Object.values(gymMap).map(g => ({...g, uniqueRouteCount: g.uniqueRoutes.size}));
-        gymsArr.sort((a,b)=> b.activities - a.activities);
+        // determine most active gym by total route touches (climbs + flashes + attempts)
+        const gymsArr = Object.values(gymMap).map(g => ({...g, uniqueRouteCount: g.uniqueRoutes.size, touches: g.climbs + g.flashes + g.attempts }));
+        gymsArr.sort((a,b)=> (b.touches) - (a.touches));
         const topGym = gymsArr[0];
 
         // most controversial route: highest disagreements ratio or count
@@ -270,14 +276,14 @@
         const totalClimbs = gymsArr.reduce((s,g)=> s+g.climbs,0);
         const totalFlashes = gymsArr.reduce((s,g)=> s+g.flashes,0);
         const totalAttempts = gymsArr.reduce((s,g)=> s+g.attempts,0);
-    const totalTouches = totalClimbs + totalFlashes + totalAttempts;
+        const totalTouches = totalClimbs + totalFlashes + totalAttempts;
         const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
         const disagreeCount = controversial ? controversial.disagreements : 0;
         // Build combined controversial route card
         let controversialHtml = '';
         if(controversial){
             const userGrades = Array.from(controversial.userGrades).sort();
-            const openedMeta = (controversial.openedby || controversial.opendate) ? `<div style='font-size:.55rem; margin:.35rem 0 .5rem; background:#f1f3f4; padding:.3rem .5rem; border-radius:6px;'>Opened by <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · Set: ${controversial.opendate}`:''}</div>` : '';
+            const openedMeta = (controversial.openedby || controversial.opendate) ? `<div style='font-size:.55rem; margin:.35rem 0 .5rem;  padding:.3rem .5rem; border-radius:6px;'>Opened by <strong>${controversial.openedby || 'Unknown'}</strong>${controversial.opendate ? ` · Set: ${controversial.opendate}`:''}</div>` : '';
             controversialHtml = `
                 <h5 style='margin:0 0 .4rem;'>Most Controversial Route</h5>
                 <div style='display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start;'>
@@ -306,7 +312,7 @@
                     ${topGym.logo_img_id ? `<img src='/image/${topGym.logo_img_id}' alt='${topGym.gym_name} logo' class='summary-gym-logo' loading='lazy'>` : ''}
                     <div>
                         <div class='summary-metric' style='line-height:1;'>${topGym.gym_name}</div>
-                        <div style='font-size:.6rem; opacity:.75; margin-top:.25rem;'>${topGym.activities} sessions · ${topGym.uniqueRouteCount} unique routes touched</div>
+                        <div style='font-size:.6rem; opacity:.75; margin-top:.25rem;'>${topGym.touches} touches · ${topGym.activities} sessions · ${topGym.uniqueRouteCount} unique routes</div>
                         <div style='font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline;'>Click to view leaderboard</div>
                     </div>
                 </div>
@@ -325,9 +331,9 @@
                     <div style='font-size:.55rem; opacity:.65;'>Across ${gymsArr.length} gym${gymsArr.length!==1?'s':''}</div>
                 </div>
                 <div style='display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem;'>
-                    <span class='badge climbs' style='font-size:.7rem;'>Climbed ${totalClimbs}</span>
-                    <span class='badge flashes' style='font-size:.7rem;'>Flashed ${totalFlashes}</span>
-                    <span class='badge attempts' style='font-size:.7rem;'>Attempted ${totalAttempts}</span>
+                    <img class='status-icon' src='${statusIcon("climbed")}' alt='climbed'><span class='badge climbs' style='font-size:.7rem;'> ${totalClimbs}</span>
+                    <img class='status-icon' src='${statusIcon("flashed")}' alt='flashed'><span class='badge flashes' style='font-size:.7rem;'> ${totalFlashes}</span>
+                    <img class='status-icon' src='${statusIcon("attempted")}' alt='attempted'><span class='badge attempts' style='font-size:.7rem;'> ${totalAttempts}</span>
                 </div>
                 <div style='font-size:.5rem; opacity:.65; margin-top:.25rem;'>Touches = climbs + flashes + attempts</div>
                 <div style='font-size:.5rem; opacity:.55; margin-top:.3rem; text-decoration:underline;'>Click to view recent sessions timeline</div>
@@ -452,7 +458,7 @@
                     </div>
                     <div class='route-climb'>
                         <img class='status-icon' src='${statusIcon(r.status)}' alt='${r.status}'>
-                        <span class='status-label'>${r.status}</span>
+                        
                         ${r.user_grade ? `<span class='${r.user_grade !== r.grade ? (gradeHarder(r.user_grade,r.grade)?'hard':'soft') : ''}'>${r.user_grade}</span>`: ''}
                         ${disagree ? `<span style='font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px;'>diff</span>`:''}
                         ${r.note ? `<span class='note-snippet'>${r.note.substring(0,40)}</span>`:''}
@@ -529,10 +535,10 @@
         const sel = document.getElementById('gymFilter');
         const gymLabel = sel && sel.value ? (gymsData.find(g=> String(g.id) === String(sel.value))?.name || 'Selected Gym') : 'All Gyms';
         if(!lastFilter){
-            indicator.textContent = `Showing: full data · ${gymLabel}`;
+            indicator.textContent = `Full data · ${gymLabel}`;
             return;
         }
-        indicator.textContent = `Showing: ${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
+        indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
     }
 
         function renderControversialDetails(){
@@ -541,7 +547,7 @@
             if(!container) return;
             const list = Object.values(routeDisagreements).filter(r=> r.disagreements>0).sort((a,b)=> b.disagreements - a.disagreements);
             if(!list.length){ container.innerHTML = `<div class='empty-state' style='padding:2rem 1rem;'>No grade disagreements in current range.</div>`; return; }
-            const rowsHtml = list.map(r => {
+                        const rowsHtml = list.map(r => {
                 const userGrades = Array.from(r.userGrades).sort();
                 const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
                 const downgrades = userGrades.filter(g=> g!==r.grade && !gradeHarder(g,r.grade)).length;
@@ -549,12 +555,19 @@
                 const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
                 const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
-                return `<div class='dis-row'>
-                    <div class='dis-cell'><strong>${r.name || 'Unnamed'}</strong><br>
-                      <span style='font-size:.55rem; opacity:.75;'>${r.gym_name}</span><br>
-                      <span style='font-size:.55rem;'>Grade: <strong>${r.grade}</strong></span><br>
-                      <span style='font-size:.5rem; opacity:.7;'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</span>
-                    </div>
+                                const colorDiv = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
+                                return `<div class='dis-row'>
+                                        <div class='dis-cell'>
+                                            <div class='route-dis-flex'>
+                                                <div class='route-color-box'>${colorDiv}</div>
+                                                <div class='route-meta'>
+                                                    <div class='route-name'>${r.name || 'Unnamed'}</div>
+                                                    <div class='route-gym'>${r.gym_name}</div>
+                                                    <div>Grade: <strong>${r.grade}</strong></div>
+                                                    <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>
+                                                </div>
+                                            </div>
+                                        </div>
                     <div class='dis-cell'>${userGrades.map(g=> `<span class='chip-grade ${g===r.grade?'':(gradeHarder(g,r.grade)?'up':'down')}'>${g}</span>`).join('')}<div style='margin-top:.25rem; font-size:.5rem;'>Up ${upgrades} · Down ${downgrades}</div></div>
                     <div class='dis-cell'>Disagreements<br><span class='badge-mini'>${r.disagreements}</span> / ${r.occurrences}</div>
                     <div class='dis-cell'>Statuses
@@ -651,8 +664,29 @@
 
         function updateRangeIndicator(){
             const indicator = document.getElementById('activeRangeIndicator');
-            if(!lastFilter){ indicator.textContent = 'Showing: full data'; return; }
-            indicator.textContent = `Showing: ${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions)`;
+            if(!lastFilter){ indicator.textContent = 'Full data'; return; }
+            indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions)`;
+        }
+
+        // Make clicking on the month inputs immediately open the picker (supported browsers)
+        function enhanceMonthInputs(){
+            ['fromMonth','toMonth'].forEach(id => {
+                const input = document.getElementById(id);
+                if(!input) return;
+                const openPicker = () => {
+                    if(typeof input.showPicker === 'function'){
+                        try { input.showPicker(); } catch(_) {}
+                    }
+                };
+                input.addEventListener('click', openPicker);
+                // Optional: also open on focus via keyboard navigation
+                input.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter' || e.key === ' '){
+                        e.preventDefault();
+                        openPicker();
+                    }
+                });
+            });
         }
 
     // Load activities on window load

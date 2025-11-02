@@ -217,6 +217,8 @@
   "Disc": "Disc",
   "Print": "Print",
   "my_activities": "My activities",
+  "Apply": "Apply",
+  "Reset": "Reset",
   
   
   "error5314": "Updating routes is not permitted for this user or the competition is not in the right status",
@@ -245,6 +247,6 @@
 "Bad_captcha": "Bad CAPTCHA. Please try again.",
 "Contact_us_text1": "Do you like this app? Get in touch!   ",
 
-  "last": "Last"
+"last": "Last"
   
 }
