@@ -319,6 +319,9 @@ def get_activities_all_anonymous():
             activity = json.loads(row[0])
             activity.pop('user_id')
             activity.pop('name')
+            for attempt in activity.get('routes', []):
+                attempt.pop('notes')
+                attempt.pop('note')
             matching_entries.append(activity)
 
         return matching_entries

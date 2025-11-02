@@ -37,11 +37,11 @@
 .route-original .ro-name { font-size:.9rem; font-weight:600; }
 .route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.75rem; }
 .route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
-.route-climb .note-snippet { font-size:.7rem; }
+
 .soft { color:#2e86de; font-weight:600; }
 .hard { color:#c0392b; font-weight:600; }
 .flash { font-style:italic; }
-.note-snippet { font-size:.7rem; color:#444; background:#f1f3f4; padding:.25rem .45rem; border-radius:6px; }
+
 .leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
 .leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
 
@@ -98,9 +98,9 @@
 .opened-meta { background:#f1f3f4; }
 .contro-flex-min { display:flex; flex-wrap:wrap; gap:.6rem; }
 .contro-grades-label { margin-top:.4rem; }
-.contro-notes { margin-top:.4rem; font-size:.6rem; }
+
 /* Overlay & disagreement details */
-.disagreements-grid { display:grid; grid-template-columns:minmax(230px, 320px) minmax(140px,220px) minmax(110px,140px) 1fr; gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+.disagreements-grid { display:grid; /* First column now flexible to take remaining space */ grid-template-columns:1fr minmax(140px,220px) minmax(110px,140px); gap:.5rem .75rem; align-items:start; font-size:.65rem; }
 .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
 .dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
 .route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
@@ -154,6 +154,18 @@
     .disagreements-grid .dis-cell.route-detail { flex:1 1 100%; min-width:100%; }
     .disagreements-grid .dis-cell:not(.route-detail) { flex:1 1 160px; min-width:140px; }
 }
+/* Center controversial routes section below summary */
+#controversialSection { width:100%; }
+#controversialSection .section-title { text-align:center; }
+#controversialDetails { max-width:1100px; margin:0.75rem auto 0; }
+/* Center recent sessions timeline */
+#timelineSection { width:100%; }
+#timelineSection .section-title { text-align:center; }
+#timeline { max-width:1100px; margin:0.75rem auto 0; }
+/* Center gym activity leaderboard */
+#leaderboardSection { width:100%; }
+#leaderboardSection .section-title { text-align:center; }
+#gymLeaderboard { max-width:1100px; margin:0.75rem auto 0; }
 </style>
 
         <!-- Filter moved to top -->
@@ -266,7 +278,7 @@
         function computeStats(sourceActivities){
             const acts = sourceActivities || currentActivitiesView || activitiesData;
             const gymMap = {}; // gym_id -> stats
-        const routeDisagreements = {}; // route_id -> { grade, gym_id, occurrences, disagreements, userGrades:Set, notes:[], name }
+    const routeDisagreements = {}; // route_id -> { grade, gym_id, occurrences, disagreements, userGrades:Set, name }
         let earliest = null, latest = null;
 
             acts.forEach(act => {
@@ -289,7 +301,7 @@
 
                 const key = r.route_id || r.id;
                 if(!routeDisagreements[key]){
-                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), notes:[], name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
                 } else {
                     // Fill openedby/opendate if missing and present on this route occurrence
                     if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
@@ -300,7 +312,6 @@
                 const rd = routeDisagreements[key];
                 rd.occurrences++;
                 rd.statuses[r.status] = (rd.statuses[r.status]||0)+1;
-                if(r.note) rd.notes.push(r.note.trim());
                 if(r.user_grade) rd.userGrades.add(r.user_grade);
                 if(r.user_grade && r.user_grade !== r.grade){
                     rd.disagreements++;
@@ -582,6 +593,9 @@
                 img.alt = `${g.gym_name} logo`;
                 img.className = 'gym-logo';
                 img.loading = 'lazy';
+                img.style.cursor = 'pointer';
+                img.setAttribute('role','button');
+                img.addEventListener('click', () => activateGymFilter(g.gym_id));
                 colFlex.appendChild(img);
             }
             const nameRow = document.createElement('div');
@@ -589,6 +603,9 @@
             const strong = document.createElement('strong');
             strong.className = 'leaderboard-gym-name';
             strong.textContent = g.gym_name;
+            strong.style.cursor = 'pointer';
+            strong.setAttribute('role','button');
+            strong.addEventListener('click', () => activateGymFilter(g.gym_id));
             const sessionSpan = document.createElement('span');
             sessionSpan.className = 'leaderboard-session-count';
             sessionSpan.innerHTML = `${g.activities} <span data-translate-key="sessions_label">sessions</span>`;
@@ -667,12 +684,6 @@
             dist.appendChild(pill);
         });
         el.appendChild(dist);
-        if(controversial.notes.length){
-            const notesDiv = document.createElement('div');
-            notesDiv.className = 'contro-notes';
-            notesDiv.innerHTML = `<span data-translate-key=\"notes_label\">Notes</span>: ${controversial.notes.slice(0,4).map(n=>`<span class='note-snippet'>${n.substring(0,50)}</span>`).join('')}`;
-            el.appendChild(notesDiv);
-        }
         if(typeof replaceTranslations === 'function') {
             replaceTranslations();
         }
@@ -738,12 +749,7 @@
                     diffSpan.textContent = 'diff';
                     climbDiv.appendChild(diffSpan);
                 }
-                if(r.note){
-                    const noteSpan = document.createElement('span');
-                    noteSpan.className = 'note-snippet';
-                    noteSpan.textContent = r.note.substring(0,40);
-                    climbDiv.appendChild(noteSpan);
-                }
+                
                 row.appendChild(climbDiv);
                 item.appendChild(row);
             });
@@ -813,7 +819,53 @@
         }
     }
 
-    function applyCombinedFilters(){
+    // Programmatically activate gym filter from leaderboard click
+    function activateGymFilter(gymId){
+        const sel = document.getElementById('gymFilter');
+        if(!sel) return;
+        sel.value = gymId || '';
+        applyCombinedFilters(true); // push URL state
+        const mf = document.getElementById('monthFilter');
+        if(mf){ mf.scrollIntoView({behavior:'smooth', block:'start'}); }
+    }
+
+    // Update URL to reflect current filter state
+    function updateURLFromState(push){
+        try {
+            const params = new URLSearchParams(window.location.search);
+            // Month range
+            if(lastFilter){
+                const fromStr = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')}`;
+                const toStr = `${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')}`;
+                params.set('from', fromStr);
+                params.set('to', toStr);
+            } else {
+                params.delete('from');
+                params.delete('to');
+            }
+            // Gym
+            const sel = document.getElementById('gymFilter');
+            if(sel && sel.value){
+                params.set('gym', sel.value);
+            } else {
+                params.delete('gym');
+            }
+            const newQuery = params.toString();
+            const newUrl = window.location.pathname + (newQuery ? ('?' + newQuery) : '');
+            if(newUrl !== window.location.pathname + window.location.search){
+                if(push) {
+                    window.history.pushState(null,'',newUrl);
+                } else {
+                    window.history.replaceState(null,'',newUrl);
+                }
+            }
+        } catch(e){
+            console.warn('Failed updating URL params', e);
+        }
+    }
+
+    // Apply filters (month + gym) to activities view; userInitiated controls URL history behavior
+    function applyCombinedFilters(userInitiated=false){
         // Month filtering already applied when lastFilter set; start from base dataset
         let base = activitiesData;
         if(lastFilter){
@@ -827,6 +879,7 @@
         currentActivitiesView = base;
         renderEverything();
         updateRangeIndicatorWithGym();
+        updateURLFromState(userInitiated); // reflect latest state in URL
     }
 
     function updateRangeIndicatorWithGym(){
@@ -865,8 +918,7 @@
             const headers = [
                 { key:'route_details', text:'' },
                 { key:'user_grades_label', text:'' },
-                { key:'status_mix', text:'' },
-                { key:'notes_label', text:'' }
+                { key:'status_mix', text:'' }
             ];
             headers.forEach(h => {
                 const hd = document.createElement('div');
@@ -916,12 +968,6 @@
                 cStatus.appendChild(barWrapper);
                 const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
                 grid.appendChild(cStatus);
-                // Notes cell
-                const cNotes = document.createElement('div'); cNotes.className = 'dis-cell';
-                r.notes.slice(0,3).forEach(n => {
-                    const tn = document.createElement('span'); tn.className = 'tiny-note'; tn.textContent = n.substring(0,60); cNotes.appendChild(tn);
-                });
-                grid.appendChild(cNotes);
             });
             container.appendChild(grid);
         }
@@ -981,17 +1027,17 @@
                     const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m;
                 }
                 lastFilter = { from, to };
-                applyCombinedFilters();
+                applyCombinedFilters(true); // user initiated -> push history entry
             });
             document.getElementById('resetRange').addEventListener('click', () => {
                 lastFilter = null;
                 document.getElementById('gymFilter').value = '';
-                applyCombinedFilters();
+                applyCombinedFilters(true); // user initiated
             });
             const gymSel = document.getElementById('gymFilter');
             if(gymSel){
                 gymSel.addEventListener('change', () => {
-                    applyCombinedFilters();
+                    applyCombinedFilters(true); // user initiated gym change
                 });
             }
         }
@@ -1024,6 +1070,47 @@
         }
 
      window.addEventListener('load', loadAll);
+
+    // Read initial filters from URL (months & gym) and apply before first render
+    function applyInitialURLFilters(){
+        const params = new URLSearchParams(window.location.search);
+        const fromQ = params.get('from');
+        const toQ = params.get('to');
+        const gymQ = params.get('gym');
+        const monthFmt = /^\d{4}-\d{2}$/;
+        let applied = false;
+        if(fromQ && toQ && monthFmt.test(fromQ) && monthFmt.test(toQ)){
+            const from = parseMonthValue(fromQ);
+            const to = parseMonthValue(toQ);
+            if(from && to){
+                if(monthCompare(from,to) > 0){ const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m; }
+                lastFilter = { from, to };
+                document.getElementById('fromMonth').value = `${from.y}-${String(from.m).padStart(2,'0')}`;
+                document.getElementById('toMonth').value = `${to.y}-${String(to.m).padStart(2,'0')}`;
+                applied = true;
+            }
+        }
+        if(gymQ){
+            const gymSel = document.getElementById('gymFilter');
+            if(gymSel){
+                gymSel.value = gymQ;
+                // If value not found it will remain; that's okay.
+            }
+            applied = true;
+        }
+        if(applied){
+            applyCombinedFilters(false); // don't push history, just reflect existing URL state
+        }
+    }
+
+    // Re-apply filters when navigating browser history
+    window.addEventListener('popstate', () => {
+        // Clear existing filter state & re-read
+        lastFilter = null;
+        const gymSel = document.getElementById('gymFilter');
+        if(gymSel) gymSel.value = '';
+        applyInitialURLFilters();
+    });
 
 </script>
 
