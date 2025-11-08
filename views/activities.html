@@ -293,12 +293,12 @@
             }
             const g = gymMap[act.gym_id];
             g.activities++;
-            (act.routes || []).forEach(r => {
+            (act.attempts || []).forEach(r => {
                 g.uniqueRoutes.add(r.route_id || r.id);
                 if(r.status === 'climbed') g.climbs++;
                 else if(r.status === 'flashed') g.flashes++;
                 else if(r.status === 'attempted') g.attempts++;
-
+                
                 const key = r.route_id || r.id;
                 if(!routeDisagreements[key]){
                     routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
@@ -704,9 +704,11 @@
             item.appendChild(dateDiv);
             const header = document.createElement('div');
             header.className = 'timeline-header';
-            header.innerHTML = `${act.gym_name || 'Unknown Gym'} · ${(act.routes||[]).length} <span data-translate-key="routes_label">route${(act.routes||[]).length!==1?'s':''}</span>`;
+            header.innerHTML = `${act.gym_name || 'Unknown Gym'} · ${(act.attempts||[]).length} <span data-translate-key="routes_label">route${(act.attempts||[]).length!==1?'s':''}</span>`;
             item.appendChild(header);
-            (act.routes||[]).forEach(r => {
+            (act.attempts||[]).forEach(r => {
+
+
                 const disagree = r.user_grade && r.user_grade !== r.grade;
                 const row = document.createElement('div');
                 row.className = 'route-row';

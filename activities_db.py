@@ -66,6 +66,158 @@ def init():
 
         print('created ' + activities_TABLE)
 
+        # Run one-off JSON migration to enrich legacy flattened route attempts with explicit attempt_id
+        try:
+            migrated_rows, migrated_attempts = _migrate_legacy_routes(db)
+            logging.info(f"Activity JSON migration complete: rows_updated={migrated_rows}, attempts_tagged={migrated_attempts}")
+        except Exception as e:
+            logging.warning(f"Activity JSON migration failed: {e}")
+
+
+
+def _migrate_legacy_routes(db_conn) -> tuple[int, int]:
+    """Migrate all activity rows to the new attempts-only flattened format.
+
+    Final target shape per row:
+      {
+        ...,  # activity metadata
+        "attempts": [ { attempt + full route snapshot fields } ]
+      }
+
+    Accepted legacy variants:
+      1. Old flattened list under 'routes'. Each entry already mixes route + attempt fields.
+      2. Intermediate structure with 'routes_dict' + lean 'attempts' referencing route_id.
+
+    Migration rules:
+      - For variant (1): copy each route entry -> attempt dict; ensure attempt_id & attempt_time present; normalize status defaulting to 'attempted'.
+      - For variant (2): merge route metadata from routes_dict[route_id] into each attempt dict producing a flattened attempt.
+      - Remove keys: 'routes', 'routes_dict'.
+      - Do not mutate rows already in final flattened form (attempt entries containing a 'routenum' or 'color1').
+
+    Returns: (rows_migrated, attempts_flattened)
+    """
+    rows_migrated = 0
+    attempts_flattened = 0
+    cursor = db_conn.cursor()
+    cursor.execute(f"SELECT id, jsondata FROM {activities_TABLE}")
+    updates: list[tuple[str, str]] = []
+    for row in cursor.fetchall():
+        activity_id, json_blob = row
+        try:
+            data = json.loads(json_blob)
+        except Exception:
+            continue
+
+        # Detect if already flattened: attempts list exists and first attempt has route metadata fields
+        atts = data.get('attempts')
+        if isinstance(atts, list) and atts:
+            first = atts[0]
+            if isinstance(first, dict) and ('routenum' in first or 'color1' in first or 'grade' in first):
+                # Already flattened; ensure removal of any obsolete structures
+                if 'routes_dict' in data:
+                    data.pop('routes_dict', None)
+                    updates.append((activity_id, json.dumps(data)))
+                    rows_migrated += 1
+                continue  # skip further processing
+
+        # Variant (2): has routes_dict + lean attempts
+        if isinstance(atts, list) and 'routes_dict' in data and isinstance(data['routes_dict'], dict):
+            new_attempts: list[dict] = []
+            for att in atts:
+                if not isinstance(att, dict):
+                    continue
+                route_id = att.get('route_id') or att.get('id') or ''
+                route_meta = data['routes_dict'].get(route_id, {}) if route_id else {}
+                flat = {
+                    # attempt fields
+                    'attempt_id': att.get('attempt_id') or att.get('id') or uuid.uuid4().hex,
+                    'attempt_time': att.get('attempt_time') or att.get('datetime') or _now_iso(),
+                    'status': (att.get('status') or 'attempted').strip().lower() or 'attempted',
+                    'user_grade': att.get('user_grade') or att.get('user_proposed_grade'),
+                    'note': att.get('note', ''),
+                    # route snapshot fields merged
+                    'route_id': route_id,
+                    'routenum': str(route_meta.get('routenum', '')),
+                    'line': str(route_meta.get('line', '')),
+                    'colorfr': route_meta.get('colorfr', ''),
+                    'color1': route_meta.get('color1', ''),
+                    'color2': route_meta.get('color2', ''),
+                    'grade': route_meta.get('grade', ''),
+                    'color_modifier': route_meta.get('color_modifier', 'solid'),
+                    'name': route_meta.get('name', ''),
+                    'openedby': route_meta.get('openedby', ''),
+                    'opendate': route_meta.get('opendate', ''),
+                    'notes': route_meta.get('notes', ''),
+                }
+                new_attempts.append(flat)
+                attempts_flattened += 1
+            data['attempts'] = new_attempts
+            data.pop('routes_dict', None)
+            data.pop('routes', None)
+            updates.append((activity_id, json.dumps(data)))
+            rows_migrated += 1
+            continue
+
+        # Variant (1): legacy 'routes' list
+        legacy_routes = data.get('routes')
+        if isinstance(legacy_routes, list) and legacy_routes:
+            new_attempts: list[dict] = []
+            for entry in legacy_routes:
+                if not isinstance(entry, dict):
+                    continue
+                attempt_id = entry.get('attempt_id') or entry.get('id') or uuid.uuid4().hex
+                route_uuid = entry.get('route_id') or entry.get('route_uuid') or entry.get('routeId') or entry.get('id') or uuid.uuid4().hex
+                attempt_time_raw = entry.get('attempt_time') or entry.get('datetime') or _now_iso()
+                status = (entry.get('status') or 'attempted').strip().lower() or 'attempted'
+                new_attempts.append({
+                    'attempt_id': attempt_id,
+                    'attempt_time': attempt_time_raw,
+                    'status': status,
+                    'user_grade': entry.get('user_grade') or entry.get('user_proposed_grade'),
+                    'note': entry.get('note', ''),
+                    # embedded route snapshot (copy straight across)
+                    'route_id': route_uuid,
+                    'routenum': str(entry.get('routenum', '')),
+                    'line': str(entry.get('line', '')),
+                    'colorfr': entry.get('colorfr', ''),
+                    'color1': entry.get('color1', ''),
+                    'color2': entry.get('color2', ''),
+                    'grade': entry.get('grade', ''),
+                    'color_modifier': entry.get('color_modifier', 'solid'),
+                    'name': entry.get('name', ''),
+                    'openedby': entry.get('openedby', ''),
+                    'opendate': entry.get('opendate', ''),
+                    'notes': entry.get('notes', ''),
+                })
+                attempts_flattened += 1
+            data['attempts'] = new_attempts
+            data.pop('routes', None)
+            data.pop('routes_dict', None)
+            updates.append((activity_id, json.dumps(data)))
+            rows_migrated += 1
+            continue
+
+        # Row had none of the expected structures; ensure attempts key exists
+        if 'attempts' not in data:
+            data['attempts'] = []
+            data.pop('routes', None)
+            data.pop('routes_dict', None)
+            updates.append((activity_id, json.dumps(data)))
+            rows_migrated += 1
+
+    # Persist batch updates
+    for act_id, payload in updates:
+        cursor.execute(f"UPDATE {activities_TABLE} SET jsondata = ? WHERE id = ?", (payload, act_id))
+    db_conn.commit()
+    return rows_migrated, attempts_flattened
+
+
+def _now_iso() -> str:
+    from datetime import datetime
+    return datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+
+
+
 
 def add_activity(user, gym, routesid, name, date):
     activity_id = str(uuid.uuid4().hex)
@@ -136,34 +288,15 @@ def add_activity_entry(activity_id, route, status, note, user_grade):
     Returns: updated Activity as lean dict (with attempts + distinct routes)
     """
     from src.RouteAttempt import RouteAttempt  # local import to avoid circulars if any
-    from src.Route import Route
 
     activity = get_activity(activity_id)
     if activity is None:
         return None
 
-    # Build a Route object from incoming route dict (minimal fields tolerated)
-    route_obj = Route(
-        id=route.get('id', route.get('route_id', '')),
-        routenum=str(route.get('routenum', '')),
-        line=str(route.get('line', '')),
-        colorfr=route.get('colorfr', ''),
-        color1=route.get('color1', ''),
-        color2=route.get('color2', ''),
-        grade=route.get('grade', ''),
-        color_modifier=route.get('color_modifier', 'solid'),
-        name=route.get('name', ''),
-        openedby=route.get('openedby', ''),
-        opendate=route.get('opendate', ''),
-        notes=route.get('notes', ''),
-    )
-
-    attempt = RouteAttempt.from_route(
-        route_obj,
-        status=status,
-        user_grade=user_grade,
-        note=note,
-    )
+    # Ensure route_id present in route metadata
+    if 'route_id' not in route:
+        route['route_id'] = route.get('route_id') or route.get('id') or uuid.uuid4().hex
+    attempt = RouteAttempt.from_route_metadata(route, status=status, user_grade=user_grade, note=note)
 
     # Use Activity.add_route_attempt (appends to attempts list; legacy flattened handled on persist)
     activity.add_route_attempt(attempt)
@@ -174,15 +307,11 @@ def add_activity_entry(activity_id, route, status, note, user_grade):
     return activity.to_dict()
 
 
-def update_activity(activity: Activity, *, legacy_flatten: bool = True) -> Activity | None:
-    """Persist an Activity domain object.
-
-    By default writes the legacy flattened representation (routes list with attempts merged) to avoid
-    breaking existing stored format. Set legacy_flatten=False to store lean form with separate attempts.
-    """
+def update_activity(activity: Activity) -> Activity | None:
+    """Persist an Activity domain object using the attempts-only representation."""
     if activity is None or not isinstance(activity, Activity):
         return None
-    payload = activity.to_dict(legacy_flatten=legacy_flatten)
+    payload = activity.to_dict()
     _update_activity_jsondata(activity.id, payload)
     return activity
 
@@ -331,6 +460,7 @@ def get_activities_all_anonymous():
         sql_lock.release()
 
 
+# this adds a new activity
 def _add_activity(activity_id, user_id, gym_id, routes_id, date, jsondata):
     try:
         sql_lock.acquire()

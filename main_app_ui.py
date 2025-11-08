@@ -567,30 +567,25 @@ def activities():
                            )
 
 
-
+## FIX THIS
+## login is not required but a user being retrieved
+## email may not exist in the session and this will cause an error
 #@app_ui.route('/activities/<activity_id>', methods=['GET'], description='returns activity-detail.html')
 @app_ui.route('/activities/<activity_id>', methods=['GET'])
-#@login_required
+@login_required
 def activity_detail(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
-    activity = activity_engine.get_activity(activity_id)
-    gym = competitionsEngine.get_gym(activity.gym_id)
+    #activity = activity_engine.get_activity(activity_id)
+    #gym = competitionsEngine.get_gym(activity.gym_id)
 
     #gym = competitionsEngine.get_gym(journey['gym_id'])
 
-    if activity.routes_id is None:
-        routes = competitionsEngine.get_routes("7134a8ef-fa2e-4672-a247-115773183bcd")  # should return  Nanterre routes
-    else:
-        routes = competitionsEngine.get_routes(activity.routes_id)
-
+    
     return render_template('activity-detail.html',
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           activity=activity,
-                           routes=routes,
-                           gym=gym,
                            today=date.today(),
-                           activity_id=activity_id,
+                           activity_id=activity_id
                            )
 
 
