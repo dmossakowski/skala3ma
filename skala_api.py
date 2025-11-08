@@ -30,6 +30,7 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
     stream_with_context, copy_current_request_context, g
 
 import logging
+from logging_config import attach_request_logging
 
 from flask import Blueprint
 import activities_db as activities_db
@@ -106,6 +107,7 @@ GOOGLE_DISCOVERY_URL = (
 
 #skala_api_app = APIBlueprint('skala_api', __name__, url_prefix='/api1', doc_ui=True, abp_tags= [book_tag, comp_tag])
 skala_api_app = Blueprint('skala_api', __name__, url_prefix='/api1')
+attach_request_logging(skala_api_app, app_name='api')
 
 
 skala_api_app.debug = True
@@ -188,7 +190,7 @@ def set_language(language=None):
     if language is None:
         language = 'fr_FR'
     session['language'] = language
-    logging.debug('api setting language requested to '+str(language))
+    #logging.debug('api setting language requested to '+str(language))
     langpack = competitionsEngine.reference_data['languages'].get(language)
     if langpack is None:
         if language.startswith('pl'):
@@ -199,7 +201,7 @@ def set_language(language=None):
             langpack = competitionsEngine.reference_data['languages']['fr_FR']
         else:
             langpack = competitionsEngine.reference_data['languages']['fr_FR']
-            logging.warn('api setting language not found '+str(language))
+            logging.warning('api setting language not found '+str(language))
 
     competitionsEngine.reference_data['current_language'] = langpack
     return language
@@ -732,7 +734,7 @@ def calculate_activities_stats_per_day(activities):
         activity_date = activity['date']
         # If the activity date is in the routes_done dictionary, add the number of routes
         if activity_date in routes_done:    
-            routes_done[activity_date] += len(activity['routes'])
+            routes_done[activity_date] += len(activity['attempts'])
 
     # Convert the dictionary to a list of values
     routes_done_list = list(routes_done.values())
@@ -755,7 +757,7 @@ def calculate_activities_stats(activities):
         start_of_week = activity_date - timedelta(days=activity_date.weekday())
         
         # Increment the count of routes done for that week
-        weekly_stats[start_of_week] += len(activity['routes'])
+        weekly_stats[start_of_week] += len(activity['attempts'])
 
     # Convert the weekly_stats dictionary to a sorted list of tuples
     sorted_weekly_stats = sorted(weekly_stats.items())
@@ -836,7 +838,7 @@ def get_activity(activity_id):
     if (activity is None):
         return {"error":"activity not found"}   
     #a = Activity1(**data)
-    activity = activities_db.get_activity(activity_id)
+    #activity = activities_db.get_activity(activity_id)
     #activity = calculate_activity_stats(activity)
 
     # journey_id = user.get('journey_id')

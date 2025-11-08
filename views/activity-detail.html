@@ -118,6 +118,7 @@
                  <h4 id="attemptModalTitle" style="margin:0; font-size:1.2rem;"></h4>
                  <button type="button" onclick="closeAttemptModal()" class="btn btn-sm btn-outline-secondary">✕</button>
             </div>
+            <div id="attemptModalError" class="alert alert-danger" style="display:none; padding:6px 10px; margin-bottom:8px; font-size:0.85rem;"></div>
             <div id="attemptRouteInfo" class="route-info" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
                 <span id="attemptRouteColor"></span>
                 <span id="attemptRouteGrade" class="badge bg-secondary" style="font-size:0.9rem;"></span>
@@ -276,38 +277,43 @@ function showModal() {
 
 
     var gym_id;
-    var routesIndex = {}; // map route_id -> route metadata from activity.routes
+    // routesIndex now unused for activity attempts (each attempt embeds full route metadata);
+    // retained only for possible gym route lookup when adding new attempts.
+    var routesIndex = {}; 
     var activity; // lean activity object
     var table;
       
       function getData()
       {
-        const gymid = "{{gym['gym_id']}}";
-        const routeid = "{{routes['id']}}";
-    
-                fetch(`/api1/activity/${ACTIVITY_ID}`)
-                    .then(r => r.json())
-                    .then(data => handleActivityResponse(data))
-                    .catch(error => console.error(error));
-    
+        fetch(`/api1/activity/${ACTIVITY_ID}`)
+            .then(r => r.json())
+            .then(data => 
+            {
+                handleActivityResponse(data);
+                gym_id = data.gym_id;
+                routesid = data.routes_id;
+                getGymData(gym_id, routesid);
+            })
+            .catch(error => console.error(error));
 
-        fetch(`/api1/gym/{{gym['id']}}/`)
-        .then(response => response.json())
-        .then(data => {
-            // use the retrieved data here
-            //console.log(data);
-            routes=data.routes
-            renderGymRoutesTabulatorTable(routes);
-            
-              
-    
-        })
-        .catch(error => console.error(error));
+
       }
     
     
 
     getData();
+
+    function getGymData(gym_id, routesid){
+
+        fetch(`/api1/gym/${gym_id}/routes/${routesid}`)
+            .then(r => r.json())
+            .then(data => {
+                gym_id = data.gym_id;
+                routes=data.routes
+                renderGymRoutesTabulatorTable(routes);
+            })
+            .catch(error => console.error(error));
+    }
     
 
     function renderGymRoutesTabulatorTable(routesA)
@@ -478,23 +484,12 @@ function showModal() {
 
 
     function handleActivityResponse(data){
-        activity = data;
-        // Build route index; if lean form routes are distinct; if legacy flattened (no attempts) we can synthesize attempts later if needed
-        routesIndex = {};
-        (activity.routes || []).forEach(r => { if(r.id) routesIndex[r.id] = r; });
-        // If response lacks attempts but has flattened routes (legacy) convert them to pseudo attempts
-        if(!activity.attempts && Array.isArray(activity.routes)){
-            activity.attempts = activity.routes.map(r => ({
-                route_id: r.id,
-                status: r.status || 'attempted',
-                user_grade: r.user_grade || r.grade,
-                note: r.note || '',
-                attempt_time: r.attempt_time || r.datetime || ''
-            }));
-        }
-    const nameSpan = document.getElementById('activityName');
-    if(nameSpan){ nameSpan.textContent = activity.name || ''; }
-        document.getElementById('activityDate').innerHTML = '<a href="/gyms/'+activity.gym_id+'">'+(activity.gym_name||'')+'</a> - '+(activity.starttime||'');
+        activity = data || {};
+        // Activity attempts are already flattened with route metadata; no need to build an index.
+        const nameSpan = document.getElementById('activityName');
+        if(nameSpan){ nameSpan.textContent = activity.name || ''; }
+        const dateEl = document.getElementById('activityDate');
+        if(dateEl){ dateEl.innerHTML = '<a href="/gyms/'+(activity.gym_id||'')+'">'+(activity.gym_name||'')+'</a> - '+(activity.starttime||''); }
         renderAttempts();
     }
 
@@ -539,17 +534,17 @@ function showModal() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 })
-                .then(r=>r.json())
+                .then(r => {
+                    if(!r.ok){ return r.json().then(err => { throw err; }); }
+                    return r.json();
+                })
                 .then(data => {
-                    if(data.error){
-                        document.getElementById('hidden_message').textContent = data.error;
-                        return;
-                    }
                     handleActivityResponse(data);
-                    document.getElementById('hidden_message').textContent = '{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}';
-                }).catch(err => {
+                    showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
+                })
+                .catch(err => {
                     console.error('update attempt failed', err);
-                    document.getElementById('hidden_message').textContent = 'error_saving';
+                    showErrorMessage(err?.error || 'error_saving');
                 });
             } else {
                 // create new attempt via POST /activity/<activity_id>
@@ -565,17 +560,18 @@ function showModal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(createPayload)
-                }).then(r=>r.json()).then(data => {
-                    if(data.error){
-                        document.getElementById('hidden_message').textContent = data.error;
-                        return;
-                    }
-                    // data is singular activity? add_activity_route returns activity.to_dict()
+                })
+                .then(r => {
+                    if(!r.ok){ return r.json().then(err => { throw err; }); }
+                    return r.json();
+                })
+                .then(data => {
                     handleActivityResponse(data);
-                    document.getElementById('hidden_message').textContent = '{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}';
-                }).catch(err => {
+                    showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
+                })
+                .catch(err => {
                     console.error('create attempt failed', err);
-                    document.getElementById('hidden_message').textContent = 'error_saving';
+                    showErrorMessage(err?.error || 'error_saving');
                 });
             }
         } catch(ex){
@@ -595,16 +591,16 @@ function showModal() {
         tbody.innerHTML='';
         const attempts = activity?.attempts || [];
         attempts.forEach(att => {
-            const route = routesIndex[att.route_id] || {};
-            const disagreement = (att.user_grade && route.grade && att.user_grade !== route.grade);
+            // Each attempt already includes route snapshot fields
+            const disagreement = (att.user_grade && att.grade && att.user_grade !== att.grade);
             const attemptKey = att.attempt_id || att.route_id;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class='route-cell'>
                     <div class='route-cell-inner'>
-                        <span class='route-color'>${getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '50px','25px')}</span>
-                        <span class='route-grade'>${route.grade || ''}</span>
-                        <span class='route-name'>${route.name || ''}</span>
+                        <span class='route-color'>${getColorSVGDiv(att.color1 || '', att.color_modifier || 'solid', '50px','25px')}</span>
+                        <span class='route-grade'>${att.grade || ''}</span>
+                        <span class='route-name'>${att.name || ''}</span>
                     </div>
                 </td>
                 <td class='status-cell'>${statusIcon(att.status)}</td>
@@ -652,7 +648,7 @@ function showModal() {
 
         // ---------- POPUP ATTEMPT EDIT (Mobile Friendly) ----------
         let attemptModalEl;
-    let currentRouteId = null; // Used when creating a brand new attempt
+        let currentRouteId = null; // Used when creating a brand new attempt
         function ensureAttemptModal(){
             // Modal now exists statically in DOM; just cache reference
             if(!attemptModalEl){
@@ -663,9 +659,13 @@ function showModal() {
         function openAttemptModal(attemptKey){
                 ensureAttemptModal();
                 currentAttemptKey = attemptKey;
-                const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === attemptKey);
+        // clear previous error
+        const errEl = document.getElementById('attemptModalError');
+        if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+            const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === attemptKey);
                 if(!attemptObj){ console.error('Attempt not found'); return; }
-                const route = routesIndex[attemptObj.route_id] || {};
+                // Use attempt object directly for route metadata
+                const route = attemptObj;
                 document.getElementById('attemptModalStatus').value = attemptObj.status;
                 document.getElementById('attemptModalGrade').value = attemptObj.user_grade || '';
                 
@@ -695,7 +695,9 @@ function showModal() {
         ensureAttemptModal();
         if(!routeData || !routeData.id){ console.error('Route data missing'); return; }
         currentRouteId = routeData.id; // keep for creation
-        const route = routesIndex[routeData.id] || routeData;
+    const route = routeData; // gym route metadata used for new attempt creation
+        const errEl = document.getElementById('attemptModalError');
+        if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
         // Prefill fields
         document.getElementById('attemptModalStatus').value = 'climbed';
         document.getElementById('attemptModalGrade').value = (route.grade || '');
@@ -746,11 +748,17 @@ function showModal() {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).then(r=>r.json()).then(data => {
-                    if(data.error){ console.error(data.error); return; }
+                })
+                .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
+                .then(data => {
+                    console.log(data);
                     closeAttemptModal();
                     handleActivityResponse(data);
-                }).catch(err => console.error(err));
+                })
+                .catch(err => {
+                    console.error(err);
+                    showErrorMessage(err?.error || 'error_updating_attempt');
+                });
             } else {
                 // CREATE new attempt via POST
                 const createPayload = {
@@ -765,11 +773,16 @@ function showModal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(createPayload)
-                }).then(r=>r.json()).then(data => {
-                    if(data.error){ console.error(data.error); return; }
+                })
+                .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
+                .then(data => {
                     closeAttemptModal();
                     handleActivityResponse(data);
-                }).catch(err => console.error(err));
+                })
+                .catch(err => {
+                    console.error(err);
+                    showErrorMessage(err?.error || 'error_creating_attempt');
+                });
             }
         }
         function deleteAttemptFromModal(){
@@ -779,11 +792,30 @@ function showModal() {
         const routeId = attemptObj?.route_id;
         if(!routeId){ console.error('route_id missing for delete'); return; }
                 fetch(`/api1/activity/${ACTIVITY_ID}/route/${routeId}`, { method:'DELETE' })
-                    .then(r=>r.json()).then(data => {
-                        if(data.error){ console.error(data.error); return; }
+                    .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
+                    .then(data => {
                         closeAttemptModal();
                         handleActivityResponse(data);
-                    }).catch(err=>console.error(err));
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showErrorMessage(err?.error || 'error_deleting_attempt');
+                    });
+        }
+        // Generic error message dispatcher: shows in attempt modal if open, else legacy hidden_message
+        function showErrorMessage(msg, success){
+            if(attemptModalEl && attemptModalEl.style.display === 'flex'){
+                const errEl = document.getElementById('attemptModalError');
+                if(errEl){
+                    errEl.textContent = msg;
+                    errEl.style.display = 'block';
+                    errEl.classList.toggle('alert-success', !!success);
+                    errEl.classList.toggle('alert-danger', !success);
+                }
+            } else {
+                const hm = document.getElementById('hidden_message');
+                if(hm){ hm.textContent = msg; }
+            }
         }
 </script>
 

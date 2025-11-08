@@ -55,6 +55,8 @@ import requests
 import json
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
+from logging_config import init_logging, attach_request_logging
 
 
 from main_app_ui import app_ui, languages
@@ -240,13 +242,13 @@ def load_user(user_id):
 
 
 def init():
-    print ('initializing server...')
+    print('initializing server...')
 
-    #init_logging(log_file=DATA_DIRECTORY+'/l.log',  console_loglevel=logging.DEBUG)
-    #init_logging(console_loglevel=logging.DEBUG)
-    r = random.randint(0, 10000)
-    init_logging(log_file=DATA_DIRECTORY+'/log'+str(r)+'.log',  console_loglevel=logging.DEBUG)
-    # init_logging(console_loglevel=logging.DEBUG)
+    # Daily rotating log file (midnight) keeping up to 300 historical files
+    log_path = os.path.join(DATA_DIRECTORY, 'app.log')
+    init_logging(log_file=log_path, console_loglevel=logging.INFO, backup_count=300)
+    # Avoid logging API blueprint requests twice by skipping its blueprint name
+    attach_request_logging(app, app_name='web', skip_blueprints={'skala_api'})
 
     
     if not os.path.exists(DATA_DIRECTORY):
@@ -292,31 +294,7 @@ def init():
 
 
 
-def init_logging(log_file=None, append=False, console_loglevel=logging.INFO):
-    """Set up logging to file and console."""
-    if log_file is not None:
-        if append:
-            filemode_val = 'a'
-        else:
-            filemode_val = 'w'
-        
-        logging.basicConfig(level=logging.DEBUG,
-                            format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
-                            # datefmt='%m-%d %H:%M',
-                            filename=log_file,
-                            filemode=filemode_val
-                            )
-    # define a Handler which writes INFO messages or higher to the sys.stderr
-
-    console = logging.StreamHandler()
-    console.setLevel(console_loglevel)
-    # set a format which is simpler for console use
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-    console.setFormatter(formatter)
-    # add the handler to the root logger
-    logging.getLogger('').addHandler(console)
-    #global LOG
-    #LOG = logging.getLogger(__name__)
+## Logging configuration was refactored into logging_config.init_logging & attach_request_logging
     
 
 

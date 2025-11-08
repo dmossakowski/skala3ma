@@ -5,8 +5,6 @@ import uuid
 from datetime import datetime
 import re
 
-from .Route import Route
-
 VALID_STATUSES = {"climbed", "flashed", "attempted"}
 STATUS_SYNONYMS = {
     "send": "climbed",
@@ -18,27 +16,34 @@ STATUS_SYNONYMS = {
 
 @dataclass
 class RouteAttempt:
-    """Represents a single user interaction with a route inside an Activity (session).
+    """A self-contained immutable-ish record of a route attempt.
 
-    Composition:
-      - route: the underlying Route definition (static metadata)
-      - status: how the climber engaged with the route (climbed|flashed|attempted)
-      - attempt_time: ISO8601 timestamp of the attempt (defaults to now if not provided)
-      - user_grade: climber's proposed grade (may match or differ from route.grade)
-      - note: optional per-attempt commentary
-
-    Serialization helpers merge attempt data with route metadata to remain
-    compatible with existing JSON shape used elsewhere in the app.
+    Flattened: embeds route metadata so Activity only stores List[RouteAttempt].
+    Immutable route snapshot fields; only 'note' and 'user_grade' are mutable.
     """
-    route: Route
-    status: str
+    # Attempt identity / timing
     attempt_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     attempt_time: Union[str, datetime] = field(default_factory=lambda: datetime.utcnow())
+    status: str = "attempted"
     user_grade: Optional[str] = None
     note: str = ""
 
+    # Route snapshot metadata
+    route_id: str = ""
+    routenum: str = ""
+    line: str = ""
+    colorfr: str = ""
+    color1: str = ""
+    color2: str = ""
+    grade: str = ""
+    color_modifier: str = "solid"
+    name: str = ""
+    openedby: str = ""
+    opendate: str = ""
+    notes: str = ""
+
     def __post_init__(self):
-        # Normalize status (case-insensitive + synonyms)
+        # Normalize status
         raw = (self.status or "").strip().lower()
         raw = STATUS_SYNONYMS.get(raw, raw)
         if raw not in VALID_STATUSES:
@@ -51,22 +56,22 @@ class RouteAttempt:
                 self.attempt_time = datetime.fromisoformat(self.attempt_time.replace("Z",""))
             except Exception:
                 self.attempt_time = datetime.utcnow()
-        # Basic validation hooks
-        self._validate_color(self.route.color1)
-        self._validate_grade(self.route.grade)
+        # Basic validation hooks on embedded snapshot
+        self._validate_color(self.color1)
+        self._validate_grade(self.grade)
         if self.user_grade:
             self._validate_grade(self.user_grade)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RouteAttempt":
-        """Create a RouteAttempt from a dict in the existing flattened route attempt shape.
-        Expected keys (subset tolerated):
-          id, routenum, line, colorfr, color1, color2, grade, color_modifier, name,
-          openedby, opendate, notes, route_id, status, note, user_grade, datetime/attempt_time
-        """
-        # Build Route first from route metadata
-        route = Route(
-            id=data.get('id', data.get('route_id', '')),
+        """Rehydrate from dict (already flattened)."""
+        return cls(
+            attempt_id=data.get('attempt_id') or data.get('id') or uuid.uuid4().hex,
+            attempt_time=data.get('attempt_time') or data.get('datetime') or datetime.utcnow(),
+            status=data.get('status', 'attempted'),
+            user_grade=data.get('user_grade') or data.get('user_proposed_grade'),
+            note=data.get('note', ''),
+            route_id=data.get('route_id') or data.get('id') or '',
             routenum=str(data.get('routenum', '')),
             line=str(data.get('line', '')),
             colorfr=data.get('colorfr', ''),
@@ -79,44 +84,38 @@ class RouteAttempt:
             opendate=data.get('opendate', ''),
             notes=data.get('notes', ''),
         )
-        attempt_time = data.get('attempt_time') or data.get('datetime') or datetime.utcnow()
-        return cls(
-            route=route,
-            attempt_id=data.get('attempt_id') or data.get('id_attempt') or uuid.uuid4().hex,
-            status=data.get('status', 'attempted'),
-            attempt_time=attempt_time,
-            user_grade=data.get('user_grade') or data.get('user_proposed_grade'),
-            note=data.get('note', ''),
-        )
 
     @classmethod
-    def from_route(cls, route: Route, *, status: str, user_grade: Optional[str] = None, note: str = "", attempt_time: Optional[Union[str, datetime]] = None) -> "RouteAttempt":
-        """Create an attempt from an existing Route instance."""
-        return cls(
-            route=route,
-            status=status,
-            attempt_time=attempt_time or datetime.utcnow(),
-            user_grade=user_grade,
-            note=note,
-        )
+    def from_route_metadata(cls, route_meta: Dict[str, Any], *, status: str, user_grade: Optional[str] = None, note: str = "", attempt_time: Optional[Union[str, datetime]] = None) -> "RouteAttempt":
+        """Create attempt from an external route metadata dict (already flattened)."""
+        data = dict(route_meta)
+        data.update({'status': status, 'user_grade': user_grade, 'note': note, 'attempt_time': attempt_time})
+        return cls.from_dict(data)
 
     def as_dict(self) -> Dict[str, Any]:
-        """Return lean attempt representation referencing route id only (no duplicated route fields)."""
         iso_time = self.attempt_time.isoformat(timespec='seconds') + "Z"
         return {
             'attempt_id': self.attempt_id,
-            'route_id': self.route.id,
+            'attempt_time': iso_time,
             'status': self.status,
             'user_grade': self.user_grade,
             'note': self.note,
-            'attempt_time': iso_time,
+            # Embedded route snapshot
+            'route_id': self.route_id,
+            'routenum': self.routenum,
+            'line': self.line,
+            'colorfr': self.colorfr,
+            'color1': self.color1,
+            'color2': self.color2,
+            'grade': self.grade,
+            'color_modifier': self.color_modifier,
+            'name': self.name,
+            'openedby': self.openedby,
+            'opendate': self.opendate,
+            'notes': self.notes,
         }
 
-    def legacy_flatten(self) -> Dict[str, Any]:
-        """Return previous flattened representation (route metadata + attempt fields) for backward compatibility."""
-        base = self.route.as_dict()
-        base.update(self.as_dict())
-        return base
+    # legacy_flatten removed – new system uses lean attempts + separate route metadata
 
     # ----- Utility & Analysis Methods -----
     @staticmethod
@@ -141,18 +140,16 @@ class RouteAttempt:
         return base
 
     def grade_diff(self) -> int:
-        """Return user_grade - route.grade ordering difference (positive means proposed harder)."""
-        if not self.user_grade or not self.route.grade:
+        if not self.user_grade or not self.grade:
             return 0
-        return self._grade_order_key(self.user_grade) - self._grade_order_key(self.route.grade)
+        return self._grade_order_key(self.user_grade) - self._grade_order_key(self.grade)
 
     def is_disagreement(self) -> bool:
-        return bool(self.user_grade and self.route.grade and self.user_grade != self.route.grade)
+        return bool(self.user_grade and self.grade and self.user_grade != self.grade)
 
     def to_route_update(self) -> Dict[str, Any]:
-        """Return a dict of route fields that could be updated based on attempt (e.g. user_grade consensus)."""
         return {
-            'id': self.route.id,
+            'id': self.route_id,
             'proposed_grade': self.user_grade,
             'note_append': self.note.strip() or None,
         }
@@ -174,7 +171,7 @@ class RouteAttempt:
             pass
 
     def __repr__(self) -> str:
-        return f"RouteAttempt(route={self.route.routenum or self.route.id}, status={self.status}, user_grade={self.user_grade})"
+        return f"RouteAttempt(route={self.routenum or self.route_id}, status={self.status}, user_grade={self.user_grade})"
 
 # Quick self-test
 if __name__ == "__main__":
@@ -196,5 +193,4 @@ if __name__ == "__main__":
     }
     attempt = RouteAttempt.from_dict(sample)
     print(attempt)
-    print("Lean attempt:", attempt.as_dict())
-    print("Legacy flattened:", attempt.legacy_flatten())
+    print("Attempt dict:", attempt.as_dict())

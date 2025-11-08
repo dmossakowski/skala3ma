@@ -54,6 +54,24 @@ class Route:
             'notes': self.notes,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Route":
+        """Create a Route from a pure metadata dict. Ignores any attempt-related fields if present."""
+        return cls(
+            id=data.get('id') or data.get('route_id') or data.get('route_uuid', ''),
+            routenum=str(data.get('routenum', '')),
+            line=str(data.get('line', '')),
+            colorfr=data.get('colorfr', ''),
+            color1=data.get('color1', ''),
+            color2=data.get('color2', ''),
+            grade=data.get('grade', ''),
+            color_modifier=data.get('color_modifier', 'solid'),
+            name=data.get('name', ''),
+            openedby=data.get('openedby', ''),
+            opendate=data.get('opendate', ''),
+            notes=data.get('notes', ''),
+        )
+
     def touch(self, **updates: Any) -> None:
         """Mutate selected attributes. Only existing attributes are updated."""
         for k, v in updates.items():
