@@ -157,6 +157,12 @@
   "ado_contest_rules": "Règlement Ado",
   "contact_email": "Contactez-nous",
   "privacy_notice": "Protection de vos données personnelles",
+  "competition_category_adult_0": "Séniors 16-49 ans",
+  "competition_category_adult_1": "Titane 50-64 ans",
+  "competition_category_adult_2": "Diamant 65 ans et +",
+  "competition_category_youth_0": "Ado 12-13",
+  "competition_category_youth_1": "Ado 14-15",
+  "competition_category_youth_2": "Ado 16-17",
 
   "activities": "Activités",
   "add_activity": "Ajouter une activité",
@@ -223,6 +229,7 @@
     "my_activities": "Mes activités",
     "Apply": "Appliquer",
     "Reset": "Réinitialiser",
+  "Present": "Présent",
   
   "error5314": "La mise à jour des voies n'est pas autorisée pour cet utilisateur ou la compétition n'est pas dans le bon état",
   "error5315": "Pas de permission pour éditer le mur",

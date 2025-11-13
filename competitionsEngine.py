@@ -205,11 +205,12 @@ def addCompetition(compId, added_by, name, date, routesid, max_participants, com
     return compId
 
 
+# also used to update max_participants
 def update_competition_details(competition, name, date, instructions):
     competition['name']=name
     competition['date'] = date
     competition['instructions'] = instructions
-    skala_db._update_competition(competition['id'], competition)
+    _update_competition(competition['id'], competition)
     return competition
     
 
@@ -273,9 +274,10 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         climbers[climberId] = {"id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
                                "club" :club, "sex":sex, "category":category, "routesClimbed":[], "score":0, "rank":0,
-                                "routesClimbed2":[], }
-        #logging.info(competition)
+                                "routesClimbed2":[], "registration_timestamp": datetime.now().isoformat()}
 
+        #logging.info(competition)
+        
         _update_competition(competitionId, competition)
     except Exception as e:
         logging.error(f'Error adding climber to the competition {email}: {str(e)}')
@@ -291,18 +293,50 @@ def removeClimber(climberId, competitionId):
     try:
         sql_lock.acquire()
         competition = get_competition(competitionId)
-
+        
         climbers = competition['climbers']
         if climberId in climbers and competition['status'] in [competition_status_open]:
             del climbers[climberId]
+            
             _update_competition(competitionId, competition)
     finally:
         sql_lock.release()
 
 
+# sort climbers by registration date and puts them on waiting list if needed
+# based on max participants
+# if registration date is missing, assume the current list order is the registration order
+def _recalculate_waiting_list(competition):   
+    climbers = competition['climbers']
+    # sort climbers by registration date
+    #sorted_climbers = sorted(climbers.items(), key=lambda x: x[1].get('registration_timestamp'))
+    for index, (climberId, climberData) in enumerate(climbers.items()):
+        if index >= int(competition.get('max_participants', 0)):
+            climbers[climberId]['registration_status'] = 'waiting'
+        else:
+            climbers[climberId]['registration_status'] = 'registered'
+    return competition
+
+
 def get_climber_json(climberId, email, name, firstname, lastname, club, sex, category=0):
     climber_json = {"id": climberId, "email": email, "name": name, "firstname": firstname, "lastname": lastname,
                            "club": club, "sex": sex, "category": category, "routesClimbed": [], "score": 0, "rank": 0}
+
+
+def setClimberPresence(competitionId, climberId, present=True ):
+    try:
+        sql_lock.acquire()
+
+        comp = get_competition(competitionId)
+        climber = comp['climbers'][climberId]
+        if climber is None:
+            return
+
+        climber['present'] = present
+        _update_competition(competitionId, comp)
+    finally:
+        sql_lock.release()
+    return comp
 
 
 
@@ -398,9 +432,10 @@ def setRoutesClimbed(competitionId, climberId, routeList):
             #print(routes_climbed)
             routes_climbed.append(route)
         comp = recalculate(competitionId, comp)
-        _update_competition(competitionId, comp)
+        comp = _update_competition(competitionId, comp)
     finally:
         sql_lock.release()
+        return comp
 
 
 def update_competition(competitionId, competition):
@@ -784,6 +819,8 @@ def _update_competition(compId, competition):
 
     if compId is None:
         raise ValueError("cannot update competition with None key");
+
+    competition = _recalculate_waiting_list(competition)
     db = lite.connect(COMPETITIONS_DB)
 
     cursor = db.cursor()
@@ -794,6 +831,7 @@ def _update_competition(compId, competition):
     #logging.info('updated competition: '+str(compId))
     db.commit()
     db.close()
+    return competition
 
 
 def delete_competition(compId):

@@ -175,8 +175,6 @@ def admin_required(fn):
         if session != None and (session.get('name') == 'David Mossakowski' or 
             session.get('name') == 'Sebastiao Correia'):
             now = int(datetime.now().timestamp())
-            #expiresAt = session['expires_at']
-            expiresAtLocaltime = session['expires_at_localtime']
             return fn(*args, **kwargs)
         else:
             session["wants_url"] = request.url
@@ -377,14 +375,14 @@ def competition_admin_post(competition_id):
     change_poster_button = request.form.get('change_poster_button')
     email_sending_button = request.form.get('email_sending_button')
     competition_routes_update_button = request.form.get('competition_routes_update_button')
-
-
+    
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
 
     id = request.form.get('id')
     action = request.form.get('action')
     competition_status = request.form.get('competition_status')
+    competition_type = request.form.get('competition_type')
 
     instructions = request.form.get('instructions')
     if instructions is not None:
@@ -473,12 +471,14 @@ def competition_admin_post(competition_id):
         competition_date = request.form.get('competition_date')
         
         max_participants = request.form.get('max_participants')
+        competition_type = request.form.get('competition_type')
         # update gym name in the competition if Gym Name is changed somewhere else
         gym = competitionsEngine.get_gym(competition['gym_id'])
         if gym is not None:
             if gym['name'] != competition['gym']:
                 competition['gym']=gym['name']
         competition['max_participants']=max_participants
+        competition['competition_type'] = competition_type
 
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, instructions)
         resultMessage= "Competition details updated"
@@ -1558,18 +1558,12 @@ def competitionRoutesList(competitionId):
     routesid = competition.get('routesid')
 
     if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
-        sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
-        competition['climbers']= sorted_data
+        competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
 
-    # library= {}
-    # library['tracks'] = tracks
-    # playlist = json.dumps(playlist)
-    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message)
-    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message,
-    #                       library=None,
-    #                       **session))
+
+
+
+
 
     return render_template("competitionClimberList.html",
                            error_code=error_code,
@@ -1600,9 +1594,6 @@ def competitionRoutes(competitionId):
     routes = competitionsEngine.get_routes(routesid)
     routesName = routes.get('name')
 
-    if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
-        sorted_data = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
-        competition['climbers']= sorted_data
 
     # library= {}
     # library['tracks'] = tracks
@@ -1626,6 +1617,7 @@ def competitionRoutes(competitionId):
                            competitionId=competitionId,
                            reference_data=competitionsEngine.reference_data,
                            **session)
+
 
 # enter competition climbed routes for a climber and save them
 @app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
@@ -1666,6 +1658,9 @@ def routes_climbed(competitionId, climberId):
     #routes = routes['routes']
     subheader_message = str(climber_name)+" - "+str(climber_club)
 
+    if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
+        competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+
     return render_template("competitionRoutesEntry.html", climberId=climberId,
                            climber=climber,
                            routes=routes,
@@ -1694,8 +1689,10 @@ def update_routes_climbed(competitionId, climberId):
             return render_template('competitionLogin.html')
 
         if len(routesUpdated) > 0:
-            competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-            competition = competitionsEngine.getCompetition(competitionId)
+            competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
+            if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
+                competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+
             return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,

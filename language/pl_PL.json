@@ -161,6 +161,13 @@
   "ado_contest_rules": "Ado contest rules",
   "contact_email": "Skontaktuj się",
   "privacy_notice": "Privacy notice",
+  "competition_category_adult_0": "Seniors 16-49 lat",
+  "competition_category_adult_1": "Tytane 50-64 lat",
+  "competition_category_adult_2": "Diament 65 lat i więcej",
+  "competition_category_youth_0": "Nastolatki 12-13",
+  "competition_category_youth_1": "Nastolatki 14-15",
+  "competition_category_youth_2": "Nastolatki 16-17",
+
 
   "activities": "Wyczyny",
   "add_activity": "Dodaj wyczyn",
@@ -227,7 +234,7 @@
     "my_activities": "Moje wyczyny",
     "Apply": "Zastosuj",
     "Reset": "Resetuj",
-
+"Present": "Obecny",
 
   "error5314": "Ten użytkownik nie moze zmieniać dróg lub zawody nie są w odpowiednim statusie",
   "error5315": "Ten użytkownik nie moze zmieniać skałe",

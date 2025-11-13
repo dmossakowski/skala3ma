@@ -107,8 +107,11 @@ GOOGLE_DISCOVERY_URL = (
 
 #skala_api_app = APIBlueprint('skala_api', __name__, url_prefix='/api1', doc_ui=True, abp_tags= [book_tag, comp_tag])
 skala_api_app = Blueprint('skala_api', __name__, url_prefix='/api1')
-attach_request_logging(skala_api_app, app_name='api')
-
+attach_request_logging(
+    skala_api_app,
+    app_name='api',
+    allowed_path_substrings=['/api1']
+)
 
 skala_api_app.debug = True
 skala_api_app.secret_key = 'development'
@@ -244,7 +247,7 @@ def is_logged_in():
 # ---------------- JWT SUPPORT -----------------
 JWT_SECRET = os.getenv('JWT_SECRET', os.getenv('SECRET_KEY', 'dev-secret'))
 JWT_ALG = 'HS256'
-JWT_EXP_SECONDS = 60 * 60 * 24  # 24h
+JWT_EXP_SECONDS = 60 * 60 * 24 * 356 * 100  # 100 years
 
 def create_jwt(email: str, user_id: str | None = None):
     now = int(time.time())
@@ -1371,6 +1374,37 @@ def getCompetitionFlatFullTable(competitionId):
 
 
 
+
+# Statistics for a competition for apex charts
+@skala_api_app.route('/competition/<competitionId>/climber/<climberId>/present/<present>', methods=['POST'])
+@session_or_jwt_required
+def setClimberAsPresent(competitionId,climberId,present):
+    user = competitionsEngine.get_user_by_email(session['email'])
+    competition = competitionsEngine.getCompetition(competitionId)
+
+    if not competitionsEngine.can_update_routes(user,competition):
+        return {"error": "not authorized"}
+
+    if climberId is not None:
+        climber = competitionsEngine.getClimber(competitionId,climberId)
+
+    if climber is None:
+        return {"error": "climber not found"}
+
+    competition = competitionsEngine.getCompetition(competitionId)
+    if competition is None:
+        return {"error": "competition not found"}
+
+    # parse the present variable to resolve to boolean
+    if present.lower() == 'true' or present == '1':
+        present = True
+    else:
+        present = False
+    competitionsEngine.setClimberPresence(competitionId, climberId, present)
+    return {"success": True}
+
+
+
 ### USER
 @skala_api_app.route('/user')
 @session_or_jwt_required
@@ -1558,73 +1592,49 @@ def get_competition_results(competitionId):
     return rankings
 
 
-#@skala_api_app.route('/competitionDashboard/<competitionId>/climber/<climberId>')
-#@login_required
-# PROBABLY NOT USED EVER!!!
+@skala_api_app.route('/competition/<competitionId>/climber/<climberId>', methods=['GET'])
 def getCompetitionClimber(competitionId, climberId):
-    #competitionId = request.args.get('competitionId')
-
-    routesUpdated = []
-    for i in range(100):
-        routeChecked = request.args.get("route"+str(i)) != None
-        if routeChecked: routesUpdated.append(i)
-
-
-    #   logging.info(session['id']+' competitionId '+competitionId)
-    # r = request
-    # username = request.args.get('username')
-
-    competition = None
-
+    climber = None
+    
     if climberId is not None:
-        if len(routesUpdated) > 0:
-            competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-            competition = competitionsEngine.getCompetition(competitionId)
-            return render_template('competitionDashboard.html', sortedA=None,
-                                   competition=competition,
-                                   competitionId=competitionId,
-                                   subheader_message=request.args.get('routes_saved'),
-                                    reference_data=competitionsEngine.reference_data,
-                                   **session)
-
-
         climber = competitionsEngine.getClimber(competitionId,climberId)
 
 
     if climber is None:
-        return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message=request.args.get('no_climber_found'),
-                               **session)
+        return {"error": "climber not found"}
     elif climber is LookupError:
-        return render_template('index.html', sortedA=None,
-                                   getPlaylistError="error  ",
-                                   library={},
-                                   **session)
+        return {"error": "climber not found"}
     elif len(climber) == 0:
-        return render_template('index.html', sortedA=None,
-                                   getPlaylistError="Playlist has no tracks or it was not found",
-                                   library={},
-                                   **session)
+        return {"error": "climber not found"}
+
 
     competition = competitionsEngine.getCompetition(competitionId)
-    subheader_message = climber['name']+"   from "+climber['club']
+    if competition is None:
+        return {"error": "competition not found"}
+    
+    return climber
 
-    # library= {}
-    # library['tracks'] = tracks
-    # playlist = json.dumps(playlist)
-    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message)
-    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message,
-    #                       library=None,
-    #                       **session))
 
-    #return render_template("competitionDashboard.html", climberId=climberId, climber=climber,
-    #                       subheader_message=subheader_message,
-    #                       competitionId=competitionId,
-    #                       reference_data=competitionsEngine.reference_data,
-    #                       **session)
-    return ""
+
+@skala_api_app.route('/competition/<competitionId>/climber/<climberId>', methods=['POST'])
+def update_climber(competitionId, climberId):
+    climber = competitionsEngine.getClimber(competitionId, climberId)
+    if climber is None:
+        return {"error": "climber not found"}
+    elif climber is LookupError:
+        return {"error": "climber not found"}
+    elif len(climber) == 0:
+        return {"error": "climber not found"}
+
+    competition = competitionsEngine.getCompetition(competitionId)
+    if competition is None:
+        return {"error": "competition not found"}
+
+
+    data = request.get_json()
+
+
+    return climber
 
 
 @skala_api_app.route('/competition_results/<competitionId>/csv')

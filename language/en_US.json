@@ -153,6 +153,14 @@
   "ado_contest_rules": "Ado contest rules",
   "contact_email": "Contact us",
   "privacy_notice": "Privacy notice",
+  "competition_category_adult_0": "Seniors 16-49 years",
+  "competition_category_adult_1": "Titan 50-64 years",
+  "competition_category_adult_2": "Diamond 65 years and older",
+  "competition_category_youth_0": "Youth 12-13",
+  "competition_category_youth_1": "Youth 14-15",
+  "competition_category_youth_2": "Youth 16-17",
+
+
 
   "activities": "Activities",
   "add_activity": "Add activity",
@@ -219,7 +227,7 @@
   "my_activities": "My activities",
   "Apply": "Apply",
   "Reset": "Reset",
-  
+  "Present": "Present",
   
   "error5314": "Updating routes is not permitted for this user or the competition is not in the right status",
   "error5315": "No permission to edit gym",
