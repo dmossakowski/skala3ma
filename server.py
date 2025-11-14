@@ -252,11 +252,14 @@ def init():
         app,
         app_name='web',
         skip_blueprints={'skala_api'},
-        allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails'])
-        
+        allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
+                                 '/competitionCalendar','/competitionRawAdmin','/competition_admin','/competitionResults',
+                                 '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser',
+                                 '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
+
     if not os.path.exists(DATA_DIRECTORY):
         print("DATA_DIRECTORY does not exist... this will not end welll....")
-
+    
     if not os.path.exists(DATA_DIRECTORY+"/users"):
         os.mkdir(DATA_DIRECTORY+"/users")
         print('Created users directory')
