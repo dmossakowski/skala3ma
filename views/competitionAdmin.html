@@ -52,10 +52,10 @@
     <br>
     <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
     <input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
-     <label for="competition_type">{{ reference_data['current_language'].competition_type}}:</label>
+     &nbsp; &nbsp; &nbsp; <label for="competition_type" data-translate-key="competition_type">:</label>
 <select name="competition_type" id="competition_type">
-    <option value="0" {% if competition['competition_type'] == 0 %} selected {% endif %}>{{ reference_data['current_language'].competition_type_0 }}</option>
-    <option value="1" {% if competition['competition_type'] == 1 %} selected {% endif %}>{{ reference_data['current_language'].competition_type_1 }}</option>
+    <option value="0" {% if competition['competition_type'] == '0' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_0 }}</option>
+    <option value="1" {% if competition['competition_type'] == '1' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_1 }}</option>
 </select>
 
 

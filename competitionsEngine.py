@@ -223,16 +223,22 @@ def update_competition_routes(competition, routesid, force=False):
 
     if (routes is None or len(routes)==0):
         logging.error('Routes not found '+str(competition.get('id')))
-        return competition
+        return 'Error: Routes not found'
         #raise ValueError('Routes not found')
     
+    if competition.get('status') in [competition_status_closed]:
+        if not force:
+            logging.error('Cannot update routes when competition is in progress/scoring/closed '+str(competition.get('id')))
+            return 'Error: Cannot update routes when competition is closed'
+            #raise ValueError('Cannot update routes when competition is in progress/scoring/closed')
+
     competition['routes'] = routes.get('routes')
 
     try:
         setRoutesClimbed2(competition)
     except:
         logging.error('error setting routes climbed2')
-        pass
+        return 'Error: error setting routes climbed2'
     
     skala_db._update_competition(competition['id'], competition)
 
