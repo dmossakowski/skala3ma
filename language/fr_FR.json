@@ -219,6 +219,7 @@
     "Apply": "Appliquer",
     "Reset": "Réinitialiser",
     "Present": "Présent",
+    "Absent": "Absent",
     "error5314": "La mise à jour des voies n'est pas autorisée pour cet utilisateur ou la compétition n'est pas dans le bon état",
     "error5315": "Pas de permission pour éditer le mur",
     "error5316": "Cet email est connu. L'utilisateur doit se connecter et s'inscrire lui-même",

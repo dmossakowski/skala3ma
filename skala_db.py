@@ -1268,16 +1268,18 @@ def _parse_date(date_str):
     return False, date_str
 
 
+# competitions migration function
 def update_competitions_data():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     
-    # Fetch all users
+    # Fetch all competitions
     cursor.execute(f'SELECT id, jsondata FROM {COMPETITIONS_TABLE}')
     competitions = cursor.fetchall()
     for competition_id, jsondata in competitions:
         competition = json.loads(jsondata)
         
+    
         
     db.commit()
     db.close()

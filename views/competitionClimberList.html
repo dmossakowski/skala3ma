@@ -111,8 +111,8 @@ climber is not none
 				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ c['name'] }}</b></a>
 				
 				{% set rs = c.get('registration_status','')|lower %}
-				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="Registered" title="Registered">Registered</span>
-				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="Waitlist" title="Waitlist">Waitlist</span>
+				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="registered" title="Registered"> </span>
+				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="waitlist" title="Waitlist">waitlist-key</span>
                 {% if c.get('present') %}
 				<span class="presence-badge present" title="Present" >✔</span>
 				{% endif %}

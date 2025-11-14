@@ -1155,6 +1155,7 @@ def get_competition_by_id(competition_id):
     return competition
 
 
+
 @skala_api_app.route('/competition/year/<year>')
 def competitions_by_year(year):
 

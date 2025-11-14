@@ -486,9 +486,10 @@ def competition_admin_post(competition_id):
 
     if competition_routes_update_button is not None:
         competition_routes = request.form.get('competition_routes')
-        competitionsEngine.update_competition_routes(competition, competition_routes, True)
         resultMessage= "Competition routes updated"
-
+        message = competitionsEngine.update_competition_routes(competition, competition_routes, True)
+        if message.startswith('Error'):
+            resultError = message
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):

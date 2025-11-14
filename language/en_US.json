@@ -219,6 +219,7 @@
     "Apply": "Apply",
     "Reset": "Reset",
     "Present": "Present",
+    "Absent": "Absent",
     "error5314": "Updating routes is not permitted for this user or the competition is not in the right status",
     "error5315": "No permission to edit gym",
     "error5316": "User with this email is known and they should login and register themselves",

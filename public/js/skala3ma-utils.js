@@ -413,7 +413,7 @@ function getTranslation(key) {
 
     t1 = JSON.parse(localStorage.getItem('translations'));
     //key='name'
-    //console.log('t1:', t1);
+    console.log('t1:', t1);
     //console.log('t1:', t1[key]);
     //console.log('t2:', translations[key]);
 

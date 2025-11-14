@@ -26,9 +26,9 @@
 									   style="transform:scale(1.4); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %}>
 								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1rem;">
 									{% if climber and climber.get('present') %}
-										<span class="badge bg-success">{{ reference_data['current_language'].present if reference_data and reference_data.get('current_language') and reference_data['current_language'].get('present') else 'Present' }}</span>
+										<span class="badge bg-success" data-translate-key="Present"> present-key </span>
 									{% else %}
-										<span class="badge bg-secondary">{{ reference_data['current_language'].absent if reference_data and reference_data.get('current_language') and reference_data['current_language'].get('absent') else 'Absent' }}</span>
+										<span class="badge bg-secondary" data-translate-key="Absent"> absent-key </span>
 									{% endif %}
 								</span>
 							</div>
@@ -37,8 +37,8 @@
 						// Presence switch logic using global apiFetch from skala3ma-utils.js
 						(function(){
 							if (typeof apiFetch !== 'function') { console.error('apiFetch global helper missing'); return; }
-							const presentLang = window.SKALA_LANG_PRESENT || 'Present';
-							const absentLang = window.SKALA_LANG_ABSENT || 'Absent';
+                           
+							
 							const container = document.getElementById('presenceContainer');
 							if(!container) return; // abort if missing
 							// Extract IDs from current URL path. Expected patterns:
@@ -63,6 +63,10 @@
 							if(!sw || !status) return;
 
 							function renderBadge(isPresent){
+                                
+                                var presentLang = getTranslation('Present') || 'present-key';
+							    var absentLang = getTranslation('Absent') || 'absent-key';
+                            
 								status.innerHTML = isPresent ? '<span class="badge bg-success">' + presentLang + '</span>' : '<span class="badge bg-secondary">' + absentLang + '</span>';
 							}
 
