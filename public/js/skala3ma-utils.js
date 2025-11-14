@@ -120,13 +120,12 @@ function getColorByBgColor(bgColor)
 
 
     
-function getColorSVGDiv(color, colorModifier, width, height){
-    var svg = getColorSVG(color, colorModifier);
-    return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid black; background-color: ${color}'> 
-        ${svg}  </div>`
+function getColorSVGDiv(color, colorModifier, width, height, grade=''){
+    var svg = getColorSVG(color, colorModifier, grade, width, height);
+    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;background-color:${color}'>${svg}</div>`;
 }
 
-function getColorSVG(color, colorModifier){    
+function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'){    
 
           //console.log(colorModifier);
     var svg = '';
@@ -139,15 +138,7 @@ function getColorSVG(color, colorModifier){
       highlight = '#BBBBBB'
       stroke = getColorByBgColor(color)
       //highlight = `#${opposite_color}`;
-      /*svg7 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 89.356 95.09 C 89.356 108.955 106.641 113.076 115.695 105.821 C 126.656 97.04 111.914 87.9 104.167 87.9" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke:  ${stroke};stroke-width: 2px;" d="M 86.947 116.437 C 98.057 117.836 113.652 124.371 123.771 115.331 C 125.942 113.392 128.06 110.785 129.227 108.139 C 131.696 102.543 129.928 80.932 142.53 87.458 C 143.867 88.151 146.589 89.002 147.206 90.515 C 148.291 93.172 147.025 97.397 146.774 100.092 C 144.919 120.029 128.823 130.623 109.235 131.419 C 102.731 131.684 86.304 135.168 86.304 124.901" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 87.823 142.115 C 107.248 142.115 128.331 145.17 142.095 127.487 C 144.61 124.256 148.385 119.479 149.903 115.807 C 153.547 106.99 154.512 82.316 169.919 85.906 C 173.268 86.686 172.87 94.508 172.87 96.802 C 172.87 108.01 166.384 119.819 160.658 129.102 C 145.292 154.013 110.251 164.021 84.421 152.245" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 89.629 176.892 C 117.671 176.892 151.817 163.246 164.915 136.777 C 169.941 126.619 174.846 116.643 178.109 105.696 C 181.41 94.617 182.546 78.293 198.398 80.583 C 205.758 81.646 205.798 90.065 205.798 95.611 C 205.798 111.043 200.218 123.133 190.617 135.466 C 183.014 145.232 172.365 157.295 162.061 164.379 C 153.415 170.323 142.257 172.851 132.347 175.661 C 117.637 179.83 102.945 184.284 87.367 184.284" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 102.888 203.811 C 146.032 203.811 185.433 181.59 204.926 142.981 C 211.979 129.012 215.092 113.056 222.016 98.907 C 223.582 95.709 226.574 86.709 230.206 85.235 C 245.786 78.91 259.862 85.828 258.58 103.938 C 258.252 108.578 254.822 113.425 252.912 117.542 C 240.458 144.384 212.284 170.382 187.949 186.513 C 170.222 198.263 151.142 207.456 130.896 213.965 C 123.788 216.25 116.079 215.797 108.697 215.797 C 107.664 215.797 101.635 215.142 101.534 216.483" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 280.176 223.813 C 275.426 223.151 271.755 220.542 267.795 217.895 C 245.546 203.025 257.037 186.396 263.097 165.851 C 264.848 159.917 264.679 153.35 266.472 147.636 C 267.926 143.003 264.677 134.685 264.669 129.589 C 264.655 120.776 261.246 91.708 274.973 90.392 C 287.079 89.231 275.608 112.052 275.608 117.716 C 275.608 125.558 278.446 133.045 277.962 140.987 C 276.768 160.575 266.235 178.174 280.272 195.771 C 282.526 198.596 288.677 205.802 292.568 205.926" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 308.041 203.63 C 281.282 196.996 284.672 163.37 287.592 144.425 C 288.779 136.728 287.543 128.12 288.189 120.34 C 288.8 112.967 287.714 105.427 289 98.108 C 289.336 96.196 290.137 91.581 292.563 91.164 C 293.954 90.926 297.287 90.774 297.986 92.321 C 299.449 95.561 295.987 98.741 295.47 101.705 C 294.043 109.88 294.484 118.652 293.604 126.941 C 292.066 141.423 287.465 165.671 295.48 178.529 C 299.652 185.223 306.291 188.748 312.626 192.872" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-</svg>`*/
+
             
       svg6 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
 <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
@@ -171,14 +162,54 @@ function getColorSVG(color, colorModifier){
 
       //return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
         //${svg6}  </div>`
-    return svg6;
+        baseSvg = svg6;
   } else {
     svg0 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
       <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
       </svg>`
-    return svg0;
+        baseSvg = svg0;
 
   }
+    // Add grade overlay scaled proportionally to passed width/height (centered) if provided
+    if (grade) {
+        var escaped = String(grade).replace(/[&<>"]/g, function(ch){
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]);
+        });
+        // Parse numeric width/height (default baseline 90x40)
+        var widthNum = parseFloat(width); if (isNaN(widthNum)) widthNum = 90;
+        var heightNum = parseFloat(height); if (isNaN(heightNum)) heightNum = 40;
+        var baseW = 90, baseH = 40;
+        var scaleX = widthNum / baseW;
+        var scaleY = heightNum / baseH;
+        // SVG logical box (kept for existing marble artwork)
+        var vbX = 100, vbY = 100, vbW = 200, vbH = 100;
+        // Proportional margins (scale previous hard-coded 30/20 with width/height scales)
+        var marginX = 30 * scaleX; // previously 30
+        var marginY = 20 * scaleY * 0.5; // reduce a bit for better vertical usage
+        // Ensure margins don't exceed half dimensions
+        if (marginX > vbW * 0.4) marginX = vbW * 0.4;
+        if (marginY > vbH * 0.3) marginY = vbH * 0.3;
+        var rectX = vbX + marginX;
+        var rectY = vbY + marginY;
+        var rectW = vbW - marginX * 2;
+        var rectH = vbH - marginY * 2;
+        // Center coordinates
+        var centerX = vbX + vbW / 2;
+        var centerY = vbY + vbH / 2;
+        // Font sizing proportional to rectangle height and grade length
+        var fontFactor;
+        if (escaped.length <= 6) fontFactor = 0.55;
+        else fontFactor = 0.42; // longer grades shrink more
+        var fontSize = Math.round(rectH * fontFactor);
+        if (fontSize < 10) fontSize = 10; // minimum legibility
+        // Text color based on background
+        var txtColor = '#6c736cff'
+        // Overlay rectangle and perfectly centered text (dominant-baseline middle)
+        var overlay = `<rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="8" fill="rgba(255,255,255,0.85)" stroke="#333" stroke-width="1"/>\n` +
+                      `<text x="${centerX}" y="${centerY}" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="700" fill="${txtColor}" dominant-baseline="middle">${escaped}</text>`;
+        baseSvg = baseSvg.replace('</svg>', overlay + '</svg>');
+    }
+    return baseSvg;
 }
 
 
@@ -382,7 +413,7 @@ function getTranslation(key) {
 
     t1 = JSON.parse(localStorage.getItem('translations'));
     //key='name'
-    //console.log('t1:', t1);
+    console.log('t1:', t1);
     //console.log('t1:', t1[key]);
     //console.log('t2:', translations[key]);
 

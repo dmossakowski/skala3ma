@@ -248,12 +248,18 @@ def init():
     log_path = os.path.join(DATA_DIRECTORY, 'app.log')
     init_logging(log_file=log_path, console_loglevel=logging.INFO, backup_count=300)
     # Avoid logging API blueprint requests twice by skipping its blueprint name
-    attach_request_logging(app, app_name='web', skip_blueprints={'skala_api'})
+    attach_request_logging(
+        app,
+        app_name='web',
+        skip_blueprints={'skala_api'},
+        allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
+                                 '/competitionCalendar','/competitionRawAdmin','/competition_admin','/competitionResults',
+                                 '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser',
+                                 '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
 
-    
     if not os.path.exists(DATA_DIRECTORY):
         print("DATA_DIRECTORY does not exist... this will not end welll....")
-
+    
     if not os.path.exists(DATA_DIRECTORY+"/users"):
         os.mkdir(DATA_DIRECTORY+"/users")
         print('Created users directory')
@@ -369,7 +375,6 @@ def logout():
     session['refresh_token'] = None
     session['expires_at'] = None
     session['expires_in'] = None
-    session['expires_at_localtime'] = None
     session['email'] = None
     session.clear()
     _setUserSessionMsg('You have been logged out')
@@ -401,10 +406,8 @@ def spotify_authorized():
         session['token'] = resp
         session['access_token'] = (resp.get('access_token'), '')
         session['refresh_token'] = (resp.get('refresh_token'), '')
-        session['expires_at'] = resp.get('expires_at')
+        session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         session['expires_in'] = resp.get('expires_in')
-        if resp.get('expires_in'):
-            session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(resp['expires_in'])-1000)
         session.dataLoadingProgressMsg = ''
         global authenticated
         authenticated = True
@@ -508,8 +511,7 @@ def facebook_auth():
     session['name']=profile['name']
     session['email']=profile['email']
     session['picture']=profile['picture']['data']['url']
-    session['expires_at'] = token['expires_at']
-    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
     session['authsource'] = 'facebook'
 
     user = competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
@@ -581,8 +583,8 @@ def googleauth_reply():
     session['name']=profile['name']
     session['email']=profile['email']
     session['picture']=profile['picture']
-    session['expires_at'] = token['expires_at']
-    session['expires_at_localtime'] = session['expires_at_localtime'] = int(datetime.datetime.now().timestamp()+int(token['expires_in']))
+    #session['expires_at'] = token['expires_at']
+    session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
     session['authsource'] = 'google'
     
     user = competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
@@ -633,7 +635,7 @@ def email_login():
         session['username'] = user.get('email')
         session['email'] = user.get('email')
         session['picture'] = '/public/images/favicon.png'
-        session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24))
+        session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         session['authsource'] = 'self'
         if competitionsEngine.is_god(user) or GODMODE:
             session['godmode'] = True

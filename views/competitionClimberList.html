@@ -33,6 +33,7 @@
 
 
 {% if climber is not none and climber is not undefined  %}
+climber is not none
 <div class="container-flex">
 	<div class="row">
 				{{ reference_data['current_language'].name}} {{ climber['name'] }}
@@ -80,36 +81,65 @@
 {% if competition is not none and competition is not undefined  %}
 
 <!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
-<div class="table-responsive">
-<table class="table thead-dark table-hover"  id="entrytable">
-         <thead><tr>
-         <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>
-         <th data-field="artist" data-sortable="True">{{ reference_data['current_language'].malefemale }}</th>
-         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
-         <th data-field="category" data-sortable="True">{{ reference_data['current_language'].category }}</th>
-         <th data-field="routes" data-filter-control="input">{{ reference_data['current_language'].routes_climbed }}</th>
-
-         </tr>
-         </thead>
-    <tbody>
-         {# here we iterate over every item in our list which we will pass from bar() #}
-		 {% for climberId in competition['climbers'] %}
-		<tr>
-
-			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
-			 <td><i>
-				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
-
-				 {{ competition['climbers'][climberId]['routesClimbed']|length }}  </a></td>
-		 </tr>
-		 {% endfor %}
-
-
-         </tbody>
-     </table>
+<style>
+/* Minimal responsive layout for climbers list */
+#climberList { display:flex; flex-direction:column; gap:.5rem; }
+.climber-row { display:flex; flex-direction:column; padding:.5rem .75rem; border:1px solid #ddd; border-radius:4px; background:#fff; }
+@media (min-width:600px){ .climber-row { flex-direction:row; align-items:center; } }
+.climber-name { font-size:1.2rem; font-weight:500; display:flex; align-items:center; gap:.5rem; }
+.presence-badge { display:inline-block; width:1.25rem; height:1.25rem; line-height:1.25rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
+.presence-badge.present { background:#198754; color:#fff; }
+.presence-badge.absent { background:#6c757d; color:#fff; }
+.climber-meta { display:flex; flex-wrap:wrap; gap:.75rem; font-size:.9rem; margin-top:.25rem; }
+@media (min-width:600px){ .climber-meta { margin-top:0; margin-left:1rem; } }
+/* registration status badge */
+.reg-status { padding:0 .6rem; border-radius:12px; font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; }
+.reg-status.registered { background:#198754; color:#fff; }
+.reg-status.waitlist { background:#ffc107; color:#000; }
+.reg-status.hide { display:none; }
+/* thin bars indicator for routes (no goal background) */
+.routes-bars { display:flex; align-items:flex-end; gap:2px; height:16px; margin-top:2px; }
+.routes-bar { width:3px; background:#198754; border-radius:2px 2px 0 0; animation:grow .4s ease-out; }
+@keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+</style>
+<div id="climberList">
+	{# iterate over climbers preserving existing Jinja notation #}
+	{% for climberId in competition['climbers'] %}
+		{% set c = competition['climbers'][climberId] %}
+		<div class="climber-row">
+			<div class="climber-name">
+				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ c['name'] }}</b></a>
+				
+				{% set rs = c.get('registration_status','')|lower %}
+				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="registered" title="Registered"> </span>
+				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="waitlist" title="Waitlist">waitlist-key</span>
+                {% if c.get('present') %}
+				<span class="presence-badge present" title="Present" >✔</span>
+				{% endif %}
+			</div>
+			<div class="climber-meta">
+				<span>{{ c['sex'] }}</span>
+				<span><i>{{ c['club'] }}</i></span>
+				{# Determine category translation key based on competition_type (0 adult, 1 youth) and category index #}
+				{% set cat_prefix = 'adult' if competition['competition_type'] == 0 else 'youth' %}
+				{% set cat_key = 'competition_category_' ~ cat_prefix ~ '_' ~ c['category'] %}
+				<span data-translate-key="{{ cat_key }}">{{ reference_data['current_language'].get(cat_key, reference_data['categories'][c['category']]) }}</span>
+				{# Thin bars indicator: one bar per route up to 50 #}
+				{% set route_count = c['routesClimbed']|length %}
+				{% set maxbars = 50 %}
+				{% set show = maxbars if route_count > maxbars else route_count %}
+				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
+                <div class="routes-bars" aria-label="{{ route_count }} routes" title="{{ route_count }} routes climbed">
+					{% for i in range(show) %}
+					<span class="routes-bar" style="height:{% if route_count>0 %}{{ 6 + ( (i / show) * 8 )|round(0,'floor') }}{% else %}0{% endif %}px"></span>
+					{% endfor %}
+				
+                <span>{{ route_count }}</span></div></a>
+			
+			</div>
+		</div>
+	{% endfor %}
+</div>
 
 
 

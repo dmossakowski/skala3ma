@@ -103,7 +103,7 @@ def _ensure_session_id():
 
 
 def attach_request_logging(app, app_name='app', skip_static=True, skip_extensions=None,
-                            skip_endpoints=None, skip_blueprints=None):
+                            skip_endpoints=None, skip_blueprints=None, allowed_path_substrings=None):
     """Attach per-request logging to a Flask app or Blueprint.
 
     Parameters:
@@ -113,11 +113,13 @@ def attach_request_logging(app, app_name='app', skip_static=True, skip_extension
         skip_extensions (Iterable[str]|None): Asset extensions to skip.
         skip_endpoints (Iterable[str]|None): Endpoint names to skip.
         skip_blueprints (Iterable[str]|None): Blueprint names to skip (to avoid double logging).
+        allowed_path_substrings (Iterable[str]|None): If provided, only requests whose path contains
+            at least one of these substrings will be logged. (Match is simple substring, case-sensitive.)
     """
     logger = logging.getLogger()
 
     if skip_extensions is None:
-        skip_extensions = ('.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.map')
+        skip_extensions = ('.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.map', '.php')
     if skip_endpoints is None:
         skip_endpoints = set()
     else:
@@ -126,6 +128,12 @@ def attach_request_logging(app, app_name='app', skip_static=True, skip_extension
         skip_blueprints = set()
     else:
         skip_blueprints = set(skip_blueprints)
+    if allowed_path_substrings is None:
+        # Default: log everything (current behavior). To restrict, caller passes list.
+        allowed_path_substrings = []
+    else:
+        # Normalize to list for iteration
+        allowed_path_substrings = list(allowed_path_substrings)
 
     @app.before_request
     def _start_timer():
@@ -150,6 +158,9 @@ def attach_request_logging(app, app_name='app', skip_static=True, skip_extension
                 return response
             if endpoint in skip_endpoints:
                 return response
+            if allowed_path_substrings:  # enforce allow-list
+                if not any(sub in path for sub in allowed_path_substrings):
+                    return response
 
             start = getattr(g, '_req_start_time', time.time())
             duration_ms = (time.time() - start) * 1000.0

@@ -15,11 +15,85 @@
     <div class="container">
         <div class="row">
 
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class=" text-left heading-section">
 						<br>
 						<h3> {{ subheader_message }}
                         </h3>
+
+						<!-- Presence switch added under subheader -->
+							<div id="presenceContainer" class="form-check form-switch d-flex align-items-center" style="--bs-form-switch-width:4em;">
+								<input class="form-check-input" type="checkbox" role="switch" id="climberPresent" name="climberPresent"
+									   style="transform:scale(1.4); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %}>
+								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1rem;">
+									{% if climber and climber.get('present') %}
+										<span class="badge bg-success" data-translate-key="Present"> present-key </span>
+									{% else %}
+										<span class="badge bg-secondary" data-translate-key="Absent"> absent-key </span>
+									{% endif %}
+								</span>
+							</div>
+							
+						<script>
+						// Presence switch logic using global apiFetch from skala3ma-utils.js
+						(function(){
+							if (typeof apiFetch !== 'function') { console.error('apiFetch global helper missing'); return; }
+                           
+							
+							const container = document.getElementById('presenceContainer');
+							if(!container) return; // abort if missing
+							// Extract IDs from current URL path. Expected patterns:
+							//   /competitionRoutesEntry/<competitionId>/climber/<climberId>
+							//   /something/competition/<competitionId>/climber/<climberId>
+							// Fallback: log error and abort if not found.
+							const path = window.location.pathname;
+							// Accept hex (uuid-like) IDs in path e.g. competitionRoutesEntry/d9abc4e9fc5c4b99ba806befe5e78a9f/climber/faeea9eca80848f580e14ee7bd96886a
+							let match = path.match(/competitionRoutesEntry\/([0-9a-fA-F]+)\/climber\/([0-9a-fA-F]+)/);
+							if(!match){
+								// broader attempt
+								match = path.match(/(\d+)\/climber\/(\d+)/);
+							}
+							if(!match){
+								console.error('Could not parse competition/climber IDs from URL', path);
+								return;
+							}
+							const competitionId = match[1];
+							const climberId = match[2];
+							const sw = document.getElementById('climberPresent');
+							const status = document.getElementById('presentStatus');
+							if(!sw || !status) return;
+
+							function renderBadge(isPresent){
+                                
+                                var presentLang = getTranslation('Present') || 'present-key';
+							    var absentLang = getTranslation('Absent') || 'absent-key';
+                            
+								status.innerHTML = isPresent ? '<span class="badge bg-success">' + presentLang + '</span>' : '<span class="badge bg-secondary">' + absentLang + '</span>';
+							}
+
+							// Initial fetch to sync presence
+							apiFetch(`/api1/competition/${competitionId}/climber/${climberId}`)
+								.then(data => {
+									// Expect data.present boolean
+									if (data && typeof data.present !== 'undefined') {
+										sw.checked = !!data.present;
+										renderBadge(sw.checked);
+									}
+								})
+								.catch(err => { console.warn('Presence load failed', err); });
+
+							sw.addEventListener('change', function(){
+								const endpoint = sw.checked ? `/api1/competition/${competitionId}/climber/${climberId}/present/True` : `/api1/competition/${competitionId}/climber/${climberId}/present/False`;
+								renderBadge(sw.checked);
+								apiFetch(endpoint, { method: 'POST' })
+									.catch(err => {
+										console.error('Failed to update presence', err);
+										// revert UI on failure
+										sw.checked = !sw.checked;
+										renderBadge(sw.checked);
+									});
+							});
+						})();
+						</script>
 
 					</div>
 
@@ -37,8 +111,8 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 		 
-         <div class="col-3" style="width: 9rem; padding-bottom: 40px" 
-         onclick="document.getElementById('route{{route['routenum']}}').checked=!document.getElementById('route{{route['routenum']}}').checked; return false;">
+		 <div class="col-3" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
+		 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb){cb.checked=!cb.checked;} return false;">
 			  <font style="text-shadow: 0px 0px 4px white; font-size: 2.4rem"><b>{{ route['routenum'] }}</b> </font>  
               
                 <input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
@@ -47,22 +121,23 @@
                        >
                    
             
-            
-              <div  align="center"
-				  style="border-color:black; :1px; background-image: repeating-linear-gradient(to right, {{ route['color1'] }} ,
-				    {% if  route['color_modifier'] == 'marble' %} rgba(0,0,0,0.9) {% else %} {{ route['color1'] }} {%endif%} 100% );">
-                  
-
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				</b>
-			
-			
-                            </div>
+		<div align="center" class="route-color" data-color1="{{ route['color1'] }}" data-colormod="{{ route['color_modifier'] }}" data-grade="{{ route['grade']|default('') }}"></div>
 
 			 
 
             </div>
-             {% endfor %}
+						 {% endfor %}
+<script>
+(function(){
+	if(typeof getColorSVGDiv !== 'function') { console.warn('getColorSVGDiv not available'); return; }
+	document.querySelectorAll('.route-color').forEach(function(el){
+		var c1 = el.dataset.color1 || '#ccc';
+		var mod = el.dataset.colormod || '';
+		var grade = el.dataset.grade || '';
+		el.innerHTML = getColorSVGDiv(c1, mod, '110px','40px', grade);
+	});
+})();
+</script>
 
 
 </form>
@@ -73,51 +148,6 @@
 
 
 				{%endif %}
-
-{% if gyms is not none  %}
-
-
-
-
-
-					{% for gymid in gyms %}
-
-
-					<div class=" col-md-2 ">IS THIS USED???
-
-						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box"
-							 onmouseover="playPreview('trackPreview{{ loop.index }}')"
-							 onmouseleave="stopPreview('trackPreview{{ loop.index }}')"
-						>
-							<a href="gyms/{{ gymid }}">
-							<div class="blog-text">
-								<div class="prod-title">
-									{% if gyms[gymid]['logoimg'] is not none %}
-									<img src="public/images/gyms/{{ gyms[gymid]['logoimg'] }}">
-									{% else %}
-
-									<h4>{{ gyms[gymid]['name'] }}</h4>
-									<span class="posted_by">{{ gyms[gymid]['date'] }}</span>
-									{% endif %}
-									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
-
-
-
-
-								</div>
-							</div>
-								</a>
-						</div>
-					</div>
-
-					 {% endfor %}
-
-
-
-
-
-{% endif %}
-
 
 
 

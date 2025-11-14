@@ -14,7 +14,16 @@
 
     {% include "competitions-menu.html" %}
 
+<style>
+    .competitions-summary { display:flex; flex-wrap:wrap; gap:1rem;}
+    .summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+    .summary-card.highlight { border:2px solid #2ecc71; }
+    .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+    .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+    .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+    .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
 
+</style>
 
 	<div  class="text-center heading-section ">
 
@@ -69,13 +78,17 @@
 									<h3>{{ competitions[competitionId]['name'] }}<br>
 										{{ competitions[competitionId]['date']  | strftime(format='short') }}</h3>
 
+                                          <span class="posted_by">{{ reference_data['current_language']['competition_type_'~competitions[competitionId]['competition_type']] }}</span><br>
+                                      
+
 									<span class="posted_by">{{ competitions[competitionId]['gym'] }}<br>
                                 
                                     </span>
 									<br>
 									<img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" ><br><br>
 									<span class="posted_by">{{ reference_data['current_language']['competition_status_'~competitions[competitionId]['status']] }}
-										{% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
+										<!-- add competition type here using data-tra-->
+                                        {% if user['id'] in competitions[competitionId]['climbers'] %}</span><br>
 										<span class="posted_by"><i class="icon-thumbs-up"></i>
                                                 {{ reference_data['current_language'].registered }}</span>
 										{% endif %}

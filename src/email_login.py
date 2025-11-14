@@ -276,7 +276,7 @@ class EmailLoginService:
             }
 
         # success
-        expires_at = int(datetime.datetime.now().timestamp()+int(1000*60*60*24))
+        expires_at = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         if apply_session:
             session['username'] = user.get('email')
             session['email'] = user.get('email')
