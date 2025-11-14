@@ -14,7 +14,16 @@
 
     {% include "competitions-menu.html" %}
 
+<style>
+    .competitions-summary { display:flex; flex-wrap:wrap; gap:1rem;}
+    .summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+    .summary-card.highlight { border:2px solid #2ecc71; }
+    .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+    .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+    .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+    .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
 
+</style>
 
 	<div  class="text-center heading-section ">
 

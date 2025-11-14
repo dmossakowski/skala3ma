@@ -239,9 +239,23 @@
         fetch('/api1/competition/list')
           .then(response => response.json())
           .then(data => {
-           
-           
-            successCallback(data);
+            // Ensure each event object has an extendedProps object that is a shallow copy
+            // of its own top-level properties (excluding any existing extendedProps to avoid recursion).
+            // This lets FullCalendar access all original fields via event.extendedProps.*
+            const processed = Array.isArray(data) ? data.map(ev => {
+                if (ev && typeof ev === 'object') {
+                    const { extendedProps, ...rest } = ev;
+                    return {
+                        ...ev,
+                        extendedProps: {
+                            ...rest, // copy all root-level fields
+                            ...(extendedProps || {}) // preserve/merge any existing extendedProps
+                        }
+                    }
+                }
+                return ev; // non-object entries passed through unchanged
+            }) : data;
+            successCallback(processed);
           })
           .catch(error => {
             failureCallback(error);

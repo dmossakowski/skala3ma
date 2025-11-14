@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import json
 import os
 import io
@@ -1114,6 +1115,7 @@ def journey_session_remove(journey_id, route_id):
     return {}
 
 
+# this is used by calendar so it has a specific format including the extendedProps thing
 @skala_api_app.route('/competition/list')
 def getCompetitionDashboard():
     comps = competitionsEngine.getCompetitions()
@@ -1125,15 +1127,20 @@ def getCompetitionDashboard():
         comps[compid]['climbers'] = None
         comps[compid]['routes'] = None
         c['title'] = comps[compid]['name'] 
-        c['id'] = comps[compid]['gym_id']
+        c['id'] = comps[compid]['id']
         #c['start'] = comps[compid]['date']+ "T11:00:00"
         #c['end'] = comps[compid]['date']+ "T15:59:59"
         c['date'] = comps[compid]['date']
-        c['extendedProps'] = comps[compid]
+        c['competition_type'] = comps[compid].get('competition_type')
+        c['status'] = comps[compid]['status']
         c['url'] = '/competitionDetails/'+compid
         c['text'] = {}
         c['text']['status'] = competitionsEngine.reference_data['current_language'].get('competition_status_'+str(comps[compid]['status']))
-
+        c['text']['competition_type'] = competitionsEngine.reference_data['current_language'].get('competition_type_'+str(comps[compid].get('competition_type','standard')))
+        c['gym'] = comps[compid].get('gym')
+        c['gym_id'] = comps[compid].get('gym_id')
+        #c['extendedProps'] = deepcopy(c)
+        
         compsreturnd.append(c)
     logging.debug('setting language of competitions to '+str(language)+' session language='+str(session.get('language')))
     return json.dumps(compsreturnd)

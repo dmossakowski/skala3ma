@@ -111,7 +111,7 @@
          {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 		 
-		 <div class="col-3" style="width: 9rem; padding-bottom: 40px" 
+		 <div class="col-3" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
 		 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb){cb.checked=!cb.checked;} return false;">
 			  <font style="text-shadow: 0px 0px 4px white; font-size: 2.4rem"><b>{{ route['routenum'] }}</b> </font>  
               

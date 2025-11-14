@@ -203,9 +203,9 @@ function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'
         var fontSize = Math.round(rectH * fontFactor);
         if (fontSize < 10) fontSize = 10; // minimum legibility
         // Text color based on background
-        var txtColor = '#333'
+        var txtColor = '#6c736cff'
         // Overlay rectangle and perfectly centered text (dominant-baseline middle)
-        var overlay = `<rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="8" fill="rgba(255,255,255,0.85)" stroke="#222" stroke-width="1"/>\n` +
+        var overlay = `<rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="8" fill="rgba(255,255,255,0.85)" stroke="#333" stroke-width="1"/>\n` +
                       `<text x="${centerX}" y="${centerY}" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="700" fill="${txtColor}" dominant-baseline="middle">${escaped}</text>`;
         baseSvg = baseSvg.replace('</svg>', overlay + '</svg>');
     }
