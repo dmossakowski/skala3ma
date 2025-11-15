@@ -359,11 +359,13 @@
                             const fill = rt.color_modifier === 'marble' ? `url(#camo_${discIndex}_${i})` : (rt.color1 || '#999999');
                             const routeNum = rt.routenum || (i+1);
                             const label = (rt.grade || '').trim() || '?';
+                            const lineVal = (rt.line || '').trim();
                             const mid = start + anglePer/2;
-                            const lr = r*0.62;
-                            const lx = cx + lr*Math.cos(mid);
-                            const ly = cy + lr*Math.sin(mid);
-                            const fontSize = Math.max(10,(r/6));
+                            // Position grade closer to outer edge (previously 0.62r, now 0.72r) & slightly larger font
+                            const gradeRadius = r*0.72;
+                            const lx = cx + gradeRadius*Math.cos(mid);
+                            const ly = cy + gradeRadius*Math.sin(mid);
+                            const fontSize = Math.max(11,(r/5.2));
                             const textWidth = Math.max(label.length * fontSize * 0.6, fontSize*1.4);
                             const textHeight = fontSize * 1.1;
                             const rectX = lx - textWidth/2 - 3;
@@ -371,10 +373,9 @@
                             const rectW = textWidth + 6;
                             const rectH = textHeight + 4;
                             svg.push(`<path d="${d}" fill="${fill}" stroke="#222" stroke-width="1" data-route-id="${rt.id}"><title>#${routeNum} ${rt.grade||''} line:${rt.line||''}</title></path>`);
-                            // (Removed contour lines for marble to emphasize camouflage pattern)
                             svg.push(`<g pointer-events="none">`+
                                      `<rect x="${rectX.toFixed(1)}" y="${rectY.toFixed(1)}" rx="4" ry="4" width="${rectW.toFixed(1)}" height="${rectH.toFixed(1)}" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`+
-                                     `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:600;">${label}</text>`+
+                                     `<text class="slice-grade" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:700;">${label}</text>`+
                                      `</g>`);
                         });
                         svg.push(`<circle cx="${cx}" cy="${cy}" r="${r-0.5}" fill="none" stroke="#555" stroke-width="2"/>`);
@@ -622,6 +623,7 @@
                         #discs-gallery .card:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); transform: translateY(-3px); }
                         .disc-svg { max-width: 100%; height: auto; }
                         .disc-svg text { font-weight: 600; }
+                        .disc-svg text.slice-grade { font-weight:700; }
                         .disc-svg image { pointer-events: none; }
                         /* Route table styles */
                         .disc-routes-table-wrapper { width:100%; margin-top:.1rem; }
