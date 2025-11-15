@@ -51,6 +51,32 @@
             font-weight: bold;
             cursor: pointer;
         }
+
+        /* Adopted controversial routes styles for activities display */
+        .disagreements-grid { display:grid; grid-template-columns:1fr minmax(140px,200px) minmax(130px,280px); gap:.5rem .75rem; align-items:start; font-size:.85rem; }
+        .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+        .dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; cursor:pointer; }
+        .route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; flex-wrap:nowrap; }
+        .route-dis-flex .route-meta { flex:1 1 auto; font-size:.85rem; line-height:1.15; }
+        .route-dis-flex .route-meta .route-name { font-size:1.1rem; font-weight:500; margin-bottom:.15rem; }
+        .route-dis-flex .route-meta .route-date { font-size:.8rem; opacity:.75; }
+        .route-dis-flex .route-meta .route-gym { opacity:.95; font-size:.6rem; }
+        .chip-grade { display:inline-block; padding:.18rem .35rem; border-radius:14px; font-size:.8rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
+        /* Status badges copied from activities.html */
+        .badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1;  }
+       
+        .badge.climbs { background:#41ac49; margin-left:.35rem; margin-right: .45rem; }
+        .badge.flashes { background:#efcc05; margin-left: 0; margin-right: .75rem; }
+        .badge.attempts { background:#d73038;margin-left: .4rem; margin-right: .45rem; }
+        .status-icon { width:20px; height:20px; vertical-align:middle;  }
+        .status-badge { font-size:.7rem; display:inline-flex; align-items:center; }
+        /* Mobile wrap override */
+        @media (max-width: 700px) {
+          .disagreements-grid { display:flex; flex-wrap:wrap; }
+          .disagreements-grid .head { flex:1 1 140px; min-width:140px; }
+          .disagreements-grid .dis-cell.route-detail { flex:1 1 100%; min-width:100%; }
+          .disagreements-grid .dis-cell:not(.route-detail) { flex:1 1 160px; min-width:140px; }
+        }
     </style>
 
     
@@ -155,10 +181,10 @@
         </div>
             
         
-        <div class="container heading-section">
-        
-            <div id="activities"></div>
-        </div>
+    <div class="container heading-section">
+      <!-- Activities will be rendered in a grid styled like controversial routes -->
+      <div id="activities"></div>
+    </div>
               
              
 			 
@@ -329,7 +355,7 @@ function getData()
     .then(response => response.json())
     .then(data => {
         // use the retrieved data here
-        console.log("retrieved data in activities.js")
+        console.log("retrieved data in user-activity.html")
         console.log(data);
         activities=data
         processActivities(activities);
@@ -343,23 +369,31 @@ function getData()
 
 function processActivities(activities)
 {
-    if (activities.activities.length == 0){
-        // add class btn-block to competition_update_button 
-        //var button = document.getElementById("competition_update_button");
-        //button.className += " btn-block";
-       // return;
-       showModal();
-       
-
-    }
-    //console.log(activities)
-
-    getActivityChart();
-    processActivityChartData(activities)
-
-    for (var i = 0; i < activities.activities.length; i++) {
-        addActivityEntry(activities.activities[i]);
-    }	  
+  if (!activities || !activities.activities) return;
+  if (activities.activities.length === 0){
+     showModal();
+  }
+  getActivityChart();
+  processActivityChartData(activities);
+  // build grid container & headers
+  const container = document.getElementById('activities');
+  container.textContent='';
+  const grid = document.createElement('div');
+  grid.className = 'disagreements-grid';
+  const headers = [
+    { key:'activity_details', text:'' },
+    { key:'attempts', text:'' },
+    { key:'gym', text:'' }
+  ];
+  headers.forEach(h=>{
+    const hd = document.createElement('div');
+    hd.className='head';
+    hd.dataset.translateKey = h.key;
+    hd.textContent = h.text;
+    grid.appendChild(hd);
+  });
+  activities.activities.forEach(a=> addActivityEntry(a, grid));
+  container.appendChild(grid);
 }
 
 function processGyms(gyms)
@@ -376,43 +410,42 @@ function processGyms(gyms)
 }	
 
 
-function addActivityEntry(text) 
-{
-    console.log(text)
-    if (!text) return;
-    // Create a new row div
-    date = text.date
-    var row = document.createElement('div');
-    row.addEventListener('click', function() {
-        location.href = `/activities/${text.id}`
-        }, false);
-    row.className = 'row activity-entry ';
+function addActivityEntry(activity, gridRef){
+  if(!activity) return;
+  const targetGrid = gridRef || document.querySelector('#activities .disagreements-grid');
+  if(!targetGrid) return;
+  const dateVal = activity.date || '';
+  // Details cell (route-detail style for visual prominence)
+  const cDetails = document.createElement('div'); cDetails.className='dis-cell route-detail';
+  cDetails.addEventListener('click', ()=> location.href = `/activities/${activity.id}`);
+  const flex = document.createElement('div'); flex.className='route-dis-flex';
+  const meta = document.createElement('div'); meta.className='route-meta';
+  meta.innerHTML = `<div class='route-name'><a href="/activities/${activity.id}">${activity.name || 'Unnamed Activity'}</a></div>
+    <div class='route-date'>${dateVal}</div>
+    `;
+  flex.appendChild(meta); cDetails.appendChild(flex); targetGrid.appendChild(cDetails);
+  // Attempts/status breakdown cell with badges & icons
+  const cAttempts = document.createElement('div'); cAttempts.className='dis-cell';
+  const counts = {climbed:0, flashed:0, attempted:0};
+  (activity.attempts||[]).forEach(at => { if(at && counts.hasOwnProperty(at.status)) counts[at.status]++; });
+  const statusesOrder = ['climbed','flashed','attempted'];
+  statusesOrder.forEach(st => {
+    const img = document.createElement('img'); img.className='status-icon'; img.src = statusIcon(st); img.alt = st;
+    const badge = document.createElement('span'); badge.className = `badge ${st==='climbed'?'climbs':(st==='flashed'?'flashes':'attempts')} status-badge`;
+    badge.textContent = ` ${counts[st]} `; // leading space for separation after icon
+    cAttempts.appendChild(img); cAttempts.appendChild(badge);
+  });
+  cAttempts.addEventListener('click', ()=> location.href = `/activities/${activity.id}`); targetGrid.appendChild(cAttempts);
+  // Gym cell
+  const cGym = document.createElement('div'); cGym.className='dis-cell'; cGym.textContent = activity.gym_name || ''; cGym.addEventListener('click', ()=> location.href = `/activities/${activity.id}`); targetGrid.appendChild(cGym);
+}
 
-    // Create a new activity-entry div
-    var entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = date;
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col-2';
-    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.name+'</a>';
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = `<a href="/activities/${text.id}">`+ text.attempts.length+'</a>';
-    row.appendChild(entry);
-
-    entry = document.createElement('div');
-    entry.className = 'activity-entry-text col';
-    entry.innerHTML = text.gym_name;
-    row.appendChild(entry);
-
-    
-    // Append the row to the activities container
-    var activities = document.getElementById('activities');
-    activities.appendChild(row);
+// Reuse status icons mapping from activities.html
+function statusIcon(status){
+  if(status==='climbed') return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+  if(status==='attempted') return '/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png';
+  if(status==='flashed') return '/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png';
+  return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
 }
 
 

@@ -852,10 +852,10 @@ def get_activity(activity_id):
     
 
 
-# add a route to an activity
+# add an attempt to an activity
 @skala_api_app.post('/activity/<activity_id>')
 @session_or_jwt_required
-def add_activity_route(activity_id):
+def add_activity_route_attempt(activity_id):
     user = competitionsEngine.get_user_by_email(session['email'])
 
     data = request.get_json()
@@ -873,7 +873,7 @@ def add_activity_route(activity_id):
     user_grade = data.get('route-grade-user')
     route = competitionsEngine.get_route(routes_id, route_id)
     
-    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
+    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade)
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
@@ -916,7 +916,8 @@ def get_activities_by_gym_by_routes(gym_id, routes_id):
 @skala_api_app.delete('/activity/<activity_id>/route/<route_id>')
 @session_or_jwt_required
 def delete_activity_route(activity_id, route_id):
-    user = competitionsEngine.get_user_by_email(session['email'])
+    #user = competitionsEngine.get_user_by_email(session['email'])
+
 
     activity = activities_db.get_activity(activity_id)
     if (activity is None):
