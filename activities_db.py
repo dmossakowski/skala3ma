@@ -276,7 +276,7 @@ def get_activities_by_gym_routes(gym_id, routes_id):
 
 
 # add an entry to an existing session
-def add_activity_entry(activity_id, route, status, note, user_grade):
+def add_activity_attempt(activity_id, route, status, note, user_grade):
     """Add a route attempt to an activity using the domain model.
 
     Parameters:
@@ -293,9 +293,12 @@ def add_activity_entry(activity_id, route, status, note, user_grade):
     if activity is None:
         return None
 
-    # Ensure route_id present in route metadata
+    # we are using route metadata dict to create RouteAttempt
+    # the 'id' of route becomes 'route_id' in attempt and we create a new unique attempt_id as 'id'
     if 'route_id' not in route:
-        route['route_id'] = route.get('route_id') or route.get('id') or uuid.uuid4().hex
+        route['route_id'] = route.get('id') 
+    route['id'] = uuid.uuid4().hex  # ensure unique id for route snapshot
+
     attempt = RouteAttempt.from_route_metadata(route, status=status, user_grade=user_grade, note=note)
 
     # Use Activity.add_route_attempt (appends to attempts list; legacy flattened handled on persist)
