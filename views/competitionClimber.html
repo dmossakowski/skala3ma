@@ -118,8 +118,9 @@
 
 					{% else %}
                         <!-- climber is null here -->
-                        {% if can_unregister is true %}
+                        
                         {{ reference_data['current_language'].status}}: <b>{{ reference_data['current_language'].registered}}/{{ reference_data['current_language'].waitlist}}<br><br></b>
+                        {% if can_unregister is true %}
                         <a href="/competitionDashboard/{{competitionId}}/unregister" class="btn btn-danger btn-lg"> {{ reference_data['current_language'].unregister}}</a>
                         <br><br>
                         {% endif %}

@@ -21,7 +21,7 @@
 
       
         <div class="col text-end justify-content-end p-4">
-            <img src="/image/{{  gym.get('logo_img_id') }}"  width="250"/>
+            <img src="/image/{{  gym.get('logo_img_id') }}"  height="120"/>
             </div>
             <div class="col justify-content-left align-items-center">
        <br>
@@ -103,7 +103,8 @@
                     gymid: "{{gymid}}",  
                     routeListId: "{{routesid}}",
                     groupBy: "line", // Override the default groupBy setting
-                    initialSort: [{ column: "grade", dir: "desc" }] // Override the default initialSort setting
+                    initialSort: [{ column: "grade", dir: "desc" }], // Override the default initialSort setting
+                    user_can_edit_gym: {{ user_can_edit_gym|tojson }}
                 };
                 
                     configureRoutesTable(userConfig);

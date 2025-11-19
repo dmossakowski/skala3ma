@@ -169,8 +169,10 @@ function initializeApp() {
                 <ul class="navbar-nav ml-left">
                     
                     <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                    <a href="/myactivities" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_activities }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionCalendar">{{ reference_data['current_language'].competitions }}</a>
+                     <a href="/myresultats" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_resultats }}</a>
                     <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
 
                                {% if session is defined and session['expires_at'] is defined %}
@@ -181,10 +183,6 @@ function initializeApp() {
                 
                     <a href="/user" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
 
-                    <a href="/myactivities" class="nav-link fs-4">{{ reference_data['current_language'].my_activities }}</a>
-
-                    <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
-                    
                     <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
 
                     {% if session['godmode']  %}

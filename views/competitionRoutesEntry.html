@@ -46,11 +46,13 @@
 							//   /something/competition/<competitionId>/climber/<climberId>
 							// Fallback: log error and abort if not found.
 							const path = window.location.pathname;
-							// Accept hex (uuid-like) IDs in path e.g. competitionRoutesEntry/d9abc4e9fc5c4b99ba806befe5e78a9f/climber/faeea9eca80848f580e14ee7bd96886a
-							let match = path.match(/competitionRoutesEntry\/([0-9a-fA-F]+)\/climber\/([0-9a-fA-F]+)/);
+							// Use a flexible regular expression: capture any non-slash chars for IDs (allows dashes, etc.).
+							// Patterns handled:
+							//   /competitionRoutesEntry/<competitionId>/climber/<climberId>
+							//   /.../competition/<competitionId>/climber/<climberId>
+							let match = path.match(/competitionRoutesEntry\/([^\/]+)\/climber\/([^\/]+)/);
 							if(!match){
-								// broader attempt
-								match = path.match(/(\d+)\/climber\/(\d+)/);
+								match = path.match(/competition\/([^\/]+)\/climber\/([^\/]+)/);
 							}
 							if(!match){
 								console.error('Could not parse competition/climber IDs from URL', path);

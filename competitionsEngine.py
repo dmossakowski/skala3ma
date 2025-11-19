@@ -295,16 +295,20 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
 
 # remove or unregister climber from a competition
+# only possible if competition is not started yet
 def removeClimber(climberId, competitionId):
     try:
         sql_lock.acquire()
         competition = get_competition(competitionId)
         
         climbers = competition['climbers']
-        if climberId in climbers and competition['status'] in [competition_status_open]:
-            del climbers[climberId]
-            
-            _update_competition(competitionId, competition)
+        
+        if climberId not in climbers:
+            raise ValueError('Cannot remove climber, not registered')
+
+        del climbers[climberId]
+        competition = _update_competition(competitionId, competition)
+        return competition
     finally:
         sql_lock.release()
 
@@ -1401,7 +1405,7 @@ def can_unregister(user, competition):
     if competition is None:
         raise ValueError('competition cannot be None')
 
-    if competition['status'] not in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
+    if competition['status'] not in [competition_status_open]:
         return False
     
     if user is not None:
@@ -1413,6 +1417,7 @@ def can_unregister(user, competition):
     return False
 
 
+# allow to edit routes in a gym
 def can_edit_gym(user, gym):
     if user is None or gym is None: 
         return False
@@ -1547,9 +1552,18 @@ def delete_gym(gym_id):
         logging.info("deleted gym and routes for "+gym_id)
 
 
+# this is used from batch edit
+
 def delete_routes(routes_id):
     if routes_id is None:
-        return    
+        return   
+    gym = skala_db.get_gym_by_routes_id(routes_id)
+    if gym is None:
+        raise ValueError('Cannot find gym for routes id: '+str(routes_id))
+           
+    if gym.get('routesid') == routes_id:
+        raise ValueError('Cannot delete routes that are assigned the default routes to a gym: '+str(gym['name']))
+        
     try:
         sql_lock.acquire()
         c1 = get_all_competitions_using_routes(routes_id)

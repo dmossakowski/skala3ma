@@ -276,6 +276,14 @@ def fsgtadmin():
             jsonobject = competitionsEngine.get_gym(id)
         if id is not None and action == 'findall':
             jsonobject = competitionsEngine.get_gyms()
+        if id is not None and action == 'delete':
+            gym = competitionsEngine.get_gym(id)
+            competitionsEngine.delete_gym(id)
+            #competitionsEngine.remove_user_permissions_to_gym(user, id)
+            if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:  
+                os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        
+
 
     elif edittype == 'routes':
         if jsonobject is not None  and action == 'update':
@@ -998,8 +1006,12 @@ def unregister(competitionId):
     if session.get('email') is not None:
         climber = competitionsEngine.get_user_by_email(session.get('email'))
         if climber is not None:
-            competitionsEngine.removeClimber(climber['id'], competitionId)
-            return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
+            competition = competitionsEngine.getCompetition(competitionId)
+            if competitionsEngine.can_unregister(climber, competition):
+                competitionsEngine.removeClimber(climber['id'], competitionId)
+            else:
+                logging.info('unregister: competition not open for unregistering')
+                
         
     return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
 
