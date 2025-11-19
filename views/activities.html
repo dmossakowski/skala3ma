@@ -782,6 +782,14 @@
         renderSummary();
         renderGymLeaderboard();
         renderTimeline();
+        // Ensure controversial details reflect current filtered dataset when visible
+        if(showControversial){
+            renderControversialDetails();
+        } else {
+            // Clear any stale controversial list if previously shown so it doesn't persist after filter changes
+            const c = document.getElementById('controversialDetails');
+            if(c) c.textContent = '';
+        }
         updateSectionsVisibility();
         // Final safeguard translation pass (in case earlier functions missed or future additions occur)
         if(typeof replaceTranslations === 'function') {
