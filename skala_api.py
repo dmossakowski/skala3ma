@@ -1384,6 +1384,7 @@ def getCompetitionFlatFullTable(competitionId):
 
 
 
+# Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/climber/<climberId>/present/<present>', methods=['POST'])
 @session_or_jwt_required
 def setClimberAsPresent(competitionId,climberId,present):
@@ -1489,31 +1490,8 @@ def get_users_by_gym(gym_id):
 
 
 
-
-@skala_api_app.route('/users/list/')
-def get_all_confirmed_users():
-    users = skala_db.get_all_users()
-    usersOut = []
-    # remove email and permissions from the response
-    for user in users:
-        if user.get('is_confirmed') is None or user.get('is_confirmed') is False:
-            continue    
-        user.pop('email', None)
-        #user.pop('permissions', None)
-        user.get('permissions', {}).pop('godmode', None)
-        user.pop('isgod', None)
-        user.pop('password', None)
-        user.pop('is_confirmed', None)
-        user.pop('gname', None)
-        usersOut.append(user)
-
-    return usersOut
-
-
-
-
 @skala_api_app.route('/users/search/')
-def search_all_users():
+def get_all_users():
     search_string = request.args.get('q')
     if search_string is None or len(search_string) < 2 or not search_string.isalnum():
         return []
@@ -2669,6 +2647,7 @@ def gyms_update(gym_id):
     body = request.data
     bodyj = request.json
     files = request.files
+    delete = formdata.get('delete')
     save = formdata.get('save')
 
     imgfilename = None
@@ -2689,6 +2668,13 @@ def gyms_update(gym_id):
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
+
+    if delete is not None:
+        competitionsEngine.delete_gym(gym_id)
+        competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
+        if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:  
+            os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        return redirect(url_for('skala_api_app.gyms'))
 
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']
