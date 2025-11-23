@@ -760,8 +760,10 @@ def calculate_activities_stats(activities):
         # Find the Monday of the week for the activity date
         start_of_week = activity_date - timedelta(days=activity_date.weekday())
         
+        if activity.get('attempts') is None:
+            logging.warning('activity has no attempts '+str(activity))
         # Increment the count of routes done for that week
-        weekly_stats[start_of_week] += len(activity['attempts'])
+        weekly_stats[start_of_week] += len(activity.get('attempts', []))
 
     # Convert the weekly_stats dictionary to a sorted list of tuples
     sorted_weekly_stats = sorted(weekly_stats.items())
@@ -2215,6 +2217,24 @@ def routes_by_gym_id(gymid):
     routes = competitionsEngine.get_routes(gym.get('routesid'))
     return json.dumps(routes.get('routes'))
 
+@skala_api_app.route('/gym/<gymid>/routes/list')
+def route_sets_list(gymid):
+    """Return list of all route sets for given gym id.
+    Each entry: {id: <routeset id>, name: <display name>}.
+    Uses skala_db.get_routes_by_gym_id.
+    """
+    try:
+        route_sets = skala_db.get_routes_by_gym_id(gymid) or {}
+        # Normalize to list for simpler front-end consumption
+        normalized = []
+        for rid, rdata in route_sets.items():
+            name = rdata.get('name') or ''
+            normalized.append({'id': rid, 'name': name})
+        return json.dumps(normalized)
+    except Exception as e:
+        logging.error(f"Error fetching route sets list for gym {gymid}: {e}")
+        return json.dumps({'status': 'error', 'message': 'Could not retrieve route sets'})
+
 
 
 @skala_api_app.route('/gym/<gymid>/routes/<routesid>/delete', methods=['POST'])
@@ -2490,7 +2510,7 @@ def route_rating(gymid, routesid):
             activity_id = activities_db.add_activity(user, gym, routesid, rating_activity_name, today)
     #activity = activities_db.get_activity(activity_id)
 
-    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
+    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade)
 
     
     return json.dumps(activity)

@@ -1967,7 +1967,7 @@ def gym_routes_discs(gym_id, routesid):
                            gyms=None,
                            gym=gym,
                            routes=routes,
-                           all_routes=all_routes,
+                           #all_routes=all_routes,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
                            user_can_edit_gym=user_can_edit_gym,
@@ -2006,16 +2006,11 @@ def gym_routes_stats(gym_id, routesid):
     return render_template('gym-routes-stats.html',
                            gymid=gym_id,
                            routesid=routesid,
-                           gyms=None,
                            gym=gym,
-                           routes=routes,
-                           all_routes=all_routes,
+                           
                            user=user,
                            reference_data=competitionsEngine.reference_data,
-                           user_can_edit_gym=user_can_edit_gym,
-                           can_create_gym=can_create_gym,
-                           grade_counts=grade_counts,
-                           ordered_grades=ordered_grades,
+                          
                            )
 
 
