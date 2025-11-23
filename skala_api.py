@@ -677,7 +677,7 @@ def get_activities():
     activities['stats'] = {}
     activities['stats']['routes_done'] = user_stats
     activities['stats']['routes_avg'] = avg_stats
-    return json.dumps(activities)
+    return activities
 
 
 
@@ -720,7 +720,7 @@ def get_useractivities():
     activities['stats']['dates'] = combined_dates
     activities['stats']['routes_done'] = user_stats
     activities['stats']['routes_avg'] = avg_stats
-    return json.dumps(activities)
+    return activities
 
 
 #calculates number of routes done per day
@@ -760,8 +760,10 @@ def calculate_activities_stats(activities):
         # Find the Monday of the week for the activity date
         start_of_week = activity_date - timedelta(days=activity_date.weekday())
         
+        if activity.get('attempts') is None:
+            logging.warning('activity has no attempts '+str(activity))
         # Increment the count of routes done for that week
-        weekly_stats[start_of_week] += len(activity['attempts'])
+        weekly_stats[start_of_week] += len(activity.get('attempts', []))
 
     # Convert the weekly_stats dictionary to a sorted list of tuples
     sorted_weekly_stats = sorted(weekly_stats.items())
@@ -1384,6 +1386,7 @@ def getCompetitionFlatFullTable(competitionId):
 
 
 
+# Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/climber/<climberId>/present/<present>', methods=['POST'])
 @session_or_jwt_required
 def setClimberAsPresent(competitionId,climberId,present):
@@ -1489,31 +1492,8 @@ def get_users_by_gym(gym_id):
 
 
 
-
-@skala_api_app.route('/users/list/')
-def get_all_confirmed_users():
-    users = skala_db.get_all_users()
-    usersOut = []
-    # remove email and permissions from the response
-    for user in users:
-        if user.get('is_confirmed') is None or user.get('is_confirmed') is False:
-            continue    
-        user.pop('email', None)
-        #user.pop('permissions', None)
-        user.get('permissions', {}).pop('godmode', None)
-        user.pop('isgod', None)
-        user.pop('password', None)
-        user.pop('is_confirmed', None)
-        user.pop('gname', None)
-        usersOut.append(user)
-
-    return usersOut
-
-
-
-
 @skala_api_app.route('/users/search/')
-def search_all_users():
+def get_all_users():
     search_string = request.args.get('q')
     if search_string is None or len(search_string) < 2 or not search_string.isalnum():
         return []
@@ -2212,7 +2192,7 @@ def gyms_list_by_field(field=None, value=None):
             gym['added_by'] = gym['added_by'].split('@')[0]  # Remove part after @
         newgyms.append(gym)
 
-    return json.dumps(newgyms)
+    return newgyms
 
 
 @skala_api_app.route('/gym/<gymid>')
@@ -2236,6 +2216,24 @@ def routes_by_gym_id(gymid):
 
     routes = competitionsEngine.get_routes(gym.get('routesid'))
     return json.dumps(routes.get('routes'))
+
+@skala_api_app.route('/gym/<gymid>/routes/list')
+def route_sets_list(gymid):
+    """Return list of all route sets for given gym id.
+    Each entry: {id: <routeset id>, name: <display name>}.
+    Uses skala_db.get_routes_by_gym_id.
+    """
+    try:
+        route_sets = skala_db.get_routes_by_gym_id(gymid) or {}
+        # Normalize to list for simpler front-end consumption
+        normalized = []
+        for rid, rdata in route_sets.items():
+            name = rdata.get('name') or ''
+            normalized.append({'id': rid, 'name': name})
+        return json.dumps(normalized)
+    except Exception as e:
+        logging.error(f"Error fetching route sets list for gym {gymid}: {e}")
+        return json.dumps({'status': 'error', 'message': 'Could not retrieve route sets'})
 
 
 
@@ -2512,7 +2510,7 @@ def route_rating(gymid, routesid):
             activity_id = activities_db.add_activity(user, gym, routesid, rating_activity_name, today)
     #activity = activities_db.get_activity(activity_id)
 
-    activity = activities_db.add_activity_entry(activity_id, route, route_finish_status, note, user_grade)
+    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade)
 
     
     return json.dumps(activity)
@@ -2669,6 +2667,7 @@ def gyms_update(gym_id):
     body = request.data
     bodyj = request.json
     files = request.files
+    delete = formdata.get('delete')
     save = formdata.get('save')
 
     imgfilename = None
@@ -2689,6 +2688,13 @@ def gyms_update(gym_id):
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
+
+    if delete is not None:
+        competitionsEngine.delete_gym(gym_id)
+        competitionsEngine.remove_user_permissions_to_gym(user, gym_id)
+        if gym.get('logo_img_id') is not None and len(gym.get('logo_img_id')) > 0:  
+            os.remove(os.path.join(UPLOAD_FOLDER, gym['logo_img_id']))
+        return redirect(url_for('skala_api_app.gyms'))
 
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']

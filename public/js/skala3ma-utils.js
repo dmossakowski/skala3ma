@@ -62,11 +62,39 @@ async function apiFetch(url, options = {}) {
     return response;
 }
 
+// Convenience JSON wrapper: parses JSON (or text fallback) and throws structured error on non-OK
+// Options:
+//   expectJson (default true) - if false, will return text even if JSON content-type
+// Error shape thrown on failure:
+//   { ok:false, status, statusText, url, data, rawText }
+async function apiFetchJson(url, options = {}, { expectJson = true } = {}) {
+    const resp = await apiFetch(url, options);
+    const ctype = resp.headers.get('content-type') || '';
+    let data; let rawText = null;
+    if (expectJson && ctype.includes('application/json')) {
+        try { data = await resp.json(); } catch (e) { data = null; }
+    } else {
+        try { rawText = await resp.text(); } catch (e) { rawText = null; }
+    }
+    if (!resp.ok) {
+        throw {
+            ok: false,
+            status: resp.status,
+            statusText: resp.statusText,
+            url,
+            data,
+            rawText
+        };
+    }
+    return data !== undefined ? data : rawText;
+}
+
 // Attach to window for other inline scripts/templates
 window.setJwtToken = setJwtToken;
 window.getJwtToken = getJwtToken;
 window.clearJwtToken = clearJwtToken;
 window.apiFetch = apiFetch;
+window.apiFetchJson = apiFetchJson;
 window.decodeJwtPayload = decodeJwtPayload;
 
 // Helper to wire a standard email/password login form to /api1/auth/login

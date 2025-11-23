@@ -152,8 +152,7 @@
                 showAlert(error_message, 'danger');
             }
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api1/user')            
-                .then(response => response.json())
+            apiFetchJson('/api1/user')            
                 .then(data => {
                     const permissions = data.permissions;
                     
@@ -192,8 +191,7 @@
                     // Gym Permissions
                     const gymPermissionsList = document.getElementById('gym-permissions-list');
                     permissions.gyms.forEach(gymId => {
-                        fetch(`/api1/gym/${gymId}`)
-                            .then(response => response.json())
+                        apiFetchJson(`/api1/gym/${gymId}`)
                             .then(gym => {
                                 if (gym.id == undefined) {
                                     return;
@@ -212,7 +210,7 @@
         
                         const competitionPermissionsList = document.getElementById('competition-permissions-list');
                         const competitionPromises = permissions.competitions.map(competitionId => 
-                            fetch(`/api1/competition/${competitionId}`).then(response => response.json())
+                            apiFetchJson(`/api1/competition/${competitionId}`)
                         );
 
                         Promise.all(competitionPromises).then(competitions => {
@@ -238,11 +236,16 @@
 
 
         function populateGymsSelect(clubId){
-            fetch('/api1/gyms')
-                .then(response => response.json())
+            apiFetchJson('/api1/gyms')
                 .then(data => {
                     const clubSelect = document.getElementById('club');
-                    data.forEach(gym => {
+                    const gyms = data;
+                    if(!Array.isArray(gyms)) {
+                        console.warn('Unexpected gyms payload shape', data);
+                        return;
+                    }
+                    gyms.forEach(gym => {
+                        if(!gym || gym.id === undefined) return;
                         const option = document.createElement('option');
                         option.value = gym.id;
                         option.textContent = gym.name;

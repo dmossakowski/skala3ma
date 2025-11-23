@@ -1967,13 +1967,51 @@ def gym_routes_discs(gym_id, routesid):
                            gyms=None,
                            gym=gym,
                            routes=routes,
-                           all_routes=all_routes,
+                           #all_routes=all_routes,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
                            user_can_edit_gym=user_can_edit_gym,
                            can_create_gym=can_create_gym,
                            )
 
+
+@app_ui.route('/gyms/<gym_id>/<routesid>/stats', methods=['GET'])
+#@login_required
+def gym_routes_stats(gym_id, routesid):
+    """Gym routes statistics page showing grade distribution bar chart.
+
+    Computes counts of routes per grade (difficulty) ordered from easiest to hardest.
+    Renders ApexCharts bar chart in template.
+    """
+    gym = competitionsEngine.get_gym(gym_id)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
+
+    # Ordered grade list (copied from skala_api global for consistency)
+    ordered_grades = ['?', '4a', '4b', '4c', '5a','5a+', '5b', '5b+', '5c','5c+', '6a', '6a+', '6b', '6b+', '6c', '6c+', '7a', '7a+', '7b', '7b+', '7c', '7c+', '8a', '8a+', '8b', '8b+', '8c', '8c+', '9a', '9a+', '9b', '9b+', '9c']
+    grade_counts = {g: 0 for g in ordered_grades}
+
+    if routes and isinstance(routes.get('routes'), list):
+        for r in routes.get('routes'):
+            g = r.get('grade')
+            if g in grade_counts:
+                grade_counts[g] += 1
+
+    return render_template('gym-routes-stats.html',
+                           gymid=gym_id,
+                           routesid=routesid,
+                           gym=gym,
+                           
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                          
+                           )
 
 
 @app_ui.route('/gyms/<gym_id>/<routesid>/beta', methods=['GET'])

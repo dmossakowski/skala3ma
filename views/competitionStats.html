@@ -65,18 +65,18 @@
 				
 <script>
 	const ctx2 = document.getElementById('myChart2');
-
-   
                 const url = '/api1/competition/{{competition['id']}}/stats';
                 const url2 = '/api1/competition_results/{{competition['id']}}/stats';
                 
                 async function getData() {
-                  const jsondata = await (await fetch(url)).json();
-                  processData2(jsondata);
-                  
-                  const rangejsondata = await (await fetch(url2)).json();
-                  processDataRange(rangejsondata);
-                  
+                  try {
+                    const jsondata = await apiFetchJson(url);
+                    processData2(jsondata);
+                    const rangejsondata = await apiFetchJson(url2);
+                    processDataRange(rangejsondata);
+                  } catch (err) {
+                    console.error('Failed to load competition stats', err);
+                  }
                 }
                 
             
@@ -90,22 +90,22 @@
 		labels: ['Femme Senior', 'Femme Titane', 'Femme Diamante', 'Homme Senior'],
 		colors: ['#4CAF50','#C5D86D','#1B998B', '#FF9800', '#FEC029', '#F9E83E'],
         series: [{
-          name: '{{ reference_data['current_language'].women}} Senior',
+          name: '{{ reference_data["current_language"].women }} Senior',
           data: []
         }, {
-          name: '{{ reference_data['current_language'].woman}} Titane',
+          name: '{{ reference_data["current_language"].woman }} Titane',
           data: []
         }, {
-          name: '{{ reference_data['current_language'].women}} Diamant',
+          name: '{{ reference_data["current_language"].women }} Diamant',
           data: []
         }, {
-          name: '{{ reference_data['current_language'].men}} Senior',
+          name: '{{ reference_data["current_language"].men }} Senior',
           data: []
         }, {
-          name: '{{ reference_data['current_language'].men}} Titane',
+          name: '{{ reference_data["current_language"].men }} Titane',
           data: []
         }, {
-          name: '{{ reference_data['current_language'].men}} Diamant',
+          name: '{{ reference_data["current_language"].men }} Diamant',
           data: []
         }],
           chart: {

@@ -219,10 +219,23 @@
         let lastFilter = null; // {from:{y,m}, to:{y,m}}
         // (Removed dynamic translation scheduler; we now create real DOM nodes early for static translation pass.)
 
-    async function fetchJson(url){
-        const r = await fetch(url);
-        if(!r.ok) throw new Error("Failed to fetch " + url);
-        return r.json();
+    // Delegates to global apiFetchJson helper (utils) for unified parsing & error shape
+    async function fetchJson(url, options={}){
+        try {
+            return await apiFetchJson(url, options);
+        } catch(e){
+            // Normalize to Error for existing catch blocks
+            if(e && e.status){
+                let detail = '';
+                if(e.data){
+                    try { detail = (e.data.error || JSON.stringify(e.data)).slice(0,200); } catch(_) {}
+                } else if(e.rawText){
+                    detail = e.rawText.slice(0,200);
+                }
+                throw new Error(`Failed API request ${url} (status ${e.status}) ${detail}`);
+            }
+            throw e; // unexpected shape
+        }
     }
 
     async function loadAll(){

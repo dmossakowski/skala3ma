@@ -1,0 +1,175 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% include "gym-menu.html" %}
+{% endblock %}
+
+{% block secondarycontent %}
+
+<div class="container-fluid" id="stats-gym-header">
+    <div class="row">
+        <div class="col text-end justify-content-end p-4">
+            <img id="gym-logo-img" src="" alt="Gym Logo" style="height:120px;display:none;" />
+        </div>
+        <div class="col justify-content-left align-items-center">
+            <h1 id="gym-name-heading" class="display-4 mt-2">Loading...</h1>
+        </div>
+    </div>
+</div>
+
+<!-- Route set selector (reuse discs dropdown for consistency) -->
+<div class="container-fluid mb-2" id="stats-controls-wrapper">
+    <div id="stats-controls" class="disc-controls-block">
+        <div class="controls-responsive">
+            <div class="ctl dropdown-ctl mb-2">
+                <select id="routes-select" class="form-select form-select-sm uniform-ctl"></select>
+            </div>
+            <div id="grade-distribution-chart" style="width:100%;"></div>
+            <div id="grade-band-summary" class="mt-3"></div>
+            <script>
+            (function() {
+                const el = document.getElementById('grade-distribution-chart');
+                if(!el) return;
+                // Extract gymId and routesId from URL: /gyms/<gymId>/<routesId>/stats
+                const pathSegments = window.location.pathname.split('/').filter(Boolean);
+                const gymsIndex = pathSegments.indexOf('gyms');
+                let gymIdFromUrl = null, routesIdFromUrl = null;
+                if (gymsIndex !== -1) {
+                    gymIdFromUrl = pathSegments[gymsIndex + 1] || null;
+                    routesIdFromUrl = pathSegments[gymsIndex + 2] || null;
+                }
+                const gymId = gymIdFromUrl ;
+                const routesId = routesIdFromUrl;
+                // Ordered grades from backend (fallback hardcoded if missing)
+                let orderedGrades = ['?','4a','4b','4c','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a','9a+','9b','9b+','9c'];
+                const gradeCounts = Object.fromEntries(orderedGrades.map(g=>[g,0]));
+
+                async function fetchGymInfo(){
+                    if(!gymId) return;
+                    try {
+                        const resp = await apiFetch(`/api1/gym/${gymId}`);
+                        const gymData = await resp.json().catch(()=>null);
+                        if(gymData){
+                            const nameEl = document.getElementById('gym-name-heading');
+                            const logoEl = document.getElementById('gym-logo-img');
+                            if(nameEl && gymData.name){ nameEl.textContent = gymData.name; }
+                            if(logoEl && gymData.logo_img_id){
+                                logoEl.src = `/image/${gymData.logo_img_id}`;
+                                logoEl.style.display = 'inline';
+                            }
+                        }
+                    } catch(e){ console.warn('Failed to fetch gym info', e); }
+                }
+
+                async function populateRoutesDropdown(){
+                    const selectEl = document.getElementById('routes-select');
+                    if(!selectEl || !gymId) return;
+                    selectEl.innerHTML = '<option>Loading...</option>';
+                    try {
+                        const resp = await apiFetch(`/api1/gym/${gymId}/routes/list`);
+                        const list = await resp.json().catch(()=>[]);
+                        if(!Array.isArray(list) || list.length===0){
+                            selectEl.innerHTML = '<option>No route sets</option>';
+                            selectEl.disabled = true;
+                            return;
+                        }
+                        const opts = list.map(item => {
+                            const name = (item.name && item.name.trim()) ? item.name : ("Route Set " + item.id.substring(0,6));
+                            const sel = item.id === routesId ? ' selected' : '';
+                            return `<option value="${item.id}"${sel}>${name}</option>`;
+                        }).join('');
+                        selectEl.innerHTML = opts;
+                        selectEl.onchange = function(){
+                            const target = this.value;
+                            if(target){ window.location.href = `/gyms/${gymId}/${target}/stats`; }
+                        };
+                    } catch(e){
+                        console.warn('Failed to load routes list', e);
+                        selectEl.innerHTML = '<option>Error loading</option>';
+                    }
+                }
+
+                async function loadRoutesAndRender(){
+                    try {
+                        const resp = await apiFetch(`/api1/gym/${gymId}/routes/${routesId}`);
+                        const data = await resp.json().catch(()=>({}));
+                        const routesArr = (data && data.routes) ? data.routes : [];
+                        routesArr.forEach(r => { if(r && r.grade && gradeCounts[r.grade] !== undefined){ gradeCounts[r.grade]++; } });
+                    } catch(err){ console.warn('Failed to fetch routes', err); }
+
+                    // Determine contiguous grade range between lowest and highest grade with >0 routes
+                    let firstIdx = -1, lastIdx = -1;
+                    for (let i = 0; i < orderedGrades.length; i++) {
+                        const g = orderedGrades[i];
+                        if ((gradeCounts[g] ?? 0) > 0) { firstIdx = i; break; }
+                    }
+                    for (let i = orderedGrades.length - 1; i >= 0; i--) {
+                        const g = orderedGrades[i];
+                        if ((gradeCounts[g] ?? 0) > 0) { lastIdx = i; break; }
+                    }
+                    let categories;
+                    if (firstIdx === -1 || lastIdx === -1) {
+                        categories = orderedGrades.slice();
+                    } else {
+                        categories = orderedGrades.slice(firstIdx, lastIdx + 1);
+                    }
+                    const seriesData = categories.map(g => (gradeCounts[g] ?? 0));
+
+                    // Map grades to difficulty bands and colors
+                    function gradeColor(grade){
+                        if(["?","4a","4b","4c"].includes(grade)) return getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#29c05c'; // very easy - green
+                        if(["5a","5a+","5b","5b+","5c"].includes(grade)) return '#ff9800'; // easy - orange
+                        if(["5c+","6a","6a+","6b"].includes(grade)) return '#2196f3'; // medium - blue
+                        if(["6b+","6c","6c+","7a"].includes(grade)) return '#e53935'; // pretty hard - red
+                        return '#000000'; // hard
+                    }
+                    const barColors = categories.map(gradeColor);
+
+                    const options = {
+                        chart: { type: 'bar', height: 420, toolbar: { show: false } },
+                        series: [{ name: 'Routes', data: seriesData }],
+                        xaxis: { categories: categories, title: { text: ' ' }, labels: { rotate: -45 } },
+                        yaxis: { title: { text: ' ' }, min: 0 },
+                        plotOptions: { bar: { borderRadius: 4, columnWidth: '55%', distributed: true } },
+                        dataLabels: { 
+                            enabled: true,
+                            formatter: function(val){ return val === 0 ? '0' : val; },
+                            style: { fontSize: '12px', colors: ['#555'] }
+                        },
+                        tooltip: { y: { formatter: v => `${v} route${v===1?'':'s'}` } },
+                        theme: { mode: 'light' },
+                        colors: barColors,
+                        noData: { text: 'No routes available' }
+                    };
+
+                    const chart = new ApexCharts(el, options);
+                    chart.render();
+
+                    // Difficulty band summary counts
+                    const bands = {
+                        very_easy: { grades: ['?','4a','4b','4c'], color: getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#29c05c' },
+                        easy: { grades: ['5a','5a+','5b','5b+','5c'], color: '#ff9800' },
+                        medium: { grades: ['5c+','6a','6a+','6b'], color: '#2196f3' },
+                        pretty_hard: { grades: ['6b+','6c','6c+','7a'], color: '#e53935' },
+                        hard: { grades: ['7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a','9a+','9b','9b+','9c'], color: '#000000' }
+                    };
+                    const sumGrades = list => list.reduce((acc,g)=> acc + (gradeCounts[g]||0),0);
+                    const summaryData = Object.values(bands).map(b => ({ label: b.grades.join(', '), count: sumGrades(b.grades), color: b.color }));
+                    const totalRoutes = summaryData.reduce((a,b)=> a + b.count, 0);
+                    const summaryEl = document.getElementById('grade-band-summary');
+                    if(summaryEl){
+                        const rows = summaryData.map(d=> `<tr><td><span style=\"display:inline-block;width:14px;height:14px;background:${d.color};border-radius:2px;margin-right:6px\"></span>${d.label}</td><td class=\"text-end fw-semibold\">${d.count}</td></tr>`).join('');
+                        summaryEl.innerHTML = `<div class=\"table-responsive\"><table class=\"table table-sm align-middle mb-0\"><thead><tr><th>Grades</th><th class=\"text-end\">Routes</th></tr></thead><tbody>${rows}<tr class=\"table-light\"><td><strong>Total</strong></td><td class=\"text-end fw-bold\">${totalRoutes}</td></tr></tbody></table></div>`;
+                    }
+                }
+
+                fetchGymInfo();
+                populateRoutesDropdown();
+                loadRoutesAndRender();
+                    })();
+                </script>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

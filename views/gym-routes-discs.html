@@ -36,11 +36,7 @@
     <div id="disc-controls" class="disc-controls-block">
         <div class="controls-responsive">
                     <div class="ctl dropdown-ctl">
-                        <select name="default_routes" class="form-select form-select-sm uniform-ctl" id="default_routes" onchange="document.location.href=`/gyms/{{ gym['id'] }}/${this.value}/discs`">
-                    {% for route in all_routes %}
-                    <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}>{{all_routes[route]['name']}}</option>
-                    {% endfor %}
-                </select>
+                        <select name="default_routes" class="form-select form-select-sm uniform-ctl" id="default_routes"></select>
             </div>
                     <div class="print-unit d-flex align-items-stretch">
                         <button type="button" id="print_discs_btn" class="uniform-ctl w-100 print-btn" title="Print discs (one per page)">
@@ -58,6 +54,23 @@
    
 
                    <script>
+                    (function(){
+                        const gymId = "{{ gym['id'] }}";
+                        const currentRoutesId = "{{ routes['id'] }}";
+                        const sel = document.getElementById('default_routes');
+                        if(sel){
+                            sel.innerHTML = '<option>Loading...</option>';
+                            apiFetch(`/api1/gym/${gymId}/routes/list`).then(r=>r.json()).then(list=>{
+                                if(!Array.isArray(list) || list.length===0){ sel.innerHTML = '<option>No route sets</option>'; sel.disabled=true; return; }
+                                sel.innerHTML = list.map(item=>{
+                                    const name = (item.name && item.name.trim()) ? item.name : ("Route Set " + item.id.substring(0,6));
+                                    const selected = item.id === currentRoutesId ? ' selected' : '';
+                                    return `<option value="${item.id}"${selected}>${name}</option>`;
+                                }).join('');
+                                sel.onchange = function(){ if(this.value){ window.location.href = `/gyms/${gymId}/${this.value}/discs`; } };
+                            }).catch(e=>{ console.warn('Failed to load route sets', e); sel.innerHTML='<option>Error loading</option>'; });
+                        }
+                    })();
                     // Disc visualization logic for gym routes
                     // Requirements implemented:
                     //  * Maintain original route order

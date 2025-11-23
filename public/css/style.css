@@ -28,6 +28,14 @@ body {
  
 }
 
+/* Brand accent color definition (added) */
+:root {
+  --brand-accent: #29c05c; /* primary accent green */
+}
+
+.brand-accent-bg { background-color: var(--brand-accent) !important; }
+.brand-accent-text { color: var(--brand-accent) !important; }
+
 .skala3ma-logo {
     font-family: "Lato","Chakra Petch";
     /*, "Rajdhani", "Doto",  "Chakra Petch" , "Lato", "Chakra Petch", "Slabo";*/
