@@ -677,7 +677,7 @@ def get_activities():
     activities['stats'] = {}
     activities['stats']['routes_done'] = user_stats
     activities['stats']['routes_avg'] = avg_stats
-    return json.dumps(activities)
+    return activities
 
 
 
@@ -720,7 +720,7 @@ def get_useractivities():
     activities['stats']['dates'] = combined_dates
     activities['stats']['routes_done'] = user_stats
     activities['stats']['routes_avg'] = avg_stats
-    return json.dumps(activities)
+    return activities
 
 
 #calculates number of routes done per day
@@ -2192,7 +2192,7 @@ def gyms_list_by_field(field=None, value=None):
             gym['added_by'] = gym['added_by'].split('@')[0]  # Remove part after @
         newgyms.append(gym)
 
-    return json.dumps(newgyms)
+    return newgyms
 
 
 @skala_api_app.route('/gym/<gymid>')

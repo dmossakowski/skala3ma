@@ -264,14 +264,9 @@ function showModal() {
 
     function deleteActivity()
     {
-    fetch(`/api1/activity/${ACTIVITY_ID}`,
-        { method: 'DELETE'})
-        .then(response => response.json())
-        .then(data => {
-            // use the retrieved data here
-            window.location.href = "/myactivities";
-        })
-        .catch(error => console.error(error));
+        apiFetchJson(`/api1/activity/${ACTIVITY_ID}`, { method: 'DELETE'})
+            .then(() => { window.location.href = "/myactivities"; })
+            .catch(error => console.error(error));
     }
 
 
@@ -285,10 +280,8 @@ function showModal() {
       
       function getData()
       {
-        fetch(`/api1/activity/${ACTIVITY_ID}`)
-            .then(r => r.json())
-            .then(data => 
-            {
+        apiFetchJson(`/api1/activity/${ACTIVITY_ID}`)
+            .then(data => {
                 handleActivityResponse(data);
                 gym_id = data.gym_id;
                 routesid = data.routes_id;
@@ -305,11 +298,10 @@ function showModal() {
 
     function getGymData(gym_id, routesid){
 
-        fetch(`/api1/gym/${gym_id}/routes/${routesid}`)
-            .then(r => r.json())
+        apiFetchJson(`/api1/gym/${gym_id}/routes/${routesid}`)
             .then(data => {
                 gym_id = data.gym_id;
-                routes=data.routes
+                routes = data.routes;
                 renderGymRoutesTabulatorTable(routes);
             })
             .catch(error => console.error(error));
@@ -503,13 +495,12 @@ function showModal() {
         // optimistic removal: hide row immediately
         const rowEl = document.querySelector(`#attemptsBody tr td a[onclick*="${attemptId}"]`)?.parentElement?.parentElement;
         if(rowEl){ rowEl.style.opacity='0.4'; }
-        fetch(`/api1/activity/${ACTIVITY_ID}/route/${attemptId}`, { method: 'DELETE'})
-          .then(r => r.json())
-          .then(data => {
-             if(data.error){ console.error(data.error); return; }
-             handleActivityResponse(data);
-          })
-          .catch(error => console.error(error));
+        apiFetchJson(`/api1/activity/${ACTIVITY_ID}/route/${attemptId}`, { method: 'DELETE'})
+            .then(data => {
+                if(data.error){ console.error(data.error); return; }
+                handleActivityResponse(data);
+            })
+            .catch(error => console.error(error));
     }
 
     // Save (or create) an attempt for the currently selected route inside this activity.
@@ -529,23 +520,15 @@ function showModal() {
             if(existingAttempt && (existingAttempt.attempt_id || existingAttempt.route_id)){
                 const attemptId = existingAttempt.attempt_id || existingAttempt.route_id; // fallback to legacy route id
                 const payload = { status: chosenStatus, user_grade: userGrade, note }; 
-                fetch(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                .then(r => {
-                    if(!r.ok){ return r.json().then(err => { throw err; }); }
-                    return r.json();
-                })
-                .then(data => {
-                    handleActivityResponse(data);
-                    showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
-                })
-                .catch(err => {
-                    console.error('update attempt failed', err);
-                    showErrorMessage(err?.error || 'error_saving');
-                });
+                apiFetchJson(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, { method: 'PUT', body: payload })
+                    .then(data => {
+                        handleActivityResponse(data);
+                        showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
+                    })
+                    .catch(err => {
+                        console.error('update attempt failed', err);
+                        showErrorMessage(err?.error || 'error_saving');
+                    });
             } else {
                 // create new attempt via POST /activity/<activity_id>
                 const createPayload = {
@@ -556,23 +539,15 @@ function showModal() {
                     route_finish_status: chosenStatus, // map status -> route_finish_status legacy field
                     'route-grade-user': userGrade
                 };
-                fetch(`/api1/activity/${ACTIVITY_ID}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(createPayload)
-                })
-                .then(r => {
-                    if(!r.ok){ return r.json().then(err => { throw err; }); }
-                    return r.json();
-                })
-                .then(data => {
-                    handleActivityResponse(data);
-                    showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
-                })
-                .catch(err => {
-                    console.error('create attempt failed', err);
-                    showErrorMessage(err?.error || 'error_saving');
-                });
+                apiFetchJson(`/api1/activity/${ACTIVITY_ID}`, { method: 'POST', body: createPayload })
+                    .then(data => {
+                        handleActivityResponse(data);
+                        showErrorMessage('{{ reference_data["current_language"].saved if reference_data["current_language"].get("saved") else "Saved" }}', true);
+                    })
+                    .catch(err => {
+                        console.error('create attempt failed', err);
+                        showErrorMessage(err?.error || 'error_saving');
+                    });
             }
         } catch(ex){
             console.error('saveData exception', ex);
@@ -633,16 +608,14 @@ function showModal() {
     function saveActivityName(){
         const newName = document.getElementById('activityNameInput').value.trim();
         if(!newName){ return; }
-        fetch(`/api1/activity/${ACTIVITY_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newName })
-        }).then(r=>r.json()).then(data => {
-            if(data.error){ console.error(data.error); return; }
-            activity = data;
-            document.getElementById('activityName').textContent = activity.name || '';
-            cancelEditActivityName();
-        }).catch(err => console.error(err));
+        apiFetchJson(`/api1/activity/${ACTIVITY_ID}`, { method: 'PUT', body: { name: newName } })
+            .then(data => {
+                if(data.error){ console.error(data.error); return; }
+                activity = data;
+                document.getElementById('activityName').textContent = activity.name || '';
+                cancelEditActivityName();
+            })
+            .catch(err => console.error(err));
     }
 
 
@@ -744,21 +717,16 @@ function showModal() {
                 // UPDATE existing attempt
                 const attemptId = attemptObj.attempt_id || attemptObj.route_id;
                 const payload = { status: statusVal, user_grade: userGradeVal, note: noteVal };
-                fetch(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
-                .then(data => {
-                    console.log(data);
-                    closeAttemptModal();
-                    handleActivityResponse(data);
-                })
-                .catch(err => {
-                    console.error(err);
-                    showErrorMessage(err?.error || 'error_updating_attempt');
-                });
+                apiFetchJson(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, { method: 'PUT', body: payload })
+                    .then(data => {
+                        console.log(data);
+                        closeAttemptModal();
+                        handleActivityResponse(data);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showErrorMessage(err?.error || 'error_updating_attempt');
+                    });
             } else {
                 // CREATE new attempt via POST
                 const createPayload = {
@@ -769,20 +737,15 @@ function showModal() {
                     route_finish_status: statusVal,
                     'route-grade-user': userGradeVal
                 };
-                fetch(`/api1/activity/${ACTIVITY_ID}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(createPayload)
-                })
-                .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
-                .then(data => {
-                    closeAttemptModal();
-                    handleActivityResponse(data);
-                })
-                .catch(err => {
-                    console.error(err);
-                    showErrorMessage(err?.error || 'error_creating_attempt');
-                });
+                apiFetchJson(`/api1/activity/${ACTIVITY_ID}`, { method: 'POST', body: createPayload })
+                    .then(data => {
+                        closeAttemptModal();
+                        handleActivityResponse(data);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showErrorMessage(err?.error || 'error_creating_attempt');
+                    });
             }
         }
         function deleteAttemptFromModal(){
@@ -791,8 +754,7 @@ function showModal() {
         const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === currentAttemptKey);
         const routeId = attemptObj?.route_id;
         if(!routeId){ console.error('route_id missing for delete'); return; }
-                fetch(`/api1/activity/${ACTIVITY_ID}/route/${routeId}`, { method:'DELETE' })
-                    .then(r => { if(!r.ok){ return r.json().then(err => { throw err; }); } return r.json(); })
+                apiFetchJson(`/api1/activity/${ACTIVITY_ID}/route/${routeId}`, { method:'DELETE' })
                     .then(data => {
                         closeAttemptModal();
                         handleActivityResponse(data);
