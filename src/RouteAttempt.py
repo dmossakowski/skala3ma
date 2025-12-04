@@ -27,6 +27,7 @@ class RouteAttempt:
     status: str = "attempted"
     user_grade: Optional[str] = None
     note: str = ""
+    route_stars: int = 0
 
     # Route snapshot metadata
     route_id: str = ""
@@ -71,6 +72,7 @@ class RouteAttempt:
             status=data.get('status', 'attempted'),
             user_grade=data.get('user_grade') or data.get('user_proposed_grade'),
             note=data.get('note', ''),
+            route_stars=int(data.get('route_stars', 0) or 0),
             route_id=data.get('route_id') or data.get('id') or '',
             routenum=str(data.get('routenum', '')),
             line=str(data.get('line', '')),
@@ -100,6 +102,7 @@ class RouteAttempt:
             'status': self.status,
             'user_grade': self.user_grade,
             'note': self.note,
+            'route_stars': self.route_stars,
             # Embedded route snapshot
             'route_id': self.route_id,
             'routenum': self.routenum,

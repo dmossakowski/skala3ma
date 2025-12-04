@@ -37,6 +37,8 @@ import skala_db
 import activities_db
 
 from src.User import User
+from src.Route import Route
+from src.Gym import Gym
 
 sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
@@ -1529,8 +1531,20 @@ def add_gym(user, gymid, routesid, name, logo_img_id=None, homepage=None, addres
     if gymid is None:
         gymid = str(uuid.uuid4().hex)
 
-    gymjson = get_gym_json(gymid, routesid, name, user['id'], logo_img_id, homepage, address, organization, routesA)
-    update_gym_status(gymjson, reference_data.get('gym_status').get('created'))
+    # Build Gym via domain object and set initial status
+    gym_obj = Gym(
+        gymid=gymid,
+        routesid=routesid,
+        name=name,
+        added_by=user['id'],
+        logo_img_id=logo_img_id,
+        homepage=homepage,
+        address=address,
+        organization=organization,
+        routesA=routesA,
+    )
+    gym_obj.update_gym_status(reference_data.get('gym_status').get('created'))
+    gymjson = gym_obj.get_gym_json()
     skala_db._add_gym(gymid, routesid, gymjson)
 
     gym_permissions = user['permissions']['gyms']
@@ -1602,10 +1616,20 @@ def delete_routes(routes_id):
 #routesid is the default routes to display
 #routes array has ids of all routes belonging to this gym
 def get_gym_json(gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
-    gymjson = {'id': gymid, 'routesid': routesid, 'name': name,
-               'logo_img_id': logo_img_id, 'homepage': homepage, 'address': address, 'organization': organization,
-               'added_by': added_by, 'routes': routesA}
-    return gymjson
+    """Create a gym JSON using the `Gym` domain class for consistency."""
+    gym = Gym(
+        gymid=gymid,
+        routesid=routesid,
+        name=name,
+        added_by=added_by,
+        logo_img_id=logo_img_id,
+        homepage=homepage,
+        address=address,
+        organization=organization,
+        routesA=routesA,
+    )
+    return gym.get_gym_json()
+
 
 def update_gym_coordinates(gymJson, lat, lon):
     # ensure that lat and lon are valid numbers
@@ -1625,19 +1649,21 @@ def update_gym_coordinates(gymJson, lat, lon):
     return gymJson
 
 
-def update_gym_status(gymJson, status):
-    if status is None:
-        return gymJson
-    gymJson['status'] = status
-    return gymJson
-
-
 def _get_route_dict(routeid, routenum, line, color1, color_modifier, grade, name, openedby, opendate, notes):
-    oneline = {}
-    oneline = {'id': routeid, 'routenum':routenum, 'line': line, 'colorfr': color1, 'color1': color1,
-                'color_modifier': color_modifier, 'grade': grade, 'name': name, 'openedby': openedby,
-                'opendate': opendate, 'notes': notes}
-    return oneline
+    route = Route(
+        id=routeid,
+        routenum=str(routenum) if routenum is not None else "",
+        line=str(line) if line is not None else "",
+        colorfr=color1 or "",
+        color1=color1 or "",
+        grade=grade or "",
+        color_modifier=color_modifier or "solid",
+        name=name or "",
+        openedby=openedby or "",
+        opendate=opendate or "",
+        notes=notes or "",
+    )
+    return route.as_dict()
 
 
 # replaces or adds routes depending if routesid is found
@@ -1777,18 +1803,13 @@ def load_csv_routes():
     return routes
 
 
-def loadgymsdict():
-    return {'gyms': [
-        {'id': '', 'routesid': '1', 'name': 'Nanterre Sprortiv' },
-        {'id': '', 'routesid': '2', 'name': 'ESS 78'}]
-    }
 
 
 def get_img(img_id):
     return skala_db.get_image(img_id)
 
 
-def loadroutesdict():
+def load_test_routeset_dict():
     return {'routes': [
         {'id': '111', 'routenum': '1', 'line': '1', 'colorfr': 'Vert', 'color1': '#2E8B57', 'color2': '', 'grade': '4b', 'name': 'Dummy route', 'openedby': '', 'opendate': '', 'notes': 'dummy routes'},
         {'id': '222', 'routenum': '2', 'line': '1', 'colorfr': 'Rouge', 'color1': '#FF0000', 'color2': '', 'grade': '5a+', 'name': "L'égyptienne", 'openedby': 'Sebastiao', 'opendate': 'dec.-21', 'notes': 'Départ bas / horizontal'},

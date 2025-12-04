@@ -176,6 +176,25 @@
                     </select>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label" data-translate-key="rating">rating translation</label>
+                    <div class="rating" id="attemptStars" style="display:flex; flex-direction:row-reverse; justify-content:center; gap:4px;">
+                        <input type="radio" name="attempt_stars" value="3" id="attemptStars3" style="display:none">
+                        <label for="attemptStars3" style="position:relative; width:1em; font-size:28px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+                        <input type="radio" name="attempt_stars" value="2" id="attemptStars2" style="display:none">
+                        <label for="attemptStars2" style="position:relative; width:1em; font-size:28px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+                        <input type="radio" name="attempt_stars" value="1" id="attemptStars1" style="display:none">
+                        <label for="attemptStars1" style="position:relative; width:1em; font-size:28px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+                    </div>
+                    <style>
+                        /* temporary inline star styles; move to CSS later */
+                        #attemptStars > label::before { content:"\2605"; position:absolute; opacity:0; }
+                        #attemptStars > label:hover:before,
+                        #attemptStars > label:hover ~ label:before { opacity:1 !important; }
+                        #attemptStars > input:checked ~ label:before { opacity:1; }
+                        #attemptStars:hover > input:checked ~ label:before { opacity:0.4; }
+                    </style>
+                </div>
+                <div class="mb-3">
                     <label class="form-label" data-translate-key="notes">notes translation</label>
                     <textarea id="attemptModalNote" class="form-control" rows="3" placeholder=".."></textarea>
                 </div>
@@ -569,6 +588,15 @@ function showModal() {
             // Each attempt already includes route snapshot fields
             const disagreement = (att.user_grade && att.grade && att.user_grade !== att.grade);
             const attemptKey = att.attempt_id || att.route_id;
+            const stars = Number(att.route_stars || 0);
+            const starsHtml = (function(n){
+                const count = Math.max(0, Math.min(3, Number(n||0)));
+                let out = '';
+                for(let i=0;i<3;i++){
+                    out += `<span style="color:${i<count?'#FFD600':'#ddd'}; font-size:1.1rem; line-height:1;">\u2605</span>`;
+                }
+                return `<div class='attempt-stars' style='margin-top:4px;'>${out}</div>`;
+            })(stars);
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class='route-cell'>
@@ -578,6 +606,7 @@ function showModal() {
                         <span class='route-name'>${att.name || ''}</span>
                     </div>
                 </td>
+                <td>${starsHtml}</td>
                 <td class='status-cell'>${statusIcon(att.status)}</td>
                 <td class='user-grade-cell'>${disagreement?`<i>${att.user_grade}</i>`:(att.user_grade||'')}</td>
                 <td class='note-cell'><i>${att.note || ''}</i></td>
@@ -643,6 +672,14 @@ function showModal() {
                 document.getElementById('attemptModalGrade').value = attemptObj.user_grade || '';
                 
                 document.getElementById('attemptModalNote').value = attemptObj.note || '';
+                // Preselect stars if present
+                const starsVal = parseInt(attemptObj.route_stars || 0);
+                if(starsVal >= 1 && starsVal <= 3){
+                    const radio = document.getElementById('attemptStars'+starsVal);
+                    if(radio) radio.checked = true;
+                } else {
+                    document.querySelectorAll('#attemptStars input[name="attempt_stars"]').forEach(r=>r.checked=false);
+                }
         // Populate route info section
         const colorEl = document.getElementById('attemptRouteColor');
         const gradeEl = document.getElementById('attemptRouteGrade');
@@ -676,6 +713,8 @@ function showModal() {
         document.getElementById('attemptModalGrade').value = (route.grade || '');
         
         document.getElementById('attemptModalNote').value = '';
+        // clear stars for new attempt
+        document.querySelectorAll('#attemptStars input[name="attempt_stars"]').forEach(r=>{ r.checked = false; });
         // Populate route info section for add/edit
         const colorEl = document.getElementById('attemptRouteColor');
         const gradeEl = document.getElementById('attemptRouteGrade');
@@ -713,10 +752,12 @@ function showModal() {
             const statusVal = document.getElementById('attemptModalStatus').value;
             const userGradeVal = document.getElementById('attemptModalGrade').value.trim();
             const noteVal = document.getElementById('attemptModalNote').value.trim();
+            const starsChecked = document.querySelector('#attemptStars input[name="attempt_stars"]:checked');
+            const starsVal = starsChecked ? parseInt(starsChecked.value) : 0;
             if(attemptObj && (attemptObj.attempt_id || attemptObj.route_id)){
                 // UPDATE existing attempt
                 const attemptId = attemptObj.attempt_id || attemptObj.route_id;
-                const payload = { status: statusVal, user_grade: userGradeVal, note: noteVal };
+                const payload = { status: statusVal, user_grade: userGradeVal, note: noteVal, route_stars: starsVal };
                 apiFetchJson(`/api1/activity/${ACTIVITY_ID}/attempt/${attemptId}`, { method: 'PUT', body: payload })
                     .then(data => {
                         console.log(data);
@@ -735,7 +776,8 @@ function showModal() {
                     route_id: routeId,
                     note: noteVal,
                     route_finish_status: statusVal,
-                    'route-grade-user': userGradeVal
+                    'route-grade-user': userGradeVal,
+                    route_stars: starsVal
                 };
                 apiFetchJson(`/api1/activity/${ACTIVITY_ID}`, { method: 'POST', body: createPayload })
                     .then(data => {

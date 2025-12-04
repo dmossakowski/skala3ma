@@ -275,8 +275,64 @@ def get_activities_by_gym_routes(gym_id, routes_id):
         db.close()
 
 
+def compute_route_ratings(gym_id: str, routes_id: str) -> dict:
+    """Compute aggregated star ratings per route for a gym route-set.
+
+    Rules:
+    - Include all attempt statuses.
+    - Deduplicate by user_id + route_id: latest attempt wins.
+    - Exclude route_stars == 0 (treated as no-comment).
+
+    Returns a map: { route_id: { 'rating_avg': float, 'rating_count': int } }
+    """
+    # Fetch all activities for this gym+routes
+    activities = get_activities_by_gym_routes(gym_id, routes_id) or []
+    # Build latest per-user rating per route
+    latest_per_user: dict[tuple[str, str], dict] = {}
+    for act in activities:
+        user_id = act.get('user_id') or ''
+        attempts = act.get('attempts') or []
+        if not isinstance(attempts, list):
+            continue
+        for att in attempts:
+            if not isinstance(att, dict):
+                continue
+            route_id = att.get('route_id') or att.get('id') or ''
+            stars = att.get('route_stars') or 0
+            # Exclude 0-star (no comment)
+            if not isinstance(stars, (int, float)) or int(stars) <= 0:
+                continue
+            # Use attempt_time for latest selection; fallback to activity added_at
+            t = att.get('attempt_time') or act.get('added_at') or ''
+            key = (str(user_id), str(route_id))
+            prev = latest_per_user.get(key)
+            if prev is None or str(t) > str(prev.get('attempt_time', '')):
+                latest_per_user[key] = {
+                    'route_id': route_id,
+                    'user_id': user_id,
+                    'route_stars': int(stars),
+                    'attempt_time': t,
+                }
+
+    # Aggregate per route
+    per_route: dict[str, list[int]] = {}
+    for (_uid, rid), rec in latest_per_user.items():
+        if not rid:
+            continue
+        per_route.setdefault(rid, []).append(int(rec.get('route_stars', 0)))
+
+    result: dict[str, dict] = {}
+    for rid, vals in per_route.items():
+        if not vals:
+            continue
+        count = len(vals)
+        avg = sum(vals) / float(count)
+        result[rid] = {'rating_avg': avg, 'rating_count': count}
+    return result
+
+
 # add an entry to an existing session
-def add_activity_attempt(activity_id, route, status, note, user_grade):
+def add_activity_attempt(activity_id, route, status, note, user_grade, route_stars: int = 0):
     """Add a route attempt to an activity using the domain model.
 
     Parameters:
@@ -299,6 +355,9 @@ def add_activity_attempt(activity_id, route, status, note, user_grade):
         route['route_id'] = route.get('id') 
     route['id'] = uuid.uuid4().hex  # ensure unique id for route snapshot
 
+    # include optional stars rating
+    route = dict(route)
+    route['route_stars'] = route_stars
     attempt = RouteAttempt.from_route_metadata(route, status=status, user_grade=user_grade, note=note)
 
     # Use Activity.add_route_attempt (appends to attempts list; legacy flattened handled on persist)

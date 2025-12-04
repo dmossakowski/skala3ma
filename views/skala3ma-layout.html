@@ -87,6 +87,60 @@
 function initializeApp() {
     // Your code that depends on translations being loaded
     //console.log('App initialized with translations');
+
+    // Enable hover-to-open for large-screen dropdown menus
+    const enableHoverDropdowns = () => {
+        const largeScreen = window.matchMedia('(min-width: 992px)').matches; // Bootstrap lg breakpoint
+        const dropdowns = document.querySelectorAll('.navbar-nav.d-none.d-md-block .dropdown');
+
+        dropdowns.forEach((dd) => {
+            const toggle = dd.querySelector('[data-bs-toggle="dropdown"], .dropdown-toggle');
+            const menu = dd.querySelector('.dropdown-menu');
+            if (!toggle || !menu) return;
+
+            // Clean previous handlers if re-binding
+            dd._hoverHandlers?.forEach((h) => dd.removeEventListener(h.type, h.listener));
+            dd._hoverHandlers = [];
+
+            if (largeScreen) {
+                const enter = () => {
+                    dd.classList.add('show');
+                    menu.classList.add('show');
+                    toggle.setAttribute('aria-expanded', 'true');
+                };
+                const leave = () => {
+                    dd.classList.remove('show');
+                    menu.classList.remove('show');
+                    toggle.setAttribute('aria-expanded', 'false');
+                };
+                const enterListener = (e) => enter(e);
+                const leaveListener = (e) => leave(e);
+                dd.addEventListener('mouseenter', enterListener);
+                dd.addEventListener('mouseleave', leaveListener);
+                dd._hoverHandlers = [
+                    { type: 'mouseenter', listener: enterListener },
+                    { type: 'mouseleave', listener: leaveListener },
+                ];
+
+                // Desktop: if submenu is open, clicking the toggle navigates to its href
+                toggle.addEventListener('click', (e) => {
+                    const isOpen = dd.classList.contains('show');
+                    const href = toggle.getAttribute('href');
+                    if (isOpen && href && href !== '#') {
+                        e.preventDefault();
+                        window.location.href = href;
+                    } else {
+                        // prevent Bootstrap from toggling/closing on first click; rely on hover
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+    };
+
+    // Bind on load and when resizing across breakpoints
+    enableHoverDropdowns();
+    window.addEventListener('resize', enableHoverDropdowns);
 }
 
 	function retrieveData() {
@@ -193,7 +247,7 @@ function initializeApp() {
                 
                 {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-4">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-3  fw-bold">{{ reference_data['current_language'].login }}
                     </a>
                 </li>
                 {% endif %}
@@ -285,7 +339,7 @@ function initializeApp() {
             <ul class="navbar-nav ml-left">
 
                 <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/activities" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     {{ reference_data['current_language'].activities }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="activitiesDropdown">
@@ -297,7 +351,7 @@ function initializeApp() {
                 <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     {{ reference_data['current_language'].competitions }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">

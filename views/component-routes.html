@@ -85,7 +85,7 @@
                         .custom-select-wrapper {
     position: relative;
     display: inline-block;
-    width: 100%;
+    width: 80%;
 }
 
 .custom-select {
@@ -140,9 +140,11 @@
                
                 <div id="mainModalMenu">
                     <div onclick="hideModal()">
-                    <div class="form-row-heading">
-                        <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; 
-                        <div id="route-name"> ROUTE NAME   </div>
+                    <div id="routeDetails" class="form-row-heading">
+                      <div id="route-routenum" style="font-size:40px;"></div>  &nbsp;&nbsp;&nbsp; 
+                      <div id="route-name"> ROUTE NAME   </div>
+                      &nbsp;&nbsp;&nbsp;
+                      <div id="route-stars-view" aria-label="Route stars" style="display:inline-flex; gap:2px; vertical-align:middle;"></div>
                     </div>
 
                 <div class="form-row-heading">
@@ -168,18 +170,53 @@
             
 <!-- start user rating -->
                     
-<div id='route-rating-div'  style="display:none;">
-    <br><hr>
-  <h4 >&nbsp;<span data-translate-key="rate">&nbsp;</span></h4>
+<div id='route-rating-div' style="display:none; padding:8px; margin-top:8px; border-top:1px solid #ddd;">
+  <h4 style="margin:8px 0 8px 0; font-size:1rem;">&nbsp;<span data-translate-key="rate">&nbsp;</span></h4>
     <div class="form-row row">
-        <div id="toggle-flash-icon col" style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-        outline-style:solid; padding: 9px; border-radius: 32%;display: inline-block; margin: 4px 10px; background: #eff3ef; width: 60px; height:60px ">
-        <img id="toggle-flash-image" class="img-fluid" src="" width="60" height="60" onclick="toggleFlashImage()"/>
-        
+        <div id="route-status-picker" class="btn-group w-100" role="group" aria-label="Route finish status" style="display:flex; gap:8px; justify-content:space-between;">
+          <input type="hidden" id="routeFinishStatus" name="route_finish_status" value="climbed">
+          <button type="button" class="btn btn-light status-btn" data-status="attempted" onclick="setRouteFinishStatus('attempted')">
+            <img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" alt="attempted" width="40" height="40">
+          </button>
+          <button type="button" class="btn btn-light status-btn" data-status="climbed" onclick="setRouteFinishStatus('climbed')">
+            <img src="/public/images/1398911_correct_mark_success_tick_valid_icon.png" alt="climbed" width="40" height="40">
+          </button>
+          <button type="button" class="btn btn-light status-btn" data-status="flashed" onclick="setRouteFinishStatus('flashed')">
+            <img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" alt="flashed" width="40" height="40">
+          </button>
         </div>
-        <div class="col">
-            <div class="custom-select-wrapper">
-                <select class="custom-select" id='grade_user' name="grade_user"  size="1" type="text" >
+        <script>
+          // Keep global routeFinishStatus for existing code paths
+          function setRouteFinishStatus(status){
+            try { window.routeFinishStatus = status; } catch(e) {}
+            var hidden = document.getElementById('routeFinishStatus');
+            if (hidden) hidden.value = status;
+            var picker = document.getElementById('route-status-picker');
+            if (!picker) return;
+            // toggle active style
+            picker.querySelectorAll('button').forEach(btn => {
+              const isActive = btn.getAttribute('data-status') === status;
+              btn.classList.toggle('active', isActive);
+              if (isActive) {
+                // green border and pressed effect
+                btn.classList.add('border','border-success');
+                btn.style.boxShadow = 'inset 0 2px 6px rgba(0,0,0,0.15), 0 0 0 2px rgba(64,173,72,0.2)';
+                btn.style.transform = 'translateY(1px)';
+              } else {
+                btn.classList.remove('border','border-success');
+                btn.style.boxShadow = '';
+                btn.style.transform = '';
+              }
+            });
+          }
+          // Initialize default selection similar to resetFlashImage()
+          (function(){ setRouteFinishStatus('climbed'); })();
+        </script>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <label class="form-label" data-translate-key="grade" style="margin:8px 0 4px;"></label>
+          <div>
+            <select class="form-select" id='grade_user' name="grade_user" size="1" type="text" style="font-size:1rem; font-weight:600; color:#40ad48;">
                 <option value="?">?</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
@@ -219,25 +256,36 @@
             
                 </select>
 
-        </div></div></div>
-
-        <div class="row text-center">
-    
-        <input id='notes_user' name="notes_user" size="10" type="text" 
-        style="box-sizing: border-box; box-shadow: 1px 1px 1px 3px #9ecab3;outline-color: transparent;
-        outline-style:solid; padding: 15px; border-radius: 2%;display: inline-block; margin: 0px 30px 10px; border-width: 0px;
-        font-weight: bold; color: #40ad48; width: 320px; "/>
-        <!--button id='editbutton' type="button" class="btn btn-success btn-lg" onclick="rateRoute();">
-          
-            <i class="bi bi-plus-circle" style="font-size: 3rem; color: white;"></i>
-            </button-->
-              <!--i class="bi bi-send" style="font-size: 3rem; color: white;"></i-->
-                 
-                   
+          </div>
         </div>
-   
-        <button id='editbutton' type="button" class="btn btn-success btn-md" onclick="rateRoute();">
-            <i class="bi bi-plus-circle" style="color: white;"></i> <span data-translate-key="add_activity"></span></button>
+        <div class="row" style="margin-top:8px;">
+            <div class="rating" id="route-stars" style="display:flex; flex-direction:row-reverse; justify-content:center;">
+                <input type="radio" name="route_stars" value="3" id="stars3" style="display:none">
+                <label for="stars3" style="position:relative; width:1em; font-size:30px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+                <input type="radio" name="route_stars" value="2" id="stars2" style="display:none">
+                <label for="stars2" style="position:relative; width:1em; font-size:30px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+                <input type="radio" name="route_stars" value="1" id="stars1" style="display:none">
+                <label for="stars1" style="position:relative; width:1em; font-size:30px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
+            </div>
+            <style>
+                /* Inline star rating styles (temporary; to be moved to CSS later) */
+                #route-stars > label::before { content:"\2605"; position:absolute; opacity:0; }
+                #route-stars > label:hover:before,
+                #route-stars > label:hover ~ label:before { opacity:1 !important; }
+                #route-stars > input:checked ~ label:before { opacity:1; }
+                #route-stars:hover > input:checked ~ label:before { opacity:0.4; }
+              /* Pressed+green style for status buttons when active */
+              .status-btn.active { border-color: #40ad48 !important; }
+            </style>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <button id='editbutton' type="button" class="btn btn-success flex-grow-1" onclick="rateRoute();">
+            <i class="bi bi-plus-circle" style="color: white;"></i> <span data-translate-key="add"></span>
+          </button>
+          <button type="button" class="btn btn-secondary flex-grow-1" onclick="hideModal()" data-translate-key="cancel"></button>
+          <button type="button" class="btn btn-danger flex-grow-1" style="display:none;" data-translate-key="Delete"></button>
+        </div>
     </div>               
 
 
@@ -429,7 +477,7 @@
 
             // Function to display the modal dialog
             function showModal() {
-                resetFlashImage();
+                
                 showRatingUi();
                 mainModalMenuDiv.style.display='block'
                 
@@ -579,6 +627,21 @@
             document.getElementById('route-opendate').innerHTML = data.opendate;
             document.getElementById('route-notes').innerHTML = data.notes;
             document.getElementById('route-line').innerHTML = data.line;
+            // Render aggregated non-editable stars (rating_avg) next to route name
+            (function(){
+              var starsEl = document.getElementById('route-stars-view');
+              if (!starsEl) return;
+              var avg = Number(data.rating_avg || 0);
+              var count = Number(data.rating_count || 0);
+              var rounded = Math.max(0, Math.min(3, Math.round(avg)));
+              var html = '<div style="display:inline-flex; gap:2px;" title="'+avg.toFixed(2)+' / 3 ('+count+' votes)">';
+              for (var i=1;i<=3;i++){
+                var filled = i <= rounded;
+                html += '<span style="font-size:22px; color:'+(filled?'#FFD600':'#ddd')+';">★</span>';
+              }
+              html += '</div>';
+              starsEl.innerHTML = html;
+            })();
             
             // this is a background on edit popup input field
             //document.getElementById('color1').style.backgroundColor = currentRow.color1;
@@ -841,6 +904,21 @@
             },
 
           },
+          {title: "{{ reference_data['current_language'].rating }}", field: "rating_avg", "responsive": 0, minWidth:10, headerVertical:false,
+           formatter:function(cell){
+              var avg = Number(cell.getValue() || 0);
+              var count = Number(cell.getRow().getData().rating_count || 0);
+              // Round avg to nearest integer for 3-star visual, but keep tooltip precise
+              var rounded = Math.max(0, Math.min(3, Math.round(avg)));
+              var html = '<div style="display:inline-flex; gap:2px;" title="'+(avg.toFixed(2))+' / 3 ('+count+' votes)">';
+              for (var i=1;i<=3;i++){
+                var filled = i <= rounded;
+                html += '<span style="font-size:18px; color:'+(filled?'#FFD600':'#ddd')+';">★</span>';
+              }
+              html += '</div>';
+              return html;
+           }
+          },
           
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 0 , minWidth:10},
           /*{title: "Difficulty", field: "difficulty_rating", "responsive": 0 , minWidth:10, formatter:"star", formatterParams:{
@@ -1019,9 +1097,16 @@
 
             const route_grade_user = document.getElementById('grade_user').value;
             formData['grade_user'] = route_grade_user;
+            // Optional 0-3 star rating from route-rating-div (radio inputs)
+            const checkedStar = document.querySelector('#route-stars input[name="route_stars"]:checked');
+            if(checkedStar){
+              formData['route_stars'] = parseInt(checkedStar.value || '0');
+            } else {
+              formData['route_stars'] = 0;
+            }
           
-            const notes_user = document.getElementById('notes_user').value;
-            formData['notes_user'] = notes_user;
+            //const notes_user = document.getElementById('notes_user').value;
+            formData['notes_user'] = '';
 
           const jsonData = JSON.stringify(formData);
           

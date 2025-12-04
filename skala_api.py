@@ -873,9 +873,10 @@ def add_activity_route_attempt(activity_id):
     route_finish_status = data.get('route_finish_status')
     grade = data.get('grade')
     user_grade = data.get('route-grade-user')
+    route_stars = data.get('route_stars')
     route = competitionsEngine.get_route(routes_id, route_id)
     
-    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade)
+    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade, (route_stars or 0))
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
@@ -1015,6 +1016,23 @@ def update_activity_route(activity_id, attempt_id):
     if 'note' in data:
         attempt.note = data.get('note') or ''
 
+    # Allow updating star rating (0-3). 0 treated as no-comment but stored.
+    if 'route_stars' in data:
+        try:
+            stars_val = int(data.get('route_stars') or 0)
+        except Exception:
+            stars_val = 0
+        # clamp to 0..3
+        if stars_val < 0:
+            stars_val = 0
+        if stars_val > 3:
+            stars_val = 3
+        try:
+            # RouteAttempt has route_stars field; assign directly
+            attempt.route_stars = stars_val
+        except Exception:
+            pass
+
     if 'attempt_time' in data and data.get('attempt_time'):
         try:
             iso = data.get('attempt_time').replace('Z', '')
@@ -1118,7 +1136,7 @@ def journey_session_remove(journey_id, route_id):
     return {}
 
 
-# this is used by calendar so it has a specific format including the extendedProps thing
+# this is used by calendar so it has a specific format 
 @skala_api_app.route('/competition/list')
 def getCompetitionDashboard():
     comps = competitionsEngine.getCompetitions()
@@ -1127,8 +1145,6 @@ def getCompetitionDashboard():
     # for each competition remove object climbers
     for compid in comps:
         c={}
-        comps[compid]['climbers'] = None
-        comps[compid]['routes'] = None
         c['title'] = comps[compid]['name'] 
         c['id'] = comps[compid]['id']
         #c['start'] = comps[compid]['date']+ "T11:00:00"
@@ -1142,11 +1158,12 @@ def getCompetitionDashboard():
         c['text']['competition_type'] = competitionsEngine.reference_data['current_language'].get('competition_type_'+str(comps[compid].get('competition_type','standard')))
         c['gym'] = comps[compid].get('gym')
         c['gym_id'] = comps[compid].get('gym_id')
+        #comps[compid]['climbers'] = None
+        #comps[compid]['routes'] = None
         #c['extendedProps'] = deepcopy(c)
         
         compsreturnd.append(c)
-    logging.debug('setting language of competitions to '+str(language)+' session language='+str(session.get('language')))
-    return json.dumps(compsreturnd)
+    return compsreturnd
 
 
 @skala_api_app.route('/competition/<competition_id>')
@@ -2344,6 +2361,12 @@ def gym_by_id_route(gymid, routesid):
             route_map[route_id]['note'].append(activity['note'])
 
       
+    # Compute aggregated star ratings (avg/count) across activities
+    try:
+        ratings_map = activities_db.compute_route_ratings(gymid, routesid)
+    except Exception:
+        ratings_map = {}
+
     for route in routes['routes']:
         route_id = route['id']
         if route_id in route_map:
@@ -2353,6 +2376,14 @@ def gym_by_id_route(gymid, routesid):
         else:
             route['average_user_grade'] = ""
             route['user_grade'] = []
+        # Attach aggregated ratings if available
+        rating = ratings_map.get(route_id)
+        if isinstance(rating, dict):
+            route['rating_avg'] = rating.get('rating_avg', 0)
+            route['rating_count'] = rating.get('rating_count', 0)
+        else:
+            route['rating_avg'] = 0
+            route['rating_count'] = 0
 
     return routes
 
@@ -2475,6 +2506,7 @@ def route_rating(gymid, routesid):
     route_finish_status = data.get('route_finish_status')
     grade = data.get('grade_user')
     user_grade = data.get('grade_user')
+    route_stars = data.get('route_stars')
 
     user = competitionsEngine.get_user_by_email(session['email'])
     gym = competitionsEngine.get_gym(gymid)
@@ -2510,7 +2542,7 @@ def route_rating(gymid, routesid):
             activity_id = activities_db.add_activity(user, gym, routesid, rating_activity_name, today)
     #activity = activities_db.get_activity(activity_id)
 
-    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade)
+    activity = activities_db.add_activity_attempt(activity_id, route, route_finish_status, note, user_grade, (route_stars or 0))
 
     
     return json.dumps(activity)
