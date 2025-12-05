@@ -340,6 +340,12 @@ def adminv2():
                            reference_data=competitionsEngine.reference_data
                            )
 
+# ---------- UI: Controversial Routes page ----------
+@app_ui.route('/controversial_routes', methods=['GET'])
+def controversial_routes_page():
+    return render_template('controversial_routes.html',
+                           reference_data=competitionsEngine.reference_data)
+
 
 @app_ui.route('/competition_admin/<competition_id>', methods=['GET'])
 #, summary='returns competitionAdmin.html', 

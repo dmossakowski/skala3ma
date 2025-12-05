@@ -965,8 +965,8 @@
                 // Loop over the data array
                 for (let i = 0; i < count; i++) {
                     // Concatenate the result of getColorSVGDiv to colorDivs
-                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '20px')+
-                    `${data[i].grade}${data[i].average_user_grade||''}  &nbsp;&nbsp;&nbsp;`;
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '26px',data[i].grade)+
+                    `${data[i].average_user_grade||''}  &nbsp;&nbsp;&nbsp;`;
                 }
                 // Wrap the colorDivs in an encompassing div with flexbox styling
                 const encompassingDiv = `<div style="display: flex; gap: 3px;">${colorDivs}</div>`;

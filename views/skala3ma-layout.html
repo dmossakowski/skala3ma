@@ -225,6 +225,7 @@ function initializeApp() {
                     <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
                     <a href="/myactivities" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_activities }}</a>
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                    <a href="/controversial_routes" class="dropdown-item fs-7">- <span data-translate-key="controversial_routes">Controversial Routes</span></a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionCalendar">{{ reference_data['current_language'].competitions }}</a>
                      <a href="/myresultats" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_resultats }}</a>
                     <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
@@ -348,7 +349,16 @@ function initializeApp() {
                 </ul>
                 </li>
                 &nbsp;&nbsp;&nbsp;
-                <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/gyms" id="gymsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ reference_data['current_language'].gyms }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="gymsDropdown">
+                    <li><a class="dropdown-item fs-7" href="/gyms" data-translate-key="overview">Overview</a></li>
+                    <li><a class="dropdown-item fs-7" href="/controversial_routes" data-translate-key="controversial_routes">Controversial Routes</a></li>
+                </ul>
+                </li>
+                &nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

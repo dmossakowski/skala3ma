@@ -1,0 +1,526 @@
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+	{% block secondarycontent %}
+
+
+
+
+    
+<div name='container' style="  margin: 0.1rem 0.1rem ">
+
+<!-- styles migrated to global stylesheet -->
+
+        <!-- Filter moved to top -->
+        <div id="monthFilter" class="card-search">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="fromMonth" class="filter-input-month" />
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label"></label>
+                    <input type="month" id="toMonth" class="filter-input-month" />
+                </div>
+                <div class="filter-grid" style="gap:.5rem; align-items:flex-end;">
+                    <button id="applyMonthFilter" class="filter-btn primary" data-translate-key="Apply">Apply translation</button>
+                    <button id="resetRange" class="filter-btn secondary" data-translate-key="Reset">Reset translation</button>
+                    <div class="filter-group">
+                        <label class="filter-label"></label>
+                        <select id="gymFilter" class="filter-select"></select>
+                    </div>
+                </div>
+                <div id="activeRangeIndicator" class="filter-range-indicator"></div>
+            </div>
+        </div>
+
+    <div id="controversialSection">
+        <h4 class="section-title" data-translate-key="controversial_routes">Controversial Routes</h4>
+        <div id="controversialDetails"></div>
+    </div>
+
+
+    <div id="rawActivities" style="display:none"></div>
+</div>
+
+<script>
+        let activitiesData = [];
+        let gymsData = [];
+        let currentActivitiesView = []; // may hold filtered subset
+        let lastFilter = null; // {from:{y,m}, to:{y,m}}
+
+    // Delegates to global apiFetchJson helper (utils) for unified parsing & error shape
+    async function fetchJson(url, options={}){
+        try {
+            return await apiFetchJson(url, options);
+        } catch(e){
+            // Normalize to Error for existing catch blocks
+            if(e && e.status){
+                let detail = '';
+                if(e.data){
+                    try { detail = (e.data.error || JSON.stringify(e.data)).slice(0,200); } catch(_) {}
+                } else if(e.rawText){
+                    detail = e.rawText.slice(0,200);
+                }
+                throw new Error(`Failed API request ${url} (status ${e.status}) ${detail}`);
+            }
+            throw e; // unexpected shape
+        }
+    }
+
+    async function loadAll(){
+        try {
+            [gymsData, activitiesData] = await Promise.all([
+                fetchJson('/api1/gyms'),
+                fetchJson('/api1/activities')
+            ]);
+            // Enrich gyms with logo images from individual gym endpoint
+            if(Array.isArray(gymsData) && gymsData.length){
+                await enrichGymsWithLogos();
+            }
+            // activities endpoint shape assumption: { activities: [ ... ] }
+            if(activitiesData.activities) activitiesData = activitiesData.activities; // normalize
+                currentActivitiesView = activitiesData;
+                setDefaultMonthInputs(); // establish default date range
+                populateGymFilter(); // populate gym selector from gymsData
+                const applied = applyInitialURLFilters(); // honor URL params if present
+                if(!applied){
+                    // No URL overrides -> render with defaults
+                    renderControversialDetails();
+                    updateRangeIndicatorWithGym();
+                }
+                attachMonthEvents();
+                enhanceMonthInputs();
+                replaceTranslations();
+        } catch(e){
+            console.error(e);
+            const container = document.getElementById('controversialDetails');
+            if(container){
+                container.textContent='';
+                const errDiv = document.createElement('div');
+                errDiv.className='empty-state';
+                errDiv.textContent='Error loading activity data.';
+                container.appendChild(errDiv);
+            }
+        }
+    }
+
+    async function enrichGymsWithLogos(){
+        // `/api1/gyms` already provides `logoimg`; normalize without extra requests
+        try {
+            gymsData.forEach(g => {
+                if(!g) return;
+                // ensure both fields are available for renderers
+                if(g.logoimg && !g.logo_img_id){
+                    g.logo_img_id = g.logoimg;
+                }
+            });
+        } catch(err){
+            console.warn('Failed normalizing gym logos', err?.message || err);
+        }
+    }
+
+        function computeStats(sourceActivities){
+            const acts = sourceActivities || currentActivitiesView || activitiesData;
+            const gymMap = {}; // gym_id -> stats
+    const routeDisagreements = {}; // route_id -> { grade, gym_id, occurrences, disagreements, userGrades:Set, name }
+        let earliest = null, latest = null;
+
+            acts.forEach(act => {
+            const dateStr = act.date || act.starttime; // variable naming differences
+            const d = new Date(dateStr);
+            if(!earliest || d < earliest) earliest = d;
+            if(!latest || d > latest) latest = d;
+
+            if(!gymMap[act.gym_id]){
+                const gymRef = gymsData.find(g=> g.id == act.gym_id) || {};
+                gymMap[act.gym_id] = { gym_id: act.gym_id, gym_name: act.gym_name || gymRef.name || 'Unknown', activities:0, climbs:0, flashes:0, attempts:0, uniqueRoutes:new Set(), logo_img_id: gymRef.logo_img_id || gymRef.logoimg };
+            }
+            const g = gymMap[act.gym_id];
+            g.activities++;
+            (act.attempts || []).forEach(r => {
+                g.uniqueRoutes.add(r.route_id || r.id);
+                if(r.status === 'climbed') g.climbs++;
+                else if(r.status === 'flashed') g.flashes++;
+                else if(r.status === 'attempted') g.attempts++;
+                
+                const key = r.route_id || r.id;
+                if(!routeDisagreements[key]){
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
+                } else {
+                    // Fill openedby/opendate if missing and present on this route occurrence
+                    if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
+                    if(!routeDisagreements[key].opendate && r.opendate) routeDisagreements[key].opendate = r.opendate;
+                    if(!routeDisagreements[key].color1 && r.color1) routeDisagreements[key].color1 = r.color1;
+                    if(!routeDisagreements[key].color_modifier && r.color_modifier) routeDisagreements[key].color_modifier = r.color_modifier;
+                }
+                const rd = routeDisagreements[key];
+                rd.occurrences++;
+                rd.statuses[r.status] = (rd.statuses[r.status]||0)+1;
+                if(r.user_grade) rd.userGrades.add(r.user_grade);
+                if(r.user_grade && r.user_grade !== r.grade){
+                    rd.disagreements++;
+                }
+            });
+        });
+
+        // determine most active gym by total route touches (climbs + flashes + attempts)
+        const gymsArr = Object.values(gymMap).map(g => ({...g, uniqueRouteCount: g.uniqueRoutes.size, touches: g.climbs + g.flashes + g.attempts }));
+        gymsArr.sort((a,b)=> (b.touches) - (a.touches));
+        const topGym = gymsArr[0];
+
+        // most controversial route: highest disagreements ratio or count
+        const controversial = Object.values(routeDisagreements)
+            .filter(r=>r.occurrences>1)
+            .sort((a,b)=> {
+                const aMetric = a.disagreements; // could refine by ratio
+                const bMetric = b.disagreements;
+                if(bMetric === aMetric) return b.occurrences - a.occurrences;
+                return bMetric - aMetric;
+            })[0];
+
+            return { gymsArr, topGym, controversial, timeframe: { earliest, latest }, routeDisagreements };
+    }
+
+        function renderControversialDetails(){
+            const { routeDisagreements } = computeStats();
+            const container = document.getElementById('controversialDetails');
+            if(!container) return;
+            const list = Object.values(routeDisagreements).filter(r=> r.disagreements>0).sort((a,b)=> b.disagreements - a.disagreements);
+            container.textContent = '';
+            if(!list.length){
+                const empty = document.createElement('div');
+                empty.className = 'empty-state pad-medium';
+                empty.dataset.translateKey = 'no_grade_disagreements_range';
+                empty.textContent = 'No grade disagreements in current range.';
+                container.appendChild(empty);
+                return;
+            }
+            const explainer = document.createElement('p');
+            explainer.className = 'disagreements-explainer';
+            explainer.dataset.translateKey = 'disagreements_explainer';
+            explainer.textContent = '';
+            container.appendChild(explainer);
+            const grid = document.createElement('div');
+            grid.className = 'disagreements-grid';
+            const headers = [
+                { key:'route_details', text:'' },
+                { key:'user_grades_label', text:'' },
+                { key:'status_mix', text:'' }
+            ];
+            headers.forEach(h => {
+                const hd = document.createElement('div');
+                hd.className = 'head';
+                hd.dataset.translateKey = h.key;
+                hd.textContent = h.text;
+                grid.appendChild(hd);
+            });
+            list.forEach(r => {
+                const userGrades = Array.from(r.userGrades).sort();
+                const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
+                const downgrades = userGrades.filter(g=> g!==r.grade && !gradeHarder(g,r.grade)).length;
+                const statusTotal = r.statuses.climbed + r.statuses.flashed + r.statuses.attempted;
+                const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
+                const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
+                const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
+                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '65px', '30px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
+                // Route details cell
+                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell route-detail';
+                const flex = document.createElement('div'); flex.className = 'route-dis-flex';
+                
+                // Gym logo and name section
+                const gymInfo = document.createElement('div'); gymInfo.className = 'route-gym-info';
+                const gymRef = gymsData.find(g => g.id == r.gym_id) || {};
+                if(gymRef.logo_img_id || gymRef.logoimg){
+                    const logoImg = document.createElement('img');
+                    logoImg.src = `/image/${gymRef.logo_img_id || gymRef.logoimg}`;
+                    logoImg.alt = `${r.gym_name} logo`;
+                    logoImg.className = 'route-gym-logo';
+                    logoImg.loading = 'lazy';
+                    gymInfo.appendChild(logoImg);
+                }
+                //const gymNameDiv = document.createElement('div'); gymNameDiv.className = 'route-gym-name-small'; gymNameDiv.textContent = r.gym_name;
+                //gymInfo.appendChild(gymNameDiv);
+                flex.appendChild(gymInfo);
+                
+                const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
+                const meta = document.createElement('div'); meta.className = 'route-meta';
+                meta.innerHTML = `<div class='route-name'>${r.name || 'Unnamed'}</div>
+                    <div class='route-gym'>${r.gym_name}</div>
+                   
+                    <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;
+                flex.appendChild(colorBox); flex.appendChild(meta); cRoute.appendChild(flex);
+                grid.appendChild(cRoute);
+                // User grades cell
+                const cGrades = document.createElement('div'); cGrades.className = 'dis-cell';
+                userGrades.forEach(gVal => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-grade ' + (gVal===r.grade?'':(gradeHarder(gVal,r.grade)?'up':'down'));
+                    chip.textContent = gVal;
+                    cGrades.appendChild(chip);
+                });
+                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
+                // Status cell (formerly followed disagreements column)
+                const cStatus = document.createElement('div'); cStatus.className = 'dis-cell';
+                const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
+                cStatus.appendChild(statusLabel);
+                const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
+                const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
+                const barFlashed = document.createElement('span'); barFlashed.className = 'flashes'; barFlashed.style.left = `${attemptPct}%`; barFlashed.style.width = `${flashPct}%`;
+                const barClimbed = document.createElement('span'); barClimbed.className = 'climbs'; barClimbed.style.left = `${attemptPct*1 + flashPct*1}%`; barClimbed.style.width = `${climbedPct}%`;
+                barWrapper.appendChild(barAttempt); barWrapper.appendChild(barFlashed); barWrapper.appendChild(barClimbed);
+                cStatus.appendChild(barWrapper);
+                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
+                grid.appendChild(cStatus);
+            });
+            container.appendChild(grid);
+            if(typeof replaceTranslations === 'function') {
+                replaceTranslations();
+            }
+        }
+
+    // Simplistic grade comparison: treat string order; improvement: parse into numeric difficulty scale
+    function gradeHarder(user, original){
+        // Heuristic: if user grade string length > original OR lexical > original treat as harder
+        if(user === original) return false;
+        return user > original; // works for common French grades ordering lexically mostly
+    }
+
+    // ----- Gym Filter Functions -----
+    function populateGymFilter(){
+        const sel = document.getElementById('gymFilter');
+        if(!sel) return;
+        const gymsSorted = [...gymsData].sort((a,b)=> a.name.localeCompare(b.name));
+        // Build option elements so translation replacement picks up data-translate-key
+        while(sel.firstChild) sel.removeChild(sel.firstChild);
+        const optAll = document.createElement('option');
+        optAll.value = '';
+        optAll.dataset.translateKey = 'all_gyms';
+        optAll.textContent = 'All Gyms'; // fallback text
+        sel.appendChild(optAll);
+        gymsSorted.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            sel.appendChild(opt);
+        });
+        if(typeof replaceTranslations === 'function') {
+            replaceTranslations();
+        }
+    }
+
+    // Update URL to reflect current filter state
+    function updateURLFromState(push){
+        try {
+            const params = new URLSearchParams(window.location.search);
+            // Month range
+            if(lastFilter){
+                const fromStr = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')}`;
+                const toStr = `${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')}`;
+                params.set('from', fromStr);
+                params.set('to', toStr);
+            } else {
+                params.delete('from');
+                params.delete('to');
+            }
+            // Gym
+            const sel = document.getElementById('gymFilter');
+            if(sel && sel.value){
+                params.set('gym', sel.value);
+            } else {
+                params.delete('gym');
+            }
+            const newQuery = params.toString();
+            const newUrl = window.location.pathname + (newQuery ? ('?' + newQuery) : '');
+            if(newUrl !== window.location.pathname + window.location.search){
+                if(push) {
+                    window.history.pushState(null,'',newUrl);
+                } else {
+                    window.history.replaceState(null,'',newUrl);
+                }
+            }
+        } catch(e){
+            console.warn('Failed updating URL params', e);
+        }
+    }
+
+    // Apply filters (month + gym) to activities view; userInitiated controls URL history behavior
+    function applyCombinedFilters(userInitiated=false){
+        // Month filtering already applied when lastFilter set; start from base dataset
+        let base = activitiesData;
+        if(lastFilter){
+            base = filterActivitiesByMonthRange(lastFilter.from, lastFilter.to);
+        }
+        const sel = document.getElementById('gymFilter');
+        const gymId = sel ? sel.value : '';
+        if(gymId){
+            base = base.filter(a => String(a.gym_id) === String(gymId));
+        }
+        currentActivitiesView = base;
+        renderControversialDetails();
+        updateRangeIndicatorWithGym();
+        updateURLFromState(userInitiated); // reflect latest state in URL
+    }
+
+    function updateRangeIndicatorWithGym(){
+        const indicator = document.getElementById('activeRangeIndicator');
+        if(!indicator) return;
+        const sel = document.getElementById('gymFilter');
+    const gymLabel = sel && sel.value ? (gymsData.find(g=> String(g.id) === String(sel.value))?.name || (document.querySelector('[data-translate-key="selected_gym"]')?.textContent || 'Selected Gym')) : (document.querySelector('[data-translate-key="all_gyms"]')?.textContent || 'All Gyms');
+        if(!lastFilter){
+            indicator.textContent = `Full data · ${gymLabel}`;
+            return;
+        }
+        indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
+    }
+
+        // -------- Month Filtering ---------
+        function setDefaultMonthInputs(){
+            if(!activitiesData.length) return;
+            const dates = activitiesData.map(a=> new Date(a.date||a.starttime)).filter(d=> !isNaN(d.getTime()));
+            dates.sort((a,b)=> b-a);
+            const latest = dates[0];
+            // Default: last 6 full months including current if present in data
+            const endYear = latest.getFullYear();
+            const endMonth = latest.getMonth(); // 0-based
+            const startDate = new Date(endYear, endMonth-5, 1); // six-month window
+            const fromVal = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}`;
+            const toVal = `${endYear}-${String(endMonth+1).padStart(2,'0')}`;
+            document.getElementById('fromMonth').value = fromVal;
+            document.getElementById('toMonth').value = toVal;
+            // Apply immediately
+            const from = { y:startDate.getFullYear(), m:startDate.getMonth()+1 };
+            const to = { y:endYear, m:endMonth+1 };
+            currentActivitiesView = filterActivitiesByMonthRange(from,to);
+            lastFilter = { from, to };
+            updateRangeIndicator();
+        }
+
+        function parseMonthValue(val){
+            if(!val) return null; // expects yyyy-mm
+            const [y,m] = val.split('-').map(Number);
+            if(!y || !m) return null;
+            return { y, m };
+        }
+
+        function monthCompare(a,b){ // a < b => -1
+            if(a.y === b.y) return a.m - b.m;
+            return a.y - b.y;
+        }
+
+        function inRange(monthObj, start, end){
+            return monthCompare(monthObj,start) >=0 && monthCompare(monthObj,end) <=0;
+        }
+
+        function filterActivitiesByMonthRange(start, end){
+            return activitiesData.filter(act => {
+                const d = new Date(act.date || act.starttime);
+                const mo = { y: d.getFullYear(), m: d.getMonth()+1 };
+                return inRange(mo,start,end);
+            });
+        }
+
+        function attachMonthEvents(){
+            document.getElementById('applyMonthFilter').addEventListener('click', () => {
+                const from = parseMonthValue(document.getElementById('fromMonth').value);
+                const to = parseMonthValue(document.getElementById('toMonth').value);
+                if(!from || !to) return;
+                if(monthCompare(from,to) > 0){ // swap if reversed
+                    const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m;
+                }
+                lastFilter = { from, to };
+                applyCombinedFilters(true); // user initiated -> push history entry
+            });
+            document.getElementById('resetRange').addEventListener('click', () => {
+                lastFilter = null;
+                document.getElementById('gymFilter').value = '';
+                applyCombinedFilters(true); // user initiated
+            });
+            const gymSel = document.getElementById('gymFilter');
+            if(gymSel){
+                gymSel.addEventListener('change', () => {
+                    applyCombinedFilters(true); // user initiated gym change
+                });
+            }
+        }
+
+        function updateRangeIndicator(){
+            const indicator = document.getElementById('activeRangeIndicator');
+            if(!lastFilter){ indicator.textContent = 'Full data'; return; }
+            indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions)`;
+        }
+
+        // Make clicking on the month inputs immediately open the picker (supported browsers)
+        function enhanceMonthInputs(){
+            ['fromMonth','toMonth'].forEach(id => {
+                const input = document.getElementById(id);
+                if(!input) return;
+                const openPicker = () => {
+                    if(typeof input.showPicker === 'function'){
+                        try { input.showPicker(); } catch(_) {}
+                    }
+                };
+                input.addEventListener('click', openPicker);
+                // Optional: also open on focus via keyboard navigation
+                input.addEventListener('keydown', (e) => {
+                    if(e.key === 'Enter' || e.key === ' '){
+                        e.preventDefault();
+                        openPicker();
+                    }
+                });
+            });
+        }
+
+     window.addEventListener('load', loadAll);
+
+    // Read initial filters from URL (months & gym) and apply before first render
+    function applyInitialURLFilters(){
+        const params = new URLSearchParams(window.location.search);
+        const fromQ = params.get('from');
+        const toQ = params.get('to');
+        const gymQ = params.get('gym');
+        const monthFmt = /^\d{4}-\d{2}$/;
+        let applied = false;
+        if(fromQ && toQ && monthFmt.test(fromQ) && monthFmt.test(toQ)){
+            const from = parseMonthValue(fromQ);
+            const to = parseMonthValue(toQ);
+            if(from && to){
+                if(monthCompare(from,to) > 0){ const tmp = { ...from }; from.y = to.y; from.m = to.m; to.y = tmp.y; to.m = tmp.m; }
+                lastFilter = { from, to };
+                document.getElementById('fromMonth').value = `${from.y}-${String(from.m).padStart(2,'0')}`;
+                document.getElementById('toMonth').value = `${to.y}-${String(to.m).padStart(2,'0')}`;
+                applied = true;
+            }
+        }
+        if(gymQ){
+            const gymSel = document.getElementById('gymFilter');
+            if(gymSel){
+                gymSel.value = gymQ;
+                // If value not found it will remain; that's okay.
+            }
+            applied = true;
+        }
+        if(applied){
+            // If only gym is supplied, keep default dates established earlier
+            applyCombinedFilters(false); // don't push history, just reflect existing URL state
+        }
+        return applied;
+    }
+
+    // Re-apply filters when navigating browser history
+    window.addEventListener('popstate', () => {
+        // Clear existing filter state & re-read
+        lastFilter = null;
+        const gymSel = document.getElementById('gymFilter');
+        if(gymSel) gymSel.value = '';
+        applyInitialURLFilters();
+    });
+
+</script>
+
+	
+{% endblock %}

@@ -1462,7 +1462,7 @@ def get_gym(gymid):
         gym = skala_db._get_gym(gymid)
     finally:
         sql_lock.release()
-        logging.info("retrieved gym by id  "+str(gymid))
+        #logging.info("retrieved gym by id  "+str(gymid))
         return gym
 
 
