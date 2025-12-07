@@ -214,7 +214,6 @@
         </script>
         </div>
         <div class="row" style="margin-top:8px;">
-          <label class="form-label" data-translate-key="grade" style="margin:8px 0 4px;"></label>
           <div>
             <select class="form-select" id='grade_user' name="grade_user" size="1" type="text" style="font-size:1rem; font-weight:600; color:#40ad48;">
                 <option value="?">?</option>
@@ -316,18 +315,24 @@
                         </div>
                       
                         <div class="form-row">
-                          <label for="color1" data-translate-key="color"></label>
+                            <div class="col col-sm-2">
+                          <label for="color1" data-translate-key="color1"></label>
+                           </div>
+                           <div class="col col-lg-3">
                           <input id="color1"  type="color"  
-                          style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px; "  >
+                          style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px; width: 90%;"  >
+                          </div>
+                             <div id="color2label" class="col col-sm-2">
+                               <label for="color2" data-translate-key="color2"></label>
+                             </div>
+                             <div id="color2input" class="col col-lg-3">
+                               <input id="color2" type="color"
+                                      style="background-color: transparent; border:0; outline: none; padding:0px; height: 35px; width: 90%; " >
+                            
+                           </div>
 
 
-                    <!--script>document.write(''+getColorSVGDiv('#FF0000', 'solid', '80px', '15px')+'')
-                    
-                        document.getElementById('color1').style.backgroundImage="url("+getColorSVGDiv('#FF0000', 'solid', '80px', '15px')+")";
-                        
-                    
-                    </script-->
-                            </input>
+                              </input>
                           <!--div id="color1-display" style="background-color: #819a1e; width: 20px; height: 20px;"></div-->
                         </div>
                       
@@ -536,7 +541,7 @@
             //document.getElementById('line').value = '';
             document.getElementById('colorfr').value = '#aaffaa';
             document.getElementById('color1').value = '#aaffaa';
-            //document.getElementById('color1').style.backgroundImage="url(data:image/svg+xml, "+getColorSVGDiv('#00FF00', 'solid', '80px', '15px')+")";
+            document.getElementById('color2').value = '#aaffaa';
                         
             //document.getElementById('color1-display').style.backgroundColor = '#aaffaa';
             //document.getElementById('color_modifier').value = 'solid';
@@ -569,6 +574,7 @@
             //document.getElementById('color_modifier').value = color_modifier;
             //document.getElementById('color_modifier').checked = data.color_modifier=='solid';
             //document.getElementById('color_modifier').checked = data.color_modifier=='solid';
+          updateColor2Visibility();
             
         }
 
@@ -597,13 +603,13 @@
             document.getElementById('line').value = data.line;
             document.getElementById('colorfr').value = data.colorfr;
             document.getElementById('color1').value = data.color1;
-            //const svgUrl = encodeURIComponent(getColorSVGDiv('#00FF00', 'solid', '80px', '15px'));
-            //document.getElementById('color1').style.backgroundImage="url(data:image/svg+xml, "+svgUrl+")";
+            document.getElementById('color2').value = data.color2;
             
             
             //document.getElementById('color1-display').style.backgroundColor = data.color1;
             //document.getElementById('color_modifier').value = data.color_modifier;
             setColorModifier(data.color_modifier);
+            updateColor2Visibility();
             
             document.getElementById('grade').value = data.grade;
             document.getElementById('name').value = data.name;
@@ -665,6 +671,21 @@
         color1input = document.getElementById('color1');
         color1input.addEventListener("input", colorChanged(0), false);
         color1input.addEventListener("change", colorChanged(1), false);
+
+        // Show/hide color2 based on color modifier (marble requires two colors)
+        function updateColor2Visibility(){
+          try {
+            var val = getColorModifierValue();
+            var lbl = document.getElementById('color2label');
+            var inp = document.getElementById('color2input');
+            if (!lbl || !inp) return;
+            var show = (val === 'marble');
+            lbl.style.display = show ? 'block' : 'none';
+            inp.style.display = show ? 'block' : 'none';
+          } catch(e) { console.warn('updateColor2Visibility failed', e); }
+        }
+        document.getElementById('color_modifier_solid').addEventListener('change', updateColor2Visibility);
+        document.getElementById('color_modifier_marble').addEventListener('change', updateColor2Visibility);
 
     </script>
     
@@ -889,11 +910,11 @@
           {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
             },
         
             formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '90px', '40px');
+              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
             },
         },
 
@@ -965,7 +986,7 @@
                 // Loop over the data array
                 for (let i = 0; i < count; i++) {
                     // Concatenate the result of getColorSVGDiv to colorDivs
-                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '26px',data[i].grade)+
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color2, data[i].color_modifier, '55px', '26px',data[i].grade)+
                     `${data[i].average_user_grade||''}  &nbsp;&nbsp;&nbsp;`;
                 }
                 // Wrap the colorDivs in an encompassing div with flexbox styling
@@ -1072,6 +1093,9 @@
           
           const color1 = document.getElementById('color1').value;
           formData['color1'] = color1;
+
+          const color2 = document.getElementById('color2').value;
+          formData['color2'] = color2;
           
           //const colorModifier = document.getElementById('color_modifier').value;
           const colorModifier = getColorModifierValue();
@@ -1120,6 +1144,7 @@
           const line = document.getElementById('line').value;
           const colorfr = document.getElementById('colorfr').value;
           const color1 = document.getElementById('color1').value;
+          const color2 = document.getElementById('color2').value;
           const color_modifier = document.getElementById('color_modifier').value;
           const grade = document.getElementById('grade').value;
           const name = document.getElementById('name').value;
@@ -1133,6 +1158,7 @@
             line,
             colorfr,
             color1,
+            color2,
             color_modifier,
             grade,
             name,

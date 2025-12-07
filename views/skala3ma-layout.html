@@ -90,13 +90,15 @@ function initializeApp() {
 
     // Enable hover-to-open for large-screen dropdown menus
     const enableHoverDropdowns = () => {
-        const largeScreen = window.matchMedia('(min-width: 992px)').matches; // Bootstrap lg breakpoint
+        const mq = window.matchMedia('(min-width: 765px)');
+        const largeScreen = mq.matches; // Bootstrap lg breakpoint
         const dropdowns = document.querySelectorAll('.navbar-nav.d-none.d-md-block .dropdown');
-
+        
         dropdowns.forEach((dd) => {
             const toggle = dd.querySelector('[data-bs-toggle="dropdown"], .dropdown-toggle');
             const menu = dd.querySelector('.dropdown-menu');
             if (!toggle || !menu) return;
+            
 
             // Clean previous handlers if re-binding
             dd._hoverHandlers?.forEach((h) => dd.removeEventListener(h.type, h.listener));
@@ -104,6 +106,7 @@ function initializeApp() {
 
             if (largeScreen) {
                 const enter = () => {
+                    
                     dd.classList.add('show');
                     menu.classList.add('show');
                     toggle.setAttribute('aria-expanded', 'true');
@@ -122,16 +125,13 @@ function initializeApp() {
                     { type: 'mouseleave', listener: leaveListener },
                 ];
 
-                // Desktop: if submenu is open, clicking the toggle navigates to its href
+                // Desktop: clicking the toggle navigates to the first submenu link
                 toggle.addEventListener('click', (e) => {
-                    const isOpen = dd.classList.contains('show');
-                    const href = toggle.getAttribute('href');
-                    if (isOpen && href && href !== '#') {
-                        e.preventDefault();
-                        window.location.href = href;
-                    } else {
-                        // prevent Bootstrap from toggling/closing on first click; rely on hover
-                        e.preventDefault();
+                    e.preventDefault();
+                    const firstItem = menu.querySelector('a.dropdown-item');
+                    const targetHref = firstItem?.getAttribute('href');
+                    if (targetHref && targetHref !== '#') {
+                        window.location.href = targetHref;
                     }
                 });
             }
@@ -140,7 +140,10 @@ function initializeApp() {
 
     // Bind on load and when resizing across breakpoints
     enableHoverDropdowns();
-    window.addEventListener('resize', enableHoverDropdowns);
+    window.addEventListener('resize', () => {
+        console.log('[menu] resize detected, re-binding hover dropdowns');
+        enableHoverDropdowns();
+    });
 }
 
 	function retrieveData() {
@@ -355,7 +358,7 @@ function initializeApp() {
                     {{ reference_data['current_language'].gyms }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="gymsDropdown">
-                    <li><a class="dropdown-item fs-7" href="/gyms" data-translate-key="overview">Overview</a></li>
+                    <li><a class="dropdown-item fs-7" href="/gyms" data-translate-key="Gallery">Gallery</a></li>
                     <li><a class="dropdown-item fs-7" href="/controversial_routes" data-translate-key="controversial_routes">Controversial Routes</a></li>
                 </ul>
                 </li>

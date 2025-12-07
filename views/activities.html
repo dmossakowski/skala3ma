@@ -545,7 +545,7 @@
                 const row = document.createElement('div');
                 row.className = 'route-row';
                 const colorDivWrapper = document.createElement('div');
-                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
+                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color2, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
                 row.appendChild(colorDivWrapper);
                 const orig = document.createElement('div');
                 orig.className = 'route-original';

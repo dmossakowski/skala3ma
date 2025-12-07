@@ -64,6 +64,8 @@
     "line": "Linia",
     "color": "Color",
     "color_modifier": "Color modifier",
+    "color1": "Kolor 1",
+    "color2": "Kolor 2",
     "solid": "solid",
     "marble": "marble",
     "route_num": "Numer drogi",

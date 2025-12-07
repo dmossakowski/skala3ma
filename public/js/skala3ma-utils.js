@@ -148,12 +148,12 @@ function getColorByBgColor(bgColor)
 
 
     
-function getColorSVGDiv(color, colorModifier, width, height, grade=''){
-    var svg = getColorSVG(color, colorModifier, grade, width, height);
-    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;aabackground-color:${color}'>${svg}</div>`;
+function getColorSVGDiv(color1, color2, colorModifier, width, height, grade=''){
+    var svg = getColorSVG(color1, color2, colorModifier, grade, width, height);
+    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;aabackground-color:${color1}'>${svg}</div>`;
 }
 
-function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'){    
+function getColorSVG(color1, color2, colorModifier, grade='', width='90px', height='40px'){    
 
     //console.log(colorModifier);
     var svg = '';
@@ -161,15 +161,19 @@ function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'
     // Always render a full-size background first
     widthNum = parseFloat(width); if (isNaN(widthNum)) widthNum = 200;
     heightNum = parseFloat(height); if (isNaN(heightNum)) heightNum = 100;
-    let bgSvg = `<svg width="${widthNum}" height="${heightNum}" viewBox="0 0 ${widthNum} ${heightNum}" xmlns="http://www.w3.org/2000/svg">\n<rect x="0" y="0" width="${widthNum}" height="${heightNum}" style="fill: ${color}; stroke: ${color};"/>`;
-
+    let bgSvg = `<svg width="${widthNum}" height="${heightNum}" viewBox="0 0 ${widthNum} ${heightNum}" xmlns="http://www.w3.org/2000/svg">\n<rect x="0" y="0" width="${widthNum}" height="${heightNum}" style="fill: ${color1}; stroke: ${color1};"/>`;
     // Overlay marble strokes if requested
     if (colorModifier === 'marble') {
-      opposite_color = (Number(`0x1${color.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
+      //opposite_color = color2; //(Number(`0x1${color2.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
       //console.log(opposite_color);
-      //console.log(cell.getValue());
+      stroke = color2; //getColorByBgColor(color)
+      //console.log('Generating marble SVG with color2:', color1, color2);
       highlight = '#BBBBBB'
-      stroke = getColorByBgColor(color)
+      if (!color2 || color2.length!==7 || color1 === color2) { 
+        stroke = getColorByBgColor(color1); 
+    }
+      
+      
     // widthNum/heightNum are set above
       var scaleX = widthNum / 222;
       var scaleY = heightNum / 222;
@@ -193,10 +197,10 @@ function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'
     <!-- Test circle to verify rendering -->
     <g transform="scale(${scaleX2}, ${scaleY2}) translate(${tx}, ${ty})">
     <path style="fill: none; stroke: ${stroke}; stroke-width: 4px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 77.193 91.531 C 77.193 109.778 102.147 123.635 117.499 111.965 C 123.743 107.219 129.691 93.485 127.26 85.532 C 126.25 82.23 121.835 74.307 124.162 70.827 C 127.742 65.475 139.972 61.215 143.302 68.738 C 156.537 98.636 125.931 136.604 94.093 130.521 C 86.765 129.121 80.617 124.785 75.817 119.177 C 73.229 116.153 71.497 111.402 67.746 109.575"/>
-    <path style="fill: none; stroke: ${stroke}; stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712"/>
-    <path style="fill: none; stroke: ${stroke}; stroke-width: 1.5px; vector-effect: non-scaling-stroke; stroke-opacity: 0.7;" d="M 89.245 164.007 C 104.326 164.007 119.367 166.359 134.362 164.217 C 146.192 162.527 157.934 153.952 167.078 146.921 C 183.346 134.413 187.523 113.774 200.39 98.941 C 211.672 85.933 236.782 80.072 253.375 82.625 C 254.8 82.844 259.384 87.455 257.054 88.612 C 243.9 95.145 224.82 84.474 220.667 102.946 C 218.104 114.343 222.418 131.852 214.998 141.653 C 209.978 148.286 201.364 151.333 194.588 155.707 C 159.581 178.302 118.16 176.363 77.476 176.363"/>
-    <path style="fill: none; stroke: ${stroke}; stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 89.356 184.584 C 128.683 184.584 163.502 187.314 198.171 166.407 C 206.261 161.528 214.549 156.915 220.421 149.307 C 228.457 138.893 230.463 126.235 236.64 114.872 C 248.588 92.892 275.957 85.981 299.246 85.981 C 311.095 85.981 330.649 93.379 325.308 109.31 C 324.388 112.051 322.872 115.357 321.051 117.68 C 319.054 120.229 315.74 124.849 312.831 126.168 C 308.602 128.086 302.48 124.489 298.804 123.095 C 286.542 118.446 277.708 107.857 262.977 114.071 C 253.264 118.167 250.764 129.932 246.944 138.667 C 240.607 153.155 231.044 171.107 216.188 178.478 C 192.176 190.393 163.542 190.041 143.153 209.001 C 140.01 211.924 127.831 220.402 127.762 225.029"/>
-    <path style="fill: none; stroke: ${stroke}; stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-opacity: 0.7;" d="M 299.371 219.588 C 284.706 219.588 275.149 195.922 278.72 183.883 C 283.16 168.912 305.219 164.832 318.376 166.38 C 323.227 166.951 328.192 176.461 322.746 179.248 C 309.457 186.05 293.348 169.444 288.925 190.127 C 286.352 202.157 311.355 212.755 319.359 215.206 C 322.604 216.199 324.945 217.666 327.797 219.484"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 2.5px; vector-effect: non-scaling-stroke; stroke-opacity: 0.7;" d="M 89.245 164.007 C 104.326 164.007 119.367 166.359 134.362 164.217 C 146.192 162.527 157.934 153.952 167.078 146.921 C 183.346 134.413 187.523 113.774 200.39 98.941 C 211.672 85.933 236.782 80.072 253.375 82.625 C 254.8 82.844 259.384 87.455 257.054 88.612 C 243.9 95.145 224.82 84.474 220.667 102.946 C 218.104 114.343 222.418 131.852 214.998 141.653 C 209.978 148.286 201.364 151.333 194.588 155.707 C 159.581 178.302 118.16 176.363 77.476 176.363"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 89.356 184.584 C 128.683 184.584 163.502 187.314 198.171 166.407 C 206.261 161.528 214.549 156.915 220.421 149.307 C 228.457 138.893 230.463 126.235 236.64 114.872 C 248.588 92.892 275.957 85.981 299.246 85.981 C 311.095 85.981 330.649 93.379 325.308 109.31 C 324.388 112.051 322.872 115.357 321.051 117.68 C 319.054 120.229 315.74 124.849 312.831 126.168 C 308.602 128.086 302.48 124.489 298.804 123.095 C 286.542 118.446 277.708 107.857 262.977 114.071 C 253.264 118.167 250.764 129.932 246.944 138.667 C 240.607 153.155 231.044 171.107 216.188 178.478 C 192.176 190.393 163.542 190.041 143.153 209.001 C 140.01 211.924 127.831 220.402 127.762 225.029"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.6;" d="M 299.371 219.588 C 284.706 219.588 275.149 195.922 278.72 183.883 C 283.16 168.912 305.219 164.832 318.376 166.38 C 323.227 166.951 328.192 176.461 322.746 179.248 C 309.457 186.05 293.348 169.444 288.925 190.127 C 286.352 202.157 311.355 212.755 319.359 215.206 C 322.604 216.199 324.945 217.666 327.797 219.484"/>
 </g>
 </svg>`
 
@@ -555,7 +559,7 @@ function clearTranslations() {
             const top_notification_labelQP = app.top_notification_label || queryParams['top_notification_label'];
             const top_notification_levelQP = app.top_notification_level ||queryParams['top_notification_level'];
 
-            console.log('top_notification_label in skala util:'+ app.top_notification_label);
+            //console.log('top_notification_label in skala util:'+ app.top_notification_label);
 
             if (top_notification_labelQP && top_notification_levelQP) {
                 showAlert(top_notification_labelQP, top_notification_levelQP);

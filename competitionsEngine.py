@@ -1649,13 +1649,14 @@ def update_gym_coordinates(gymJson, lat, lon):
     return gymJson
 
 
-def _get_route_dict(routeid, routenum, line, color1, color_modifier, grade, name, openedby, opendate, notes):
+def _get_route_dict(routeid, routenum, line, color1, color2, color_modifier, grade, name, openedby, opendate, notes):
     route = Route(
         id=routeid,
         routenum=str(routenum) if routenum is not None else "",
         line=str(line) if line is not None else "",
         colorfr=color1 or "",
         color1=color1 or "",
+        color2=color2 or "",    
         grade=grade or "",
         color_modifier=color_modifier or "solid",
         name=name or "",

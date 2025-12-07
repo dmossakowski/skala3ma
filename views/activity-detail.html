@@ -341,11 +341,11 @@ function showModal() {
             {title: "{{ reference_data['current_language'].color }}", field: "color1", 
             "responsive": 0 , minWidth:10, 
             formatter:function(cell, formatterParams, onRendered){ 
-                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px');
                 },
             
                 formatterPrint:function(cell, formatterParams, onRendered){
-                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color_modifier, '100px', '50px');
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px');
                 },
             },
             {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
@@ -388,7 +388,7 @@ function showModal() {
                 // Loop over the data array
                 for (let i = 0; i < count; i++) {
                     // Concatenate the result of getColorSVGDiv to colorDivs
-                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color_modifier, '55px', '20px')+
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color2, data[i].color_modifier, '55px', '20px')+
                     ` &nbsp;&nbsp;&nbsp;`;
                 }
                 // Wrap the colorDivs in an encompassing div with flexbox styling
@@ -601,7 +601,7 @@ function showModal() {
             tr.innerHTML = `
                 <td class='route-cell'>
                     <div class='route-cell-inner'>
-                        <span class='route-color'>${getColorSVGDiv(att.color1 || '', att.color_modifier || 'solid', '50px','25px')}</span>
+                        <span class='route-color'>${getColorSVGDiv(att.color1 || '', att.color2 || '', att.color_modifier || 'solid', '50px','25px')}</span>
                         <span class='route-grade'>${att.grade || ''}</span>
                         <span class='route-name'>${att.name || ''}</span>
                     </div>
@@ -684,7 +684,7 @@ function showModal() {
         const colorEl = document.getElementById('attemptRouteColor');
         const gradeEl = document.getElementById('attemptRouteGrade');
         const nameEl = document.getElementById('attemptRouteName');
-        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '55px','25px'); }
+        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color2 || '', route.color_modifier || 'solid', '55px','25px'); }
         if(gradeEl){ gradeEl.textContent = route.grade || ''; }
         if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
         const delBtn = document.getElementById('attemptModalDeleteBtn');
@@ -719,7 +719,7 @@ function showModal() {
         const colorEl = document.getElementById('attemptRouteColor');
         const gradeEl = document.getElementById('attemptRouteGrade');
         const nameEl = document.getElementById('attemptRouteName');
-        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color_modifier || 'solid', '55px','25px'); }
+        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color2 || '', route.color_modifier || 'solid', '55px','25px'); }
         if(gradeEl){ gradeEl.textContent = route.grade || ''; }
         if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
         const delBtn = document.getElementById('attemptModalDeleteBtn');
@@ -831,7 +831,7 @@ function showModal() {
 	 
 					<div class="text-center heading-section">
 					
-				<h3>
+				<h3> <a href="/myactivities" class="btn btn-sm  " title="Back to My Activities"><i class="bi bi-arrow-left-square-fill" style="font-size: 1.1rem; color: #40ad48;"></i></a>
                     <span id="activityName"></span>
                     <span id="activityNameEdit" style="cursor:pointer; margin-left:8px;" title="Edit name" onclick="enterEditActivityName()">
                         <i class="bi bi-pencil-square" style="font-size:1.1rem;"></i>
@@ -843,6 +843,7 @@ function showModal() {
                     </span>
                 </h3>
                          <div id="activityDate"></div>
+                        
                                  
                          
 					</div>

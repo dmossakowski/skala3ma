@@ -1388,7 +1388,7 @@ div.cs-select span {
 
 /* ---- Reusable Card Styles (Summary/Search) ---- */
 /* Grid wrapper for cards */
-.cards-grid { display:flex; flex-wrap:wrap; gap:1rem; }
+.cards-grid { display:flex; flex-wrap:wrap; gap:1rem; margin: 0 0.75rem 0rem 0.75rem; }
 
 /* Base card */
 .summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }

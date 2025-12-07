@@ -64,6 +64,8 @@
     "line": "Ligne",
     "color": "Couleur",
     "color_modifier": "Texture",
+    "color1": "Couleur 1",
+    "color2": "Couleur 2",
     "solid": "pleine",
     "marble": "marbrée",
     "route_num": "Num",
