@@ -55,10 +55,7 @@ async function apiFetch(url, options = {}) {
         opts.body = JSON.stringify(opts.body);
     }
     const response = await fetch(url, opts);
-    // Auto clear token on 401
-    if (response.status === 401) {
-        clearJwtToken();
-    }
+    
     return response;
 }
 
@@ -150,7 +147,7 @@ function getColorByBgColor(bgColor)
     
 function getColorSVGDiv(color1, color2, colorModifier, width, height, grade=''){
     var svg = getColorSVG(color1, color2, colorModifier, grade, width, height);
-    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;aabackground-color:${color1}'>${svg}</div>`;
+    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;'>${svg}</div>`;
 }
 
 function getColorSVG(color1, color2, colorModifier, grade='', width='90px', height='40px'){    

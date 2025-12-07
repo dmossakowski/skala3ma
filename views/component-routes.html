@@ -765,7 +765,7 @@
 
 
 
-          fetch(`/api1/gym/${routesTableConfig.gymid}`)
+          apiFetch(`/api1/gym/${routesTableConfig.gymid}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -781,7 +781,8 @@
           })
           .catch(error => console.error(error));
       
-          fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}`)
+          
+          apiFetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -795,24 +796,29 @@
           })
           .catch(error => console.error(error));
       
-          fetch(`/api1/user`)
+
+          apiFetch(`/api1/user`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
-                //console.log(data);
-                if (Object.keys(data).length === 0) {
-                    // data is an empty object
-                }
-                else{
-                    isLoggedIn = true;
-                    showRatingUi();
-                }
+              console.log(data);
+              // Explicit 401 handling: clear token and redirect
+              
+
+              if (Object.keys(data).length === 0) {
+                // data is an empty object
+              }
+              else{
+                isLoggedIn = true;
+                showRatingUi();
+              }
                 
             }                
           )
           .catch(error => console.error(error));
 
-          fetch(`/api1/activity/gym/${routesTableConfig.gymid}/routes/${routesTableConfig.routeListId}`)
+
+          apiFetch(`/api1/activity/gym/${routesTableConfig.gymid}/routes/${routesTableConfig.routeListId}`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -831,7 +837,7 @@
           .catch(error => console.error(error));
 
 
-          fetch(`/api1/gym/${routesTableConfig.gymid}/users`)
+          apiFetch(`/api1/gym/${routesTableConfig.gymid}/users`)
           .then(response => response.json())
           .then(data => {
               // use the retrieved data here
@@ -1183,7 +1189,7 @@
             var data = getFormData();
             //console.log('saving new route to activity '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/activity/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
+            apiFetch(`/api1/activity/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
                 mode: 'no-cors',
                 method: 'POST',
                 headers: {
@@ -1222,7 +1228,7 @@
         function saveData(inputData){
             console.log('saving data '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
+            apiFetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/saveone`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
@@ -1230,6 +1236,7 @@
                 body: JSON.stringify(inputData)
             })
             .then(response => {
+                
                 if (!response.ok) {
                     //console.log('error response',response.json)
                     //console.log(response.json)
@@ -1264,7 +1271,7 @@
                 var data = getFormData();
                 //console.log('rating route '+mod_type)    
             //fetch('/api1/gym/{{gymid}}/{{routesid}}/'+mod_type, {
-            fetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/rate`, {
+            apiFetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}/rate`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
@@ -1272,6 +1279,16 @@
                 body: JSON.stringify(data)
             })
             .then(response => {
+                if (response && response.status === 401) {
+                try { clearJwtToken && clearJwtToken(); } catch(_) {}
+                try {
+                  const currentPath = window.location.pathname || '';
+                  if (currentPath !== '/loginchoice') {
+                    window.location.assign('/loginchoice');
+                  }
+                } catch(_) {}
+                return; // stop further processing
+              }
                 if (!response.ok) {
                     //console.log('error response',response.json)
                     //console.log(response.json)

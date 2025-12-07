@@ -880,7 +880,7 @@ def add_activity_route_attempt(activity_id):
 
     # journey_id = user.get('journey_id')
     #journeys = activities_db.get_activities(user.get('id'))
-    return json.dumps(activity)
+    return activity
 
 
 
