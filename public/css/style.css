@@ -1,3 +1,158 @@
+/* Shared card styling reused across search box and route cards */
+.card-search,
+.sk-card,
+.route-dis-card {
+  background: #f5f5f7;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  padding: 0rem 1rem;
+}
+
+/* Ensure spacing between route entries */
+.route-dis-card { margin-bottom: 0.75rem; }
+
+/* Route detail flex keeps image + meta aligned */
+.route-dis-flex { display: flex; gap: 0.75rem; align-items: center; }
+.route-gym-logo { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; }
+.route-color-box { display: flex; align-items: center; }
+.route-meta { line-height: 1.25; }
+.route-name { font-weight: 600; }
+.route-gym { font-size: 0.9rem; color: #555; }
+.route-open { font-size: 0.85rem; color: #777; }
+
+/* Explainer paragraph above the list; align spacing with search bar */
+.disagreements-explainer {
+  margin: 0.5rem 0.75rem 0.75rem 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* Chips for user grades already exist; add spacing if missing */
+.chip-grade { display: inline-block; margin: 0 0.25rem 0.25rem 0; }
+
+/* New: disagreements up/down summary text */
+.dis-updown {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* New: statuses label */
+.statuses-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  margin-right: 0.5rem;
+}
+
+/* Status bar container and segments */
+.disagreements-summary-bar { position: relative; display: inline-block; height: 8px; width: 160px; background: #e0e0e6; border-radius: 6px; overflow: hidden; vertical-align: middle; margin: 0; }
+.disagreements-summary-bar .attempts { position: absolute; left: 0; top: 0; height: 100%; background: #b0b7ff; }
+.disagreements-summary-bar .flashes { position: absolute; top: 0; height: 100%; background: #8ee6ff; }
+.disagreements-summary-bar .climbs { position: absolute; top: 0; height: 100%; background: #8ad28a; }
+
+/* Status breakdown icons */
+.status-icon { width: 16px; height: 16px; vertical-align: text-bottom; }
+
+/* Status breakdown line (icons + counts) */
+.status-breakdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Responsive: ensure first column keeps minimum width; allow wrap */
+.route-detail { min-width: 300px; }
+
+/* Controversial routes: rows layout with wrapping */
+.disagreements-grid.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dis-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+}
+
+.dis-row .logo-cell { flex: 0 0 64px; display:flex; align-items:center; justify-content:center; }
+.dis-row .route-detail { flex: 1 1 420px; }
+.dis-row .grades-cell { flex: 1 1 260px; }
+.dis-row .status-cell { flex: 1 1 260px; }
+
+@media (max-width: 768px) {
+  .dis-row .logo-cell { flex: 0 0 48px; }
+  .dis-row .route-detail { flex: 1 1 100%; }
+  .dis-row .grades-cell { flex: 1 1 48%; }
+  .dis-row .status-cell { flex: 1 1 48%; }
+}
+
+@media (max-width: 540px) {
+  .dis-row { gap: 0.4rem 0.5rem; }
+  .dis-row .logo-cell { flex: 0 0 40px; }
+  .dis-row .route-detail,
+  .dis-row .grades-cell,
+  .dis-row .status-cell { flex: 1 1 100%; }
+}
+/* Controversial routes: enforce 4-column grid (logo, details, grades, status) */
+.disagreements-grid.four-cols {
+  display: grid;
+  grid-template-columns: 64px 1.6fr 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+}
+
+.disagreements-grid.four-cols .logo-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-gym-logo-wrap {
+  width: 48px;
+  height: 48px;
+}
+
+.route-gym-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.route-gym-logo.placeholder { opacity: 0.6; }
+
+/* Ensure existing cells look tidy in the 4-col grid */
+.dis-cell.route-detail { overflow: hidden; }
+.dis-cell .route-meta { min-width: 0; }
+
+@media (max-width: 768px) {
+  .disagreements-grid.four-cols {
+    grid-template-columns: 48px 1.4fr 1fr 1fr;
+    gap: 0.4rem 0.5rem;
+  }
+  .route-gym-logo-wrap { width: 40px; height: 40px; }
+}
+
+/* Mobile collapse: stack cells vertically when space is tight */
+@media (max-width: 540px) {
+  .disagreements-grid.four-cols {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .disagreements-grid.four-cols > * {
+    grid-column: 1 / -1;
+  }
+  .disagreements-grid.four-cols .logo-cell {
+    justify-content: flex-start;
+  }
+  .route-gym-logo-wrap { width: 36px; height: 36px; }
+}
 @font-face {
   font-family: 'icomoon';
   src: url("../fonts/icomoon/icomoon.eot?srf3rx");
@@ -1247,7 +1402,7 @@ div.cs-select span {
 
 /* Search/Filter card (used by month filter) */
 #monthFilter,
-.card-search { margin:.4rem 0 1.2rem; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.card-search { margin:.4rem 0.75rem 1.2rem 0.75rem ; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .card-search .filter-grid { display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end; }
 .card-search .filter-group { flex:1 1 auto; min-width:180px; }
 .filter-label { font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem; }
@@ -1330,8 +1485,9 @@ div.cs-select span {
 .distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
 
 /* Overlay & disagreement details */
-.disagreements-grid { display:grid; grid-template-columns:1fr minmax(140px,220px) minmax(110px,140px); gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+/*.disagreements-grid { display:grid; grid-template-columns:1fr minmax(140px,220px) minmax(110px,140px); gap:.5rem .75rem; align-items:start; font-size:.65rem; }
 .disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+*/
 .dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
 .route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
 .route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
@@ -1351,7 +1507,7 @@ div.cs-select span {
 .route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
 .route-meta { flex:1 1 auto; }
 .route-color-box .route-color-fallback { margin-bottom:.3rem; }
-@media (max-width: 600px) {
+@media (max-width: 300px) {
   .route-dis-flex { flex-direction:column; align-items:flex-start; }
   .route-color-box { margin-bottom:.4rem; }
   .route-gym-info { margin-bottom:.4rem; }

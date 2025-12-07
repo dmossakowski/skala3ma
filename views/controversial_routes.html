@@ -109,6 +109,13 @@
         }
     }
 
+    function statusIcon(status){
+        if(status==='climbed') return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+        if(status==='attempted') return '/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png';
+        if(status==='flashed') return '/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png';
+        return '/public/images/1398911_correct_mark_success_tick_valid_icon.png';
+    }
+
     async function enrichGymsWithLogos(){
         // `/api1/gyms` already provides `logoimg`; normalize without extra requests
         try {
@@ -205,20 +212,9 @@
             explainer.dataset.translateKey = 'disagreements_explainer';
             explainer.textContent = '';
             container.appendChild(explainer);
+            // Build responsive Bootstrap layout; no header row
             const grid = document.createElement('div');
-            grid.className = 'disagreements-grid';
-            const headers = [
-                { key:'route_details', text:'' },
-                { key:'user_grades_label', text:'' },
-                { key:'status_mix', text:'' }
-            ];
-            headers.forEach(h => {
-                const hd = document.createElement('div');
-                hd.className = 'head';
-                hd.dataset.translateKey = h.key;
-                hd.textContent = h.text;
-                grid.appendChild(hd);
-            });
+            grid.className = 'container-fluid';
             list.forEach(r => {
                 const userGrades = Array.from(r.userGrades).sort();
                 const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
@@ -228,8 +224,16 @@
                 const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
                 const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '65px', '30px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
-                // Route details cell
-                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell route-detail';
+                // Wrapper per route using Bootstrap rows/cols
+                const routeCard = document.createElement('div');
+                routeCard.className = 'route-dis-card';
+                const row = document.createElement('div');
+                row.className = 'row g-3 align-items-start';
+
+                // Route details column (min 300px)
+                const cRoute = document.createElement('div');
+                cRoute.className = 'col-12 col-md route-detail';
+                cRoute.style.minWidth = '300px';
                 const flex = document.createElement('div'); flex.className = 'route-dis-flex';
                 
                 // Gym logo and name section
@@ -254,9 +258,11 @@
                    
                     <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;
                 flex.appendChild(colorBox); flex.appendChild(meta); cRoute.appendChild(flex);
-                grid.appendChild(cRoute);
-                // User grades cell
-                const cGrades = document.createElement('div'); cGrades.className = 'dis-cell';
+                row.appendChild(cRoute);
+
+                // User grades column
+                const cGrades = document.createElement('div');
+                cGrades.className = 'col-6 col-md-3';
                 userGrades.forEach(gVal => {
                     const chip = document.createElement('span');
                     chip.className = 'chip-grade ' + (gVal===r.grade?'':(gradeHarder(gVal,r.grade)?'up':'down'));
@@ -264,8 +270,11 @@
                     cGrades.appendChild(chip);
                 });
                 const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
-                // Status cell (formerly followed disagreements column)
-                const cStatus = document.createElement('div'); cStatus.className = 'dis-cell';
+                row.appendChild(cGrades);
+
+                // Status mix column
+                const cStatus = document.createElement('div');
+                cStatus.className = 'col-6 col-md-3';
                 const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
                 cStatus.appendChild(statusLabel);
                 const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
@@ -274,8 +283,21 @@
                 const barClimbed = document.createElement('span'); barClimbed.className = 'climbs'; barClimbed.style.left = `${attemptPct*1 + flashPct*1}%`; barClimbed.style.width = `${climbedPct}%`;
                 barWrapper.appendChild(barAttempt); barWrapper.appendChild(barFlashed); barWrapper.appendChild(barClimbed);
                 cStatus.appendChild(barWrapper);
-                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
-                grid.appendChild(cStatus);
+                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown';
+                const attemptedIcon = statusIcon('attempted');
+                const flashedIcon = statusIcon('flashed');
+                const climbedIcon = statusIcon('climbed');
+                statusBreakdown.innerHTML = `
+                    <img src="${attemptedIcon}" alt="attempted" class="status-icon"><span class='badge attempts status-badge'> ${r.statuses.attempted||0}</span>&nbsp;&nbsp;
+                     <img src="${flashedIcon}" alt="flashed" class="status-icon"><span class='badge flashes status-badge'> ${r.statuses.flashed||0}</span>&nbsp;&nbsp;
+                    <img src="${climbedIcon}" alt="climbed" class="status-icon"><span class='badge climbs status-badge'> ${r.statuses.climbed||0}</span>
+                `;
+                cStatus.appendChild(statusBreakdown);
+                row.appendChild(cStatus);
+
+                // Append row to grid container
+                routeCard.appendChild(row);
+                grid.appendChild(routeCard);
             });
             container.appendChild(grid);
             if(typeof replaceTranslations === 'function') {
@@ -283,7 +305,7 @@
             }
         }
 
-    // Simplistic grade comparison: treat string order; improvement: parse into numeric difficulty scale
+    // Simplistic grade comparison: treat string order; improvement: parse into numeric difficulty scale. A 1 · F 0 · C 5
     function gradeHarder(user, original){
         // Heuristic: if user grade string length > original OR lexical > original treat as harder
         if(user === original) return false;

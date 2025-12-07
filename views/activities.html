@@ -94,7 +94,12 @@
                 currentActivitiesView = activitiesData;
                 setDefaultMonthInputs();
                 populateGymFilter();
-                renderEverything();
+                const applied = applyInitialURLFilters();
+                if(!applied){
+                    // No URL overrides -> render with defaults
+                    renderEverything();
+                    updateRangeIndicatorWithGym();
+                }
                 attachMonthEvents();
                 enhanceMonthInputs();
                 replaceTranslations();
@@ -211,7 +216,7 @@
         const totalTouches = totalClimbs + totalFlashes + totalAttempts;
         const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
         const disagreeCount = controversial ? controversial.disagreements : 0;
-        // Build combined controversial route card with DOM nodes (no innerHTML template)
+        // Controversial route summary card removed
         function buildControversialDom(){
             const frag = document.createDocumentFragment();
             const title = document.createElement('h5');
@@ -366,18 +371,7 @@
         clickRecent.textContent = 'Click to view recent sessions timeline';
         sessionsCard.appendChild(clickRecent);
         summaryEl.appendChild(sessionsCard);
-    // Controversial top card
-    const controCard = document.createElement('div');
-    controCard.className = 'summary-card controversial cursor-pointer';
-    controCard.id = 'controversialTopCard';
-    controCard.setAttribute('aria-label','Open list of all controversial routes');
-    controCard.appendChild(buildControversialDom());
-    summaryEl.appendChild(controCard);
-        if(controCard){
-            controCard.addEventListener('click', () => {
-                window.location.href = '/controversial_routes';
-            });
-        }
+    // Controversial top card removed
         if(sessionsCard){
             sessionsCard.addEventListener('click', () => {
                 showTimeline = true;
@@ -859,8 +853,10 @@
             applied = true;
         }
         if(applied){
+            // If only gym is supplied, keep default dates established earlier
             applyCombinedFilters(false); // don't push history, just reflect existing URL state
         }
+        return applied;
     }
 
     // Re-apply filters when navigating browser history
