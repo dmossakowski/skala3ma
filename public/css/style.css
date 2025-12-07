@@ -1,3 +1,158 @@
+/* Shared card styling reused across search box and route cards */
+.card-search,
+.sk-card,
+.route-dis-card {
+  background: #f5f5f7;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  padding: 0rem 1rem;
+}
+
+/* Ensure spacing between route entries */
+.route-dis-card { margin-bottom: 0.75rem; }
+
+/* Route detail flex keeps image + meta aligned */
+.route-dis-flex { display: flex; gap: 0.75rem; align-items: center; }
+.route-gym-logo { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; }
+.route-color-box { display: flex; align-items: center; }
+.route-meta { line-height: 1.25; }
+.route-name { font-weight: 600; }
+.route-gym { font-size: 0.9rem; color: #555; }
+.route-open { font-size: 0.85rem; color: #777; }
+
+/* Explainer paragraph above the list; align spacing with search bar */
+.disagreements-explainer {
+  margin: 0.5rem 0.75rem 0.75rem 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* Chips for user grades already exist; add spacing if missing */
+.chip-grade { display: inline-block; margin: 0 0.25rem 0.25rem 0; }
+
+/* New: disagreements up/down summary text */
+.dis-updown {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* New: statuses label */
+.statuses-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  margin-right: 0.5rem;
+}
+
+/* Status bar container and segments */
+.disagreements-summary-bar { position: relative; display: inline-block; height: 8px; width: 160px; background: #e0e0e6; border-radius: 6px; overflow: hidden; vertical-align: middle; margin: 0; }
+.disagreements-summary-bar .attempts { position: absolute; left: 0; top: 0; height: 100%; background: #b0b7ff; }
+.disagreements-summary-bar .flashes { position: absolute; top: 0; height: 100%; background: #8ee6ff; }
+.disagreements-summary-bar .climbs { position: absolute; top: 0; height: 100%; background: #8ad28a; }
+
+/* Status breakdown icons */
+.status-icon { width: 16px; height: 16px; vertical-align: text-bottom; }
+
+/* Status breakdown line (icons + counts) */
+.status-breakdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Responsive: ensure first column keeps minimum width; allow wrap */
+.route-detail { min-width: 300px; }
+
+/* Controversial routes: rows layout with wrapping */
+.disagreements-grid.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dis-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+}
+
+.dis-row .logo-cell { flex: 0 0 64px; display:flex; align-items:center; justify-content:center; }
+.dis-row .route-detail { flex: 1 1 420px; }
+.dis-row .grades-cell { flex: 1 1 260px; }
+.dis-row .status-cell { flex: 1 1 260px; }
+
+@media (max-width: 768px) {
+  .dis-row .logo-cell { flex: 0 0 48px; }
+  .dis-row .route-detail { flex: 1 1 100%; }
+  .dis-row .grades-cell { flex: 1 1 48%; }
+  .dis-row .status-cell { flex: 1 1 48%; }
+}
+
+@media (max-width: 540px) {
+  .dis-row { gap: 0.4rem 0.5rem; }
+  .dis-row .logo-cell { flex: 0 0 40px; }
+  .dis-row .route-detail,
+  .dis-row .grades-cell,
+  .dis-row .status-cell { flex: 1 1 100%; }
+}
+/* Controversial routes: enforce 4-column grid (logo, details, grades, status) */
+.disagreements-grid.four-cols {
+  display: grid;
+  grid-template-columns: 64px 1.6fr 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+}
+
+.disagreements-grid.four-cols .logo-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-gym-logo-wrap {
+  width: 48px;
+  height: 48px;
+}
+
+.route-gym-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.route-gym-logo.placeholder { opacity: 0.6; }
+
+/* Ensure existing cells look tidy in the 4-col grid */
+.dis-cell.route-detail { overflow: hidden; }
+.dis-cell .route-meta { min-width: 0; }
+
+@media (max-width: 768px) {
+  .disagreements-grid.four-cols {
+    grid-template-columns: 48px 1.4fr 1fr 1fr;
+    gap: 0.4rem 0.5rem;
+  }
+  .route-gym-logo-wrap { width: 40px; height: 40px; }
+}
+
+/* Mobile collapse: stack cells vertically when space is tight */
+@media (max-width: 540px) {
+  .disagreements-grid.four-cols {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .disagreements-grid.four-cols > * {
+    grid-column: 1 / -1;
+  }
+  .disagreements-grid.four-cols .logo-cell {
+    justify-content: flex-start;
+  }
+  .route-gym-logo-wrap { width: 36px; height: 36px; }
+}
 @font-face {
   font-family: 'icomoon';
   src: url("../fonts/icomoon/icomoon.eot?srf3rx");
@@ -1230,4 +1385,157 @@ div.cs-select span {
   /* Prevent accidental page breaks inside discs */
   .disc-svg, .disc-card, .disc-wrapper { page-break-inside: avoid; break-inside: avoid; }
 }
+
+/* ---- Reusable Card Styles (Summary/Search) ---- */
+/* Grid wrapper for cards */
+.cards-grid { display:flex; flex-wrap:wrap; gap:1rem; margin: 0 0.75rem 0rem 0.75rem; }
+
+/* Base card */
+.summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+.summary-card.highlight { border:2px solid #2ecc71; }
+.summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
+.summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+
+/* Interactive card behavior */
+.summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+.summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
+
+/* Search/Filter card (used by month filter) */
+#monthFilter,
+.card-search { margin:.4rem 0.75rem 1.2rem 0.75rem ; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.card-search .filter-grid { display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end; }
+.card-search .filter-group { flex:1 1 auto; min-width:180px; }
+.filter-label { font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem; }
+.filter-input-month { font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px; }
+.filter-select { font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff; }
+.filter-btn { font-size:.65rem; padding:.45rem .85rem; border:0; border-radius:8px; font-weight:600; cursor:pointer; }
+.filter-btn.primary { background:#53be6b; color:#fff; }
+.filter-btn.secondary { background:#f1f3f4; color:#222; }
+.filter-range-indicator { flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7; }
+
+/* Generic card helpers */
+.card-row { display:flex; align-items:center; gap:.75rem; margin:.35rem 0; }
+.lh-1 { line-height:1; }
+.card-meta { font-size:.6rem; opacity:.75; margin-top:.25rem; }
+.card-action-hint { font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline; }
+.stats-row { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
+.stat-block { min-width:120px; }
+.stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
+.card-subtext { font-size:.55rem; opacity:.65; }
+.status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
+.status-badge { font-size:.7rem; }
+
+/* ---- Activities Page Components (migrated from activities.html) ---- */
+/* Route chips and timeline */
+.route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#f1f3f4; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
+.route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
+.grade-original { font-weight:600; }
+.timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
+.timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
+.timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
+.status-icon { width:20px; height:20px; vertical-align:middle; }
+.status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
+.route-row:last-child { border-bottom:none; }
+.route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
+.route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.85rem; }
+.route-original .ro-name { font-size:.9rem; font-weight:600; }
+.route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.75rem; }
+.route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
+.soft { color:#2e86de; font-weight:600; }
+.hard { color:#c0392b; font-weight:600; }
+.flash { font-style:italic; }
+
+/* Leaderboard */
+.leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
+.leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
+.gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
+.badge.flashes { background:#efcc05; }
+.badge.attempts { background:#d73038; }
+.badge.climbs { background:#41ac49; }
+.leaderboard-col { display:flex; flex-direction:column; gap:.6rem; }
+.leaderboard-name-row { display:flex; justify-content:space-between; align-items:center; }
+.leaderboard-gym-name { font-size:.9rem; }
+.leaderboard-session-count { font-size:.6rem; opacity:.7; }
+.leaderboard-badges { margin:.4rem 0 .3rem; }
+.leaderboard-unique { font-size:.6rem; opacity:.7; }
+
+/* Controversial route top card & details */
+.contro-title { margin:0 0 .4rem; }
+.contro-none { font-size:.6rem; opacity:.7; }
+.contro-flex { display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start; }
+.contro-left { flex:1 1 200px; min-width:180px; }
+.contro-right { flex:1 1 220px; min-width:200px; }
+.contro-name { font-size:.8rem; font-weight:600; }
+.contro-gym { font-size:.55rem; opacity:.75; }
+.opened-meta { font-size:.55rem; margin:.35rem 0 .5rem; padding:.3rem .5rem; border-radius:6px; }
+.contro-set-grade { font-size:.6rem; }
+.contro-disagreements { font-size:.55rem; margin-top:.4rem; }
+.contro-status-mix { font-size:.55rem; }
+.grades-label { font-size:.6rem; margin-bottom:.25rem; }
+.grades-wrap { display:flex; flex-wrap:wrap; gap:.4rem; }
+.click-view-all { font-size:.55rem; margin-top:.5rem; text-decoration:underline; }
+.contro-route-title { margin:0 0 .3rem; }
+.contro-route-gymline { font-size:.7rem; margin-bottom:.2rem; }
+.contro-flex-min { display:flex; flex-wrap:wrap; gap:.6rem; }
+.contro-grades-label { margin-top:.4rem; }
+.contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
+.distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
+
+/* Overlay & disagreement details */
+/*.disagreements-grid { display:grid; grid-template-columns:1fr minmax(140px,220px) minmax(110px,140px); gap:.5rem .75rem; align-items:start; font-size:.65rem; }
+.disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
+*/
+.dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
+.route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
+.route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
+.route-dis-flex .route-meta .route-gym { opacity:.85; }
+.route-dis-flex .route-meta .route-open { opacity:.85; }
+.chip-grade { display:inline-block; padding:.18rem .35rem; border-radius:14px; font-size:.8rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
+.chip-grade.up { background:#ffd9d9; color:#c0392b; }
+.chip-grade.down { background:#d9ecff; color:#1e5fa3; }
+.tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
+.badge-mini { background:#f1f3f4; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
+.disagreements-summary-bar { height:6px; width:100%; background:#f1f3f4; border-radius:4px; position:relative; margin-top:.3rem; }
+.disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
+.route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; flex-wrap:nowrap; }
+.route-gym-info { display:flex; flex-direction:column; align-items:center; gap:.2rem; flex:0 0 auto; }
+.route-gym-logo {  width: 84px; height:64px; object-fit:contain; border-radius:3px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.route-gym-name-small { font-size:.65rem; font-weight:600; text-align:center; opacity:.8; max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
+.route-meta { flex:1 1 auto; }
+.route-color-box .route-color-fallback { margin-bottom:.3rem; }
+@media (max-width: 300px) {
+  .route-dis-flex { flex-direction:column; align-items:flex-start; }
+  .route-color-box { margin-bottom:.4rem; }
+  .route-gym-info { margin-bottom:.4rem; }
+}
+.disagreements-summary-bar span.attempts { background:#d73038; left:0; }
+.disagreements-summary-bar span.flashes { background:#efcc05; }
+.disagreements-summary-bar span.climbs { background:#41ac49; }
+
+/* Section layout helpers */
+.empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
+.empty-state.pad-medium { padding:2rem 1rem; }
+.section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
+.big-number { font-size:2.2rem; font-weight:800; }
+.scroll-h { overflow-x:auto; }
+
+/* Centered sections */
+#controversialSection { width:100%; }
+#controversialSection .section-title { text-align:center; }
+#controversialDetails { max-width:1100px; margin:0.75rem auto 0; }
+#timelineSection { width:100%; }
+#timelineSection .section-title { text-align:center; }
+#timeline { max-width:1100px; margin:0.75rem auto 0; }
+#leaderboardSection { width:100%; }
+#leaderboardSection .section-title { text-align:center; }
+#gymLeaderboard { max-width:1100px; margin:0.75rem auto 0; }
+
+/* Timeline & controversial details */
+.timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
+.diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
+.route-color-fallback { width:55px; height:20px; background:#ddd; border-radius:4px; }
 

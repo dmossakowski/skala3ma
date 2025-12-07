@@ -87,6 +87,63 @@
 function initializeApp() {
     // Your code that depends on translations being loaded
     //console.log('App initialized with translations');
+
+    // Enable hover-to-open for large-screen dropdown menus
+    const enableHoverDropdowns = () => {
+        const mq = window.matchMedia('(min-width: 765px)');
+        const largeScreen = mq.matches; // Bootstrap lg breakpoint
+        const dropdowns = document.querySelectorAll('.navbar-nav.d-none.d-md-block .dropdown');
+        
+        dropdowns.forEach((dd) => {
+            const toggle = dd.querySelector('[data-bs-toggle="dropdown"], .dropdown-toggle');
+            const menu = dd.querySelector('.dropdown-menu');
+            if (!toggle || !menu) return;
+            
+
+            // Clean previous handlers if re-binding
+            dd._hoverHandlers?.forEach((h) => dd.removeEventListener(h.type, h.listener));
+            dd._hoverHandlers = [];
+
+            if (largeScreen) {
+                const enter = () => {
+                    
+                    dd.classList.add('show');
+                    menu.classList.add('show');
+                    toggle.setAttribute('aria-expanded', 'true');
+                };
+                const leave = () => {
+                    dd.classList.remove('show');
+                    menu.classList.remove('show');
+                    toggle.setAttribute('aria-expanded', 'false');
+                };
+                const enterListener = (e) => enter(e);
+                const leaveListener = (e) => leave(e);
+                dd.addEventListener('mouseenter', enterListener);
+                dd.addEventListener('mouseleave', leaveListener);
+                dd._hoverHandlers = [
+                    { type: 'mouseenter', listener: enterListener },
+                    { type: 'mouseleave', listener: leaveListener },
+                ];
+
+                // Desktop: clicking the toggle navigates to the first submenu link
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const firstItem = menu.querySelector('a.dropdown-item');
+                    const targetHref = firstItem?.getAttribute('href');
+                    if (targetHref && targetHref !== '#') {
+                        window.location.href = targetHref;
+                    }
+                });
+            }
+        });
+    };
+
+    // Bind on load and when resizing across breakpoints
+    enableHoverDropdowns();
+    window.addEventListener('resize', () => {
+        console.log('[menu] resize detected, re-binding hover dropdowns');
+        enableHoverDropdowns();
+    });
 }
 
 	function retrieveData() {
@@ -169,10 +226,11 @@ function initializeApp() {
                 <ul class="navbar-nav ml-left">
                     
                     <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
-                    <a href="/myactivities" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_activities }}</a>
+                    
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                    <a href="/controversial_routes" class="nav-link fs-4 fw-medium"><span data-translate-key="controversial_routes">Controversial Routes</span></a>
                     <a class="nav-link fs-4 fw-medium" href="/competitionCalendar">{{ reference_data['current_language'].competitions }}</a>
-                     <a href="/myresultats" class="dropdown-item fs-7">- {{ reference_data['current_language'].my_resultats }}</a>
+                     
                     <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
 
                                {% if session is defined and session['expires_at'] is defined %}
@@ -182,7 +240,8 @@ function initializeApp() {
                         </a>
                 
                     <a href="/user" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
-
+                    <a href="/myactivities" class="nav-link fs-4">{{ reference_data['current_language'].my_activities }}</a>
+                    <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
                     <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
 
                     {% if session['godmode']  %}
@@ -193,7 +252,7 @@ function initializeApp() {
                 
                 {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-4">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-3  fw-bold">{{ reference_data['current_language'].login }}
                     </a>
                 </li>
                 {% endif %}
@@ -285,7 +344,7 @@ function initializeApp() {
             <ul class="navbar-nav ml-left">
 
                 <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/activities" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     {{ reference_data['current_language'].activities }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="activitiesDropdown">
@@ -294,10 +353,19 @@ function initializeApp() {
                 </ul>
                 </li>
                 &nbsp;&nbsp;&nbsp;
-                <a class="nav-link fs-7 fw-semibold" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/gyms" id="gymsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ reference_data['current_language'].gyms }}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="gymsDropdown">
+                    <li><a class="dropdown-item fs-7" href="/gyms" data-translate-key="Gallery">Gallery</a></li>
+                    <li><a class="dropdown-item fs-7" href="/controversial_routes" data-translate-key="controversial_routes">Controversial Routes</a></li>
+                </ul>
+                </li>
+                &nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="#" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     {{ reference_data['current_language'].competitions }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">

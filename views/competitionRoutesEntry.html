@@ -134,9 +134,10 @@
 	if(typeof getColorSVGDiv !== 'function') { console.warn('getColorSVGDiv not available'); return; }
 	document.querySelectorAll('.route-color').forEach(function(el){
 		var c1 = el.dataset.color1 || '#ccc';
+        var c2 = el.dataset.color2 || '#ccc';
 		var mod = el.dataset.colormod || '';
 		var grade = el.dataset.grade || '';
-		el.innerHTML = getColorSVGDiv(c1, mod, '110px','40px', grade);
+		el.innerHTML = getColorSVGDiv(c1, c2, mod, '110px','40px', grade);
 	});
 })();
 </script>

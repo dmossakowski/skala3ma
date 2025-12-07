@@ -55,10 +55,7 @@ async function apiFetch(url, options = {}) {
         opts.body = JSON.stringify(opts.body);
     }
     const response = await fetch(url, opts);
-    // Auto clear token on 401
-    if (response.status === 401) {
-        clearJwtToken();
-    }
+    
     return response;
 }
 
@@ -148,42 +145,64 @@ function getColorByBgColor(bgColor)
 
 
     
-function getColorSVGDiv(color, colorModifier, width, height, grade=''){
-    var svg = getColorSVG(color, colorModifier, grade, width, height);
-    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;background-color:${color}'>${svg}</div>`;
+function getColorSVGDiv(color1, color2, colorModifier, width, height, grade=''){
+    var svg = getColorSVG(color1, color2, colorModifier, grade, width, height);
+    return `<div style='padding:0;margin:0;width:${width};height:${height};border:0px solid black;'>${svg}</div>`;
 }
 
-function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'){    
+function getColorSVG(color1, color2, colorModifier, grade='', width='90px', height='40px'){    
 
-          //console.log(colorModifier);
+    //console.log(colorModifier);
     var svg = '';
-//<?xml version="1.0" encoding="utf-8"?>
-          // Check if the color modifier is 'marble' to apply the hatched pattern
+
+    // Always render a full-size background first
+    widthNum = parseFloat(width); if (isNaN(widthNum)) widthNum = 200;
+    heightNum = parseFloat(height); if (isNaN(heightNum)) heightNum = 100;
+    let bgSvg = `<svg width="${widthNum}" height="${heightNum}" viewBox="0 0 ${widthNum} ${heightNum}" xmlns="http://www.w3.org/2000/svg">\n<rect x="0" y="0" width="${widthNum}" height="${heightNum}" style="fill: ${color1}; stroke: ${color1};"/>`;
+    // Overlay marble strokes if requested
     if (colorModifier === 'marble') {
-      opposite_color = (Number(`0x1${color.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
+      //opposite_color = color2; //(Number(`0x1${color2.slice(1)}`) ^ 0xFFFFFF).toString(16).substr(1).toUpperCase()
       //console.log(opposite_color);
-      //console.log(cell.getValue());
+      stroke = color2; //getColorByBgColor(color)
+      //console.log('Generating marble SVG with color2:', color1, color2);
       highlight = '#BBBBBB'
-      stroke = getColorByBgColor(color)
-      //highlight = `#${opposite_color}`;
+      if (!color2 || color2.length!==7 || color1 === color2) { 
+        stroke = getColorByBgColor(color1); 
+    }
+      
+      
+    // widthNum/heightNum are set above
+      var scaleX = widthNum / 222;
+      var scaleY = heightNum / 222;
 
             
-      svg6 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-<rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 77.193 91.531 C 77.193 109.778 102.147 123.635 117.499 111.965 C 123.743 107.219 129.691 93.485 127.26 85.532 C 126.25 82.23 121.835 74.307 124.162 70.827 C 127.742 65.475 139.972 61.215 143.302 68.738 C 156.537 98.636 125.931 136.604 94.093 130.521 C 86.765 129.121 80.617 124.785 75.817 119.177 C 73.229 116.153 71.497 111.402 67.746 109.575" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 89.245 164.007 C 104.326 164.007 119.367 166.359 134.362 164.217 C 146.192 162.527 157.934 153.952 167.078 146.921 C 183.346 134.413 187.523 113.774 200.39 98.941 C 211.672 85.933 236.782 80.072 253.375 82.625 C 254.8 82.844 259.384 87.455 257.054 88.612 C 243.9 95.145 224.82 84.474 220.667 102.946 C 218.104 114.343 222.418 131.852 214.998 141.653 C 209.978 148.286 201.364 151.333 194.588 155.707 C 159.581 178.302 118.16 176.363 77.476 176.363" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 89.356 184.584 C 128.683 184.584 163.502 187.314 198.171 166.407 C 206.261 161.528 214.549 156.915 220.421 149.307 C 228.457 138.893 230.463 126.235 236.64 114.872 C 248.588 92.892 275.957 85.981 299.246 85.981 C 311.095 85.981 330.649 93.379 325.308 109.31 C 324.388 112.051 322.872 115.357 321.051 117.68 C 319.054 120.229 315.74 124.849 312.831 126.168 C 308.602 128.086 302.48 124.489 298.804 123.095 C 286.542 118.446 277.708 107.857 262.977 114.071 C 253.264 118.167 250.764 129.932 246.944 138.667 C 240.607 153.155 231.044 171.107 216.188 178.478 C 192.176 190.393 163.542 190.041 143.153 209.001 C 140.01 211.924 127.831 220.402 127.762 225.029" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 228.595 212.065 C 231.925 206.883 236.4 202.228 239.102 196.64 C 247.665 178.933 252.681 153.218 273.809 145.77 C 288.194 140.698 308.841 137.458 323.654 142.105 C 330.666 144.305 338.776 148.109 336.739 156.96 C 335.908 160.571 329.159 160.489 326.614 160.359 C 322.642 160.156 319.377 157.408 315.643 156.373 C 309.227 154.595 301.448 154.909 294.847 155.304 C 276.482 156.402 268.288 167.749 266.154 184.591 C 265.424 190.346 262.867 196.762 264.512 202.693 C 266.463 209.727 272.976 213.716 276.067 220.119" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-<path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: ${stroke};stroke-width: 2px;" d="M 299.371 219.588 C 284.706 219.588 275.149 195.922 278.72 183.883 C 283.16 168.912 305.219 164.832 318.376 166.38 C 323.227 166.951 328.192 176.461 322.746 179.248 C 309.457 186.05 293.348 169.444 288.925 190.127 C 286.352 202.157 311.355 212.755 319.359 215.206 C 322.604 216.199 324.945 217.666 327.797 219.484" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
+    // Directly render marble strokes scaled to desired size (no pattern)
+    // Original artwork bounds: x in [65,330], y in [60,225] => width=265, height=165
+    // We map these to [0,widthNum] x [0,heightNum]
+    const vbX0 = 65, vbY0 = 60, vbW0 = 265, vbH0 = 165;
+        let scaleX2 = widthNum / vbW0;
+        let scaleY2 = heightNum / vbH0;
+        const overscale = 1.3; // 5% larger than the image
+        scaleX2 *= overscale;
+        scaleY2 *= overscale;
+        const contentW = vbW0 * scaleX2;
+        const contentH = vbH0 * scaleY2;
+        // Translate in original coordinate space AFTER scaling (transform order: scale then translate)
+        const tx = -vbX0 + ((widthNum / scaleX2) - vbW0) / 2;
+        const ty = -vbY0 + ((heightNum / scaleY2) - vbH0) / 2;
+        svg6 = bgSvg + `
+    <!-- Test circle to verify rendering -->
+    <g transform="scale(${scaleX2}, ${scaleY2}) translate(${tx}, ${ty})">
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 4px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 77.193 91.531 C 77.193 109.778 102.147 123.635 117.499 111.965 C 123.743 107.219 129.691 93.485 127.26 85.532 C 126.25 82.23 121.835 74.307 124.162 70.827 C 127.742 65.475 139.972 61.215 143.302 68.738 C 156.537 98.636 125.931 136.604 94.093 130.521 C 86.765 129.121 80.617 124.785 75.817 119.177 C 73.229 116.153 71.497 111.402 67.746 109.575"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 76.754 135.251 C 84.848 136.199 93.444 140.298 101.495 142.31 C 116.049 145.949 132.345 136.168 142.028 126.021 C 159.535 107.674 156.859 62.071 191.822 64.965 C 195.701 65.286 197.557 71.397 195.73 74.405 C 192.708 79.381 186.724 82.812 184.287 88.072 C 179.181 99.089 178.529 116.824 170.636 126.277 C 166.252 131.528 163.216 137.127 157.515 141.284 C 133.843 158.545 87.714 157.701 65.25 139.712"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 2.5px; vector-effect: non-scaling-stroke; stroke-opacity: 0.7;" d="M 89.245 164.007 C 104.326 164.007 119.367 166.359 134.362 164.217 C 146.192 162.527 157.934 153.952 167.078 146.921 C 183.346 134.413 187.523 113.774 200.39 98.941 C 211.672 85.933 236.782 80.072 253.375 82.625 C 254.8 82.844 259.384 87.455 257.054 88.612 C 243.9 95.145 224.82 84.474 220.667 102.946 C 218.104 114.343 222.418 131.852 214.998 141.653 C 209.978 148.286 201.364 151.333 194.588 155.707 C 159.581 178.302 118.16 176.363 77.476 176.363"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.8;" d="M 89.356 184.584 C 128.683 184.584 163.502 187.314 198.171 166.407 C 206.261 161.528 214.549 156.915 220.421 149.307 C 228.457 138.893 230.463 126.235 236.64 114.872 C 248.588 92.892 275.957 85.981 299.246 85.981 C 311.095 85.981 330.649 93.379 325.308 109.31 C 324.388 112.051 322.872 115.357 321.051 117.68 C 319.054 120.229 315.74 124.849 312.831 126.168 C 308.602 128.086 302.48 124.489 298.804 123.095 C 286.542 118.446 277.708 107.857 262.977 114.071 C 253.264 118.167 250.764 129.932 246.944 138.667 C 240.607 153.155 231.044 171.107 216.188 178.478 C 192.176 190.393 163.542 190.041 143.153 209.001 C 140.01 211.924 127.831 220.402 127.762 225.029"/>
+    <path style="fill: none; stroke: ${stroke}; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-opacity: 0.6;" d="M 299.371 219.588 C 284.706 219.588 275.149 195.922 278.72 183.883 C 283.16 168.912 305.219 164.832 318.376 166.38 C 323.227 166.951 328.192 176.461 322.746 179.248 C 309.457 186.05 293.348 169.444 288.925 190.127 C 286.352 202.157 311.355 212.755 319.359 215.206 C 322.604 216.199 324.945 217.666 327.797 219.484"/>
+</g>
 </svg>`
 
-    // stick figure
-   /*svg5 = `<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-<path style="fill: #${opposite_color}; stroke: #${opposite_color};" d="M 114.068 114.261 C 114.068 116.806 114.068 119.351 114.068 121.895 C 114.068 123.909 114.068 125.922 114.068 127.936 C 114.068 129.55 114.068 131.164 114.068 132.779 C 114.068 133.217 113.51 151.122 113.974 151.26 C 119.559 152.918 127.163 151.653 132.928 151.653 C 147.885 151.653 162.785 150.214 177.5 150.214 C 182.244 150.214 186.837 151.306 191.406 152.141 C 193.145 152.459 195.915 149.507 196.611 151.132 C 203.495 167.193 185.908 177.258 175.743 184.176 C 172.648 186.281 169.412 188.217 166.136 190.028 C 164.276 191.056 158.479 193.127 160.603 193.195 C 167.25 193.407 182.492 190.445 188.152 187.234 C 193.237 184.35 199.933 165.921 207.995 168.652 C 216.05 171.38 222.72 177.61 228.156 183.939 C 231.109 187.378 234.525 192.893 239.261 194.122 C 242.881 195.062 249.733 190.387 253.595 189.74 C 255.185 189.474 256.775 189.235 258.363 188.951 C 259.254 188.792 261.891 188.306 260.987 188.248 C 258.175 188.069 254.192 184.767 251.77 183.386 C 243.629 178.747 235.909 173.209 228.24 167.829 C 226.973 166.939 219.319 163.923 218.931 162.739 C 217.561 158.559 217.767 147.984 218.921 143.604 C 218.96 143.459 231.058 146.061 231.741 146.204 C 243.04 148.577 254.812 150.388 266.371 150.388 C 269.581 150.388 272.834 151.177 275.91 151.687 C 276.381 151.765 280.464 153.624 280.745 152.889 C 283.862 144.76 281.416 132.532 281.914 123.865 C 282.167 119.456 285.278 114.796 284.118 110.273 C 283.928 109.533 278.411 108.739 277.595 108.474 C 277.449 108.427 272.612 106.654 272.387 107.05 C 267.822 115.106 265.377 124.904 262.894 133.759 C 262.495 135.185 260.728 143.136 259.218 143.908 C 257.548 144.761 252.152 141.753 250.611 141.258 C 242.836 138.756 235.462 134.73 227.63 132.503 C 227 132.324 219.277 130.976 218.962 130.275 C 218.517 129.28 218.84 127.119 218.767 126.06 C 218.711 125.253 217.477 121.47 217.857 120.855 C 218.297 120.142 222.989 120.913 223.653 120.983 C 228.76 121.521 243.755 125.479 238.489 114.669 C 237.805 113.267 232.63 113.988 231.521 113.986 C 223.7 113.973 215.879 113.979 208.057 113.979 C 201.654 113.979 194.602 113.935 188.28 112.868 C 187.777 112.784 182.506 112.246 182.338 112.661 C 181.967 113.578 180.351 122.722 180.668 122.888 C 190.398 127.99 197.542 119.46 195.424 133.02 C 195.266 134.026 195.318 136.669 194.774 137.566 C 194.345 138.275 188.171 137.646 187.51 137.646 C 180.783 137.646 174.175 137.682 167.476 138.387 C 162.643 138.895 157.785 139.354 152.984 140.106 C 150.292 140.528 147.59 141.002 144.891 141.364 C 129.458 143.43 134.232 137.093 135.647 125.07 C 136.049 121.654 136.087 118.552 137.387 115.254 C 137.907 111.893 114.869 114.261 114.068 114.261 Z" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-</svg>`*/
+
+
    
    
    
@@ -191,24 +210,22 @@ function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'
       //return `<div style='padding: 0px; margin: 0px 0px 0px 0px; width:${width}; height:${height}; border: 0px solid ${color}; background-color: ${color}'> 
         //${svg6}  </div>`
         baseSvg = svg6;
-  } else {
-    svg0 = `<svg viewBox="100 100 200 100" xmlns="http://www.w3.org/2000/svg">
-      <rect x="100.148" y="99.984" width="200.296" height="99.984" style="fill: ${color}; stroke: ${color};" transform="matrix(1, 0, 0, 1, 7.105427357601002e-15, 0)"/>
-      </svg>`
-        baseSvg = svg0;
+    } else {
+                baseSvg = bgSvg + `</svg>`;
 
   }
     // Add grade overlay scaled proportionally to passed width/height (centered) if provided
     if (grade) {
+        //console.log('Adding grade overlay:', grade);
         var escaped = String(grade).replace(/[&<>"]/g, function(ch){
             return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]);
         });
         // Parse numeric width/height (default baseline 90x40)
-        var widthNum = parseFloat(width); if (isNaN(widthNum)) widthNum = 90;
-        var heightNum = parseFloat(height); if (isNaN(heightNum)) heightNum = 40;
+        var widthNum2 = widthNum; if (isNaN(widthNum2)) widthNum2 = 90;
+        var heightNum2 = heightNum; if (isNaN(heightNum2)) heightNum2 = 40;
         var baseW = 90, baseH = 40;
-        var scaleX = widthNum / baseW;
-        var scaleY = heightNum / baseH;
+        var scaleX = widthNum2 / baseW;
+        var scaleY = heightNum2 / baseH;
         // SVG logical box (kept for existing marble artwork)
         var vbX = 100, vbY = 100, vbW = 200, vbH = 100;
         // Proportional margins (scale previous hard-coded 30/20 with width/height scales)
@@ -217,62 +234,72 @@ function getColorSVG(color, colorModifier, grade='', width='90px', height='40px'
         // Ensure margins don't exceed half dimensions
         if (marginX > vbW * 0.4) marginX = vbW * 0.4;
         if (marginY > vbH * 0.3) marginY = vbH * 0.3;
-        var rectX = vbX + marginX;
-        var rectY = vbY + marginY;
-        var rectW = vbW - marginX * 2;
-        var rectH = vbH - marginY * 2;
-        // Center coordinates
-        var centerX = vbX + vbW / 2;
-        var centerY = vbY + vbH / 2;
-        // Font sizing proportional to rectangle height and grade length
-        var fontFactor;
-        if (escaped.length <= 6) fontFactor = 0.55;
-        else fontFactor = 0.42; // longer grades shrink more
-        var fontSize = Math.round(rectH * fontFactor);
-        if (fontSize < 10) fontSize = 10; // minimum legibility
-        // Text color based on background
-        var txtColor = '#6c736cff'
-        // Overlay rectangle and perfectly centered text (dominant-baseline middle)
-        var overlay = `<rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="8" fill="rgba(255,255,255,0.85)" stroke="#333" stroke-width="1"/>\n` +
-                      `<text x="${centerX}" y="${centerY}" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="700" fill="${txtColor}" dominant-baseline="middle">${escaped}</text>`;
-        baseSvg = baseSvg.replace('</svg>', overlay + '</svg>');
+        // Grade font sizing: fit by width (95%) for narrow, and by height (95%) for wide
+        var w = widthNum; var h = heightNum;
+        var shorter = Math.min(w, h);
+        var longer = Math.max(w, h);
+        var text = escaped;
+        var charCount = 3;
+        var charWidthFactor = 0.6 ; // Helvetica approx
+        var fontByHeight = Math.floor(h * 0.98);
+        var fontByWidth = Math.floor((w * 0.98) / Math.max(charCount * charWidthFactor, 1));
+        var fontSize = Math.max(10, Math.min(fontByHeight, fontByWidth));
+        var centerX = w / 2;
+        var centerY = h / 2 + 2
+                var txtColor = '#ffffff';
+                var backdropW = Math.floor(Math.min(w * 0.95, Math.max(charCount * charWidthFactor * fontSize * 1.1, shorter * 0.6)));
+            var backdropH = Math.floor(fontSize * 1.20);
+        var backdropX = Math.floor(centerX - backdropW / 2);
+        var backdropY = Math.floor(centerY - backdropH / 2);
+                var overlay = `<defs>
+    <filter id="gradeShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+        <feOffset in="blur" dx="0" dy="2" result="offsetBlur" />
+        <feMerge>
+            <feMergeNode in="offsetBlur" />
+            <feMergeNode in="SourceGraphic" />
+        </feMerge>
+    </filter>
+</defs>
+<text x="${centerX}" y="${centerY}" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="500" fill="${txtColor}" dominant-baseline="middle" filter="url(#gradeShadow)">${escaped}</text>`;
+                baseSvg = baseSvg.replace('</svg>', overlay + '</svg>');
     }
     return baseSvg;
 }
 
 
 
-function generatePizzaSVG(radius, colors) {
-    const centerX = radius;
-    const centerY = radius;
-    const slices = colors.length;
-    const angleStep = 360 / slices;
-  
-    let svgPaths = '';
-  
-    for (let i = 0; i < slices; i++) {
-      const startAngle = i * angleStep;
-      const endAngle = (i + 1) * angleStep;
-  
-      const startX = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
-      const startY = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
-      const endX = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
-      const endY = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
-  
-      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-  
-      svgPaths += `
-        <path d="M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z" 
-              fill="${colors[i]}" />
-      `;
+    function generatePizzaSVG(radius, colors) {
+        const centerX = radius;
+        const centerY = radius;
+        const slices = colors.length;
+        const angleStep = 360 / slices;
+    
+        let svgPaths = '';
+    
+        for (let i = 0; i < slices; i++) {
+        const startAngle = i * angleStep;
+        const endAngle = (i + 1) * angleStep;
+    
+        const startX = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+        const startY = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+        const endX = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+        const endY = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+    
+        const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    
+        svgPaths += `
+            <path d="M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z" 
+                fill="${colors[i]}" />
+        `;
+        }
+    
+        return `
+        <svg width="${radius * 2}" height="${radius * 2}" viewBox="0 0 ${radius * 2} ${radius * 2}" xmlns="http://www.w3.org/2000/svg">
+            ${svgPaths}
+        </svg>
+        `;
     }
-  
-    return `
-      <svg width="${radius * 2}" height="${radius * 2}" viewBox="0 0 ${radius * 2} ${radius * 2}" xmlns="http://www.w3.org/2000/svg">
-        ${svgPaths}
-      </svg>
-    `;
-  }
   
   
 
@@ -289,15 +316,18 @@ function generatePizzaSVG(radius, colors) {
 
 
 
-function resetFlashImage()
-{
-        //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
-        currentRouteStatusIconIndex = 0;
-        routeFinishStatus = 'climbed';
-        //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
-        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
-        
-}
+    function resetFlashImage()
+    {
+            //console.log("resetFlashImage  "+ currentRouteStatusIconIndex);
+            currentRouteStatusIconIndex = 0;
+            routeFinishStatus = 'climbed';
+            //document.getElementById('toggle-flash-image').src = "/public/images/316154_lightning_icon.png";
+        var imgEl = document.getElementById('toggle-flash-image');
+        if (imgEl) {
+            imgEl.src = "/public/images/"+images[currentRouteStatusIconIndex];
+        }
+            
+    }
 
     function toggleFlashImage()
     {
@@ -306,8 +336,10 @@ function resetFlashImage()
         // advance to the next image index with every execution of this function
         currentRouteStatusIconIndex = (++currentRouteStatusIconIndex ) % images.length;
         // set the image source of oggle-flash-image to the image at the current index
-
-        document.getElementById('toggle-flash-image').src = "/public/images/"+images[currentRouteStatusIconIndex];
+        var imgEl = document.getElementById('toggle-flash-image');
+        if (imgEl) {
+            imgEl.src = "/public/images/"+images[currentRouteStatusIconIndex];
+        }
         // set routeFinishStatus to flashed, attempt or success based on the current index
         if (currentRouteStatusIconIndex == 0)
         {
@@ -524,7 +556,7 @@ function clearTranslations() {
             const top_notification_labelQP = app.top_notification_label || queryParams['top_notification_label'];
             const top_notification_levelQP = app.top_notification_level ||queryParams['top_notification_level'];
 
-            console.log('top_notification_label in skala util:'+ app.top_notification_label);
+            //console.log('top_notification_label in skala util:'+ app.top_notification_label);
 
             if (top_notification_labelQP && top_notification_levelQP) {
                 showAlert(top_notification_labelQP, top_notification_levelQP);

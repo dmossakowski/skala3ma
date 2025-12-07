@@ -13,163 +13,10 @@
     
 <div name='container' style="  margin: 0.1rem 0.1rem ">
 
-<style>
-/* Base summary & activity styles */
-.activities-summary { display:flex; flex-wrap:wrap; gap:1rem;}
-.summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
-.summary-card.highlight { border:2px solid #2ecc71; }
-.summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
-.summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
-.summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
-.summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
-.route-chip { display:inline-flex; align-items:center; gap:.4rem; background:#f1f3f4; padding:.35rem .6rem; border-radius:24px; font-size:.75rem; margin:.25rem .25rem .25rem 0; }
-.route-chip.disagree { background:#ffe5e5; border:1px solid #ff6b6b; }
-.grade-original { font-weight:600; }
-.timeline-item { border-left:4px solid #53be6b; margin-left:.6rem; padding:.6rem .8rem .6rem 1rem; position:relative; background:#ffffff; border-radius:0 8px 8px 0; box-shadow:0 2px 3px rgba(0,0,0,.05); }
-.timeline-item::before { content:""; width:14px; height:14px; background:#53be6b; border-radius:50%; position:absolute; left:-10px; top:14px; }
-.timeline-date { font-size:.75rem; text-transform:uppercase; letter-spacing:1px; color:#666; font-weight:600; }
-.status-icon { width:20px; height:20px; vertical-align:middle; }
-.status-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-.route-row { display:flex; align-items:center; gap:.9rem; font-size:.85rem; padding:.5rem 0; border-bottom:1px dashed #e1e4e5; }
-.route-row:last-child { border-bottom:none; }
-.route-original { display:flex; flex-direction:row; align-items:center; gap:.65rem; font-size:.75rem; flex-wrap:wrap; }
-.route-original .ro-num { font-weight:600; letter-spacing:.5px; font-size:.85rem; }
-.route-original .ro-name { font-size:.9rem; font-weight:600; }
-.route-original .ro-openedby { opacity:.55; font-style:italic; font-size:.75rem; }
-.route-climb { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font-size:.75rem; }
-
-.soft { color:#2e86de; font-weight:600; }
-.hard { color:#c0392b; font-weight:600; }
-.flash { font-style:italic; }
-
-.leaderboard { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:1rem; }
-.leaderboard-card { background:#fff; border-radius:12px; padding:.9rem .9rem 1rem; box-shadow:0 2px 4px rgba(0,0,0,.08); position:relative; }
-
-.gym-logo { height:200px; width:auto; max-width:100%; object-fit:contain; border-radius:12px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-.summary-gym-logo { width:42px; height:42px; object-fit:contain; border-radius:10px; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,.12); }
-.badge { display:inline-block; padding:.3rem .55rem; border-radius:6px; font-size:.6rem; font-weight:600; letter-spacing:.5px; background:#eceff1; margin-right:.35rem; }
-.badge.flashes { background:#efcc05; }
-.badge.attempts { background:#d73038; }
-.badge.climbs { background:#41ac49; }
-.contro-route-distribution { display:flex; flex-wrap:wrap; gap:.35rem; }
-.distribution-pill { background:#fff; border:1px solid #ddd; padding:.3rem .5rem; border-radius:20px; font-size:.65rem; }
-.empty-state { text-align:center; padding:3rem 1rem; opacity:.6; }
-.section-title { font-size:1.2rem; font-weight:700; margin:.4rem 0 .7rem; letter-spacing:.5px; }
-.big-number { font-size:2.2rem; font-weight:800; }
-.scroll-h { overflow-x:auto; }
-/* Summary (renderSummary) refactored styles */
-.gym-flex { display:flex; align-items:center; gap:.75rem; margin:.35rem 0; }
-.lh-1 { line-height:1; }
-.gym-meta { font-size:.6rem; opacity:.75; margin-top:.25rem; }
-.gym-click-line { font-size:.5rem; opacity:.55; margin-top:.25rem; text-decoration:underline; }
-.outcomes-flex { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
-.touches-block { min-width:120px; }
-.sessions-block { min-width:100px; }
-.stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
-.across-line { font-size:.55rem; opacity:.65; }
-.status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
-.status-badge { font-size:.7rem; }
-.touches-def { font-size:.5rem; opacity:.65; margin-top:.25rem; }
-.click-recent { font-size:.5rem; opacity:.55; margin-top:.3rem; text-decoration:underline; }
-/* Controversial route top card */
-.contro-title { margin:0 0 .4rem; }
-.contro-none { font-size:.6rem; opacity:.7; }
-.contro-flex { display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start; }
-.contro-left { flex:1 1 200px; min-width:180px; }
-.contro-right { flex:1 1 220px; min-width:200px; }
-.contro-name { font-size:.8rem; font-weight:600; }
-.contro-gym { font-size:.55rem; opacity:.75; }
-.opened-meta { font-size:.55rem; margin:.35rem 0 .5rem; padding:.3rem .5rem; border-radius:6px; }
-.contro-set-grade { font-size:.6rem; }
-.contro-disagreements { font-size:.55rem; margin-top:.4rem; }
-.contro-status-mix { font-size:.55rem; }
-.grades-label { font-size:.6rem; margin-bottom:.25rem; }
-.grades-wrap { display:flex; flex-wrap:wrap; gap:.4rem; }
-.click-view-all { font-size:.55rem; margin-top:.5rem; text-decoration:underline; }
-/* Additional detail section styles */
-.leaderboard-col { display:flex; flex-direction:column; gap:.6rem; }
-.leaderboard-name-row { display:flex; justify-content:space-between; align-items:center; }
-.leaderboard-gym-name { font-size:.9rem; }
-.leaderboard-session-count { font-size:.6rem; opacity:.7; }
-.leaderboard-badges { margin:.4rem 0 .3rem; }
-.leaderboard-unique { font-size:.6rem; opacity:.7; }
-.contro-route-title { margin:0 0 .3rem; }
-.contro-route-gymline { font-size:.7rem; margin-bottom:.2rem; }
-.opened-meta { background:#f1f3f4; }
-.contro-flex-min { display:flex; flex-wrap:wrap; gap:.6rem; }
-.contro-grades-label { margin-top:.4rem; }
-
-/* Overlay & disagreement details */
-.disagreements-grid { display:grid; /* First column now flexible to take remaining space */ grid-template-columns:1fr minmax(140px,220px) minmax(110px,140px); gap:.5rem .75rem; align-items:start; font-size:.65rem; }
-.disagreements-grid .head { font-weight:700; text-transform:uppercase; letter-spacing:.7px; font-size:.58rem; opacity:.7; }
-.dis-cell { background:#f1f3f4; padding:.45rem .45rem; border-radius:10px; }
-.route-dis-flex .route-meta { flex:1 1 auto; font-size:.90rem; line-height:1.1; }
-.route-dis-flex .route-meta .route-name { font-size:.75rem; font-weight:600; margin-bottom:.15rem; }
-.route-dis-flex .route-meta .route-gym { opacity:.85; }
-.route-dis-flex .route-meta .route-open { opacity:.85; }
-.chip-grade { display:inline-block; padding:.18rem .35rem; border-radius:14px; font-size:.8rem; font-weight:600; letter-spacing:.3px; background:#eceff1; margin:.18rem .25rem .18rem 0; }
-.chip-grade.up { background:#ffd9d9; color:#c0392b; }
-.chip-grade.down { background:#d9ecff; color:#1e5fa3; }
-.tiny-note { display:inline-block; background:#fff7e6; padding:.2rem .4rem; font-size:.55rem; border-radius:6px; margin:.15rem .25rem .15rem 0; }
-.badge-mini { background:#f1f3f4; padding:.2rem .4rem; border-radius:6px; font-size:.55rem; font-weight:600; letter-spacing:.4px; }
-.disagreements-summary-bar { height:6px; width:100%; background:#f1f3f4; border-radius:4px; position:relative; margin-top:.3rem; }
-.disagreements-summary-bar span { position:absolute; top:0; height:100%; border-radius:4px; }
-.route-dis-flex { display:flex; gap:.6rem; align-items:flex-start; flex-wrap:nowrap; }
-.route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
-.route-meta { flex:1 1 auto; }
-@media (max-width: 600px) { /* stack route details vertically on narrow screens */
-    .route-dis-flex { flex-direction:column; align-items:flex-start; }
-    .route-color-box { margin-bottom:.4rem; }
-}
-.disagreements-summary-bar span.attempts { background:#d73038; left:0; }
-.disagreements-summary-bar span.flashes { background:#efcc05; }
-.disagreements-summary-bar span.climbs { background:#41ac49; }
-/* Month filter extracted styles */
-#monthFilter { margin:.4rem 0 1.2rem; background:#f1f3f4; padding:.9rem 1rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-#monthFilter .filter-grid { display:flex; flex-wrap:wrap; gap:.9rem; align-items:flex-end; }
-#monthFilter .filter-group { flex:1 1 auto; min-width:180px; }
-.filter-label { font-size:.6rem; font-weight:600; letter-spacing:.5px; display:block; margin-bottom:.25rem; }
-.filter-input-month { font-size:.75rem; padding:.35rem .5rem; width:100%; border:1px solid #ccc; border-radius:8px; }
-.filter-select { font-size:.7rem; padding:.4rem .55rem; width:100%; border:1px solid #ccc; border-radius:8px; background:#fff; }
-.filter-btn { font-size:.65rem; padding:.45rem .85rem; border:0; border-radius:8px; font-weight:600; cursor:pointer; }
-.filter-btn.primary { background:#53be6b; color:#fff; }
-.filter-btn.secondary { background:#f1f3f4; color:#222; }
-.filter-range-indicator { flex:1 1 100%; font-size:.6rem; margin-top:.4rem; opacity:.7; }
-/* Consolidated dark mode styles */
-
-/* Timeline & controversial details refactor */
-.timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
-.diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
-.route-color-fallback { width:55px; height:20px; background:#ddd; border-radius:4px; }
-.empty-state.pad-medium { padding:2rem 1rem; }
-.disagreements-explainer { font-size:.65rem; max-width:760px; margin:.2rem 0 1rem; opacity:.75; }
-.dis-updown { margin-top:.25rem; font-size:.5rem; }
-.statuses-label { display:block; margin-bottom:.25rem; }
-.status-breakdown { font-size:.5rem; margin-top:.25rem; }
-.route-color-box .route-color-fallback { margin-bottom:.3rem; }
-/* Mobile layout override for controversial routes grid: allow wrapping with route detail cell spanning full width */
-@media (max-width: 700px) {
-    .disagreements-grid { display:flex; flex-wrap:wrap; }
-    .disagreements-grid .head { flex:1 1 140px; min-width:140px; }
-    .disagreements-grid .dis-cell.route-detail { flex:1 1 100%; min-width:100%; }
-    .disagreements-grid .dis-cell:not(.route-detail) { flex:1 1 160px; min-width:140px; }
-}
-/* Center controversial routes section below summary */
-#controversialSection { width:100%; }
-#controversialSection .section-title { text-align:center; }
-#controversialDetails { max-width:1100px; margin:0.75rem auto 0; }
-/* Center recent sessions timeline */
-#timelineSection { width:100%; }
-#timelineSection .section-title { text-align:center; }
-#timeline { max-width:1100px; margin:0.75rem auto 0; }
-/* Center gym activity leaderboard */
-#leaderboardSection { width:100%; }
-#leaderboardSection .section-title { text-align:center; }
-#gymLeaderboard { max-width:1100px; margin:0.75rem auto 0; }
-</style>
+<!-- styles migrated to global stylesheet -->
 
         <!-- Filter moved to top -->
-        <div id="monthFilter">
+        <div id="monthFilter" class="card-search">
             <div class="filter-grid">
                 <div class="filter-group">
                     <label class="filter-label"></label>
@@ -190,7 +37,7 @@
                 <div id="activeRangeIndicator" class="filter-range-indicator"></div>
             </div>
         </div>
-    <div id="summary" class="activities-summary"></div>
+    <div id="summary" class="cards-grid"></div>
 
     <div id="leaderboardSection" style="display:none;">
         <h4 class="section-title" data-translate-key="gym_activity_leaderboard">Gym Activity Leaderboard</h4>
@@ -202,12 +49,6 @@
         <h4 class="section-title" data-translate-key="recent_sessions_timeline">Recent Sessions Timeline</h4>
         <div id="timeline"></div>
     </div>
-
-    <div id="controversialSection" style="display:none;">
-        <h4 class="section-title" data-translate-key="controversial_routes">Controversial Routes</h4>
-        <div id="controversialDetails"></div>
-    </div>
-
 
     <div id="rawActivities" style="display:none"></div>
 </div>
@@ -253,7 +94,12 @@
                 currentActivitiesView = activitiesData;
                 setDefaultMonthInputs();
                 populateGymFilter();
-                renderEverything();
+                const applied = applyInitialURLFilters();
+                if(!applied){
+                    // No URL overrides -> render with defaults
+                    renderEverything();
+                    updateRangeIndicatorWithGym();
+                }
                 attachMonthEvents();
                 enhanceMonthInputs();
                 replaceTranslations();
@@ -271,21 +117,17 @@
     }
 
     async function enrichGymsWithLogos(){
-        // Fetch each gym detail to obtain logoimg; ignore failures gracefully
-        await Promise.all(gymsData.map(async g => {
-            if(!g || !g.id) return;
-            try {
-                const detail = await fetchJson(`/api1/gym/${g.id}`);
-                // Expect field logoimg like "logo-ESN-HD-copy-1030x1030.png"
-                if(detail && detail.logoimg){
-                    g.logoimg = detail.logoimg;
-                    // normalize to logo_img_id expected by rendering logic
-                    g.logo_img_id = detail.logo_img_id || detail.logoimg;
+        // `/api1/gyms` provides `logoimg`; normalize without extra requests
+        try {
+            gymsData.forEach(g => {
+                if(!g) return;
+                if(g.logoimg && !g.logo_img_id){
+                    g.logo_img_id = g.logoimg;
                 }
-            } catch(err){
-                console.warn('Failed to fetch gym detail/logo for id', g.id, err.message);
-            }
-        }));
+            });
+        } catch(err){
+            console.warn('Failed normalizing gym logos', err?.message || err);
+        }
     }
 
         function computeStats(sourceActivities){
@@ -352,7 +194,6 @@
 
     let showLeaderboard = false;
     let showTimeline = true; // default: show sessions timeline on initial load
-    let showControversial = false;
 
     function renderSummary(){
         const { gymsArr, topGym, controversial, timeframe } = computeStats();
@@ -375,7 +216,7 @@
         const totalTouches = totalClimbs + totalFlashes + totalAttempts;
         const dateSpan = timeframe.earliest && timeframe.latest ? `${timeframe.earliest.toISOString().split('T')[0]} → ${timeframe.latest.toISOString().split('T')[0]}` : '';
         const disagreeCount = controversial ? controversial.disagreements : 0;
-        // Build combined controversial route card with DOM nodes (no innerHTML template)
+        // Controversial route summary card removed
         function buildControversialDom(){
             const frag = document.createDocumentFragment();
             const title = document.createElement('h5');
@@ -462,7 +303,7 @@
         h5Gym.textContent = 'Most Active Gym';
         gymCard.appendChild(h5Gym);
     const gymFlex = document.createElement('div');
-    gymFlex.className = 'gym-flex';
+    gymFlex.className = 'card-row';
         if(topGym.logo_img_id){
             const img = document.createElement('img');
             img.src = `/image/${topGym.logo_img_id}`;
@@ -477,11 +318,11 @@
         metricDiv.textContent = topGym.gym_name;
         gymInfo.appendChild(metricDiv);
     const metaLine = document.createElement('div');
-    metaLine.className = 'gym-meta';
+    metaLine.className = 'card-meta';
         metaLine.innerHTML = `${topGym.touches} <span data-translate-key="touches">touches</span> · ${topGym.activities} <span data-translate-key="sessions_label">sessions</span> · ${topGym.uniqueRouteCount} <span data-translate-key="unique_routes">unique routes</span>`;
         gymInfo.appendChild(metaLine);
     const clickLine = document.createElement('div');
-    clickLine.className = 'gym-click-line';
+    clickLine.className = 'card-action-hint';
         clickLine.dataset.translateKey = 'click_view_leaderboard';
         clickLine.textContent = 'Click to view leaderboard';
         gymInfo.appendChild(clickLine);
@@ -498,17 +339,17 @@
         h5Sessions.textContent = 'Sessions & Route Outcomes';
         sessionsCard.appendChild(h5Sessions);
     const outcomesFlex = document.createElement('div');
-    outcomesFlex.className = 'outcomes-flex';
+    outcomesFlex.className = 'stats-row';
     const touchesBlock = document.createElement('div');
-    touchesBlock.className = 'touches-block';
+    touchesBlock.className = 'stat-block';
     touchesBlock.innerHTML = `<div class='big-number lh-1'>${totalTouches}</div><div class='stat-label' data-translate-key="touches">Touches</div>`;
         outcomesFlex.appendChild(touchesBlock);
     const sessionsBlock = document.createElement('div');
-    sessionsBlock.className = 'sessions-block';
+    sessionsBlock.className = 'stat-block';
     sessionsBlock.innerHTML = `<div class='lh-1' style='font-size:1.3rem; font-weight:700;'>${totalActivities}</div><div class='stat-label' data-translate-key="sessions_label">Sessions</div>`;
         outcomesFlex.appendChild(sessionsBlock);
     const acrossLine = document.createElement('div');
-    acrossLine.className = 'across-line';
+    acrossLine.className = 'card-subtext';
         acrossLine.innerHTML = `<span data-translate-key="across">Across</span> ${gymsArr.length} <span data-translate-key="gyms">gym${gymsArr.length!==1?'s':''}</span>`;
         outcomesFlex.appendChild(acrossLine);
         sessionsCard.appendChild(outcomesFlex);
@@ -520,38 +361,21 @@
             <img class='status-icon' src='${statusIcon("attempted")}' alt='attempted'><span class='badge attempts status-badge'> ${totalAttempts}</span>`;
         sessionsCard.appendChild(statusStrip);
     const touchesDef = document.createElement('div');
-    touchesDef.className = 'touches-def';
+    touchesDef.className = 'card-subtext';
         touchesDef.dataset.translateKey = 'touches_definition';
         touchesDef.textContent = 'Touches = climbs + flashes + attempts 111';
         sessionsCard.appendChild(touchesDef);
     const clickRecent = document.createElement('div');
-    clickRecent.className = 'click-recent';
+    clickRecent.className = 'card-action-hint';
         clickRecent.dataset.translateKey = 'click_view_recent_sessions';
         clickRecent.textContent = 'Click to view recent sessions timeline';
         sessionsCard.appendChild(clickRecent);
         summaryEl.appendChild(sessionsCard);
-    // Controversial top card
-    const controCard = document.createElement('div');
-    controCard.className = 'summary-card controversial cursor-pointer';
-    controCard.id = 'controversialTopCard';
-    controCard.setAttribute('aria-label','Open list of all controversial routes');
-    controCard.appendChild(buildControversialDom());
-    summaryEl.appendChild(controCard);
-        if(controCard){
-            controCard.addEventListener('click', () => {
-                showControversial = true;
-                showLeaderboard = false;
-                showTimeline = false;
-                renderControversialDetails();
-                updateSectionsVisibility();
-                updateCardHighlights();
-            });
-        }
+    // Controversial top card removed
         if(sessionsCard){
             sessionsCard.addEventListener('click', () => {
                 showTimeline = true;
                 showLeaderboard = false;
-                showControversial = false;
                 updateSectionsVisibility();
                 updateCardHighlights();
             });
@@ -560,7 +384,6 @@
             gymCard.addEventListener('click', () => {
                 showLeaderboard = true;
                 showTimeline = false;
-                showControversial = false;
                 updateSectionsVisibility();
                 updateCardHighlights();
             });
@@ -575,8 +398,7 @@
     function updateCardHighlights(){
         const cards = [
             document.getElementById('mostActiveGymCard'),
-            document.getElementById('sessionsOutcomesCard'),
-            document.getElementById('controversialTopCard')
+            document.getElementById('sessionsOutcomesCard')
         ];
         cards.forEach(c => { if(c) c.classList.remove('highlight'); });
         if(showTimeline){
@@ -584,9 +406,6 @@
             if(c) c.classList.add('highlight');
         } else if(showLeaderboard){
             const c = document.getElementById('mostActiveGymCard');
-            if(c) c.classList.add('highlight');
-        } else if(showControversial){
-            const c = document.getElementById('controversialTopCard');
             if(c) c.classList.add('highlight');
         }
     }
@@ -726,7 +545,7 @@
                 const row = document.createElement('div');
                 row.className = 'route-row';
                 const colorDivWrapper = document.createElement('div');
-                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
+                colorDivWrapper.innerHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color2, r.color_modifier, '55px', '20px') : `<div class='route-color-fallback'></div>`;
                 row.appendChild(colorDivWrapper);
                 const orig = document.createElement('div');
                 orig.className = 'route-original';
@@ -795,14 +614,6 @@
         renderSummary();
         renderGymLeaderboard();
         renderTimeline();
-        // Ensure controversial details reflect current filtered dataset when visible
-        if(showControversial){
-            renderControversialDetails();
-        } else {
-            // Clear any stale controversial list if previously shown so it doesn't persist after filter changes
-            const c = document.getElementById('controversialDetails');
-            if(c) c.textContent = '';
-        }
         updateSectionsVisibility();
         // Final safeguard translation pass (in case earlier functions missed or future additions occur)
         if(typeof replaceTranslations === 'function') {
@@ -813,10 +624,8 @@
     function updateSectionsVisibility(){
         const lb = document.getElementById('leaderboardSection');
         const tl = document.getElementById('timelineSection');
-        const cr = document.getElementById('controversialSection');
         if(lb) lb.style.display = showLeaderboard ? 'block' : 'none';
         if(tl) tl.style.display = showTimeline ? 'block' : 'none';
-        if(cr) cr.style.display = showControversial ? 'block' : 'none';
     }
 
     // ----- Gym Filter Functions -----
@@ -916,84 +725,6 @@
         }
         indicator.textContent = `${lastFilter.from.y}-${String(lastFilter.from.m).padStart(2,'0')} → ${lastFilter.to.y}-${String(lastFilter.to.m).padStart(2,'0')} (${currentActivitiesView.length} sessions) · ${gymLabel}`;
     }
-
-        function renderControversialDetails(){
-            const { routeDisagreements } = computeStats();
-            const container = document.getElementById('controversialDetails');
-            if(!container) return;
-            const list = Object.values(routeDisagreements).filter(r=> r.disagreements>0).sort((a,b)=> b.disagreements - a.disagreements);
-            container.textContent = '';
-            if(!list.length){
-                const empty = document.createElement('div');
-                empty.className = 'empty-state pad-medium';
-                empty.dataset.translateKey = 'no_grade_disagreements_range';
-                empty.textContent = 'No grade disagreements in current range.';
-                container.appendChild(empty);
-                return;
-            }
-            const explainer = document.createElement('p');
-            explainer.className = 'disagreements-explainer';
-            explainer.dataset.translateKey = 'disagreements_explainer';
-            explainer.textContent = '';
-            container.appendChild(explainer);
-            const grid = document.createElement('div');
-            grid.className = 'disagreements-grid';
-            const headers = [
-                { key:'route_details', text:'' },
-                { key:'user_grades_label', text:'' },
-                { key:'status_mix', text:'' }
-            ];
-            headers.forEach(h => {
-                const hd = document.createElement('div');
-                hd.className = 'head';
-                hd.dataset.translateKey = h.key;
-                hd.textContent = h.text;
-                grid.appendChild(hd);
-            });
-            list.forEach(r => {
-                const userGrades = Array.from(r.userGrades).sort();
-                const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
-                const downgrades = userGrades.filter(g=> g!==r.grade && !gradeHarder(g,r.grade)).length;
-                const statusTotal = r.statuses.climbed + r.statuses.flashed + r.statuses.attempted;
-                const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
-                const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
-                const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
-                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '55px', '20px') : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
-                // Route details cell
-                const cRoute = document.createElement('div'); cRoute.className = 'dis-cell route-detail';
-                const flex = document.createElement('div'); flex.className = 'route-dis-flex';
-                const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
-                const meta = document.createElement('div'); meta.className = 'route-meta';
-                meta.innerHTML = `<div class='route-name'>${r.name || 'Unnamed'}</div>
-                    <div class='route-gym'>${r.gym_name}</div>
-                    <div>Grade: <strong>${r.grade}</strong></div>
-                    <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;
-                flex.appendChild(colorBox); flex.appendChild(meta); cRoute.appendChild(flex);
-                grid.appendChild(cRoute);
-                // User grades cell
-                const cGrades = document.createElement('div'); cGrades.className = 'dis-cell';
-                userGrades.forEach(gVal => {
-                    const chip = document.createElement('span');
-                    chip.className = 'chip-grade ' + (gVal===r.grade?'':(gradeHarder(gVal,r.grade)?'up':'down'));
-                    chip.textContent = gVal;
-                    cGrades.appendChild(chip);
-                });
-                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
-                // Status cell (formerly followed disagreements column)
-                const cStatus = document.createElement('div'); cStatus.className = 'dis-cell';
-                const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
-                cStatus.appendChild(statusLabel);
-                const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
-                const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
-                const barFlashed = document.createElement('span'); barFlashed.className = 'flashes'; barFlashed.style.left = `${attemptPct}%`; barFlashed.style.width = `${flashPct}%`;
-                const barClimbed = document.createElement('span'); barClimbed.className = 'climbs'; barClimbed.style.left = `${attemptPct*1 + flashPct*1}%`; barClimbed.style.width = `${climbedPct}%`;
-                barWrapper.appendChild(barAttempt); barWrapper.appendChild(barFlashed); barWrapper.appendChild(barClimbed);
-                cStatus.appendChild(barWrapper);
-                const statusBreakdown = document.createElement('div'); statusBreakdown.className = 'status-breakdown'; statusBreakdown.textContent = `A ${r.statuses.attempted||0} · F ${r.statuses.flashed||0} · C ${r.statuses.climbed||0}`; cStatus.appendChild(statusBreakdown);
-                grid.appendChild(cStatus);
-            });
-            container.appendChild(grid);
-        }
 
         // -------- Month Filtering ---------
         function setDefaultMonthInputs(){
@@ -1122,8 +853,10 @@
             applied = true;
         }
         if(applied){
+            // If only gym is supplied, keep default dates established earlier
             applyCombinedFilters(false); // don't push history, just reflect existing URL state
         }
+        return applied;
     }
 
     // Re-apply filters when navigating browser history
