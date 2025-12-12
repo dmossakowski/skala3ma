@@ -158,13 +158,20 @@ def set_language(language=None):
 
 
 def login_required(fn):
+    wrapped = skala_api.session_or_jwt_required(fn)
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if skala_api.is_logged_in():
-            return fn(*args, **kwargs)
-        else:
+        resp = wrapped(*args, **kwargs)
+        status = None
+        if isinstance(resp, tuple):
+            if len(resp) >= 2 and isinstance(resp[1], int):
+                status = resp[1]
+        elif hasattr(resp, 'status_code'):
+            status = resp.status_code
+        if status == 401:
             session["wants_url"] = request.url
             return redirect(url_for("app_ui.fsgtlogin"))
+        return resp
     return decorated_function
 
 
@@ -604,24 +611,6 @@ def activity_detail(activity_id):
                            )
 
 
-@app_ui.route('/activities/dialog', methods=['GET'])
-#@login_required
-def activity_detail_dialog():
-
-    user = competitionsEngine.get_user_by_email(session['email'])
-    activity = activity_engine.get_activity(activity_id)
-    gym = competitionsEngine.get_gym(activity['gym_id'])
-
-
-    return render_template('activity-detail.html',
-                           user=user,
-                           reference_data=competitionsEngine.reference_data,
-                           activity=activity,
-                           routes=routes,
-                           gym=gym,
-                           today=date.today(),
-                           activity_id=activity_id,
-                           )
  
 
 @app_ui.route('/journey/add', methods=['POST'])

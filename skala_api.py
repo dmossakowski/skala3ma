@@ -184,6 +184,7 @@ def x(*args, **kwargs):
         if language is None:
             language = 'fr_FR'
         session['language'] = language
+        recreate_session_from_jwt()\
     #logging.debug ("api setting language to session language="+str(session['language']))
     set_language(session['language'])   
     
@@ -250,10 +251,35 @@ JWT_SECRET = os.getenv('JWT_SECRET', os.getenv('SECRET_KEY', 'dev-secret'))
 JWT_ALG = 'HS256'
 JWT_EXP_SECONDS = 60 * 60 * 24 * 356 * 100  # 100 years
 
-def create_jwt(email: str, user_id: str | None = None):
+def create_jwt(
+    email: str,
+    user_id: str | None = None,
+    *,
+    name: str | None = None,
+    authsource: str | None = None,
+    expires_at: int | None = None,
+    picture: str | None = None,
+):
     now = int(time.time())
-    payload = {'sub': email,'uid': user_id,'iat': now,'exp': now + JWT_EXP_SECONDS}
+    payload = {
+        'sub': email,
+        'uid': user_id,
+        'iat': now,
+        'exp': now + JWT_EXP_SECONDS,
+    }
+    # Prefer explicit parameters, fallback to session values
+    if name or session.get('name'):
+        payload['name'] = name if name is not None else session.get('name')
+    if authsource or session.get('authsource'):
+        payload['authsource'] = authsource if authsource is not None else session.get('authsource')
+    if expires_at or session.get('expires_at'):
+        payload['expires_at'] = expires_at if expires_at is not None else session.get('expires_at')
+    if picture is not None:
+        payload['picture'] = picture
+    elif session.get('picture') is not None:
+        payload['picture'] = session.get('picture')
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
 
 def decode_jwt(token: str):
     try:
@@ -262,6 +288,7 @@ def decode_jwt(token: str):
         return {'error': 'token_expired'}
     except Exception:
         return {'error': 'invalid_token'}
+
 
 def jwt_required(fn):
     @wraps(fn)
@@ -277,23 +304,45 @@ def jwt_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+
 def session_or_jwt_required(fn):
     """Allow either JWT (Authorization: Bearer) or existing session email."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        email = None
-        auth_header = request.headers.get('Authorization', '')
-        if auth_header.startswith('Bearer '):
-            decoded = decode_jwt(auth_header[7:].strip())
-            if isinstance(decoded, dict) and 'error' not in decoded:
-                email = decoded.get('sub')
-        if not email and session is not None:
-            email = session.get('email')
-        if not email:
+        recreate_session_from_jwt
+        if not session.get('email'):
             return jsonify({'error': 'unauthorized'}), 401
-        g.auth_email = email  # type: ignore
         return fn(*args, **kwargs)
     return wrapper
+
+
+def recreate_session_from_jwt():
+    email = None
+    expires_at = None
+    picture = None
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        decoded = decode_jwt(auth_header[7:].strip())
+        if isinstance(decoded, dict) and 'error' not in decoded:
+            email = decoded.get('sub')
+            expires_at = decoded.get('exp')
+            picture = decoded.get('picture')
+            session['email'] = email  # ensure session email set
+            session['expires_at'] = expires_at  # type: ignore
+            session['picture'] = picture  # type: ignore
+
+    if not email:
+        cookie_token = request.cookies.get('skala3ma_jwt')
+        if cookie_token:
+            decoded = decode_jwt(cookie_token)
+            if isinstance(decoded, dict) and 'error' not in decoded:
+                email = decoded.get('sub')
+                expires_at = decoded.get('exp')
+                picture = decoded.get('picture')
+                session['email'] = email  # ensure session email set
+                session['expires_at'] = expires_at  # type: ignore
+                session['picture'] = picture  # type: ignore
+
 
 def admin_required(fn):
     @wraps(fn)
@@ -1438,7 +1487,7 @@ def setClimberAsPresent(competitionId,climberId,present):
 @session_or_jwt_required
 def get_user():
     """Return basic user profile (requires JWT or session)."""
-    email = getattr(g, 'auth_email', None)
+    email = session.get('email')
     if not email:
         return jsonify({'error': 'unauthorized'}), 401
     user = competitionsEngine.get_user_by_email(email)
@@ -1907,7 +1956,7 @@ def get_competition_stats(competitionId):
 @skala_api_app.route('/climber/stats')
 @session_or_jwt_required
 def get_myskala():
-    username = session.get('username')
+    username = session.get('email')
     stats = {}
     competitions = skala_db.get_all_competitions()
     competition_routes_total = 0

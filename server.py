@@ -60,7 +60,7 @@ from logging_config import init_logging, attach_request_logging
 
 
 from main_app_ui import app_ui, languages
-from skala_api import skala_api_app
+from skala_api import skala_api_app, create_jwt
 
 import competitionsEngine
 
@@ -161,6 +161,49 @@ app = SIMPLE_CAPTCHA.init_app(app)
 
 # Instantiate email login service AFTER bcrypt & captcha are set up
 email_login_service = EmailLoginService(competitionsEngine, email_sender, bcrypt, SIMPLE_CAPTCHA)
+
+# Shared helper: return HTML that stores JWT and redirects to target
+def _jwt_handoff_redirect(token: str, target: str) -> Response:
+    html = (
+        """
+        <!doctype html>
+        <html><head><meta charset='utf-8'><title>Login Complete</title></head>
+        <body>
+        <script>
+        (function(){
+            try {
+                var t = __TOKEN_PLACEHOLDER__;
+                if (t) {
+                    localStorage.setItem('skala3ma_jwt', t);
+                    // Also set a cookie so normal link navigations include auth
+                    var isHttps = (window.location.protocol === 'https:');
+                    var secure = isHttps ? '; Secure' : '';
+                    // Use SameSite=Lax so cookie is sent on same-site navigations
+                    document.cookie = 'skala3ma_jwt=' + encodeURIComponent(t) + '; Path=/; SameSite=Lax' + secure;
+                }
+            } catch(e) {}
+            try {
+                window.location.assign('__TARGET_PLACEHOLDER__');
+            } catch(e) {
+                window.location.href = '__TARGET_PLACEHOLDER__';
+            }
+        })();
+        </script>
+        </body></html>
+        """
+        .replace('__TOKEN_PLACEHOLDER__', json.dumps(token))
+        .replace('__TARGET_PLACEHOLDER__', target)
+    )
+    return Response(html, mimetype='text/html')
+
+# --- Session persistence/cookie settings (fix Android Chrome expiry) ---
+# Ensure sessions are treated as permanent and cookies survive browser restarts.
+from datetime import timedelta as _td
+# OAuth redirects can be cross-site; require SameSite=None for compatibility.
+# Note: requires HTTPS with Secure.
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+# Respect environment for Secure flag; default to True in production.
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'true').lower() == 'true'
 
 
 
@@ -554,9 +597,6 @@ def googleauth():
 
 
 
-@app.route('/google/authaaa/')
-def googleauth_replyqq():
-    error = request.args.get('error')
 
 
 @app.route('/google/auth/')
@@ -593,10 +633,21 @@ def googleauth_reply():
 
     log_request_details('google auth successful '+profile['email'])
 
-    if session.get('wants_url') is not None:
-        return redirect(session['wants_url'])
-    else:
-        return after_login(user, profile.get('email'))
+    # Issue a JWT and hand off to client via HTML redirect
+    try:
+        user_id = user.get('id') if isinstance(user, dict) else None
+        token = create_jwt(
+            session.get('email'),
+            user_id,
+            name=session.get('name'),
+            authsource=session.get('authsource'),
+            expires_at=session.get('expires_at'),
+            picture=session.get('picture'),
+        )
+    except Exception:
+        token = ''
+    target = session.get('wants_url') or '/'
+    return _jwt_handoff_redirect(token, target)
 
 
 
@@ -639,7 +690,21 @@ def email_login():
         session['authsource'] = 'self'
         if competitionsEngine.is_god(user) or GODMODE:
             session['godmode'] = True
-        return after_login(user, email)
+        # Also issue a JWT and hand off to the client for API calls
+        try:
+            user_id = user.get('id') if isinstance(user, dict) else None
+            token = create_jwt(
+                session.get('email'),
+                user_id,
+                name=session.get('username') or session.get('email'),  # or use user.get('firstname') if available
+                authsource=session.get('authsource'),
+                expires_at=session.get('expires_at'),
+                picture=session.get('picture'),
+            )
+        except Exception:
+            token = ''
+        target = session.get('wants_url') or '/'
+        return _jwt_handoff_redirect(token, target)
 
     log_request_details('User failed login '+email)
     error = get_translation('User_does_not_exist_or_wrong_password')

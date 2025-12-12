@@ -223,7 +223,7 @@
                 const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
                 const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
-                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '65px', '30px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
+                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color2, r.color_modifier, '65px', '28px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
                 // Wrapper per route using Bootstrap rows/cols
                 const routeCard = document.createElement('div');
                 routeCard.className = 'route-dis-card';
@@ -275,8 +275,8 @@
                 // Status mix column
                 const cStatus = document.createElement('div');
                 cStatus.className = 'col-6 col-md-3';
-                const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
-                cStatus.appendChild(statusLabel);
+                //const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
+                //cStatus.appendChild(statusLabel);
                 const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
                 const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
                 const barFlashed = document.createElement('span'); barFlashed.className = 'flashes'; barFlashed.style.left = `${attemptPct}%`; barFlashed.style.width = `${flashPct}%`;

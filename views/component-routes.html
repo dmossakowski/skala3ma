@@ -617,9 +617,23 @@
             document.getElementById('opendate').value = data.opendate;
             document.getElementById('notes').value = data.notes;
 
-            if (data.color_modifier == 'marble') { 
-              document.getElementById('route-color1').style.background = hatchedBackground;
-            } else {
+
+            try {
+              var svgDiv = getColorSVGDiv(
+                data.color1,
+                data.color2,
+                data.color_modifier,
+                '90px',
+                '40px',
+                ''
+              );
+              var target = document.getElementById('route-color1');
+              if (target) {
+                target.innerHTML = svgDiv;
+              }
+            } catch(e) {
+              console.warn('Failed to render color SVG', e);
+              // Fallback to solid background if SVG fails
               document.getElementById('route-color1').style.background = data.color1;
             }
 

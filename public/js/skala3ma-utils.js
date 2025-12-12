@@ -29,7 +29,13 @@ function getJwtToken() {
 }
 
 function clearJwtToken() {
-    localStorage.removeItem(JWT_STORAGE_KEY);
+    // Clear localStorage
+    try { localStorage.removeItem(JWT_STORAGE_KEY); } catch (e) { /* ignore */ }
+    // Delete cookie by setting expiry in the past
+    try {
+        const secure = (location.protocol === 'https:') ? '; Secure' : '';
+        document.cookie = 'skala3ma_jwt=; Path=/; SameSite=Lax' + secure + '; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } catch (e) { /* ignore */ }
 }
 
 // Decode JWT payload without verifying signature (client-side convenience only)
@@ -94,45 +100,7 @@ window.apiFetch = apiFetch;
 window.apiFetchJson = apiFetchJson;
 window.decodeJwtPayload = decodeJwtPayload;
 
-// Helper to wire a standard email/password login form to /api1/auth/login
-// Expected fields: input[name=email], input[name=password]
-// Add attribute data-jwt-login="true" to the form to auto-enable.
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForms = document.querySelectorAll('form[data-jwt-login="true"]');
-    loginForms.forEach(form => {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = form.querySelector('input[name=email]')?.value?.trim();
-            const password = form.querySelector('input[name=password]')?.value;
-            if (!email || !password) {
-                showAlert('missing_credentials', 'danger');
-                return;
-            }
-            try {
-                const resp = await apiFetch('/api1/auth/login', {
-                    method: 'POST',
-                    body: { email, password }
-                });
-                const data = await resp.json().catch(() => ({}));
-                if (resp.ok && data.token) {
-                    setJwtToken(data.token);
-                    const payload = decodeJwtPayload(data.token);
-                    // Optionally show a success notification
-                    showAlert('login_success', 'success', 5000);
-                    // Redirect: honor data.redirect or data.next or a data-redirect attribute
-                    const redirectTo = data.redirect || data.next || form.getAttribute('data-redirect') || '/';
-                    window.location.assign(redirectTo);
-                } else {
-                    const msg = data.error || (data.errors && data.errors.join(', ')) || 'login_failed';
-                    showAlert(msg, 'danger');
-                }
-            } catch (err) {
-                console.error('login error', err);
-                showAlert('network_error', 'danger');
-            }
-        });
-    });
-});
+
 
 
 
@@ -551,6 +519,12 @@ function clearTranslations() {
 
          // Check for 'message' and 'level' query parameters and call showAlert
          document.addEventListener('DOMContentLoaded', () => {
+            // Ensure logout elements trigger auth token clearing before navigation
+            document.querySelectorAll('[data-logout="true"], a[href="/logout"], a[href="/api1/auth/logout"]').forEach(el => {
+                el.addEventListener('click', () => {
+                    try { clearJwtToken(); } catch (e) {}
+                });
+            });
             const queryParams = getQueryParams();
             const message = queryParams['message'];
             const top_notification_labelQP = app.top_notification_label || queryParams['top_notification_label'];
