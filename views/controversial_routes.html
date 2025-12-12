@@ -223,7 +223,7 @@
                 const attemptPct = statusTotal ? (r.statuses.attempted/statusTotal*100).toFixed(0) : 0;
                 const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
-                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color_modifier, '65px', '30px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
+                const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color2, r.color_modifier, '65px', '28px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
                 // Wrapper per route using Bootstrap rows/cols
                 const routeCard = document.createElement('div');
                 routeCard.className = 'route-dis-card';

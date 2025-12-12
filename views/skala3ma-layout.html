@@ -210,7 +210,7 @@ function initializeApp() {
             </a> 
             
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"><img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top"></span>
+            <span class="navbar-toggler-icon"><img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top" style="background-color: white;"></span>
             </button>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                 <div class="offcanvas-header">
@@ -353,16 +353,10 @@ function initializeApp() {
                 </ul>
                 </li>
                 &nbsp;&nbsp;&nbsp;
-                <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/gyms" id="gymsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    {{ reference_data['current_language'].gyms }}
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="gymsDropdown">
-                    <li><a class="dropdown-item fs-7" href="/gyms" data-translate-key="Gallery">Gallery</a></li>
-                    <li><a class="dropdown-item fs-7" href="/controversial_routes" data-translate-key="controversial_routes">Controversial Routes</a></li>
-                </ul>
-                </li>
+                <a class="nav-link fs-9 fw-bold " href="/controversial_routes" data-translate-key="controversial_routes">Controversial Routes</a>
                 &nbsp;&nbsp;&nbsp;
+                <a class="nav-link fs-9 fw-bold " href="/gyms" data-translate-key="gyms">Gyms</a></li>
+                    
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
