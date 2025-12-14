@@ -1855,18 +1855,20 @@ def gym_by_id(gymid):
     #routes1 = competitionsEngine.get_routes(gym['routesid'])
     routes = routes_dict.get(gym['routesid'])
     routesid = gym['routesid']
-    return render_template('gym-main.html',
+    return render_template('gym-routes.html',
                            gymid=gymid,
                            routesid=routesid,
                            gyms=None,
                            gym=gym,
-                           routes=None,
+                           routes=routes,
                            all_routes=all_routes,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
                            user_can_edit_gym=user_can_edit_gym,
                            can_create_gym=can_create_gym,
                            )
+
+    
 
 
 @app_ui.route('/gyms/<gymid>/qrcode')
@@ -1906,6 +1908,42 @@ def gym_qrcode_by_id(gymid):
                            )
 
 
+
+@app_ui.route('/gyms/<gymid>/main')
+def gym_main_by_id(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    #gym['routesid']='abc1'
+
+    if gym is None or len(gym) == 0:
+        return redirect('/gyms')
+    
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
+    
+    #routes = all_routes.get(routesid)
+    can_create_gym = False
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    user_can_edit_gym = False
+    routes_dict = competitionsEngine.get_routes_by_gym_id(gymid)
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is not None:
+        user_can_edit_gym = competitionsEngine.can_edit_gym(user, gym)
+        can_create_gym = competitionsEngine.can_create_gym(user)
+     
+    #routes1 = competitionsEngine.get_routes(gym['routesid'])
+    routes = routes_dict.get(gym['routesid'])
+    routesid = gym['routesid']
+    return render_template('gym-main.html',
+                           gymid=gymid,
+                           routesid=routesid,
+                           gyms=None,
+                           gym=gym,
+                           routes=None,
+                           all_routes=all_routes,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           user_can_edit_gym=user_can_edit_gym,
+                           can_create_gym=can_create_gym,
+                           )
 
 
 @app_ui.route('/gyms/<gym_id>/<routesid>', methods=['GET'])

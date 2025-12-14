@@ -184,7 +184,7 @@ def x(*args, **kwargs):
         if language is None:
             language = 'fr_FR'
         session['language'] = language
-        recreate_session_from_jwt()\
+        recreate_session_from_jwt()
     #logging.debug ("api setting language to session language="+str(session['language']))
     set_language(session['language'])   
     

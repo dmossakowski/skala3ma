@@ -16,7 +16,7 @@
         /* Style for the modal dialog container */
         .modal-container {
             display: none;
-            justify-content: center;
+            justify-content: left;
             
             position: fixed;
             z-index: 1023;
@@ -111,8 +111,8 @@
         
     </div>
 
-    <!-- Static attempt edit modal created at load time so translation keys exist before replaceTranslations() runs -->
-    <div id="attemptEditModal" class="modal-container" style="display:none;">
+    <!-- route attempt detail edit/add modal -->
+    <div id="attemptEditModal" class="modal-container" style="display:none;">aa
         <div class="modal-box" style="max-width:520px; width:90%; flex-direction:column; align-items:stretch;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                  <h4 id="attemptModalTitle" style="margin:0; font-size:1.2rem;"></h4>
@@ -121,7 +121,6 @@
             <div id="attemptModalError" class="alert alert-danger" style="display:none; padding:6px 10px; margin-bottom:8px; font-size:0.85rem;"></div>
             <div id="attemptRouteInfo" class="route-info" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
                 <span id="attemptRouteColor"></span>
-                <span id="attemptRouteGrade" class="badge bg-secondary" style="font-size:0.9rem;"></span>
                 <span id="attemptRouteName" style="font-weight:600; font-size:0.95rem;"></span>
             </div>
             <form id="attemptEditForm" onsubmit="submitAttemptModal(event)">
@@ -135,7 +134,7 @@
                     <input type='hidden' id='attemptModalStatus' />
                 </div>
                 <div class="row g-2 mb-3">
-                    <label class="form-label" data-translate-key="grade">grade translation</label>
+                   
                     <select id="attemptModalGrade" class="form-select" style="font-size:1rem; font-weight:600; color:#40ad48;">
                         <option value="?">?</option>
                         <option value="1">1</option>
@@ -176,7 +175,7 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" data-translate-key="rating">rating translation</label>
+                   
                     <div class="rating" id="attemptStars" style="display:flex; flex-direction:row-reverse; justify-content:center; gap:4px;">
                         <input type="radio" name="attempt_stars" value="3" id="attemptStars3" style="display:none">
                         <label for="attemptStars3" style="position:relative; width:1em; font-size:28px; font-weight:300; color:#FFD600; cursor:pointer">☆</label>
@@ -195,7 +194,7 @@
                     </style>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" data-translate-key="notes">notes translation</label>
+                  
                     <textarea id="attemptModalNote" class="form-control" rows="3" placeholder=".."></textarea>
                 </div>
                 <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -341,18 +340,18 @@ function showModal() {
             {title: "{{ reference_data['current_language'].color }}", field: "color1", 
             "responsive": 0 , minWidth:10, 
             formatter:function(cell, formatterParams, onRendered){ 
-                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px');
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px', cell.getRow().getData().grade);
                 },
             
-                formatterPrint:function(cell, formatterParams, onRendered){
-                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px');
+            formatterPrint:function(cell, formatterParams, onRendered){
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '100px', '50px', cell.getRow().getData().grade);
                 },
             },
-            {title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
+            //{title: "{{ reference_data['current_language'].grade }}", field: "grade", "responsive": 0 , minWidth:10, headerVertical:false},
             {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 1 , minWidth:10},
-            {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
-            {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
-            {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
+            //{title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
+            //{title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 2},
+            //{title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 1 , formatter:"plaintext"}
             ];
         
           // Create the Tabulator table
@@ -388,7 +387,7 @@ function showModal() {
                 // Loop over the data array
                 for (let i = 0; i < count; i++) {
                     // Concatenate the result of getColorSVGDiv to colorDivs
-                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color2, data[i].color_modifier, '55px', '20px')+
+                    colorDivs += getColorSVGDiv(data[i].color1, data[i].color2, data[i].color_modifier, '55px', '20px', data[i].grade)+
                     ` &nbsp;&nbsp;&nbsp;`;
                 }
                 // Wrap the colorDivs in an encompassing div with flexbox styling
@@ -601,8 +600,8 @@ function showModal() {
             tr.innerHTML = `
                 <td class='route-cell'>
                     <div class='route-cell-inner'>
-                        <span class='route-color'>${getColorSVGDiv(att.color1 || '', att.color2 || '', att.color_modifier || 'solid', '50px','25px')}</span>
-                        <span class='route-grade'>${att.grade || ''}</span>
+                        <span class='route-color'>${getColorSVGDiv(att.color1 || '', att.color2 || '', att.color_modifier || 'solid', '50px','25px', att.grade)}</span>
+                      
                         <span class='route-name'>${att.name || ''}</span>
                     </div>
                 </td>
@@ -658,89 +657,96 @@ function showModal() {
             }
         }
         let currentAttemptKey = null;
-        function openAttemptModal(attemptKey){
-                ensureAttemptModal();
-                currentAttemptKey = attemptKey;
-        // clear previous error
-        const errEl = document.getElementById('attemptModalError');
-        if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
-            const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === attemptKey);
-                if(!attemptObj){ console.error('Attempt not found'); return; }
-                // Use attempt object directly for route metadata
-                const route = attemptObj;
-                document.getElementById('attemptModalStatus').value = attemptObj.status;
-                document.getElementById('attemptModalGrade').value = attemptObj.user_grade || '';
-                
-                document.getElementById('attemptModalNote').value = attemptObj.note || '';
-                // Preselect stars if present
-                const starsVal = parseInt(attemptObj.route_stars || 0);
-                if(starsVal >= 1 && starsVal <= 3){
-                    const radio = document.getElementById('attemptStars'+starsVal);
-                    if(radio) radio.checked = true;
-                } else {
-                    document.querySelectorAll('#attemptStars input[name="attempt_stars"]').forEach(r=>r.checked=false);
-                }
-        // Populate route info section
-        const colorEl = document.getElementById('attemptRouteColor');
-        const gradeEl = document.getElementById('attemptRouteGrade');
-        const nameEl = document.getElementById('attemptRouteName');
-        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color2 || '', route.color_modifier || 'solid', '55px','25px'); }
-        if(gradeEl){ gradeEl.textContent = route.grade || ''; }
-        if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
-        const delBtn = document.getElementById('attemptModalDeleteBtn');
-        if(delBtn){ delBtn.style.display=''; }
-                attemptModalEl.style.display='flex';
-                attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
-                        btn.classList.toggle('active', btn.getAttribute('data-status') === attemptObj.status);
-                        btn.onclick = () => {
-                                attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
-                                btn.classList.add('active');
-                                document.getElementById('attemptModalStatus').value = btn.getAttribute('data-status');
-                        };
-                });
+
+        function populateAttemptModal(route, attemptKey){
+            ensureAttemptModal();
+            console.log('populateAttemptModal', route, attemptKey);
+            // clear previous error
+            const errEl = document.getElementById('attemptModalError');
+            if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+
+            // Status / Grade / Note
+            route_status = route.status || 'climbed';
+            document.getElementById('attemptModalStatus').value = route_status;
+            document.getElementById('attemptModalGrade').value = route.user_grade || route.grade || '?';
+            document.getElementById('attemptModalNote').value = route.note || '';
+
+            // Stars
+            const starsVal = parseInt(route.route_stars || 0);
+            const starsInputs = document.querySelectorAll('#attemptStars input[name="attempt_stars"]');
+            starsInputs.forEach(r=>{ r.checked = false; });
+            if(starsVal >= 1 && starsVal <= 3){
+                const radio = document.getElementById('attemptStars'+starsVal);
+                if(radio) radio.checked = true;
+            }
+
+            // Route info section
+            const colorEl = document.getElementById('attemptRouteColor');
+            const nameEl = document.getElementById('attemptRouteName');
+            if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color2 || '', route.color_modifier || 'solid', '60px','30px', route.grade); }
+            if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
+
+            // Delete button visibility
+            const delBtn = document.getElementById('attemptModalDeleteBtn');
+            console.log('attemptKey for delete btn:', attemptKey);
+            delBtn.style.display = attemptKey ? '' : 'none'; 
+
+            // Status buttons UI + click handlers
+            attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-status') === route_status;
+                btn.classList.toggle('active', isActive);
+                btn.onclick = () => {
+                    attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('attemptModalStatus').value = btn.getAttribute('data-status');
+                };
+            });
+
+            attemptModalEl.style.display='flex';
         }
 
-    // Open attempt modal for a route that may not yet have an attempt (creation flow)
-    function openAttemptModalForRoute(routeData){
-        ensureAttemptModal();
-        if(!routeData || !routeData.id){ console.error('Route data missing'); return; }
-        currentRouteId = routeData.id; // keep for creation
-    const route = routeData; // gym route metadata used for new attempt creation
-        const errEl = document.getElementById('attemptModalError');
-        if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
-        // Prefill fields
-        document.getElementById('attemptModalStatus').value = 'climbed';
-        document.getElementById('attemptModalGrade').value = (route.grade || '');
-        
-        document.getElementById('attemptModalNote').value = '';
-        // clear stars for new attempt
-        document.querySelectorAll('#attemptStars input[name="attempt_stars"]').forEach(r=>{ r.checked = false; });
-        // Populate route info section for add/edit
-        const colorEl = document.getElementById('attemptRouteColor');
-        const gradeEl = document.getElementById('attemptRouteGrade');
-        const nameEl = document.getElementById('attemptRouteName');
-        if(colorEl){ colorEl.innerHTML = getColorSVGDiv(route.color1 || '', route.color2 || '', route.color_modifier || 'solid', '55px','25px'); }
-        if(gradeEl){ gradeEl.textContent = route.grade || ''; }
-        if(nameEl){ nameEl.textContent = route.name || route.routenum || ''; }
-        const delBtn = document.getElementById('attemptModalDeleteBtn');
-        if(delBtn){ delBtn.style.display = 'none'; }
-        attemptModalEl.style.display='flex';
-        attemptModalEl.querySelectorAll('.status-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-status') === 'climbed');
-            btn.onclick = () => {
-                attemptModalEl.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('attemptModalStatus').value = btn.getAttribute('data-status');
+        function openAttemptModal(attemptKey){
+            console.log('openAttemptModal', attemptKey);
+            ensureAttemptModal();
+            currentAttemptKey = attemptKey;
+
+            const attemptObj = (activity.attempts||[]).find(a => (a.attempt_id||a.route_id) === attemptKey);
+            if(!attemptObj){ console.error('Attempt not found'); return; }
+
+            // Build preset from existing attempt
+            const preset = {
+                showDelete: true
             };
-        });
-        // Hide the route selection modal if open
-        if(modal) modal.style.display='none';
-    }
-        function closeAttemptModal(){
-                if(attemptModalEl) attemptModalEl.style.display='none';
-                currentAttemptKey = null;
+
+            populateAttemptModal(attemptObj, attemptKey);
         }
-        function submitAttemptModal(e){
+
+        // Open attempt modal for a route that may not yet have an attempt (creation flow)
+        function openAttemptModalForRoute(routeData){
+            console.log('Opening attempt modal for route: openAttemptModalForRoute', routeData);
+            ensureAttemptModal();
+            if(!routeData || !routeData.id){ console.error('Route data missing'); return; }
+            currentRouteId = routeData.id; // keep for creation
+
+            // Preset defaults for new attempt
+            const preset = {
+                showDelete: false
+            };
+
+            populateAttemptModal(routeData, null);
+
+            // Hide the route selection modal if open
+            if(modal) modal.style.display='none';
+        }
+
+
+
+    function closeAttemptModal(){
+            if(attemptModalEl) attemptModalEl.style.display='none';
+            currentAttemptKey = null;
+    }
+    
+    function submitAttemptModal(e){
             e.preventDefault();
             // For new attempt, currentAttemptKey may be null; fallback to currentRouteId
             let attemptObj = null;
