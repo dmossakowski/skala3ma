@@ -21,6 +21,7 @@
             width: 100%;
             height: 100%;
             overflow: auto;
+            /*justify-content: left;*/
             background-color: rgba(0, 0, 0, 0.4);
         }
 
@@ -34,7 +35,7 @@
             
             display: flex;
             
-            justify-content: center;
+            
             align-items: center;
             text-align: center;
             font-size: 14px;
@@ -44,9 +45,9 @@
         /* Style for the close button */
         .close-button {
             position: absolute;
-            top: 20px;
+            top: 30px;
             right: 30px;
-            font-size: 30px;
+            font-size: 35px;
             color: #aaa;
             font-weight: bold;
             cursor: pointer;
@@ -147,9 +148,9 @@
                         </div>
 
 
-                <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData();">Create</button>&nbsp;
+                <button id='editbutton' type="button" class="btn btn-primary btn-lg" onclick="saveData();" data-translate-key="create">Create</button>&nbsp;
                 
-                <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()">Cancel</button>
+                <button id='cancelbutton' type="button" class="btn btn-secondary  btn-lg" onclick="closeDialog()" data-translate-key="cancel">Cancel</button>
             </div> 
             </div>
 

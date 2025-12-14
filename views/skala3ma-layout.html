@@ -7,7 +7,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 	<title>SKALA3MA</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicon.png">
-	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 	<meta name="description" content="skala3ma" />
 	<meta name="keywords" content="python, scikit, flask, gevent, Jinja2, matplotlib, pandas, plotly" />
 
@@ -25,6 +25,29 @@
           'GRAD' 0,
           'opsz' 64;
           font-size: 44px;
+        }
+
+        /* Mobile bottom nav safe-area and spacing */
+        .mobile-bottom-nav {
+            z-index: 1030; /* above content */
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+            padding-bottom: 12px; /* baseline gap from gesture area */
+        }
+        .mobile-bottom-nav .container-fluid { padding-top: 6px; padding-bottom: 6px; }
+
+        /* Use safe-area insets when available */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .mobile-bottom-nav {
+                padding-bottom: max(env(safe-area-inset-bottom), 12px);
+            }
+        }
+
+        /* Ensure page content isn't hidden behind the fixed mobile nav */
+        @media (max-width: 768px) {
+            body { padding-bottom: 84px; }
+            @supports (padding: env(safe-area-inset-bottom)) {
+                body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+            }
         }
         </style>
 	<link rel="shortcut icon" href="/public/images/favicon.png"/>
@@ -294,13 +317,13 @@ function initializeApp() {
 
 
             <!-- section shown below md width - mobile menu-->
-            <div class=" fixed-bottom    ml-auto d-block d-md-none  " 
-            style="background: #000; color: #53be6b ;  font-size: 16px">
+            <div class="fixed-bottom ml-auto d-block d-md-none mobile-bottom-nav" 
+            style="background: #fff; color: #53be6b; font-size: 16px">
                 
             <div class=" container-fluid   text-center">
               <div class="row">
                   <div class="col">
-                    <a href="/activities" >
+                    <a href="/myactivities" >
                 
                     <span class="material-symbols-outlined" style="font-size: 44px;color: #53be6b ">
                         add_circle
