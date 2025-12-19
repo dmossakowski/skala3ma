@@ -113,7 +113,7 @@
   var cell7 = row.insertCell(6);
   var cell8 = row.insertCell(7);
   cell1.innerHTML = '<input type="hidden" name="routeid" value="0"><input type="text" value="" name="routeline" id="routeline1" size=3/>';
-  cell2.innerHTML = '<input name="color1" type ="color" ><select type="select" name="color_modifier"><option name="solid" selected> solid</option><option name="marble" > marble</option></select>';
+  cell2.innerHTML = '<input name="color1" type ="color" ><input name="color2" type ="color" ><select type="select" name="color_modifier"><option name="solid" selected> solid</option><option name="marble" > marble</option></select>';
 
   cell3.innerHTML = '<input type="text" value="" name="routegrade" id="routegrade1" size="5"/>';
   cell4.innerHTML = '<input type="text" value="" name="routename" id="routenum1"/>';
@@ -202,8 +202,7 @@ function deleteRow(id) {
          <thead><tr>
          <th data-width="250" data-field="line" data-filter-control="input">{{ reference_data['current_language'].line }}</th>
          <th data-field="color1" data-filter-control="input">{{ reference_data['current_language'].color }}</th>
-
-         <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
+          <th data-field="track" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].grade }}</th>
          <th data-field="name" data-filter-control="input" data-editable="true">{{ reference_data['current_language'].route_name }}</th>
          <th data-field="openedby" data-filter-control="input">{{ reference_data['current_language'].route_opened_by }}</th>
          <th data-field="openeddate" data-filter-control="input">{{ reference_data['current_language'].route_opened_date }}</th>
@@ -219,7 +218,8 @@ function deleteRow(id) {
 			 <td><input type="hidden" name="routeid" value="{{ route['id']}}">
 				 {{loop.index}} <input type="text" value="{{ route['line'] }}" name="routeline" id="routeline1" size="3"/> </td>
 			 <td>
-				 <input name="color1" type ="color" value="{{ route['color1'] }}">
+				 1: <input name="color1" type ="color" value="{{ route['color1'] }}">
+				 2:    <input name="color2" type ="color" value="{{ route['color2'] }}">
 				 <select type="select" name="color_modifier">
 					 <option name="solid" value="solid" {% if route['color_modifier'] == 'solid' %}selected{% endif %} > {{reference_data['current_language'].solid}}</option>
 					 <option name="marble" value="marble" {% if route['color_modifier'] == 'marble' %}selected{% endif %} > {{reference_data['current_language'].marble}}</option>
