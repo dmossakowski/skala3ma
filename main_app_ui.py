@@ -2215,6 +2215,7 @@ def gym_routes_save(gymid, routesid):
     routeid = formdata['routeid']
     routeline = formdata['routeline']
     color1 = formdata['color1']
+    color2 = formdata['color2']
     #iscolor2same = formdata['iscolor2same']
     color_modifier = formdata['color_modifier']
     routegrade = formdata['routegrade']
@@ -2255,7 +2256,7 @@ def gym_routes_save(gymid, routesid):
     for i, routeline1 in enumerate(routeline):
         if routeid[i] == '0':
             routeid[i]=str(uuid.uuid4().hex)
-        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i],
+        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i], color2[i],
                                                      color_modifier[i], routegrade[i],
                                            routename[i], openedby[i], opendate[i], notes[i])
         routes.append(oneline)
