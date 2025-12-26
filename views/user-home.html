@@ -23,7 +23,7 @@
                 <!-- Left: User identity -->
                 <div class="col-sm-6">
                     <div class="summary-card" id="user-identity-card">
-                        <h3 class="mb-2">Hi <span id="ud-greeting-name"></span>!
+                        <h3 class="mb-2">Hej <span id="ud-greeting-name"></span>!
                            
                         </h3>
                         <div id="ud-profile-update-note" class="card-subtext" style="display:none;">
@@ -59,7 +59,7 @@
                     <div class="summary-card" id="managed-gyms-card">
                     <h5 data-translate-key="gyms_you_manage">Gyms you manage</h5>
                     <div id="managed-gyms-card-list" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;"></div>
-                    <div id="managed-gyms-empty" class="card-subtext">No permissioned gyms found.</div>
+                    <div id="managed-gyms-empty" class="card-subtext">-</div>
                         </div>
                 </div>
            
@@ -84,7 +84,7 @@
                     <div class="summary-card" id="managed-competitions-card">
                         <h5 data-translate-key="competitions_you_manage">Competitions you manage</h5>
                         <div id="managed-competitions-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
-                        <div id="managed-competitions-empty" class="card-subtext">No permissioned competitions found.</div>
+                        <div id="managed-competitions-empty" class="card-subtext">-</div>
                     </div>
                 </div>
             
@@ -318,11 +318,11 @@
                         if (els.homeNote) {
                             const clubName = (user.club || '').trim();
                             if (clubName) {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Update it on your profile. If your club "${clubName}" isn’t available yet, please <a href="/contact" style="color: #3caf57;">contact us</a> so we can add it. `+
+                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} If your club "${clubName}" isn’t available yet, please <a href="/contact" style="color: #3caf57;">contact us</a> so we can add it. `+
                                    
                                     ` `;
                             } else {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Please update your home gym on your profile. `;
+                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET}  `;
                             }
                             els.homeNote.style.display = 'block';
                         }
