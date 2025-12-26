@@ -158,7 +158,7 @@
     "competition_category_youth_1": "Youth 14-15",
     "competition_category_youth_2": "Youth 16-17",
     "activities": "Activities",
-    "add_activity": "Add activity",
+    "add_activity": "Add activity <i class=\"bi bi-plus-circle\"></i>",
     "delete_activity": "Delete activity",
     "activity": "Activity",
     "activity_name": "Activity name",
@@ -285,5 +285,12 @@
     "overview": "Overview",
     "competition_type": "Competition type",
     "topo": "Topo",
-    "Last": "Last"
+    "Last": "Last",
+    "general_permissions": "General permissions",
+    "actions": "Actions",
+    "edit_profile": "Edit profile <i class=\"bi bi-pencil-square\"></i>",
+    "gyms_you_manage": "Gyms you manage",
+    "home_gym": "Home gym",
+    "profile_missing_details": "Your profile is missing some details (first and/or last name). Please update your info.",
+    "home_gym_not_set": "Your home gym isn’t set."
 }

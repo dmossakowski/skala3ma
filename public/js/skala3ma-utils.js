@@ -545,5 +545,53 @@ function clearTranslations() {
             }
         });
 
+    function createAndRedirectToNewActiviity(gymId, activityName, activityDate) {
+
+        // validate the inputs, if gym id is none then return, if activity name is empty then set it to 'New Activity', if activity date is empty then set it to today's date
+        if (!gymId) {
+            console.error('Gym ID is required to create a new activity.');
+
+        }
+        if (!activityName) {
+            activityName = 'New Activity';
+        }
+        if (!activityDate) {
+            const today = new Date();
+            activityDate = today.toISOString().split('T')[0];
+        }
+        
+        const data = {
+            gym_id: gymId,
+            activity_name: activityName,
+            date: activityDate
+        };
 
 
+        fetch('/api1/activity', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                //console.log('error response',response.json)
+                //return Promise.reject(response);
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // redirect to the new activity page
+            window.location.href = "/activities/"+data.id;
+    
+        })
+        .catch(error => {
+            console.error('catch error:', error);
+            document.getElementById('hidden_message').textContent="{{ reference_data['current_language']['error5315'] }}";
+
+            
+            
+        });
+    }

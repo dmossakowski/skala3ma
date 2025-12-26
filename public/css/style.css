@@ -1391,7 +1391,7 @@ div.cs-select span {
 .cards-grid { display:flex; flex-wrap:wrap; gap:1rem; margin: 0 0.75rem 0rem 0.75rem; }
 
 /* Base card */
-.summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
+.summary-card { flex:1 1 220px; height: 95%; background:#f1f3f4; border-radius:12px; padding:1rem 1rem; margin: 0.2rem 0.2rem 0.2rem 0.2rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
 .summary-card.highlight { border:2px solid #2ecc71; }
 .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
 .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
@@ -1421,7 +1421,7 @@ div.cs-select span {
 .stats-row { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
 .stat-block { min-width:120px; }
 .stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
-.card-subtext { font-size:.55rem; opacity:.65; }
+.card-subtext { font-size:.85rem; opacity:.75; }
 .status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
 .status-badge { font-size:.7rem; }
 
@@ -1526,7 +1526,6 @@ div.cs-select span {
 /* Centered sections */
 #controversialSection { width:100%; }
 #controversialSection .section-title { text-align:center; }
-#controversialDetails { max-width:1100px; margin:0.75rem auto 0; }
 #timelineSection { width:100%; }
 #timelineSection .section-title { text-align:center; }
 #timeline { max-width:1100px; margin:0.75rem auto 0; }

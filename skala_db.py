@@ -874,6 +874,28 @@ def get_gym_by_gym_name(gym_name):
     return None
 
 
+def search_gym_by_name_address(search_string):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+
+    query = '''
+    SELECT jsondata FROM ''' + GYM_TABLE + '''
+    WHERE (lower(trim(json_extract(jsondata, '$.name'))) LIKE lower(trim(?)) 
+    OR lower(trim(json_extract(jsondata, '$.address'))) LIKE lower(trim(?))) 
+    LIMIT 10;
+    '''
+    
+    search_pattern = f'%{search_string}%'
+    rows = cursor.execute(query, [search_pattern, search_pattern])
+    
+    users = []
+    if rows is not None:
+        for row in rows.fetchall():
+            user = json.loads(row[0])
+            users.append(user)
+    
+    return users
+
 
 def get_gym_by_ref_id(ref_id):
     db = lite.connect(COMPETITIONS_DB)

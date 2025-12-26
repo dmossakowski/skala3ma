@@ -1,0 +1,428 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+
+    {% include "user-menu.html" %}
+	<div id="alertPlaceholder"></div>
+    <div>
+	   
+
+        <!-- Summary cards -->
+        <div id="user-home-cards">
+            <!-- Personal Details + Home Gym Row -->
+            <div class="row g-1" >
+                <!-- Left: User identity -->
+                <div class="col-sm-6">
+                    <div class="summary-card" id="user-identity-card">
+                        <h3 class="mb-2">Hi <span id="ud-greeting-name"></span>!
+                           
+                        </h3>
+                        <div id="ud-profile-update-note" class="card-subtext" style="display:none;">
+                            <span data-translate-key="profile_missing_details">Your profile is missing some details (first and/or last name). Please update your info.</span>
+                        </div>
+                        <div ><a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right: Home gym -->
+                <div class="col-sm-6 ">
+                    <div class="summary-card" id="user-homegym-card">
+                        <div class="d-flex align-items-center" style="gap:.75rem;">
+                            <a id="ud-greeting-gym-link" href="#" style="display:none;">
+                                <img id="ud-greeting-logo" class="route-gym-logo" alt="Gym logo" style="display:none;">
+                            </a>
+                               <h3 class="mb-0"><span data-translate-key="home_gym">Home gym</span>: <a id="ud-greeting-gym-text" href="#"></a>
+                                 
+                       </h3>
+                        </div>
+                        <div id="ud-homegym-update-note" class="card-subtext" style="display:none;">
+                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span>
+                            &nbsp;<a href="/user" class="btn btn-sm btn-outline-primary">Update your details</a>
+                        </div>
+                         <div ><a href="/user" class="btn btn-sm btn-success" title="Edit profile" data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>  <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
+                             
+                        </div>
+                    </div>
+                </div>
+           
+                
+                <div class="col-sm-6">
+                    <div class="summary-card" id="managed-gyms-card">
+                    <h5 data-translate-key="gyms_you_manage">Gyms you manage</h5>
+                    <div id="managed-gyms-card-list" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;"></div>
+                    <div id="managed-gyms-empty" class="card-subtext">No permissioned gyms found.</div>
+                        </div>
+                </div>
+           
+                <div class="col-sm-6">
+                    <div class="summary-card" id="user-actions-card">
+                    <h5 data-translate-key="actions">General permissions</h5>
+                    <div class="card-row" style="gap:.75rem; align-items:center;">
+                        <a id="action-create-gym" href="/gyms/add" class="btn btn-sm btn-success" style="display:none;">
+                            <span data-translate-key="create_gym">Create gym</span>
+                        </a>
+                        <a id="action-create-competition" href="/newCompetition" class="btn btn-sm btn-success" style="display:none;">
+                            <span data-translate-key="create_competition">Create competition</span>
+                        </a>
+                    </div>
+                   
+                    <div id="general-permissions-list-actions"></div>
+                        </div>
+                </div>
+            
+        </div>
+
+
+    </div>
+
+
+
+
+    <script>
+        var subheader_message = "{{ subheader_message }}";
+        var permissions = {};
+        if (subheader_message != "") {
+            showAlert(subheader_message, 'success');
+        }
+
+        var error_message = "{{ error_message }}";
+        if (error_message != "") {
+            showAlert(error_message, 'danger');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dbg = (...args) => { try { console.log('[gyms-home DEBUG]', ...args); } catch (_) {} };
+            const HOME_GYM_NOT_SET = "{{ reference_data['current_language'].home_gym_not_set }}";
+
+            const els = {
+                greetName: document.getElementById('ud-greeting-name'),
+                greetGymLink: document.getElementById('ud-greeting-gym-link'),
+                greetGymText: document.getElementById('ud-greeting-gym-text'),
+                greetLogo: document.getElementById('ud-greeting-logo'),
+                // home gym inline editing removed; go to /user
+                homeNote: document.getElementById('ud-homegym-update-note'),
+                managedGymsList: document.getElementById('managed-gyms-card-list'),
+                managedGymsEmpty: document.getElementById('managed-gyms-empty'),
+                managedGymsCard: document.getElementById('managed-gyms-card'),
+                actionsCard: document.getElementById('user-actions-card'),
+                actionsCreateGym: document.getElementById('action-create-gym'),
+                actionsCreateCompetition: document.getElementById('action-create-competition'),
+                generalPermsList: document.getElementById('general-permissions-list-actions')
+            };
+
+            const permissionLookup = {
+                'edit_competition': "<i class='bi bi-lock'></i> {{reference_data['current_language'].edit_competition}} ",
+                'create_competition': "<i class='bi bi-lock'></i> {{reference_data['current_language'].create_competition}} ",
+                'update_routes': "<i class='bi bi-lock'></i> {{reference_data['current_language'].update_routes}}  ",
+                'create_gym': "<i class='bi bi-lock'></i> {{reference_data['current_language'].create_gym}}  "
+            };
+
+            const setGreetingName = (user) => {
+                const nameVal = (user.firstname || user.name || '').trim();
+                const lastVal = (user.lastname || user.lstname || '').trim();
+                const nickVal = (user.nick || '').trim();
+                const nm = (nickVal || nameVal || user.fullname || '').trim();
+                if (els.greetName) els.greetName.textContent = nm || '';
+
+                const profileNote = document.getElementById('ud-profile-update-note');
+                if (profileNote) {
+                    const needsUpdate = (!nameVal || !lastVal);
+                    profileNote.style.display = needsUpdate ? 'block' : 'none';
+                }
+            };
+
+            const setGreetingGym = (gym, gid) => {
+                if (!gym) return;
+                if (els.greetGymText) {
+                    els.greetGymText.textContent = gym.name || '';
+                    els.greetGymText.href = `/gyms/${gid}`;
+                }
+                if (els.greetGymLink) {
+                    els.greetGymLink.href = `/gyms/${gid}`;
+                    els.greetGymLink.style.display = 'inline-block';
+                }
+                if (els.greetLogo) {
+                    if (gym.logo_img_id) {
+                        els.greetLogo.src = `/image/${gym.logo_img_id}`;
+                        els.greetLogo.style.display = 'inline-block';
+                        els.greetLogo.style.height = '64px';
+                        els.greetLogo.style.borderRadius = '6px';
+                        els.greetLogo.style.objectFit = 'scale-down';
+                    } else {
+                        els.greetLogo.style.display = 'none';
+                    }
+                }
+                if (els.homeNote) els.homeNote.style.display = 'none';
+            };
+
+            // Gym search removed; edits should be done on /user.
+
+            const renderManagedGyms = async (gymIds) => {
+                if (!Array.isArray(gymIds) || gymIds.length === 0) return;
+                const fetches = gymIds.map(id => apiFetchJson(`/api1/gym/${id}`).catch(() => null));
+                const gyms = await Promise.all(fetches);
+                gyms
+                    .filter(gym => gym && gym.id !== undefined && gym.name)
+                    .forEach(gym => {
+                        if (!els.managedGymsList) return;
+
+                        // Create a small tile with logo (if any) and the gym name below
+                        const tile = document.createElement('div');
+                        tile.style.display = 'flex';
+                        tile.style.flexDirection = 'column';
+                        tile.style.alignItems = 'center';
+                        tile.style.gap = '.25rem';
+
+                        const link = document.createElement('a');
+                        link.href = `/gyms/${gym.id}`;
+                        link.title = gym.name;
+
+                        if (gym.logo_img_id) {
+                            const img = document.createElement('img');
+                            img.src = `/image/${gym.logo_img_id}`;
+                            img.alt = `${gym.name} logo`;
+                            img.className = 'gym-logo-inline';
+                            img.loading = 'lazy';
+                            img.style.height = '64px';
+                            img.style.borderRadius = '6px';
+                            img.style.objectFit = 'cover';
+                            link.appendChild(img);
+                        }
+
+                        tile.appendChild(link);
+
+                        const nameAnchor = document.createElement('a');
+                        nameAnchor.href = `/gyms/${gym.id}`;
+                        nameAnchor.className = 'text-decoration-none';
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'small text-muted text-center';
+                        nameDiv.textContent = gym.name;
+                        nameAnchor.appendChild(nameDiv);
+                        tile.appendChild(nameAnchor);
+
+                        els.managedGymsList.appendChild(tile);
+                        if (els.managedGymsEmpty) els.managedGymsEmpty.style.display = 'none';
+                    });
+            };
+
+            const setupActions = (genPerms) => {
+                const canCreateGym = genPerms.includes('create_gym');
+                const canCreateCompetition = genPerms.includes('create_competition');
+                if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? 'inline-block' : 'none';
+                if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? 'inline-block' : 'none';
+            };
+
+            const renderGeneralPermissions = (perms) => {
+                if (!els.generalPermsList) return;
+                if (perms.godmode) {
+                    const div = document.createElement('div');
+                    div.innerHTML = "<i class='bi bi-lock'></i> Admin";
+                    els.generalPermsList.appendChild(div);
+                }
+                (perms.general || []).forEach(permission => {
+                    const div = document.createElement('div');
+                    div.innerHTML = permissionLookup[permission] || permission;
+                    els.generalPermsList.appendChild(div);
+                });
+            };
+
+            const init = async () => {
+                try {
+                    const user = await apiFetchJson('/api1/user');
+                    permissions = user.permissions || {};
+                    dbg('User payload:', { gymid: user.gymid, club: user.club, name: user.name, lastname: user.lastname, nick: user.nick });
+
+                    setGreetingName(user);
+
+                    const gid = user.gymid || null;
+                    if (gid) {
+                        try {
+                            const gym = await apiFetchJson(`/api1/gym/${gid}`);
+                            setGreetingGym(gym, gid);
+                        } catch (e) {
+                            dbg('Failed to fetch home gym', e);
+                        }
+                    } else {
+                        // No home gym set: show placeholder and contextual note
+                        if (els.greetGymLink) els.greetGymLink.style.display = 'none';
+                        if (els.greetLogo) els.greetLogo.style.display = 'none';
+                        if (els.greetGymText) {
+                            const clubName = (user.club || '').trim();
+                            els.greetGymText.textContent = clubName || '';
+                            els.greetGymText.removeAttribute('href');
+                        }
+                        // Hide Add Activity when no gymid
+                        const addActBtn = document.getElementById('action-add-activity');
+                        if (addActBtn) addActBtn.style.display = 'none';
+                        if (els.homeNote) {
+                            const clubName = (user.club || '').trim();
+                            if (clubName) {
+                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Update it on your profile. If your club "${clubName}" isn’t available yet, please <a href="/contact" style="color: #3caf57;">contact us</a> so we can add it. `+
+                                   
+                                    ` `;
+                            } else {
+                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Please update your home gym on your profile. `+
+                                    `<a href="/user" class="btn btn-sm btn-outline-primary ms-1">Update your details</a>`;
+                            }
+                            els.homeNote.style.display = 'block';
+                        }
+                    }
+
+                    const genPerms = Array.isArray(permissions.general) ? permissions.general : [];
+                    const hasAnyPerm = (genPerms.length > 0) || (permissions.godmode === true);
+                    if (!hasAnyPerm && els.actionsCard) {
+                        els.actionsCard.style.display = 'none';
+                    } else {
+                        setupActions(genPerms);
+                        renderGeneralPermissions(permissions);
+                    }
+                    const gymPerms = Array.isArray(permissions.gyms) ? permissions.gyms : [];
+                    if (gymPerms.length === 0) {
+                        if (els.managedGymsCard) els.managedGymsCard.style.display = 'none';
+                    } else {
+                        await renderManagedGyms(gymPerms);
+                    }
+                    // Hook up Add Activity action
+                    const addAct = document.getElementById('action-add-activity');
+                    if (addAct) {
+                        addAct.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const gid = user.gymid || null;
+                            if (!gid) {
+                                showAlert('Please set your home gym first', 'warning');
+                                return;
+                            }
+                            try {
+                                if (typeof createAndRedirectToNewActiviity === 'function') {
+                                    createAndRedirectToNewActiviity(gid, null, null);
+                                } else if (typeof window.createAndRedirectToNewActiviity === 'function') {
+                                    window.createAndRedirectToNewActiviity(gid, null, null);
+                                } else {
+                                    console.error('createAndRedirectToNewActiviity is not available');
+                                }
+                            } catch (err) {
+                                console.error('Failed to start new activity', err);
+                            }
+                        });
+                    }
+                    if (typeof replaceTranslations === 'function') { try { replaceTranslations(); } catch (e) {} }
+                } catch (e) {
+                    console.warn('Failed to initialize gyms home', e);
+                }
+            };
+
+            init();
+        });
+    </script>
+
+
+
+					</div>
+
+
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+				{% if competitions is none  %}
+
+				{% endif %}
+
+
+
+{% if climber is not none and climber is not undefined  %}
+
+				{% endif %}
+
+
+
+
+
+{% if competition is not none and competition is not undefined  %}
+
+
+<div class="container-fluid">
+<table class="table thead-dark table-hover" >
+         <thead><tr>
+         <th data-width="250" data-field="Time Added" data-filter-control="input">Name</th>
+         <th data-field="artist" data-filter-control="input">Sex</th>
+         <th data-field="track" data-filter-control="input">Club</th>
+
+         </tr>
+         </thead>
+    <tbody>
+         {# here we iterate over every item in our list which we will pass from bar() #}
+    				{% for climberId in competition['climbers'] %}
+
+		 <tr><td>{{ competition['climbers'][climberId]['name'] }}</td>
+					<td> {{ competition['climbers'][climberId]['sex'] }}</td> <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+
+                    </tr>
+             {% endfor %}
+
+
+         </tbody>
+     </table>
+
+
+</div>
+
+
+
+
+				{%endif %}
+
+{% if competitions is not none  %}
+
+
+
+
+
+					{% for competitionId in competitions %}
+
+
+<div class=" col-md-2 ">
+
+						<div id='albumArt{{ loop.index }}' class="fh5co-blog animate-box">
+
+							<a href="competitionDashboard/{{ competitionId }}">
+							<div class="blog-text">
+								<div class="prod-title">
+									<h4>{{ competitions[competitionId]['name'] }}</h4>
+									<span class="posted_by">{{ competitions[competitionId]['gym'] }}</span>
+									<br>
+									<span class="posted_by">{{ competitions[competitionId]['date'] }}</span>
+									<!--span class="comment"><a href="">21<i class="icon-bubble2"></i></a></span-->
+
+
+
+
+								</div>
+							</div>
+								</a>
+						</div>
+					</div>
+
+					 {% endfor %}
+
+
+
+
+
+{% endif %}
+
+
+			</div>
+		</div>
+	</div>
+
+{% endblock %}

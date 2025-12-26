@@ -171,7 +171,7 @@
     "competition_category_youth_1": "Nastolatki 14-15",
     "competition_category_youth_2": "Nastolatki 16-17",
     "activities": "Wyczyny",
-    "add_activity": "Dodaj wyczyn",
+    "add_activity": "Dodaj wyczyn <i class=\"bi bi-plus-circle\"></i>",
     "delete_activity": "Wymaż wyczyn",
     "activity": "Wyczyn",
     "activity_name": "Nazwa wyczynu",
@@ -297,5 +297,12 @@
     "overview": "Przegląd",
     "competition_type": "Typ zawodów",
     "topo": "Topo",
-    "last": "Ostatni"
+    "last": "Ostatni",
+    "general_permissions": "Uprawnienia ogólne",
+    "actions": "Akcje",
+    "edit_profile": "Edytuj profil <i class=\"bi bi-pencil-square\"></i>",
+    "gyms_you_manage": "Ścianki, którymi zarządzasz",
+    "home_gym": "Ścianka domowa",
+    "profile_missing_details": "Twój profil jest niekompletny (imię i/lub nazwisko). Zaktualizuj swoje dane.",
+    "home_gym_not_set": "Twoja ścianka domowa nie jest ustawiona."
 }
