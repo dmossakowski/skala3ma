@@ -24,6 +24,9 @@
 
 	{% block secondarycontent %}
 
+
+    {% include "gyms-menu.html" %}
+
 <!--script>
 $(document).ready(function () {
     $('#gymtable1').DataTable();
@@ -37,42 +40,6 @@ $(document).ready(function () {
 
 
 <!-- gyms.html -->
-
-    <div>
-		<div class="text-center heading-section">
-			<br>
-
-			    {% if gym is not none and gym is not undefined  %}
-                        not used
-						<img src="/image/{{ gym.get('logo_img_id') }}" width="120" >
-
-						<font size="+5"> {{ gym['name'] }}</font>
-						<a href="/gyms/{{gym['id']}}/edit" alt="{{gym['homepage']}}"><i class="icon-wrench"></i></a>
-							<a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/edit" alt="{{gym['homepage']}}"><i class="icon-list"></i></a>
-
-						<a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/download" alt="{{gym['homepage']}}"><i class="icon-download"></i></a>
-                        <a href="/gyms/{{gym['id']}}/{{gym['routesid']}}/csv" alt="{{gym['homepage']}}"><i class="icon-file"></i></a>
-						
-							<br>
-						{{ gym['address'] }} <i class="icon-location"></i><br>
-						<a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}<i class="icon-home"></i></a>
-
-					{% else %}
-						<h3>{{ reference_data['current_language'].gyms }} 
-
-						{% if can_create_gym is true %}
-                        <a href="/gyms/add" ><i class="bi bi-plus-circle-fill" style="font-size: 3rem; color: #53be6b;"></i></a>
-							
-						{% endif %}
-                        </h3>
-                        {% if can_create_competition is true %}
-							
-                        
-
-                        {% endif %}
-				{% endif %}
-		</div>
-    </div>
 
 
     <div class="container">

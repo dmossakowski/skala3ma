@@ -1494,16 +1494,8 @@ def get_user():
     if not user:
         return jsonify({'error': 'not_found'}), 404
     picture = user.get('gpictureurl') or user.get('fpictureurl') or user.get('picture')
-    return jsonify({
-        'email': user.get('email'),
-        'firstname': user.get('firstname'),
-        'lastname': user.get('lastname'),
-        'club': user.get('club'),
-        'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode')),
-        'picture': picture,
-        'permissions': user.get('permissions', {}),
-        'gymid': user.get('gymid')
-    })
+    user['picture'] = picture
+    return user
 
 
 @skala_api_app.route('/user/email')  
@@ -2233,6 +2225,29 @@ def gyms_list(field=None, value=None):
 
 
 
+@skala_api_app.route('/gyms/search/')
+def search_gyms():
+    search_string = request.args.get('q')
+    if search_string is None or len(search_string) < 2 or not search_string.isalnum():
+        return []
+
+    gyms=  skala_db.search_gym_by_name_address(search_string=search_string)
+    # remove email and permissions from the response
+    for gym in gyms:
+        gym.pop('email', None)
+        #user.pop('permissions', None)
+        gym.pop('isgod',None)
+        
+        if gym.get('fpictureurl') is not None:
+            gym['pictureurl'] = gym.get('fpictureurl')
+        if gym.get('gpictureurl') is not None:
+            gym['pictureurl'] = gym.get('gpictureurl')
+       
+    #json.dumps(users)
+    return gyms
+
+
+
 @skala_api_app.route('/gyms/names')
 def gyms_names(field=None, value=None):
     return skala_db.get_all_gym_names()
@@ -2257,6 +2272,9 @@ def gyms_list_by_field(field=None, value=None):
         if 'added_by' in gym:
             gym['added_by'] = gym['added_by'].split('@')[0]  # Remove part after @
         newgyms.append(gym)
+
+        # sort gyms by name
+    newgyms = sorted(newgyms, key=lambda x: x.get('name', '').lower())
 
     return newgyms
 

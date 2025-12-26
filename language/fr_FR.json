@@ -159,7 +159,7 @@
     "competition_category_youth_1": "Ado 14-15",
     "competition_category_youth_2": "Ado 16-17",
     "activities": "Activités",
-    "add_activity": "Ajouter une activité",
+    "add_activity": "Ajouter une activité <i class=\"bi bi-plus-circle\"></i>",
     "delete_activity": "Supprimer activité",
     "activity": "Activité",
     "activity_name": "Activité name",
@@ -286,5 +286,13 @@
     "overview": "Aperçu",
     "competition_type": "Type de compétition",
     "topo": "Topo",
-    "Last": "Dernier"
+    "Last": "Dernier",
+    "general_permissions": "Permissions générales",
+    "actions": "Actions",
+    "edit_profile": "Éditer le profil <i class=\"bi bi-pencil-square\"></i>",
+    "gyms_you_manage": "Salles que vous gérez",
+    "home_gym": "Salle principale",
+    "profile_missing_details": "Votre profil est incomplet (prénom et/ou nom). Veuillez mettre à jour vos informations.",
+    "home_gym_not_set": "Votre salle principale n’est pas définie. Veuillez mettre à jour votre salle principale dans votre profil.",
+    "competitions_you_manage": "Compétitions que vous gérez"
 }

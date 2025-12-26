@@ -1041,6 +1041,21 @@ def get_user():
 
 
 
+@app_ui.route('/profile')
+@login_required
+def get_user_home():
+    if session.get('email') is None:
+        return render_template('login.html', sortedA=None,
+                               reference_data=competitionsEngine.reference_data,
+                               subheader_message="No user found",
+                               **session)
+
+
+    return render_template('user-home.html',
+                           reference_data=competitionsEngine.reference_data,
+                            **session)
+
+
 # function to save user details 
 @app_ui.route('/updateuser')
 def update_user():
@@ -1117,7 +1132,7 @@ def update_user():
     if name is None:
         name = ""
 
-    return render_template('climber.html',
+    return render_template('user-home.html',
                            subheader_message=subheader_message,
                            competitionId=None,
                            climber=climber,
@@ -1138,7 +1153,7 @@ def myskala():
     competition={}
 
 
-    return render_template("myskala.html", 
+    return render_template("user-competition-results.html", 
                            subheader_message=subheader_message,
                            competition=competition,
                            reference_data=competitionsEngine.reference_data,
@@ -1171,7 +1186,7 @@ def get_mygyms():
     if name is None:
         name = ""
 
-    return render_template('gyms.html',
+    return render_template('gyms-home.html',
                            #subheader_message=subheader_message,
                            competitionId=None,
                            climber=climber,
@@ -1828,6 +1843,74 @@ def gyms():
                            home_gym=home_gym,
                            permissioned_gyms=permissioned_gyms,
                             **session)
+
+
+
+
+@app_ui.route('/gyms/search')
+def gyms_search():
+    fullname = request.args.get('fullname')
+    nick = request.args.get('nick')
+    email = request.args.get('email')
+    sex = request.args.get('sex')
+    club = request.args.get('club')
+    category = request.args.get('category')
+
+    ## for future usage to only show confirmed gyms
+    #gyms = competitionsEngine.get_gyms(status=competitionsEngine.reference_data.get('gym_status').get('confirmed'))
+    gyms = competitionsEngine.get_gyms()
+    
+    can_create_gym = False
+    email = session.get('email')
+    user = None
+    home_gym = None
+    permissioned_gyms = None
+    if email is not None:
+        user = competitionsEngine.get_user_by_email(email)
+        if user is None: # this happens when switching between dev and prod servers
+            session.clear()
+            return redirect("/")
+        u = User.from_dict(user)
+        home_gym = u.get_home_gym()
+        if home_gym is not None:
+            home_gym = competitionsEngine.get_gym(home_gym)
+        permissioned_gyms = competitionsEngine.get_gyms_by_ids(u.get_permissions('gyms'))
+
+        # Remove gyms already present in home_gym or permissioned_gyms
+        if home_gym and home_gym.get('id') in gyms:
+            del gyms[home_gym['id']]
+
+        if home_gym and home_gym.get('id') in permissioned_gyms:
+            del permissioned_gyms[home_gym['id']]
+
+        # remove permissioned gyms from rest of gyms    
+        if permissioned_gyms:
+            for gym_id in permissioned_gyms.keys():
+                if gym_id in gyms:
+                    del gyms[gym_id]
+
+    if user is not None:
+        can_create_gym = competitionsEngine.can_create_gym(user)
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    if not permissioned_gyms:
+        permissioned_gyms = None
+
+    return render_template('gyms-search.html',
+                           competitionId=None,
+                           user=user,
+                           gyms=gyms,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=email,
+                           logged_name=name,
+                           can_create_gym=can_create_gym,
+                           home_gym=home_gym,
+                           permissioned_gyms=permissioned_gyms,
+                            **session)
+
 
 
 

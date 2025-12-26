@@ -260,11 +260,11 @@ function initializeApp() {
 
                                {% if session is defined and session['expires_at'] is defined %}
                                <hr>
-                    <a href="/user" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a href="/profile" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
                         </a>
                 
-                    <a href="/user" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
+                    <a href="/profile" class="nav-link fs-4">{{ reference_data['current_language'].myprofile }}</a>
                     <a href="/myactivities" class="nav-link fs-4">{{ reference_data['current_language'].my_activities }}</a>
                     <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
                     <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
@@ -325,11 +325,9 @@ function initializeApp() {
             <div class=" container-fluid   text-center">
               <div class="row">
                   <div class="col">
-                    <a href="/myactivities" >
+                    <a href="/profile" >
                 
-                    <span class="material-symbols-outlined" style="font-size: 44px;color: #53be6b ">
-                        add_circle
-                        </span>
+                        <i  style="font-size: 32px;color: #53be6b " class="bi bi-activity"></i>
                         </a>
                    
                     
@@ -337,19 +335,15 @@ function initializeApp() {
                   <div  class="col">
                     <a href="/gyms" >
                 
-                    <span class="material-symbols-outlined" style="font-size: 44px;color: #53be6b ">
-                        elevation
-                        
-                        </span>
+                    <i  style="font-size: 32px;color: #53be6b " class="bi bi-bricks"></i>
                         </a>
                     
                   </div>
                   <div class="col">
                     <a href="/competitionDashboard" >
                 
-                    <span class="material-symbols-outlined" style="font-size: 44px;color: #53be6b ">
-                        trophy
-                        </span>
+                   
+                         <i  style="font-size: 32px;color: #53be6b " class="bi bi-trophy"></i>
                         </a>    
                   </div>
 
@@ -367,6 +361,8 @@ function initializeApp() {
 
 
             <ul class="navbar-nav ml-left">
+                <a class="nav-link fs-9 fw-bold " href="/profile" data-translate-key="myprofile">Home</a>
+                &nbsp;&nbsp;&nbsp;
 
                 <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/activities" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -426,13 +422,13 @@ function initializeApp() {
             {% if session is defined and session['expires_at'] is defined %}
 
                 <li  class="nav-item">
-                <a href="/user" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a href="/profile" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     
                 <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
                 
                 </a> 
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a href="/user" class="dropdown-item fs-7 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
+                    <a href="/profile" class="dropdown-item fs-7 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
 
                     <a href="/myactivities" class="dropdown-item fs-7">{{ reference_data['current_language'].my_activities }}</a>
 

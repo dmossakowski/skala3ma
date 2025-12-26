@@ -179,7 +179,16 @@ def _jwt_handoff_redirect(token: str, target: str) -> Response:
                     var isHttps = (window.location.protocol === 'https:');
                     var secure = isHttps ? '; Secure' : '';
                     // Use SameSite=Lax so cookie is sent on same-site navigations
-                    document.cookie = 'skala3ma_jwt=' + encodeURIComponent(t) + '; Path=/; SameSite=Lax' + secure;
+                    // Add cookie expiration (both Expires and Max-Age for compatibility)
+                    var days = 120; // adjust as needed
+                    var maxAge = days * 24 * 60 * 60; // seconds
+                    var expires = new Date(Date.now() + maxAge * 1000).toUTCString();
+                    document.cookie = 'skala3ma_jwt=' + encodeURIComponent(t)
+                        + '; Path=/'
+                        + '; SameSite=Lax'
+                        + '; Expires=' + expires
+                        + '; Max-Age=' + maxAge
+                        + secure;
                 }
             } catch(e) {}
             try {
@@ -646,7 +655,7 @@ def googleauth_reply():
         )
     except Exception:
         token = ''
-    target = session.get('wants_url') or '/'
+    target = session.get('wants_url') or '/profile'
     return _jwt_handoff_redirect(token, target)
 
 
@@ -703,7 +712,7 @@ def email_login():
             )
         except Exception:
             token = ''
-        target = session.get('wants_url') or '/'
+        target = session.get('wants_url') or '/profile'
         return _jwt_handoff_redirect(token, target)
 
     log_request_details('User failed login '+email)
@@ -753,21 +762,13 @@ def confirm_email(type, token):
 
 
 def after_login(user, email):
-    if user.get('club') is None or user.get('club').strip() == '' or user.get('firstname') is None or user.get('firstname').strip() == '':
-        return render_template('climber.html',
+    return render_template('user-home.html',
                         reference_data=competitionsEngine.reference_data,
                         email=email,
                         climber=user,
                         logged_email=email)
 
-    if user.get('gymid') is not None:
-        return redirect("/gyms/"+user.get('gymid'))
-    
-    return redirect('/')
-        #render_template('competitionDashboard.html',
-            #              reference_data=competitionsEngine.reference_data,
-            #             email=email,
-            #            error=error)
+   
 
 
 def log_request_details(msg=''):

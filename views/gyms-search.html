@@ -1,0 +1,124 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+    {% include "gyms-menu.html" %}
+
+
+<!-- gyms.html -->
+
+
+    <div>
+        <!-- Search bar styled like activities page -->
+        <div id="gymSearch" class="card-search">
+            <div class="filter-grid">
+                <div class="filter-group" style="width:100%">
+                  
+                    <input id="gym-search" type="search" class="form-control" placeholder="Search gyms" />
+                   
+                </div>
+            </div> 
+        </div>
+       
+        <!-- Cards grid consistent with activities page -->
+        <div id="gyms-grid" class="container-fluid"></div>
+    </div>
+
+
+	<script>
+	// Uses apiFetch from skala3ma-util.js (included via base layout)
+	document.addEventListener('DOMContentLoaded', () => {
+		const grid = document.getElementById('gyms-grid');
+		const searchInput = document.getElementById('gym-search');
+
+		const renderGyms = (gyms) => {
+			try {
+				if (!Array.isArray(gyms)) {
+					gyms = gyms ? Object.values(gyms) : [];
+				}
+			} catch (e) {
+				gyms = [];
+			}
+
+			if (!gyms || gyms.length === 0) {
+				grid.innerHTML = '<div class="empty-state">No gyms found.</div>';
+				return;
+			}
+
+			grid.innerHTML = gyms.map((gym) => {
+				const id = gym.id ?? gym['id'];
+				const name = gym.name ?? gym['name'] ?? '';
+				const logoId = gym.logo_img_id ?? gym['logo_img_id'] ?? gym.logoimg;
+				const address = gym.address ?? gym['address'] ?? '';
+				const date = gym.date ?? gym['date'] ?? '';
+				const logoHTML = logoId ? `<img class="route-gym-logo" src="/image/${logoId}" alt="${name} logo" loading="lazy">` : '<img class="route-gym-logo" src="/public/images/fsgt-logo-me.png" alt="${name} logo" loading="lazy">';
+				return `
+					<div class="route-dis-card">
+						<div class="row g-3 align-items-center">
+							<div class="col-auto">${logoHTML}</div>
+							<div class="col">
+								<a href="/gyms/${id}" class="unstyled-link">
+									<div class="summary-metric lh-1">${name}</div>
+									${address ? `<div class="card-meta">${address}</div>` : ''}
+									${date ? `<div class="card-subtext">${date}</div>` : ''}
+								</a>
+							</div>
+						</div>
+					</div>`;
+			}).join('');
+			if (typeof replaceTranslations === 'function') {
+				replaceTranslations();
+			}
+		};
+
+		const loadAllGyms = async () => {
+			try {
+				const resp = await apiFetch('/api1/gyms');
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+				const gyms = await resp.json();
+				renderGyms(gyms);
+			} catch (e) {
+				console.error('Failed to load gyms', e);
+				renderGyms([]);
+			}
+		};
+
+		let searchTimer = null;
+		const doSearch = async (q) => {
+			const query = (q || '').trim();
+			if (query.length < 2) {
+				return loadAllGyms();
+			}
+			try {
+				const resp = await apiFetch(`/api1/gyms/search?q=${encodeURIComponent(query)}`);
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+				const gyms = await resp.json();
+				renderGyms(gyms);
+			} catch (e) {
+				console.error('Search failed', e);
+			}
+		};
+
+		searchInput.addEventListener('input', (e) => {
+			const q = e.target.value;
+			clearTimeout(searchTimer);
+			searchTimer = setTimeout(() => {
+				doSearch(q);
+			}, 300);
+		});
+
+		loadAllGyms();
+	});
+	</script>
+
+
+{% endblock %}
