@@ -78,6 +78,15 @@
                     <div id="general-permissions-list-actions"></div>
                         </div>
                 </div>
+                
+                <!-- Competitions you manage -->
+                <div class="col-sm-6">
+                    <div class="summary-card" id="managed-competitions-card">
+                        <h5>Competitions you manage</h5>
+                        <div id="managed-competitions-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
+                        <div id="managed-competitions-empty" class="card-subtext">No permissioned competitions found.</div>
+                    </div>
+                </div>
             
         </div>
 
@@ -214,6 +223,49 @@
                     });
             };
 
+            const renderManagedCompetitions = async (compIds) => {
+                if (!Array.isArray(compIds) || compIds.length === 0) return;
+                try {
+                    const comps = await apiFetchJson('/api1/competition/list');
+                    const compIdSet = new Set(compIds.map(id => String(id)));
+                    const filtered = (Array.isArray(comps) ? comps : []).filter(c => compIdSet.has(String(c.id)));
+
+                    if (filtered.length === 0) {
+                        if (els.managedCompetitionsEmpty) els.managedCompetitionsEmpty.style.display = 'block';
+                        return;
+                    }
+
+                    filtered.forEach(c => {
+                        const item = document.createElement('div');
+                        item.className = 'd-flex flex-column';
+                        item.style.gap = '.125rem';
+
+                        const titleLink = document.createElement('a');
+                        titleLink.href = c.url || `/competitionDetails/${c.id}`;
+                        titleLink.textContent = c.title || `Competition ${c.id}`;
+                        titleLink.className = 'fw-semibold';
+
+                        const subtitle = document.createElement('div');
+                        subtitle.className = 'small text-muted';
+                        const parts = [];
+                        if (c.date) parts.push(String(c.date));
+                        if (c.gym) parts.push(String(c.gym));
+                        subtitle.textContent = parts.join(' • ');
+
+                        item.appendChild(titleLink);
+                        item.appendChild(subtitle);
+
+                        if (els.managedCompetitionsList) {
+                            els.managedCompetitionsList.appendChild(item);
+                        }
+                    });
+
+                    if (els.managedCompetitionsEmpty) els.managedCompetitionsEmpty.style.display = 'none';
+                } catch (e) {
+                    console.warn('Failed to fetch competitions list', e);
+                }
+            };
+
             const setupActions = (genPerms) => {
                 const canCreateGym = genPerms.includes('create_gym');
                 const canCreateCompetition = genPerms.includes('create_competition');
@@ -289,6 +341,17 @@
                         if (els.managedGymsCard) els.managedGymsCard.style.display = 'none';
                     } else {
                         await renderManagedGyms(gymPerms);
+                    }
+
+                    // Competitions card
+                    els.managedCompetitionsCard = document.getElementById('managed-competitions-card');
+                    els.managedCompetitionsList = document.getElementById('managed-competitions-list');
+                    els.managedCompetitionsEmpty = document.getElementById('managed-competitions-empty');
+                    const compPerms = Array.isArray(permissions.competitions) ? permissions.competitions : [];
+                    if (compPerms.length === 0) {
+                        if (els.managedCompetitionsCard) els.managedCompetitionsCard.style.display = 'none';
+                    } else {
+                        await renderManagedCompetitions(compPerms);
                     }
                     // Hook up Add Activity action
                     const addAct = document.getElementById('action-add-activity');

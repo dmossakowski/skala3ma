@@ -1132,7 +1132,7 @@ def update_user():
     if name is None:
         name = ""
 
-    return render_template('climber.html',
+    return render_template('user-home.html',
                            subheader_message=subheader_message,
                            competitionId=None,
                            climber=climber,
