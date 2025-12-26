@@ -48,7 +48,7 @@
                             <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span>
                             &nbsp;<a href="/user" class="btn btn-sm btn-outline-primary">Update your details</a>
                         </div>
-                         <div ><a href="/user" class="btn btn-sm btn-success" title="Edit profile" data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>  <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
+                         <div style="margin: 10px 0px 0 0"><a href="/user" class="btn btn-sm btn-success" title="Edit profile" data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>  <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
                              
                         </div>
                     </div>
@@ -270,8 +270,7 @@
                                    
                                     ` `;
                             } else {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Please update your home gym on your profile. `+
-                                    `<a href="/user" class="btn btn-sm btn-outline-primary ms-1">Update your details</a>`;
+                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} Please update your home gym on your profile. `;
                             }
                             els.homeNote.style.display = 'block';
                         }
