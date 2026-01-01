@@ -1228,7 +1228,7 @@ def get_competition_by_id(competition_id):
 
     if competition is None:
         return {"error": "competition not found"}
-    return competition
+    return jsonify(competition)
 
 
 

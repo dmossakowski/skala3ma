@@ -75,46 +75,122 @@
 .routes-bar { width:3px; background:#198754; border-radius:2px 2px 0 0; animation:grow .4s ease-out; }
 @keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
 </style>
-<div id="climberList">
-	{# iterate over climbers preserving existing Jinja notation #}
-	{% for climberId in competition['climbers'] %}
-		{% set c = competition['climbers'][climberId] %}
-		<div class="climber-row">
-			<div class="climber-name">
-				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ c['name'] }}</b></a>
-				
-				{% set rs = c.get('registration_status','')|lower %}
-				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="registered" title="Registered"> </span>
-				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="waitlist" title="Waitlist">waitlist-key</span>
-				<span class="climber-meta">{% if c['registration_timestamp'] %} {{ c['registration_timestamp'] | strftime(format='short') }} {% endif %}</span>
-                {% if c.get('present') %}
-				<span class="presence-badge present" title="Present">✔</span>
-                
-				{% endif %}
-			</div>
-			<div class="climber-meta">
-				<span>{{ c['sex'] }}</span>
-				<span><i>{{ c['club'] }}</i></span>
-				{# Determine category translation key based on competition_type (0 adult, 1 youth) and category index #}
-				{% set cat_prefix = 'adult' if competition['competition_type'] == 0 else 'youth' %}
-				{% set cat_key = 'competition_category_' ~ cat_prefix ~ '_' ~ c['category'] %}
-				<span data-translate-key="{{ cat_key }}">{{ reference_data['current_language'].get(cat_key, reference_data['categories'][c['category']]) }}</span>
-				{# Thin bars indicator: one bar per route up to 50 #}
-				{% set route_count = c['routesClimbed']|length %}
-				{% set maxbars = 50 %}
-				{% set show = maxbars if route_count > maxbars else route_count %}
-				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
-                <div class="routes-bars" aria-label="{{ route_count }} routes" title="{{ route_count }} routes climbed">
-					{% for i in range(show) %}
-					<span class="routes-bar" style="height:{% if route_count>0 %}{{ 6 + ( (i / show) * 8 )|round(0,'floor') }}{% else %}0{% endif %}px"></span>
-					{% endfor %}
-				
-                <span>{{ route_count }}</span></div></a>
-			
-			</div>
-		</div>
-	{% endfor %}
-</div>
+<div id="climberList"></div>
+<script>
+(function(){
+	if (typeof apiFetchJson !== 'function' && typeof apiFetch !== 'function') { console.error('apiFetch/apiFetchJson global helper missing'); return; }
+
+	const container = document.getElementById('climberList');
+	if(!container) return;
+
+	// Determine competition ID from URL or Jinja fallback
+	const path = window.location.pathname;
+	let match = path.match(/competitionClimberList\/([^\/]+)/);
+	if(!match){ match = path.match(/competition\/([^\/]+)/); }
+	const competitionIdFromJinja = {{ competition['id'] | default('') | tojson }};
+	const competitionId = (match && match[1]) ? match[1] : (competitionIdFromJinja || '');
+	if(!competitionId){ console.error('Cannot determine competitionId'); return; }
+
+	function createEl(tag, cls){ const el = document.createElement(tag); if(cls) el.className = cls; return el; }
+	function textEl(tag, text, cls){ const el = createEl(tag, cls); el.textContent = text; return el; }
+	function getCatKey(compType, category){ const prefix = (compType === 0) ? 'adult' : 'youth'; return `competition_category_${prefix}_${category}`; }
+	function fmtDate(val){
+		if(val == null) return '';
+		try{
+			const d = (typeof val === 'number') ? new Date(val*1000) : new Date(val);
+			if(isNaN(d.getTime())) return '';
+			return d.toLocaleDateString();
+		} catch(e){ return ''; }
+	}
+
+	const fetchComp = (typeof apiFetchJson === 'function')
+		? apiFetchJson(`/api1/competition/${competitionId}`)
+		: apiFetch(`/api1/competition/${competitionId}`).then(r => { if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+
+	fetchComp
+		.then(comp => {
+			if(!comp || !comp.climbers){ container.textContent = ''; return; }
+			container.textContent = '';
+			const entries = Object.entries(comp.climbers);
+			entries.forEach(([climberId, c]) => {
+				const row = createEl('div', 'climber-row');
+				const nameRow = createEl('div', 'climber-name');
+				const metaRow = createEl('div', 'climber-meta');
+
+				// Name + link
+				const nameLink = document.createElement('a');
+				nameLink.href = `/competitionRoutesEntry/${competitionId}/climber/${climberId}`;
+				const nameBold = document.createElement('b');
+				nameBold.textContent = c.name || '';
+				nameLink.appendChild(nameBold);
+				nameRow.appendChild(nameLink);
+
+				// Registration status badges
+				const rs = (c.registration_status || '').toLowerCase();
+				const registered = createEl('span', `reg-status registered ${ (rs.includes('register') && !rs.includes('wait')) ? 'show' : 'hide' }`);
+				registered.setAttribute('data-translate-key', 'registered');
+				registered.title = 'Registered';
+				registered.textContent = typeof getTranslation === 'function' ? (getTranslation('registered') || '') : '';
+				nameRow.appendChild(registered);
+
+				const waitlist = createEl('span', `reg-status waitlist ${ rs.includes('wait') ? 'show' : 'hide' }`);
+				waitlist.setAttribute('data-translate-key', 'waitlist');
+				waitlist.title = 'Waitlist';
+				waitlist.textContent = typeof getTranslation === 'function' ? (getTranslation('waitlist') || 'waitlist-key') : 'waitlist-key';
+				nameRow.appendChild(waitlist);
+
+				// Registration date
+				const regSpan = textEl('span', fmtDate(c.registration_timestamp), 'climber-meta');
+				nameRow.appendChild(regSpan);
+
+				// Presence badge
+				if(c.present){
+					const pres = createEl('span', 'presence-badge present');
+					pres.title = 'Present';
+					pres.textContent = '✔';
+					nameRow.appendChild(pres);
+				}
+
+				// Meta: sex, club, category, routes bars
+				metaRow.appendChild(textEl('span', c.sex || ''));
+				const clubEl = createEl('span');
+				const ital = document.createElement('i'); ital.textContent = c.club || ''; clubEl.appendChild(ital);
+				metaRow.appendChild(clubEl);
+
+				const catKey = getCatKey(comp.competition_type, c.category);
+				const catSpan = createEl('span');
+				catSpan.setAttribute('data-translate-key', catKey);
+				catSpan.textContent = typeof getTranslation === 'function' ? (getTranslation(catKey) || '') : '';
+				metaRow.appendChild(catSpan);
+
+				const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
+				const maxbars = 50;
+				const show = routeCount > maxbars ? maxbars : routeCount;
+				const editLink = document.createElement('a');
+				editLink.href = `/competitionRoutesEntry/${competitionId}/climber/${climberId}`;
+				editLink.setAttribute('alt', 'Click to edit');
+				const bars = createEl('div', 'routes-bars');
+				bars.setAttribute('aria-label', `${routeCount} routes`);
+				bars.title = `${routeCount} routes climbed`;
+				for(let i=0;i<show;i++){
+					const bar = createEl('span', 'routes-bar');
+					const h = routeCount>0 ? Math.floor(6 + ( (i / (show||1)) * 8 )) : 0;
+					bar.style.height = `${h}px`;
+					bars.appendChild(bar);
+				}
+				const countSpan = textEl('span', String(routeCount));
+				bars.appendChild(countSpan);
+				editLink.appendChild(bars);
+				metaRow.appendChild(editLink);
+
+				row.appendChild(nameRow);
+				row.appendChild(metaRow);
+				container.appendChild(row);
+			});
+		})
+		.catch(err => { console.error('Failed to load competition', err); });
+})();
+</script>
 
 
 
