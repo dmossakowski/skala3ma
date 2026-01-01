@@ -1295,7 +1295,23 @@ def new_competition_post():
         return "{ 'error'; 'Not authorized'}"
 
     if name is not None and date is not None and routesid is not None:
-        competitionId = competitionsEngine.addCompetition(None, name, date, routesid)
+        # Basic defaults for API-based creation
+        max_participants = request.form.get('max_participants') or 80
+        competition_type = request.form.get('competition_type') or 0
+        instructions = request.form.get('instructions') or ""
+        calc_strategy = request.form.get('calc_strategy')
+
+        competitionId = competitionsEngine.addCompetition(
+            None,
+            user.get('id') if user else None,
+            name,
+            date,
+            routesid,
+            max_participants,
+            competition_type=competition_type,
+            instructions=instructions,
+            calc_strategy=calc_strategy
+        )
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = competitionsEngine.getCompetition(competitionId)
         return comp
@@ -1459,7 +1475,7 @@ def setClimberAsPresent(competitionId,climberId,present):
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competitionId)
 
-    if not competitionsEngine.can_update_routes(user,competition):
+    if not competitionsEngine.can_update_routes(user,None):
         return {"error": "not authorized"}
 
     if climberId is not None:

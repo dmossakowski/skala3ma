@@ -13,6 +13,20 @@
 
 		{% include "competition-menu.html" %}
 
+		<script>
+			// Default to empty strings when Jinja variables are undefined
+			alertMessage = {{ alert_message | default('') | tojson }};
+			infoMessage = {{ info_message  | default('') | tojson }};
+
+            console.log("Alert message: ", alertMessage);
+
+            if (alertMessage != '') {
+                showAlert(alertMessage, 'danger')
+            }
+            if (infoMessage != '') {
+                showAlert(infoMessage, 'info')
+            }
+        </script>
         <!-- competitionClimberList.html -->
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="container">
@@ -23,7 +37,9 @@
 						<h3>{{ reference_data['current_language'].competition_climber_list }} <br>
 								{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
 
+
 						<font color="red">	{{ reference_data['current_language'][error_code] }} </font>
+                        <font color="red">	{{ reference_data['current_language'][error_code] }} </font>
 
 					    </div>
                     </div>
@@ -31,49 +47,6 @@
 
 
 
-
-{% if climber is not none and climber is not undefined  %}
-climber is not none
-<div class="container-flex">
-	<div class="row">
-				{{ reference_data['current_language'].name}} {{ climber['name'] }}
-	            ({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
-
-
-
-				{{ climber['routesClimbed'] }}
-
-    </div>
-</div>
-
-	<div class="table-responsive">
-			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
-            <table class="table"><tr>
-
-					{% for i in range(100) %}
-                    <td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %} ></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button class="btn btn-success btn-lg">Submit</button>
-				</form>
-
-</div>
-	</div>
-				{% endif %}
 
 
 
@@ -87,7 +60,7 @@ climber is not none
 .climber-row { display:flex; flex-direction:column; padding:.5rem .75rem; border:1px solid #ddd; border-radius:4px; background:#fff; }
 @media (min-width:600px){ .climber-row { flex-direction:row; align-items:center; } }
 .climber-name { font-size:1.2rem; font-weight:500; display:flex; align-items:center; gap:.5rem; }
-.presence-badge { display:inline-block; width:1.25rem; height:1.25rem; line-height:1.25rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
+.presence-badge { display:inline-block; width:1.35rem; height:1.25rem; line-height:1.25rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
 .presence-badge.present { background:#198754; color:#fff; }
 .presence-badge.absent { background:#6c757d; color:#fff; }
 .climber-meta { display:flex; flex-wrap:wrap; gap:.75rem; font-size:.9rem; margin-top:.25rem; }
@@ -113,8 +86,10 @@ climber is not none
 				{% set rs = c.get('registration_status','')|lower %}
 				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="registered" title="Registered"> </span>
 				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="waitlist" title="Waitlist">waitlist-key</span>
+				<span class="climber-meta">{% if c['registration_timestamp'] %} {{ c['registration_timestamp'] | strftime(format='short') }} {% endif %}</span>
                 {% if c.get('present') %}
-				<span class="presence-badge present" title="Present" >✔</span>
+				<span class="presence-badge present" title="Present">✔</span>
+                
 				{% endif %}
 			</div>
 			<div class="climber-meta">

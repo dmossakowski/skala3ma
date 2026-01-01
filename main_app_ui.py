@@ -830,11 +830,15 @@ def new_competition():
             clubs.append ({'gymname':gymname, 'gymid':gymid, 'routesid':routeid, 'routesname':routes[routeid]['name']})
 
 
+    # Strategy options for selection
+    available_strategies = competitionsEngine.CalculationStrategy.list_available_strategies()
+
     return render_template('newCompetition.html',
                            competitionName=None,
                            session=session,
                            gyms=gyms,
                            clubs=clubs,
+                           available_strategies=available_strategies,
                            reference_data=competitionsEngine.reference_data,
 
                             **session)
@@ -857,6 +861,7 @@ def new_competition_post():
     competition_type = request.form.get('competition_type')
     max_participants = request.form.get('max_participants')
     instructions = request.form.get('instructions')
+    calc_strategy = request.form.get('calc_strategy')
 
     comp = {}
     competitionId = None
@@ -868,7 +873,8 @@ def new_competition_post():
     added_by = user['id']
     if name is not None and date is not None and routesid is not None and max_participants is not None:
         competitionId = competitionsEngine.addCompetition(None, added_by, name, date, routesid, max_participants,
-                                                          competition_type=competition_type, instructions=instructions)
+                                  competition_type=competition_type, instructions=instructions,
+                                  calc_strategy=calc_strategy)
         # now if an image was provided, save it under the competition id
         # there is only one main image allowed per competition for now
         # any new image will overwrite the previous one
@@ -935,7 +941,7 @@ def addCompetitionClimber(competitionId):
         error_code = "error5321"
 
     if dob is not None:
-        category = competitionsEngine.get_category_from_dob(dob)   
+        category = competitionsEngine.get_category_from_dob(dob, comp.get('calc_type'))   
         if category == -1:
             error_code = "error5325"
 
@@ -1092,7 +1098,8 @@ def update_user():
     error_message = ''
     categoryold = request.args.get('category')
 
-    category = competitionsEngine.get_category_from_dob(dob)
+    # the following is only done to validate the dob; category is not used later
+    category = competitionsEngine.get_category_from_dob(dob, 1)
     if category == -1:
         #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
         error_message='error5325'
@@ -1238,7 +1245,6 @@ def getCompetition(competitionId):
                                    **session)
 
 
-    subheader_message = "CompetitionDetails '" + competition['name'] + "' on "+competition['date']
 
     # library= {}
     # library['tracks'] = tracks
@@ -1254,7 +1260,6 @@ def getCompetition(competitionId):
 
     return render_template("competitionDetails.html", competitionId=competitionId,
                            competition=competition,
-                           subheader_message=subheader_message,
                            reference_data=competitionsEngine.reference_data,
                            library=None,
                            **session)
@@ -1562,19 +1567,18 @@ def downloadCompetitionCsv(competitionId):
                      "attachment; filename=competitionresults.csv"})
 
 
-
-@app_ui.route('/competitionRoutesEntry/<competitionId>')
-@login_required
+# Climbers link for a competition
+@app_ui.route('/climbers/<competitionId>')
 def competitionRoutesList(competitionId):
     #competitionId = request.args.get('competitionId')
 
-    user = competitionsEngine.get_user_by_email(session['email'])
+    user = competitionsEngine.get_user_by_email(session.get('email'))
 
     competition = competitionsEngine.getCompetition(competitionId)
 
     error_code = ""
-    if not competitionsEngine.can_update_routes(user,competition):
-        error_code = "error5314"
+    #if not competitionsEngine.can_update_routes(user,competition):
+    #    error_code = "error5314"
 
     gymid = competition['gym']
     #gym = competitionsEngine.get_gym(gymid)
@@ -1582,11 +1586,6 @@ def competitionRoutesList(competitionId):
 
     if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
         competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
-
-
-
-
-
 
     return render_template("competitionClimberList.html",
                            error_code=error_code,
@@ -1598,12 +1597,13 @@ def competitionRoutesList(competitionId):
 
 
 
+
 @app_ui.route('/competitionRoutes/<competitionId>')
-@login_required
+#@login_required
 def competitionRoutes(competitionId):
     #competitionId = request.args.get('competitionId')
 
-    user = competitionsEngine.get_user_by_email(session['email'])
+    user = competitionsEngine.get_user_by_email(session.get('email'))
 
     competition = competitionsEngine.getCompetition(competitionId)
 
@@ -1668,8 +1668,10 @@ def routes_climbed(competitionId, climberId):
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competitionId)
 
-    if not competitionsEngine.can_update_routes(user,competition):
-        return redirect(url_for('app_ui.competitionRoutesList', competitionId=competitionId))
+    can_update_routes = competitionsEngine.has_permission_for_competition(competitionId, user)
+    can_update_routes_for_competition = competitionsEngine.can_update_routes(user, competition)
+
+    #    return redirect(url_for('app_ui.competitionRoutesList', competitionId=competitionId))
 
 
     routesid = competition.get('routesid')
@@ -1678,20 +1680,20 @@ def routes_climbed(competitionId, climberId):
     climber_name = climber.get('name')
     climber_club = climber.get('club')
 
-    #routes = routes['routes']
-    subheader_message = str(climber_name)+" - "+str(climber_club)
 
     if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
         competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
 
     return render_template("competitionRoutesEntry.html", climberId=climberId,
+                           can_update_routes=can_update_routes,
+                           can_update_routes_for_competition=can_update_routes_for_competition,
                            climber=climber,
                            routes=routes,
-                           subheader_message=subheader_message,
                            competition=competition,
                            competitionId=competitionId,
                            reference_data=competitionsEngine.reference_data,
                            **session)
+
 
 
 @app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
@@ -1699,6 +1701,7 @@ def routes_climbed(competitionId, climberId):
 def update_routes_climbed(competitionId, climberId):
     # generate array of marked routes from HTTP request
     routesUpdated = []
+    error_message = ""
     for i in range(100):
         routeChecked = request.form.get("route"+str(i)) != None
         if routeChecked:
@@ -1713,8 +1716,8 @@ def update_routes_climbed(competitionId, climberId):
 
         if len(routesUpdated) > 0:
             competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-            if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
-                competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
+        if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
+            competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
 
             return render_template('competitionClimberList.html',
                                    competition=competition,
@@ -1726,30 +1729,28 @@ def update_routes_climbed(competitionId, climberId):
         climber = competitionsEngine.getClimber(competitionId,climberId)
 
     if climber is None:
-        return render_template('competitionDashboard.html', sortedA=None,
-                               subheader_message="No climber found",
-                               **session)
+        error_message = "No climber found"
+
+
     elif climber is LookupError:
         return render_template('competitionDashboard.html', sortedA=None,
                                    getPlaylistError="error  ",
                                    library={},
                                    **session)
-    elif len(climber) == 0:
-        return render_template('competitionDashboard.html', sortedA=None,
-                                   getPlaylistError="Playlist has no tracks or it was not found",
-                                   library={},
-                                   **session)
+    
 
     competition = competitionsEngine.getCompetition(competitionId)
 
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    info_message = "Success for "+climber['name']+"   from "+climber['club']
 
-    return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
+
+    return render_template("competitionClimberList.html", climberId=climberId, climber=climber,
                            routes=routes,
-                           subheader_message=subheader_message,
+                           info_message=info_message,
+                           error_message=error_message,
                            competition=competition,
                            competitionId=competitionId,
                            reference_data=competitionsEngine.reference_data,

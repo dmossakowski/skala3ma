@@ -172,7 +172,7 @@ email_sender = EmailSender(
 
 
 # called from main_app_ui
-def addCompetition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions):
+def addCompetition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_strategy=None):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -195,7 +195,7 @@ def addCompetition(compId, added_by, name, date, routesid, max_participants, com
                    "routesid": routesid, "status": "preopen", "climbers": {},
                    "max_participants": max_participants,
                    "results": copy.deepcopy(CalculationStrategy.emptyResults),
-                   "calc_type": CalculationStrategy.calc_type_fsgt1,
+                   "calc_type": CalculationStrategy.normalize_strategy_key(calc_strategy) if calc_strategy is not None else 'fsgt1',
                    "competition_type":competition_type,
                    "status" : competition_status_created,
                    "routes": routes.get('routes'),
@@ -454,12 +454,11 @@ def update_competition(competitionId, competition):
     _update_competition(competitionId, competition)
 
 
-
+# check and remove (this is part of CalculationStrategy) 
 def get_route_repeats(sex, comp):
-    if comp['calc_type'] == CalculationStrategy.calc_type_fsgt0:
-        return CalculationStrategyFsgt0._getRouteRepeats(None, sex, comp)
-    else:
-        return CalculationStrategyFsgt1._getRouteRepeats(None, sex, comp)
+    # Use resolved strategy
+    strategy = CalculationStrategy.create_strategy(comp.get('calc_type'))
+    return strategy._getRouteRepeats(sex, comp)
 
 
 def recalculate(competitionId, comp=None):
@@ -471,15 +470,8 @@ def recalculate(competitionId, comp=None):
             if comp is None:
                 return
         
-        # Choose the strategy based on the calculationType
-        if comp['calc_type'] == CalculationStrategy.calc_type_fsgt0:
-            strategy = CalculationStrategyFsgt0()
-        elif comp['calc_type'] == 1:
-            strategy = CalculationStrategyFsgt1()
-        elif comp['calc_type'] == 'ffme0':
-            strategy = CalculationStrategyFfme0()
-        else:
-            raise ValueError("Invalid calculationType")
+        # Resolve calculation strategy via registry (supports legacy ints and slugs)
+        strategy = CalculationStrategy.create_strategy(comp.get('calc_type'))
 
         # Use the strategy to recalculate the competition
         strategy.recalculate(comp)
@@ -496,15 +488,15 @@ def get_sorted_rankings(competition):
     
     
     rankings = {}
-    rankings['F'] = []
-    rankings['M'] = []
+    rankings['F'] = [] # only used for FSGT0
+    rankings['M'] = [] # only used for FSGT0
     rankings['0F'] = []
     rankings['1F'] = []
     rankings['2F'] = []
     rankings['0M'] = []
     rankings['1M'] = []
     rankings['2M'] = []
-    rankings['A'] = []
+    rankings['A'] = [] # replaces M and F rankings after men's and women's points were combined in FSGT1
     #rankings['club'] = []
 
     # scratch first
@@ -524,7 +516,8 @@ def get_sorted_rankings(competition):
     # do not generate rankings for all users together for the fsgt0 calculation
     # because in fsgt0 points for each route are divided separately by men and woman
     # so it does not make sense to rank them together
-    if (competition.get('calc_type') != CalculationStrategy.calc_type_fsgt0):
+    # Only build the 'A' ranking when strategy is not fsgt0 (sex-separated)
+    if CalculationStrategy.normalize_strategy_key(competition.get('calc_type')) != 'fsgt0':
         for itemid in sorted(competition.get('climbers'),
                          key=lambda k: (competition.get('climbers')[k]['score']),
                          reverse=True):
@@ -1015,29 +1008,10 @@ def get_all_competition_ids():
     return skala_db.get_all_competition_ids()
 
 
-def get_category_from_dob(dob):
-        if dob is None:
-            return -1
-        dob = datetime.strptime(dob, "%Y-%m-%d")
-        # Calculate the age
-        today = datetime.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        
-        # Determine the category based on age
-        if 18 <= age <= 49:
-            return 0
-        elif 50 <= age <= 64:
-            return 1
-        elif age >= 65:
-            return 2
-        elif 12 <= age <= 13:
-            return 0
-        elif 14 <= age <= 15:
-            return 1
-        elif 16 <= age <= 17:
-            return 2
-        else:
-            return -1  # Return -1 if age does not fit any category
+def get_category_from_dob(dob, calc_type):
+    # Dispatch to strategy-specific category if provided; otherwise base logic
+    category = CalculationStrategy.get_category_from_dob_for(dob, calc_type)
+    return category
 
 
 def get_user_emails_with_competition_id(competition_id):
@@ -1336,6 +1310,7 @@ def can_edit_users(user):
 def is_god(user):
     return user.get('permissions').get('godmode') == True
 
+
 def competition_can_be_deleted(competition):
     climbers = competition.get('climbers')
     
@@ -1347,12 +1322,35 @@ def competition_can_be_deleted(competition):
     return True
     
 
+
+# can update routes if:
+# user has update_routes general permission
+# competition is in scoring or inprogress status
+# user has permission for the given competition
+def has_permission_update_routes(user):
+    if user is None: 
+        return False
+    
+    permissions = user.get('permissions')
+
+    if 'update_routes' in permissions.get('general', []):
+        return True
+
+    return False
+
 # can update routes if:
 # user has update_routes general permission
 # competition is in scoring or inprogress status
 # user has permission for the given competition
 def can_update_routes(user, competition):
+    if user is None: 
+        return False
+    
     permissions = user.get('permissions')
+
+    if competition is None:
+        if 'update_routes' in permissions.get('general', []):
+            return True
 
     if 'update_routes' in permissions['general'] \
             and competition['status'] in [competition_status_scoring, competition_status_inprogress]\

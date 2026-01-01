@@ -59,6 +59,14 @@
                                             <label for="competition_type">{{ reference_data['current_language'].competition_type_adult_fsgt }} / {{ reference_data['current_language'].competition_type_ado_fsgt }}</label>
                                         </div>
                                         <div class="form-floating mb-3">
+                                            <select class="form-control" id="calc_strategy" name="calc_strategy">
+                                                {% for s in available_strategies %}
+                                                <option value="{{ s['slug'] }}">{{ s['label'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <label for="calc_strategy">Calculation Strategy</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
                                             <input type="number" class="form-control" id="max_participants" name="max_participants" placeholder="Max Participants" size="30" value="80">
                                             <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
                                         </div>

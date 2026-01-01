@@ -9,30 +9,36 @@
 
 
 	{% block secondarycontent %}
-	<div  >
+	
 	{% include "competition-menu.html" %}
 
-    <div class="container">
-        <div class="row">
+    <script>
+        can_update_routes = {{ 'true' if can_update_routes else 'false' }};
+        can_update_routes_for_competition = {{ 'true' if can_update_routes_for_competition else 'false' }};
 
-					<div class=" text-left heading-section">
-						<br>
-						<h3> {{ subheader_message }}
-                        </h3>
+    </script>
 
-						<!-- Presence switch added under subheader -->
-							<div id="presenceContainer" class="form-check form-switch d-flex align-items-center" style="--bs-form-switch-width:4em;">
-								<input class="form-check-input" type="checkbox" role="switch" id="climberPresent" name="climberPresent"
-									   style="transform:scale(1.4); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %}>
-								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1rem;">
-									{% if climber and climber.get('present') %}
-										<span class="badge bg-success" data-translate-key="Present"> present-key </span>
-									{% else %}
-										<span class="badge bg-secondary" data-translate-key="Absent"> absent-key </span>
-									{% endif %}
+
+    <div class="container-fluid">
+        <div class="row-1 align-items-center text-center">
+    
+            				<div id="presenceContainer" class="  d-flex align-items-center text-center justify-content-center">
+                              
+								    <span class="heading-title">{{ climber['firstname'] }} {{ climber['lastname'] }} - {{ climber['club'] }} </span>
+								    <input class="form-check-input" type="checkbox" role="switch" id="climberPresent" name="climberPresent"
+									    style="margin: 0 0 0 20px;transform:scale(1.8); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %} {% if not can_update_routes %}disabled{% endif %}>
+                                        <span id="presenceLock" class="ms-2 text-muted {% if can_update_routes %}d-none{% endif %}" ><i class="bi bi-lock-fill"></i></span>
+								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1.2rem;">
+									<span id="presentBadge" class="badge bg-success {% if not (climber and climber.get('present')) %}d-none{% endif %}" style="font-size:1.0rem;" data-translate-key="Present">present-key</span>
+									<span id="absentBadge" class="badge bg-secondary {% if climber and climber.get('present') %}d-none{% endif %}" style="font-size:1.0rem;" data-translate-key="Absent">absent-key</span>
 								</span>
+								    
+                               
+                                 
 							</div>
-							
+                          
+              
+             
 						<script>
 						// Presence switch logic using global apiFetch from skala3ma-utils.js
 						(function(){
@@ -62,14 +68,33 @@
 							const climberId = match[2];
 							const sw = document.getElementById('climberPresent');
 							const status = document.getElementById('presentStatus');
+							const lockEl = document.getElementById('presenceLock');
 							if(!sw || !status) return;
 
+							const canUpdateRoutes = (typeof can_update_routes === 'string') ? (can_update_routes === 'true') : !!can_update_routes;
+							if(!canUpdateRoutes){
+								sw.disabled = true;
+								if(lockEl){ lockEl.classList.remove('d-none'); }
+							} else {
+								if(lockEl){ lockEl.classList.add('d-none'); }
+							}
+
 							function renderBadge(isPresent){
-                                
-                                var presentLang = getTranslation('Present') || 'present-key';
+
+	                                var presentLang = getTranslation('Present') || 'present-key';
 							    var absentLang = getTranslation('Absent') || 'absent-key';
-                            
-								status.innerHTML = isPresent ? '<span class="badge bg-success">' + presentLang + '</span>' : '<span class="badge bg-secondary">' + absentLang + '</span>';
+								const presentBadge = document.getElementById('presentBadge');
+								const absentBadge = document.getElementById('absentBadge');
+								if(!presentBadge || !absentBadge) return;
+								presentBadge.textContent = presentLang;
+								absentBadge.textContent = absentLang;
+								if(isPresent){
+									presentBadge.classList.remove('d-none');
+									absentBadge.classList.add('d-none');
+								} else {
+									presentBadge.classList.add('d-none');
+									absentBadge.classList.remove('d-none');
+								}
 							}
 
 							// Initial fetch to sync presence
@@ -84,6 +109,7 @@
 								.catch(err => { console.warn('Presence load failed', err); });
 
 							sw.addEventListener('change', function(){
+								if(!canUpdateRoutes){ return; }
 								const endpoint = sw.checked ? `/api1/competition/${competitionId}/climber/${climberId}/present/True` : `/api1/competition/${competitionId}/climber/${climberId}/present/False`;
 								renderBadge(sw.checked);
 								apiFetch(endpoint, { method: 'POST' })
@@ -96,29 +122,35 @@
 							});
 						})();
 						</script>
+                      
+			</div>
 
-					</div>
+        </div>
+    </div>
 
-</div></div>
+{% if routes is not none and routes is not undefined   %}
+<br><br>
 
-{% if routes is not none and routes is not undefined  %}
-
-
-<div class="container">
+<div class="container-fluid">
 
 <form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}" method="post">
-<h2><input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
+<h2>
+	<input type="submit" class="btn btn-lg btn-primary" value="{{ reference_data['current_language'].save}}" {% if not can_update_routes_for_competition %}disabled{% endif %}>
+    <span id="presenceLock" class="ms-2 text-muted {% if can_update_routes %}d-none{% endif %}" ><i class="bi bi-lock-fill"></i></span>
+							
+	<span id="saveLock" class="ms-2 text-muted {% if can_update_routes_for_competition %}d-none{% endif %}"><i class="bi bi-lock-fill"></i></span>
+</h2>
 
-<div class="row">
-         {# here we iterate over every item in our list which we will pass from bar() #}
+    <div class="row m-0">
+				 {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 		 
-		 <div class="col-3" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
-		 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb){cb.checked=!cb.checked;} return false;">
+				 <div class="col-2" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
+				 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb && !cb.disabled){cb.checked=!cb.checked;} return false;">
 			  <font style="text-shadow: 0px 0px 4px white; font-size: 2.4rem"><b>{{ route['routenum'] }}</b> </font>  
               
                 <input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
-                              onclick="event.stopPropagation();" style="width: 2rem; height: 2rem;"
+															onclick="event.stopPropagation();" style="width: 2rem; height: 2rem;" {% if not can_update_routes_for_competition %}disabled{% endif %}
                        {% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
                        >
                    
@@ -127,7 +159,7 @@
 
 			 
 
-            </div>
+        </div>
 						 {% endfor %}
 <script>
 (function(){
@@ -147,7 +179,17 @@
 
 </div>
 
+{% else  %}
 
+    {% if not can_update_routes_for_competition %}
+        <div class="alert alert-warning" role="alert" data-translate-key="no_permission_update_routes">
+            You do not have permission to update routes for this competition.
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert" data-translate-key="no_routes_defined_competition">
+            No routes have been defined for this competition.
+        </div>
+    {% endif %}
 
 
 				{%endif %}
