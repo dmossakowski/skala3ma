@@ -51,7 +51,6 @@
 
 
 
-{% if competition is not none and competition is not undefined  %}
 
 <!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
 <style>
@@ -75,13 +74,14 @@
 .routes-bar { width:3px; background:#198754; border-radius:2px 2px 0 0; animation:grow .4s ease-out; }
 @keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
 </style>
-<div id="climberList"></div>
+<div id="climberTable"></div>
 <script>
 (function(){
 	if (typeof apiFetchJson !== 'function' && typeof apiFetch !== 'function') { console.error('apiFetch/apiFetchJson global helper missing'); return; }
+	if (typeof Tabulator === 'undefined') { console.error('Tabulator not available'); return; }
 
-	const container = document.getElementById('climberList');
-	if(!container) return;
+	const tableEl = document.getElementById('climberTable');
+	if(!tableEl) return;
 
 	// Determine competition ID from URL or Jinja fallback
 	const path = window.location.pathname;
@@ -91,8 +91,6 @@
 	const competitionId = (match && match[1]) ? match[1] : (competitionIdFromJinja || '');
 	if(!competitionId){ console.error('Cannot determine competitionId'); return; }
 
-	function createEl(tag, cls){ const el = document.createElement(tag); if(cls) el.className = cls; return el; }
-	function textEl(tag, text, cls){ const el = createEl(tag, cls); el.textContent = text; return el; }
 	function getCatKey(compType, category){ const prefix = (compType === 0) ? 'adult' : 'youth'; return `competition_category_${prefix}_${category}`; }
 	function fmtDate(val){
 		if(val == null) return '';
@@ -109,83 +107,63 @@
 
 	fetchComp
 		.then(comp => {
-			if(!comp || !comp.climbers){ container.textContent = ''; return; }
-			container.textContent = '';
-			const entries = Object.entries(comp.climbers);
-			entries.forEach(([climberId, c]) => {
-				const row = createEl('div', 'climber-row');
-				const nameRow = createEl('div', 'climber-name');
-				const metaRow = createEl('div', 'climber-meta');
-
-				// Name + link
-				const nameLink = document.createElement('a');
-				nameLink.href = `/competitionRoutesEntry/${competitionId}/climber/${climberId}`;
-				const nameBold = document.createElement('b');
-				nameBold.textContent = c.name || '';
-				nameLink.appendChild(nameBold);
-				nameRow.appendChild(nameLink);
-
-				// Registration status badges
-				const rs = (c.registration_status || '').toLowerCase();
-				const registered = createEl('span', `reg-status registered ${ (rs.includes('register') && !rs.includes('wait')) ? 'show' : 'hide' }`);
-				registered.setAttribute('data-translate-key', 'registered');
-				registered.title = 'Registered';
-				registered.textContent = typeof getTranslation === 'function' ? (getTranslation('registered') || '') : '';
-				nameRow.appendChild(registered);
-
-				const waitlist = createEl('span', `reg-status waitlist ${ rs.includes('wait') ? 'show' : 'hide' }`);
-				waitlist.setAttribute('data-translate-key', 'waitlist');
-				waitlist.title = 'Waitlist';
-				waitlist.textContent = typeof getTranslation === 'function' ? (getTranslation('waitlist') || 'waitlist-key') : 'waitlist-key';
-				nameRow.appendChild(waitlist);
-
-				// Registration date
-				const regSpan = textEl('span', fmtDate(c.registration_timestamp), 'climber-meta');
-				nameRow.appendChild(regSpan);
-
-				// Presence badge
-				if(c.present){
-					const pres = createEl('span', 'presence-badge present');
-					pres.title = 'Present';
-					pres.textContent = '✔';
-					nameRow.appendChild(pres);
+			const rows = [];
+			if(comp && comp.climbers){
+				for(const [climberId, c] of Object.entries(comp.climbers)){
+					const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
+					const rs = (c.registration_status || '').toLowerCase();
+					const catKey = getCatKey(comp.competition_type, c.category);
+					const catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
+					rows.push({
+						id: climberId,
+						name: c.name || '',
+						sex: c.sex || '',
+						club: c.club || '',
+						category: catLabel,
+						routes: routeCount,
+						registeredOn: fmtDate(c.registration_timestamp),
+						present: !!c.present,
+						status: rs.includes('wait') ? 'Waitlist' : (rs.includes('register') ? 'Registered' : '')
+					});
 				}
+			}
 
-				// Meta: sex, club, category, routes bars
-				metaRow.appendChild(textEl('span', c.sex || ''));
-				const clubEl = createEl('span');
-				const ital = document.createElement('i'); ital.textContent = c.club || ''; clubEl.appendChild(ital);
-				metaRow.appendChild(clubEl);
-
-				const catKey = getCatKey(comp.competition_type, c.category);
-				const catSpan = createEl('span');
-				catSpan.setAttribute('data-translate-key', catKey);
-				catSpan.textContent = typeof getTranslation === 'function' ? (getTranslation(catKey) || '') : '';
-				metaRow.appendChild(catSpan);
-
-				const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
-				const maxbars = 50;
-				const show = routeCount > maxbars ? maxbars : routeCount;
-				const editLink = document.createElement('a');
-				editLink.href = `/competitionRoutesEntry/${competitionId}/climber/${climberId}`;
-				editLink.setAttribute('alt', 'Click to edit');
-				const bars = createEl('div', 'routes-bars');
-				bars.setAttribute('aria-label', `${routeCount} routes`);
-				bars.title = `${routeCount} routes climbed`;
-				for(let i=0;i<show;i++){
-					const bar = createEl('span', 'routes-bar');
-					const h = routeCount>0 ? Math.floor(6 + ( (i / (show||1)) * 8 )) : 0;
-					bar.style.height = `${h}px`;
-					bars.appendChild(bar);
+			const table = new Tabulator(tableEl, {
+				data: rows,
+				layout: "fitDataStretch",
+				responsiveLayout: "collapse",
+				responsiveLayoutCollapseStartOpen: true,
+				initialSort: [
+					{column: "name", dir: "asc"}
+				],
+				columns: [
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Name') || 'Name') : 'Name'), field: "name", responsive: 0, headerSort: true,
+						formatter: function(cell){
+							const d = cell.getRow().getData();
+							const url = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
+							const val = cell.getValue() || '';
+							return `<a href="${url}"><b>${val}</b></a>`;
+						}
+					},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Registered') || 'Registered') : 'Registered'), field: "status", responsive: 1,
+						formatter: function(cell){
+							const v = (cell.getValue() || '').toLowerCase();
+							if(v === 'registered') return '<span class="reg-status registered show" data-translate-key="registered">Registered</span>';
+							if(v === 'waitlist') return '<span class="reg-status waitlist show" data-translate-key="waitlist">Waitlist</span>';
+							return '';
+						}
+					},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Present') || 'Present') : 'Present'), field: "present", responsive: 2, hozAlign: "center", formatter: "tickCross", width: 100},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Registered Date') || 'Registered Date') : 'Registered Date'), field: "registeredOn", responsive: 3},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Club') || 'Club') : 'Club'), field: "club", responsive: 4},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Category') || 'Category') : 'Category'), field: "category", responsive: 5},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Sex') || 'Sex') : 'Sex'), field: "sex", responsive: 6},
+					{title: (typeof getTranslation === 'function' ? (getTranslation('Routes') || 'Routes') : 'Routes'), field: "routes", responsive: 7, hozAlign: "right"},
+				],
+				rowClick: function(e, row){
+					const d = row.getData();
+					window.location.href = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
 				}
-				const countSpan = textEl('span', String(routeCount));
-				bars.appendChild(countSpan);
-				editLink.appendChild(bars);
-				metaRow.appendChild(editLink);
-
-				row.appendChild(nameRow);
-				row.appendChild(metaRow);
-				container.appendChild(row);
 			});
 		})
 		.catch(err => { console.error('Failed to load competition', err); });
@@ -197,8 +175,6 @@
 
 
 
-
-				{%endif %}
 
 
 
