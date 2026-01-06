@@ -139,7 +139,7 @@
 			 <td>	<b>{{ climber['name'] }}</b></a></td>
 
 			 <td><i>{{climber['club'] }}</i></td>
-			 <td><i>  {{ reference_data['categories'][climber['category']] }}  </i></td>
+			 <td><i> {{ reference_data['categories'][climber['category']] }} - {{ reference_data['current_language'].get('competition_category_'+competition['age_category_type']+ '_' +competition['competition_type']+ '_' + climber['category']|string) }}  </i></td>
 			 <td>{{ climber['routesClimbed']|length }}  </i></td>
 			 <td>{{ climber['score'] }}  </td>
 

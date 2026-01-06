@@ -11,7 +11,7 @@
 
 
     
-<div name='container' style="  margin: 0.1rem 0.1rem ">
+<div name='container-fluid' style="  margin: 0.1rem 0.1rem ">
 
 <!-- styles migrated to global stylesheet -->
 
@@ -157,7 +157,7 @@
                 
                 const key = r.route_id || r.id;
                 if(!routeDisagreements[key]){
-                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '' };
+                    routeDisagreements[key] = { route_id:key, grade:r.grade, gym_id:act.gym_id, gym_name:g.gym_name, occurrences:0, disagreements:0, userGrades:new Set(), name:r.name || ('#'+(r.routenum||'')), openedby: r.openedby || '', opendate: r.opendate || '', statuses:{ climbed:0, flashed:0, attempted:0 }, color1: r.color1 || '', color_modifier: r.color_modifier || '', line: r.line };
                 } else {
                     // Fill openedby/opendate if missing and present on this route occurrence
                     if(!routeDisagreements[key].openedby && r.openedby) routeDisagreements[key].openedby = r.openedby;
@@ -253,7 +253,7 @@
                 
                 const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
                 const meta = document.createElement('div'); meta.className = 'route-meta';
-                meta.innerHTML = `<div class='route-name'>${r.name || 'Unnamed'}</div>
+                meta.innerHTML = `<div class='route-name'>${r.line}: ${r.name || 'Unnamed'}</div>
                     <div class='route-gym'>${r.gym_name}</div>
                    
                     <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;

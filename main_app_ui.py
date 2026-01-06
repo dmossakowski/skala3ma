@@ -485,6 +485,9 @@ def competition_admin_post(competition_id):
             print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id]['name'])
             # Set to a default value or handle the error as appropriate
             competition['climbers'][climber_id]['category'] = 0  # Replace default_value with whatever default you wish to use
+        # TODO check but this is probably not necessary so commenting it out
+        # competitionsEngine.update_competition_climbers_category(competition, competition.get('competition_type'))
+
         competitionsEngine.update_competition(competition['id'], competition)
 
     if competition_update_button is not None:
@@ -831,14 +834,14 @@ def new_competition():
 
 
     # Strategy options for selection
-    available_strategies = competitionsEngine.CalculationStrategy.list_available_strategies()
+    calc_types  = competitionsEngine.CalculationStrategy.list_calc_types()
 
     return render_template('newCompetition.html',
                            competitionName=None,
                            session=session,
                            gyms=gyms,
                            clubs=clubs,
-                           available_strategies=available_strategies,
+                           calc_types=calc_types,
                            reference_data=competitionsEngine.reference_data,
 
                             **session)
@@ -861,8 +864,8 @@ def new_competition_post():
     competition_type = request.form.get('competition_type')
     max_participants = request.form.get('max_participants')
     instructions = request.form.get('instructions')
-    calc_strategy = request.form.get('calc_strategy')
-
+    calc_type = request.form.get('calc_type')
+    calc_type = 'fsgt2' # for now we force fsgt2
     comp = {}
     competitionId = None
 
@@ -874,7 +877,7 @@ def new_competition_post():
     if name is not None and date is not None and routesid is not None and max_participants is not None:
         competitionId = competitionsEngine.addCompetition(None, added_by, name, date, routesid, max_participants,
                                   competition_type=competition_type, instructions=instructions,
-                                  calc_strategy=calc_strategy)
+                                  calc_type=calc_type)
         # now if an image was provided, save it under the competition id
         # there is only one main image allowed per competition for now
         # any new image will overwrite the previous one
@@ -941,7 +944,7 @@ def addCompetitionClimber(competitionId):
         error_code = "error5321"
 
     if dob is not None:
-        category = competitionsEngine.get_category_from_dob(dob, comp.get('calc_type'))   
+        category = competitionsEngine.get_category_from_dob(dob, comp.get('date'))   
         if category == -1:
             error_code = "error5325"
 
@@ -1099,7 +1102,7 @@ def update_user():
     categoryold = request.args.get('category')
 
     # the following is only done to validate the dob; category is not used later
-    category = competitionsEngine.get_category_from_dob(dob, 1)
+    category = competitionsEngine.get_category_from_dob(dob, datetime.now().strftime('%Y-%m-%d'))
     if category == -1:
         #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
         error_message='error5325'
@@ -1568,6 +1571,7 @@ def downloadCompetitionCsv(competitionId):
 
 
 # Climbers link for a competition
+# to do - remove competition from this but this requires changes in menu and elsewhere
 @app_ui.route('/climbers/<competitionId>')
 def competitionRoutesList(competitionId):
     #competitionId = request.args.get('competitionId')
@@ -1599,7 +1603,6 @@ def competitionRoutesList(competitionId):
 
 
 @app_ui.route('/competitionRoutes/<competitionId>')
-#@login_required
 def competitionRoutes(competitionId):
     #competitionId = request.args.get('competitionId')
 

@@ -15,11 +15,10 @@ class CalculationStrategy:
     # Legacy integer codes (kept for backward compatibility)
     calc_type_fsgt0 = 0
     calc_type_fsgt1 = 1
-    calc_type_fsgt2 = 2
 
     # Strategy registry: slug -> {"class": cls, "label": str}
     registry = {}
-    legacy_map = {0: 'fsgt0', 1: 'fsgt1', 2: 'fsgt2'}
+    legacy_map = {0: 'fsgt0', 1: 'fsgt1'}
 
     @classmethod
     def register(cls, slug, strategy_class, label=None):
@@ -29,23 +28,38 @@ class CalculationStrategy:
 
     @classmethod
     def normalize_strategy_key(cls, key):
-        # Accept int legacy codes, string slugs, or None
+        """
+        Normalize a calculation strategy key to a registered slug.
+        - Accepts legacy ints (0/1/2), numeric strings, or existing slugs.
+        """
+     
+        # None -> default base
         if key is None:
-            return 'fsgt1'  # default
+            return f"fsgt1"
+
+        # Legacy int -> base 
         if isinstance(key, int):
-            return cls.legacy_map.get(key, 'fsgt1')
+            base = cls.legacy_map.get(key, None)
+            return f"{base}"
+
+
+        # String handling
         if isinstance(key, str):
-            # If a numeric string, treat as legacy int
-            try:
-                n = int(key)
-                return cls.legacy_map.get(n, 'fsgt1')
-            except ValueError:
+            # first check if it's already a known slug
+            if key in cls.registry:
                 return key
-        # Fallback
-        return 'fsgt1'
+            # Numeric string -> legacy int
+            try:
+                base = cls.legacy_map.get(int(key), None)
+                return f"{base}"
+            except ValueError:       
+                return None
+
+        # Fallback -> default base + audience
+        return None
 
     @classmethod
-    def get_strategy_class(cls, key):
+    def get_strategy_class(cls, key, audience: str = 'adult'):
         slug = cls.normalize_strategy_key(key)
         entry = cls.registry.get(slug)
         if entry is None:
@@ -53,50 +67,15 @@ class CalculationStrategy:
         return entry["class"], slug
 
     @classmethod
-    def create_strategy(cls, key):
-        strategy_class, _ = cls.get_strategy_class(key)
+    def create_strategy(cls, key, audience: str = 'adult'):
+        strategy_class, _ = cls.get_strategy_class(key, audience=audience)
         return strategy_class()
 
     @classmethod
-    def list_available_strategies(cls):
+    def list_calc_types(cls):
         # Return list of {slug, label}
         return [{"slug": s, "label": v.get("label", s)} for s, v in cls.registry.items()]
 
     def recalculate(self, competition):
         raise NotImplementedError("Subclasses should implement this!")
-
-
     
-    def get_category_from_dob(dob):
-        if dob is None:
-            return -1
-        dob = datetime.strptime(dob, "%Y-%m-%d")
-        # Calculate the age
-        today = datetime.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        
-        # Determine the category based on age
-        if 18 <= age <= 49:
-            return 0
-        elif 50 <= age <= 64:
-            return 1
-        elif age >= 65:
-            return 2
-        elif 12 <= age <= 13:
-            return 0
-        elif 14 <= age <= 15:
-            return 1
-        elif 16 <= age <= 17:
-            return 2
-        else:
-            return -1  # Return -1 if age does not fit any category
-
-    @classmethod
-    def get_category_from_dob_for(cls, dob, key):
-        # If the resolved strategy defines an override, use it; else fall back to base
-        strategy_class, _ = cls.get_strategy_class(key)
-        # Prefer a static/class method on the strategy
-        override = getattr(strategy_class, 'get_category_from_dob', None)
-        if callable(override) and override is not CalculationStrategy.get_category_from_dob:
-            return override(dob)
-        return CalculationStrategy.get_category_from_dob(dob)

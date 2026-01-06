@@ -1098,7 +1098,7 @@
           const formData = {};
 
           const routeid = document.getElementById('routeid').value;
-          console.log('getFormData routeid '+routeid);
+          //console.log('getFormData routeid '+routeid);
           
           formData['id'] = routeid;
           
@@ -1190,8 +1190,8 @@
           // insert the new route into the array
           routes.splice(routenum, 0, route);
       
-          console.log('Route added:', route);
-          console.log('Routes array:', routes);
+          //console.log('Route added:', route);
+          //console.log('Routes array:', routes);
         }
 
         function saveLine() {
@@ -1220,8 +1220,8 @@
                 //return response.json();
             })
             .then(data => {
-                console.log('Response from saving route');
-                console.log(data)
+                //console.log('Response from saving route');
+                //console.log(data)
                 //routes=data.routes
                 //renderTabulatorTable(routes);
                 //table.replaceData(routes);

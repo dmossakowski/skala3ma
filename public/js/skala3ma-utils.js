@@ -389,16 +389,22 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
 
 let translations = {};
 
+
+
 // Function to load the language pack
-function loadLanguagePack(force = false) {
+function loadLanguagePack(language= 'fr_FR', force = false) {
     return new Promise((resolve, reject) => {
         // Check if the language pack is in local storage and force is not true
         const storedTranslations = localStorage.getItem('translations');
         const storedTimestamp = localStorage.getItem('translations-timestamp');
+        const storedLanguage = localStorage.getItem('translations-language');
         const currentTime = new Date().getTime();
         const threeHoursInMillis = 3 * 60 * 60 * 1000;
         const difference = currentTime - new Date(storedTimestamp).getTime()
 
+        if (storedLanguage !== language) {
+            force = true;
+        }   
         if (!storedTimestamp || difference > threeHoursInMillis) {
             force = true;   
         }
@@ -409,14 +415,15 @@ function loadLanguagePack(force = false) {
             resolve();
         } else {
             // Fetch the language pack from the API
-            apiFetch('/api1/langpack')
+            apiFetch('/api1/langpack/' + language)
                 .then(response => response.json())
                 .then(data => {
                     translations = data;
                     // Store the language pack in local storage
                     localStorage.setItem('translations', JSON.stringify(translations));
-                    //console.log('Language pack loaded:', translations);
+                    console.log('Language pack loaded:', translations);
                     localStorage.setItem('translations-timestamp', new Date().toISOString());
+                    localStorage.setItem('translations-language', language);
                     resolve();
                 })
                 .catch(error => {
@@ -428,8 +435,16 @@ function loadLanguagePack(force = false) {
 }
 
 
+
+
 // Function to replace translations in the DOM
 function replaceTranslations() {
+    translations = JSON.parse(localStorage.getItem('translations'));
+    //console.log('replaceTranslations called');
+    if (!translations) {
+        console.warn('No translations found in local storage.');
+        return;
+    }
     document.querySelectorAll('[data-translate-key]').forEach(element => {
         const key = element.getAttribute('data-translate-key');
         element.innerHTML = translations[key] || key;
@@ -445,11 +460,21 @@ function getTranslation(key) {
     //console.log('t1:', t1[key]);
     //console.log('t2:', translations[key]);
 
-    return translations[key] || key;
+    translation = translations[key] 
+    if (translation) {
+        return translation;
+    }else{
+        //console.log('Missing translation for key:', key);
+        //console.log(t1);
+        //console.log(localStorage.getItem('translations-timestamp'));
+        return key +' x';
+    }
+    return translations[key] || key+' x';
 }
 
 // Function to clear translations from local storage
 function clearTranslations() {
+    console.log('Clearing translations from local storage');
     localStorage.removeItem('translations');
     translations = {};
 }

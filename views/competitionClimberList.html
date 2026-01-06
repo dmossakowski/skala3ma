@@ -18,7 +18,7 @@
 			alertMessage = {{ alert_message | default('') | tojson }};
 			infoMessage = {{ info_message  | default('') | tojson }};
 
-            console.log("Alert message: ", alertMessage);
+            //console.log("Alert message: ", alertMessage);
 
             if (alertMessage != '') {
                 showAlert(alertMessage, 'danger')
@@ -59,7 +59,7 @@
 .climber-row { display:flex; flex-direction:column; padding:.5rem .75rem; border:1px solid #ddd; border-radius:4px; background:#fff; }
 @media (min-width:600px){ .climber-row { flex-direction:row; align-items:center; } }
 .climber-name { font-size:1.2rem; font-weight:500; display:flex; align-items:center; gap:.5rem; }
-.presence-badge { display:inline-block; width:1.35rem; height:1.25rem; line-height:1.25rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
+.presence-badge { display:inline-block; width:1.35rem; height:1rem; line-height:1rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
 .presence-badge.present { background:#198754; color:#fff; }
 .presence-badge.absent { background:#6c757d; color:#fff; }
 .climber-meta { display:flex; flex-wrap:wrap; gap:.75rem; font-size:.9rem; margin-top:.25rem; }
@@ -73,6 +73,9 @@
 .routes-bars { display:flex; align-items:flex-end; gap:2px; height:16px; margin-top:2px; }
 .routes-bar { width:3px; background:#198754; border-radius:2px 2px 0 0; animation:grow .4s ease-out; }
 @keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+/* presence indicator: static check/cross badge */
+/* uses existing .presence-badge present/absent styles above */
+.tabulator-cell[data-field="present"] { padding:.5rem; }
 </style>
 <div id="climberTable"></div>
 <script>
@@ -91,7 +94,83 @@
 	const competitionId = (match && match[1]) ? match[1] : (competitionIdFromJinja || '');
 	if(!competitionId){ console.error('Cannot determine competitionId'); return; }
 
-	function getCatKey(compType, category){ const prefix = (compType === 0) ? 'adult' : 'youth'; return `competition_category_${prefix}_${category}`; }
+	function getCatKey(calc_type, competition_type, age_category_type, category)
+    {   
+        key = '';
+        console.log("calc_type:", calc_type, " competition_type:", competition_type, " category:", category, " age_category_type:", age_category_type);
+
+        // fsgt1_adult_0
+        // fsgt1_youth_0 etc..
+        key = age_category_type+'_' + competition_type+'_' + category;
+        
+        console.log("key:", key);
+        return `competition_category_${key}`; 
+        
+    }
+
+    var table = new Tabulator(tableEl, {
+				layout: "fitDataStretch",
+				responsiveLayout: "collapse",
+				responsiveLayoutCollapseStartOpen: true,
+				initialSort: [
+					{column: "name", dir: "asc"}
+				],
+				columns: [
+					{title: "{{ reference_data['current_language'].name }}", field: "name", responsive: 0, headerSort: true,
+						formatter: function(cell){
+							const d = cell.getRow().getData();
+							const url = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
+							const val = cell.getValue() || '';
+							return `<a href="${url}"><b>${val}</b></a>`;
+						}
+					},
+					{title: "{{ reference_data['current_language'].registered }}", field: "status", responsive: 1,
+						formatter: function(cell){
+							const v = (cell.getValue() || '').toLowerCase();
+                            reg_text = getTranslation('registered');
+                            wait_text = getTranslation('waitlist');
+							if(v === 'registered') return `<span class="reg-status registered show" >${reg_text}</span>`;
+							if(v === 'waitlist') return `<span class="reg-status waitlist show" >${wait_text}</span>`;
+							return '';
+						}
+					},
+						{title: "{{ reference_data['current_language'].Present }}", field: "present", responsive: 2, hozAlign: "center", width: 120,
+							formatter: function(cell){
+								const isPresent = !!cell.getValue();
+								const presentText = "{{ reference_data['current_language'].Present }}";
+								const absentText = "{{ reference_data['current_language'].Absent }}";
+								const label = isPresent ? presentText : absentText;
+								// Use Unicode check/cross for robustness, with accessible label
+								const symbol = isPresent ? '✓' : '✗';
+								return `<span class="presence-badge ${isPresent ? 'present' : 'absent'}" aria-label="${label}" title="${label}">${symbol}</span>`;
+							}
+						},
+					{title: "{{ reference_data['current_language'].registered_date }}", field: "registeredOn", responsive: 3},
+					{title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
+					{title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5},
+					{title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
+					{title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
+                        formatter: function(cell){
+                            const routeCount = cell.getValue() || 0;
+                            let barsHtml = '<div class="routes-bars" aria-label="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}" title="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}">';
+                            /*for(let i=0; i<routeCount; i++){
+                                let calc_height = Math.min(100, i*3 +10);
+                                if (routeCount == 26)(
+                                    console.log("26 routes: height: "+calc_height)
+                                )
+                                barsHtml += '<div class="routes-bar" style="height:'+calc_height+'%"></div>';
+                            }*/
+                            barsHtml += routeCount+'</div>';
+                            return barsHtml;
+                        }
+                    }
+				],
+				rowClick: function(e, row){
+					const d = row.getData();
+					window.location.href = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
+				}
+			});
+
 	function fmtDate(val){
 		if(val == null) return '';
 		try{
@@ -102,7 +181,7 @@
 	}
 
 	const fetchComp = (typeof apiFetchJson === 'function')
-		? apiFetchJson(`/api1/competition/${competitionId}`)
+		? apiFetchJson(`/api1/competition/${competitionId}?remove=routesClimbed2`)
 		: apiFetch(`/api1/competition/${competitionId}`).then(r => { if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
 
 	fetchComp
@@ -112,7 +191,7 @@
 				for(const [climberId, c] of Object.entries(comp.climbers)){
 					const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
 					const rs = (c.registration_status || '').toLowerCase();
-					const catKey = getCatKey(comp.competition_type, c.category);
+					const catKey =  getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
 					const catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
 					rows.push({
 						id: climberId,
@@ -127,44 +206,16 @@
 					});
 				}
 			}
+            //console.log("Loaded climbers:", rows.length);
+            const startTime = new Date().getTime();
+            //console.log("Time before updateOrAddData:", new Date().getTime() - startTime, "ms");
+            if (rows.length > 0) {
+                table.updateOrAddData(rows);
+            }
+            
+            //console.log("Time after updateOrAddData:", new Date().getTime() - startTime, "ms");
 
-			const table = new Tabulator(tableEl, {
-				data: rows,
-				layout: "fitDataStretch",
-				responsiveLayout: "collapse",
-				responsiveLayoutCollapseStartOpen: true,
-				initialSort: [
-					{column: "name", dir: "asc"}
-				],
-				columns: [
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Name') || 'Name') : 'Name'), field: "name", responsive: 0, headerSort: true,
-						formatter: function(cell){
-							const d = cell.getRow().getData();
-							const url = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
-							const val = cell.getValue() || '';
-							return `<a href="${url}"><b>${val}</b></a>`;
-						}
-					},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Registered') || 'Registered') : 'Registered'), field: "status", responsive: 1,
-						formatter: function(cell){
-							const v = (cell.getValue() || '').toLowerCase();
-							if(v === 'registered') return '<span class="reg-status registered show" data-translate-key="registered">Registered</span>';
-							if(v === 'waitlist') return '<span class="reg-status waitlist show" data-translate-key="waitlist">Waitlist</span>';
-							return '';
-						}
-					},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Present') || 'Present') : 'Present'), field: "present", responsive: 2, hozAlign: "center", formatter: "tickCross", width: 100},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Registered Date') || 'Registered Date') : 'Registered Date'), field: "registeredOn", responsive: 3},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Club') || 'Club') : 'Club'), field: "club", responsive: 4},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Category') || 'Category') : 'Category'), field: "category", responsive: 5},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Sex') || 'Sex') : 'Sex'), field: "sex", responsive: 6},
-					{title: (typeof getTranslation === 'function' ? (getTranslation('Routes') || 'Routes') : 'Routes'), field: "routes", responsive: 7, hozAlign: "right"},
-				],
-				rowClick: function(e, row){
-					const d = row.getData();
-					window.location.href = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
-				}
-			});
+			
 		})
 		.catch(err => { console.error('Failed to load competition', err); });
 })();

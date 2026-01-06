@@ -230,11 +230,21 @@ def get_language():
 
 
 @skala_api_app.route('/langpack')
-def get_langpack():
+def get_default_langpack():
     if not session.get('language'):
         return json.dumps(competitionsEngine.reference_data['languages']['fr_FR'])
     else:
         return json.dumps(competitionsEngine.reference_data['languages'][session.get('language')])
+
+
+@skala_api_app.route('/langpack/<language>')
+def get_langpack(language=None):
+    if not session.get('language'):
+        return json.dumps(competitionsEngine.reference_data['languages']['fr_FR'])
+    else:
+        set_language(language)
+        return json.dumps(competitionsEngine.reference_data['languages'][session.get('language')])
+
 
 
 
@@ -1207,6 +1217,7 @@ def getCompetitionDashboard():
         c['text']['competition_type'] = competitionsEngine.reference_data['current_language'].get('competition_type_'+str(comps[compid].get('competition_type','standard')))
         c['gym'] = comps[compid].get('gym')
         c['gym_id'] = comps[compid].get('gym_id')
+        c['calc_type'] = comps[compid].get('calc_type','standard')
         #comps[compid]['climbers'] = None
         #comps[compid]['routes'] = None
         #c['extendedProps'] = deepcopy(c)
@@ -1225,6 +1236,10 @@ def get_competition_by_id(competition_id):
     for climber in competition.get('climbers').values():
         climber.pop('email', None)
 
+
+    if request.args.get('remove') == 'routesClimbed2':
+        for climber in competition.get('climbers').values():
+            climber.pop('routesClimbed2', None)
 
     if competition is None:
         return {"error": "competition not found"}
@@ -1299,7 +1314,7 @@ def new_competition_post():
         max_participants = request.form.get('max_participants') or 80
         competition_type = request.form.get('competition_type') or 0
         instructions = request.form.get('instructions') or ""
-        calc_strategy = request.form.get('calc_strategy')
+        calc_type = request.form.get('calc_type')
 
         competitionId = competitionsEngine.addCompetition(
             None,
@@ -1310,7 +1325,7 @@ def new_competition_post():
             max_participants,
             competition_type=competition_type,
             instructions=instructions,
-            calc_strategy=calc_strategy
+            calc_type=calc_type
         )
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = competitionsEngine.getCompetition(competitionId)
@@ -1410,8 +1425,13 @@ def getCompetitionFlatFullTable(competitionId):
                                    **session)
 
     routesid = competition.get('routesid')
-    routesDict = competitionsEngine.get_routes(routesid)
-    routes = routesDict['routes']
+    
+    routes = []
+    if (competition.get('routes') is None) or (len(competition.get('routes')) == 0):
+        routes = competition.get('routes')
+    else:
+        routesDict = competitionsEngine.get_routes(routesid)
+        routes = routesDict['routes']
 
     #rankings = competitionsEngine.get_sorted_rankings(competition)
     # we need 6 categories:
@@ -1439,10 +1459,17 @@ def getCompetitionFlatFullTable(competitionId):
     for route in competition.get('routes'):
         for climber in competition['climbers'].values():
             if int(route.get('routenum')) in climber.get('routesClimbed'):
+                if len(climber.get('routesClimbed2')) != len(climber.get('routesClimbed')) :
+                    logging.error("getCompetitionFlatFullTable climber routesClimbed2 length mismatch "+climber.get('id'))
+
                 table_entry = {}
                 index = climber.get('routesClimbed').index(int(route.get('routenum')))
-                if (climber.get('routesClimbed2') and climber.get('routesClimbed2')[index] and route.get('id') != climber.get('routesClimbed2')[index].get('id')):  # there is a potential bug here on routeseClimbed2 not there
-                    logging.error("getCompetitionFlatFullTable route id is not matching or climber doesn't have a routeClimbed")
+                try:
+                    if climber.get('routesClimbed2') and route.get('id') != climber.get('routesClimbed2')[index].get('id'):  # there is a potential bug here on routeseClimbed2 not there
+                        logging.error("getCompetitionFlatFullTable route id is not matching or climber doesn't have a routeClimbed"+climber.get('id'))
+                except Exception as e:
+                    logging.error("getCompetitionFlatFullTable error checking routeClimbed2 "+str(e)+ " climber id "+str(climber.get('id')))
+                    
                 points = climber.get('points_earned')[index]
 
                 table_entry.update(route)

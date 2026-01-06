@@ -7,6 +7,7 @@ from CalculationStrategy import CalculationStrategy
 
 
 class CalculationStrategyFsgt0(CalculationStrategy):
+    name = "fsgt0"
 
     def recalculate(self, comp):    
         comp['results'] = copy.deepcopy(CalculationStrategy.emptyResults)
@@ -110,6 +111,7 @@ class CalculationStrategyFsgt0(CalculationStrategy):
 
 
 class CalculationStrategyFsgt1(CalculationStrategyFsgt0):
+    name = "fsgt1"
     def _getRouteRepeats(self, sex, comp):
         pointsPerRoute = [0 for i in range(200)]
         for climber in comp['climbers']:
@@ -135,33 +137,9 @@ class CalculationStrategyFsgt1(CalculationStrategyFsgt0):
 
     # End class CalculationStrategyFsgt1
 
-    
-class CalculationStrategyFsgt2(CalculationStrategyFsgt1):
-    # Override age categories: 18-39 -> 0, 40-49 -> 1, 50+ -> 2
-    def get_category_from_dob(dob):
-        if dob is None:
-            return -1
-        dob_dt = datetime.strptime(dob, "%Y-%m-%d")
-        today = datetime.today()
-        age = today.year - dob_dt.year - ((today.month, today.day) < (dob_dt.month, dob_dt.day))
 
-        if 18 <= age <= 39:
-            return 0
-        elif 40 <= age <= 49:
-            return 1
-        elif age >= 50:
-            return 2
-        elif 12 <= age <= 13:
-            return 0
-        elif 14 <= age <= 15:
-            return 1
-        elif 16 <= age <= 17:
-            return 2
-        else:
-            return -1
+
 
 # Register strategies with human-readable labels
-CalculationStrategy.register('fsgt0', CalculationStrategyFsgt0, label='FSGT: sex-separated route repeats')
-CalculationStrategy.register('fsgt1', CalculationStrategyFsgt1, label='FSGT: all climbers combined route repeats')
-CalculationStrategy.register('fsgt2', CalculationStrategyFsgt2, label='FSGT2: age 18–39 / 40–49 / 50+')
-
+CalculationStrategy.register(CalculationStrategyFsgt0.name, CalculationStrategyFsgt0, label='FSGT: sex-separated route repeats')
+CalculationStrategy.register(CalculationStrategyFsgt1.name, CalculationStrategyFsgt1, label='FSGT: all climbers combined route repeats')

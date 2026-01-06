@@ -54,9 +54,10 @@
     <input name="max_participants" size="5" value="{{competition['max_participants']}}" id="max_participants"/>
      &nbsp; &nbsp; &nbsp; <label for="competition_type" data-translate-key="competition_type">:</label>
 <select name="competition_type" id="competition_type">
-    <option value="0" {% if competition['competition_type'] == '0' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_0 }}</option>
-    <option value="1" {% if competition['competition_type'] == '1' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_1 }}</option>
+    <option value="adult" {% if competition['competition_type'] == 'adult' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_adult }}</option>
+    <option value="ado" {% if competition['competition_type'] == 'ado' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_ado }}</option>
 </select>
+
 
 
     <div class="col-md-6">
@@ -298,7 +299,7 @@
 			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
 					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
 			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>  {{ reference_data['categories'][competition['climbers'][climberId]['category']] }}  </i></td>
+			 <td><i>  {{ competition['climbers'][climberId]['category'] }}  </i></td>
 			 <td><i>
 				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
 				 {{ competition['climbers'][climberId]['routesClimbed']}}  --
