@@ -97,13 +97,13 @@
 	function getCatKey(calc_type, competition_type, age_category_type, category)
     {   
         key = '';
-        console.log("calc_type:", calc_type, " competition_type:", competition_type, " category:", category, " age_category_type:", age_category_type);
+        //console.log("calc_type:", calc_type, " competition_type:", competition_type, " category:", category, " age_category_type:", age_category_type);
 
         // fsgt1_adult_0
         // fsgt1_youth_0 etc..
         key = age_category_type+'_' + competition_type+'_' + category;
         
-        console.log("key:", key);
+        //console.log("key:", key);
         return `competition_category_${key}`; 
         
     }
