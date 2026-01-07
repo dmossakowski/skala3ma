@@ -13,6 +13,20 @@
 
 		{% include "competition-menu.html" %}
 
+		<script>
+			// Default to empty strings when Jinja variables are undefined
+			alertMessage = {{ alert_message | default('') | tojson }};
+			infoMessage = {{ info_message  | default('') | tojson }};
+
+            //console.log("Alert message: ", alertMessage);
+
+            if (alertMessage != '') {
+                showAlert(alertMessage, 'danger')
+            }
+            if (infoMessage != '') {
+                showAlert(infoMessage, 'info')
+            }
+        </script>
         <!-- competitionClimberList.html -->
 		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
 					<div class="container">
@@ -23,7 +37,9 @@
 						<h3>{{ reference_data['current_language'].competition_climber_list }} <br>
 								{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
 
+
 						<font color="red">	{{ reference_data['current_language'][error_code] }} </font>
+                        <font color="red">	{{ reference_data['current_language'][error_code] }} </font>
 
 					    </div>
                     </div>
@@ -32,53 +48,9 @@
 
 
 
-{% if climber is not none and climber is not undefined  %}
-climber is not none
-<div class="container-flex">
-	<div class="row">
-				{{ reference_data['current_language'].name}} {{ climber['name'] }}
-	            ({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
 
 
 
-				{{ climber['routesClimbed'] }}
-
-    </div>
-</div>
-
-	<div class="table-responsive">
-			<form target="/competitionDashboard/{{competitionId}}/updateRoutes">
-            <table class="table"><tr>
-
-					{% for i in range(100) %}
-                    <td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %} ></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button class="btn btn-success btn-lg">Submit</button>
-				</form>
-
-</div>
-	</div>
-				{% endif %}
-
-
-
-
-{% if competition is not none and competition is not undefined  %}
 
 <!--onclick="location.href='/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}'"-->
 <style>
@@ -87,7 +59,7 @@ climber is not none
 .climber-row { display:flex; flex-direction:column; padding:.5rem .75rem; border:1px solid #ddd; border-radius:4px; background:#fff; }
 @media (min-width:600px){ .climber-row { flex-direction:row; align-items:center; } }
 .climber-name { font-size:1.2rem; font-weight:500; display:flex; align-items:center; gap:.5rem; }
-.presence-badge { display:inline-block; width:1.25rem; height:1.25rem; line-height:1.25rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
+.presence-badge { display:inline-block; width:1.35rem; height:1rem; line-height:1rem; text-align:center; border-radius:50%; font-size:.85rem; font-weight:600; }
 .presence-badge.present { background:#198754; color:#fff; }
 .presence-badge.absent { background:#6c757d; color:#fff; }
 .climber-meta { display:flex; flex-wrap:wrap; gap:.75rem; font-size:.9rem; margin-top:.25rem; }
@@ -101,53 +73,159 @@ climber is not none
 .routes-bars { display:flex; align-items:flex-end; gap:2px; height:16px; margin-top:2px; }
 .routes-bar { width:3px; background:#198754; border-radius:2px 2px 0 0; animation:grow .4s ease-out; }
 @keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+/* presence indicator: static check/cross badge */
+/* uses existing .presence-badge present/absent styles above */
+.tabulator-cell[data-field="present"] { padding:.5rem; }
 </style>
-<div id="climberList">
-	{# iterate over climbers preserving existing Jinja notation #}
-	{% for climberId in competition['climbers'] %}
-		{% set c = competition['climbers'][climberId] %}
-		<div class="climber-row">
-			<div class="climber-name">
-				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ c['name'] }}</b></a>
-				
-				{% set rs = c.get('registration_status','')|lower %}
-				<span class="reg-status registered {% if 'register' in rs and not 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="registered" title="Registered"> </span>
-				<span class="reg-status waitlist {% if 'wait' in rs %}show{% else %}hide{% endif %}" data-translate-key="waitlist" title="Waitlist">waitlist-key</span>
-                {% if c.get('present') %}
-				<span class="presence-badge present" title="Present" >✔</span>
-				{% endif %}
-			</div>
-			<div class="climber-meta">
-				<span>{{ c['sex'] }}</span>
-				<span><i>{{ c['club'] }}</i></span>
-				{# Determine category translation key based on competition_type (0 adult, 1 youth) and category index #}
-				{% set cat_prefix = 'adult' if competition['competition_type'] == 0 else 'youth' %}
-				{% set cat_key = 'competition_category_' ~ cat_prefix ~ '_' ~ c['category'] %}
-				<span data-translate-key="{{ cat_key }}">{{ reference_data['current_language'].get(cat_key, reference_data['categories'][c['category']]) }}</span>
-				{# Thin bars indicator: one bar per route up to 50 #}
-				{% set route_count = c['routesClimbed']|length %}
-				{% set maxbars = 50 %}
-				{% set show = maxbars if route_count > maxbars else route_count %}
-				<a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
-                <div class="routes-bars" aria-label="{{ route_count }} routes" title="{{ route_count }} routes climbed">
-					{% for i in range(show) %}
-					<span class="routes-bar" style="height:{% if route_count>0 %}{{ 6 + ( (i / show) * 8 )|round(0,'floor') }}{% else %}0{% endif %}px"></span>
-					{% endfor %}
-				
-                <span>{{ route_count }}</span></div></a>
+<div id="climberTable"></div>
+<script>
+(function(){
+	if (typeof apiFetchJson !== 'function' && typeof apiFetch !== 'function') { console.error('apiFetch/apiFetchJson global helper missing'); return; }
+	if (typeof Tabulator === 'undefined') { console.error('Tabulator not available'); return; }
+
+	const tableEl = document.getElementById('climberTable');
+	if(!tableEl) return;
+
+	// Determine competition ID from URL or Jinja fallback
+	const path = window.location.pathname;
+	let match = path.match(/competitionClimberList\/([^\/]+)/);
+	if(!match){ match = path.match(/competition\/([^\/]+)/); }
+	const competitionIdFromJinja = {{ competition['id'] | default('') | tojson }};
+	const competitionId = (match && match[1]) ? match[1] : (competitionIdFromJinja || '');
+	if(!competitionId){ console.error('Cannot determine competitionId'); return; }
+
+	function getCatKey(calc_type, competition_type, age_category_type, category)
+    {   
+        key = '';
+        //console.log("calc_type:", calc_type, " competition_type:", competition_type, " category:", category, " age_category_type:", age_category_type);
+
+        // fsgt1_adult_0
+        // fsgt1_youth_0 etc..
+        key = age_category_type+'_' + competition_type+'_' + category;
+        
+        //console.log("key:", key);
+        return `competition_category_${key}`; 
+        
+    }
+
+    var table = new Tabulator(tableEl, {
+				layout: "fitDataStretch",
+				responsiveLayout: "collapse",
+				responsiveLayoutCollapseStartOpen: true,
+				initialSort: [
+					{column: "name", dir: "asc"}
+				],
+				columns: [
+					{title: "{{ reference_data['current_language'].name }}", field: "name", responsive: 0, headerSort: true,
+						formatter: function(cell){
+							const d = cell.getRow().getData();
+							const url = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
+							const val = cell.getValue() || '';
+							return `<a href="${url}"><b>${val}</b></a>`;
+						}
+					},
+					{title: "{{ reference_data['current_language'].registered }}", field: "status", responsive: 1,
+						formatter: function(cell){
+							const v = (cell.getValue() || '').toLowerCase();
+                            reg_text = getTranslation('registered');
+                            wait_text = getTranslation('waitlist');
+							if(v === 'registered') return `<span class="reg-status registered show" >${reg_text}</span>`;
+							if(v === 'waitlist') return `<span class="reg-status waitlist show" >${wait_text}</span>`;
+							return '';
+						}
+					},
+						{title: "{{ reference_data['current_language'].Present }}", field: "present", responsive: 2, hozAlign: "center", width: 120,
+							formatter: function(cell){
+								const isPresent = !!cell.getValue();
+								const presentText = "{{ reference_data['current_language'].Present }}";
+								const absentText = "{{ reference_data['current_language'].Absent }}";
+								const label = isPresent ? presentText : absentText;
+								// Use Unicode check/cross for robustness, with accessible label
+								const symbol = isPresent ? '✓' : '✗';
+								return `<span class="presence-badge ${isPresent ? 'present' : 'absent'}" aria-label="${label}" title="${label}">${symbol}</span>`;
+							}
+						},
+					{title: "{{ reference_data['current_language'].registered_date }}", field: "registeredOn", responsive: 3},
+					{title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
+					{title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5},
+					{title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
+					{title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
+                        formatter: function(cell){
+                            const routeCount = cell.getValue() || 0;
+                            let barsHtml = '<div class="routes-bars" aria-label="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}" title="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}">';
+                            /*for(let i=0; i<routeCount; i++){
+                                let calc_height = Math.min(100, i*3 +10);
+                                if (routeCount == 26)(
+                                    console.log("26 routes: height: "+calc_height)
+                                )
+                                barsHtml += '<div class="routes-bar" style="height:'+calc_height+'%"></div>';
+                            }*/
+                            barsHtml += routeCount+'</div>';
+                            return barsHtml;
+                        }
+                    }
+				],
+				rowClick: function(e, row){
+					const d = row.getData();
+					window.location.href = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
+				}
+			});
+
+	function fmtDate(val){
+		if(val == null) return '';
+		try{
+			const d = (typeof val === 'number') ? new Date(val*1000) : new Date(val);
+			if(isNaN(d.getTime())) return '';
+			return d.toLocaleDateString();
+		} catch(e){ return ''; }
+	}
+
+	const fetchComp = (typeof apiFetchJson === 'function')
+		? apiFetchJson(`/api1/competition/${competitionId}?remove=routesClimbed2`)
+		: apiFetch(`/api1/competition/${competitionId}`).then(r => { if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+
+	fetchComp
+		.then(comp => {
+			const rows = [];
+			if(comp && comp.climbers){
+				for(const [climberId, c] of Object.entries(comp.climbers)){
+					const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
+					const rs = (c.registration_status || '').toLowerCase();
+					const catKey =  getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
+					const catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
+					rows.push({
+						id: climberId,
+						name: c.name || '',
+						sex: c.sex || '',
+						club: c.club || '',
+						category: catLabel,
+						routes: routeCount,
+						registeredOn: fmtDate(c.registration_timestamp),
+						present: !!c.present,
+						status: rs.includes('wait') ? 'Waitlist' : (rs.includes('register') ? 'Registered' : '')
+					});
+				}
+			}
+            //console.log("Loaded climbers:", rows.length);
+            const startTime = new Date().getTime();
+            //console.log("Time before updateOrAddData:", new Date().getTime() - startTime, "ms");
+            if (rows.length > 0) {
+                table.updateOrAddData(rows);
+            }
+            
+            //console.log("Time after updateOrAddData:", new Date().getTime() - startTime, "ms");
+
 			
-			</div>
-		</div>
-	{% endfor %}
-</div>
+		})
+		.catch(err => { console.error('Failed to load competition', err); });
+})();
+</script>
 
 
 
 
 
 
-
-				{%endif %}
 
 
 

@@ -306,7 +306,7 @@ def init():
         skip_blueprints={'skala_api'},
         allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
                                  '/competitionCalendar','/competitionRawAdmin','/competition_admin','/competitionResults',
-                                 '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser',
+                                 '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser','/climbers',
                                  '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
 
     if not os.path.exists(DATA_DIRECTORY):

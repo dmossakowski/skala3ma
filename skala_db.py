@@ -726,7 +726,7 @@ def _update_user(climberId, email, climber):
             logging.warning(f"climberId is None and climber['id'] is None for email {email}")
     else:
         climberId = climber['id']
-        cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where email =? ",
+        cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where lower(email) =? ",
                    [ json.dumps(climber), str(email)])
     
     # End timing for the update query

@@ -97,15 +97,34 @@
 
 
    document.addEventListener('DOMContentLoaded', () => {
-    // Load the language pack and replace translations
-    loadLanguagePack().then(() => {
+    // Load the language pack and replace 
+    //const userLang = navigator.language || navigator.userLanguage;
+    //const langCode = userLang.replace('-', '_'); // e.g., 'en-US' to 'en_US'
+    //loadTranslations();
+    replaceTranslations();
+    initializeApp();
+    
+});
+
+function loadTranslations(languagePack, force=true) {
+
+    console.log('Loading translations for language pack:', languagePack, 'force:', force);
+    loadLanguagePack(languagePack, force).then(() => {
         replaceTranslations();
         // Call other functions that depend on translations being loaded
         initializeApp();
     }).catch(error => {
         console.error('Failed to load language pack:', error);
     });
-});
+
+
+}
+
+function setLanguage(languageCode) {
+    console.log('Setting language to:', languageCode);
+
+    loadTranslations(languageCode, true);
+}   
 
 function initializeApp() {
     // Your code that depends on translations being loaded
@@ -291,9 +310,9 @@ function initializeApp() {
                 <li class="nav-item dropdown">
                    
                 
-                        <li><a href="/language/fr_FR" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a></li>
-                        <li><a href="/language/en_US" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
-                        <li><a href="/language/pl_PL" onclick="clearTranslations();" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
+                        <li><a href="#" onclick="loadTranslations('fr_FR');" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a></li>
+                        <li><a href="#" onclick="loadTranslations('en_US');" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a></li>
+                        <li><a href="#" onclick="loadTranslations('pl_PL');" class="dropdown-item fs-4 fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a></li>
                         <!-- Ajoutez d'autres langues avec leurs liens href -->
                    
                 <br>
@@ -411,9 +430,9 @@ function initializeApp() {
                     <i class="bi bi-translate" ></i></a>     
                 <div class="dropdown-menu  dropdown-menu-end">
         
-                <a href="/language/fr_FR" onclick="clearTranslations();" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
-                <a href="/language/en_US" onclick="clearTranslations();" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
-                <a href="/language/pl_PL" onclick="clearTranslations();" class="dropdown-item fs-7  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
+                <a href="#" onclick="loadTranslations('fr_FR');" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="fr"></a>
+                <a href="#" onclick="loadTranslations('en_US');" class="dropdown-item fs-7 fw-medium"><span class="lang-lg lang-lbl" lang="en"></span></a>
+                <a href="#" onclick="loadTranslations('pl_PL');" class="dropdown-item fs-7  fw-medium"><span class="lang-lg lang-lbl" lang="pl"></span></a>
                 <!-- Ajoutez d'autres langues avec leurs liens href -->
                 </div>
                 </li>
@@ -540,9 +559,9 @@ function initializeApp() {
 						<div  class="col-md-2">
 							<!-- http://usrz.github.io/bootstrap-languages/ -->
 							<h3 class="section-title">Languages</h3>
-							<a href="/language/fr_FR" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
-							<a href="/language/en_US" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
-							<a href="/language/pl_PL" style="color: white" onclick="clearTranslations();"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
+							<a href="#" style="color: white" onclick="loadTranslations('fr_FR');"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
+							<a href="#" style="color: white" onclick="loadTranslations('en_US');"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
+							<a href="#" style="color: white" onclick="loadTranslations('pl_PL');"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
 
                             <br><br>
 						</div>

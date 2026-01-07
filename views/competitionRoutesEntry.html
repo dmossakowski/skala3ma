@@ -9,116 +9,235 @@
 
 
 	{% block secondarycontent %}
-	<div  >
+	
 	{% include "competition-menu.html" %}
 
-    <div class="container">
-        <div class="row">
+    <script>
+        can_update_routes = {{ 'true' if can_update_routes else 'false' }};
+        can_update_routes_for_competition = {{ 'true' if can_update_routes_for_competition else 'false' }};
 
-					<div class=" text-left heading-section">
-						<br>
-						<h3> {{ subheader_message }}
-                        </h3>
+    </script>
 
-						<!-- Presence switch added under subheader -->
-							<div id="presenceContainer" class="form-check form-switch d-flex align-items-center" style="--bs-form-switch-width:4em;">
-								<input class="form-check-input" type="checkbox" role="switch" id="climberPresent" name="climberPresent"
-									   style="transform:scale(1.4); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %}>
-								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1rem;">
-									{% if climber and climber.get('present') %}
-										<span class="badge bg-success" data-translate-key="Present"> present-key </span>
-									{% else %}
-										<span class="badge bg-secondary" data-translate-key="Absent"> absent-key </span>
-									{% endif %}
+
+    <div class="container-fluid">
+        <div class="row-1 align-items-center text-center">
+    
+            				<div id="presenceContainer" class="  d-flex align-items-center text-center justify-content-center">
+                              
+								    <span class="heading-title">{{ climber['firstname'] }} {{ climber['lastname'] }} - {{ climber['club'] }} </span>
+								    <input class="form-check-input" type="checkbox" role="switch" id="climberPresent" name="climberPresent"
+									    style="margin: 0 0 0 20px;transform:scale(1.8); cursor:pointer;" {% if climber and climber.get('present') %}checked{% endif %} {% if not can_update_routes %}disabled{% endif %}>
+                                        <span id="presenceLock" class="ms-2 text-muted {% if can_update_routes %}d-none{% endif %}" ><i class="bi bi-lock-fill"></i></span>
+								<span id="presentStatus" class="ms-3 fw-semibold" style="font-size:1.2rem;">
+									<span id="presentBadge" class="badge bg-success {% if not (climber and climber.get('present')) %}d-none{% endif %}" style="font-size:1.0rem;" data-translate-key="Present">present-key</span>
+									<span id="absentBadge" class="badge bg-secondary {% if climber and climber.get('present') %}d-none{% endif %}" style="font-size:1.0rem;" data-translate-key="Absent">absent-key</span>
 								</span>
+								    
+                               
+                                 
 							</div>
-							
+                          
+              
+             
+						<!-- Presence confirmation modal -->
+						<div class="modal fade" id="presenceConfirmModal" tabindex="-1" aria-labelledby="presenceConfirmTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+						  <div class="modal-dialog">
+						    <div class="modal-content">
+						      <div class="modal-header">
+						        <h5 class="modal-title" id="presenceConfirmTitle">Confirm Change</h5>
+						        <button type="button" class="btn-close" id="presenceCloseBtn" aria-label="Close"></button>
+						      </div>
+						      <div class="modal-body" id="presenceConfirmBody">Are you sure you want to change presence?</div>
+						      <div class="modal-footer">
+						        <button type="button" class="btn btn-secondary" id="presenceCancelBtn" data-translate-key="cancel">Cancel</button>
+						        <button type="button" class="btn btn-primary" id="presenceSaveBtn" data-translate-key="save">Save</button>
+						      </div>
+						    </div>
+						  </div>
+						</div>
+
 						<script>
-						// Presence switch logic using global apiFetch from skala3ma-utils.js
+						// Presence switch logic with confirmation dialog; uses global apiFetch and Bootstrap modal
 						(function(){
 							if (typeof apiFetch !== 'function') { console.error('apiFetch global helper missing'); return; }
-                           
-							
+							const hasBootstrap = typeof bootstrap !== 'undefined' && bootstrap.Modal;
 							const container = document.getElementById('presenceContainer');
 							if(!container) return; // abort if missing
-							// Extract IDs from current URL path. Expected patterns:
-							//   /competitionRoutesEntry/<competitionId>/climber/<climberId>
-							//   /something/competition/<competitionId>/climber/<climberId>
-							// Fallback: log error and abort if not found.
+							// Extract IDs from current URL path.
 							const path = window.location.pathname;
-							// Use a flexible regular expression: capture any non-slash chars for IDs (allows dashes, etc.).
-							// Patterns handled:
-							//   /competitionRoutesEntry/<competitionId>/climber/<climberId>
-							//   /.../competition/<competitionId>/climber/<climberId>
 							let match = path.match(/competitionRoutesEntry\/([^\/]+)\/climber\/([^\/]+)/);
-							if(!match){
-								match = path.match(/competition\/([^\/]+)\/climber\/([^\/]+)/);
-							}
-							if(!match){
-								console.error('Could not parse competition/climber IDs from URL', path);
-								return;
-							}
+							if(!match){ match = path.match(/competition\/([^\/]+)\/climber\/([^\/]+)/); }
+							if(!match){ console.error('Could not parse competition/climber IDs from URL', path); return; }
 							const competitionId = match[1];
 							const climberId = match[2];
 							const sw = document.getElementById('climberPresent');
 							const status = document.getElementById('presentStatus');
+							const lockEl = document.getElementById('presenceLock');
+							const modalEl = document.getElementById('presenceConfirmModal');
+							const modal = (hasBootstrap && modalEl) ? new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false }) : null;
+							const titleEl = document.getElementById('presenceConfirmTitle');
+							const bodyEl = document.getElementById('presenceConfirmBody');
+							const cancelBtn = document.getElementById('presenceCancelBtn');
+							const saveBtn = document.getElementById('presenceSaveBtn');
+							const closeBtn = document.getElementById('presenceCloseBtn');
 							if(!sw || !status) return;
 
+							// i18n labels
+							var presentLang = (typeof getTranslation === 'function' ? getTranslation('Present') : null) || 'present-key';
+							var absentLang = (typeof getTranslation === 'function' ? getTranslation('Absent') : null) || 'absent-key';
+							var confirmTitleLang = '';
+							var confirmBodyPresentLang = (typeof getTranslation === 'function' ? getTranslation('confirm_set_to_present_question') : null) || 'Confirm set to Present?';
+							var confirmBodyAbsentLang = (typeof getTranslation === 'function' ? getTranslation('confirm_set_to_absent_question') : null) || 'Confirm set to Absent?';
+							var saveLang = (typeof getTranslation === 'function' ? getTranslation('save') : null);
+							var cancelLang = (typeof getTranslation === 'function' ? getTranslation('cancel') : null);
+							if(titleEl) titleEl.textContent = confirmTitleLang;
+							if(cancelBtn) cancelBtn.textContent = cancelLang;
+							if(saveBtn) saveBtn.textContent = saveLang;
+
+							const canUpdateRoutes = (typeof can_update_routes === 'string') ? (can_update_routes === 'true') : !!can_update_routes;
+							if(!canUpdateRoutes){
+								sw.disabled = true;
+								if(lockEl){ lockEl.classList.remove('d-none'); }
+							} else {
+								if(lockEl){ lockEl.classList.add('d-none'); }
+							}
+
 							function renderBadge(isPresent){
-                                
-                                var presentLang = getTranslation('Present') || 'present-key';
-							    var absentLang = getTranslation('Absent') || 'absent-key';
-                            
-								status.innerHTML = isPresent ? '<span class="badge bg-success">' + presentLang + '</span>' : '<span class="badge bg-secondary">' + absentLang + '</span>';
+								const presentBadge = document.getElementById('presentBadge');
+								const absentBadge = document.getElementById('absentBadge');
+								if(!presentBadge || !absentBadge) return;
+								presentBadge.textContent = presentLang;
+								absentBadge.textContent = absentLang;
+								if(isPresent){
+									presentBadge.classList.remove('d-none');
+									absentBadge.classList.add('d-none');
+								} else {
+									presentBadge.classList.add('d-none');
+									absentBadge.classList.remove('d-none');
+								}
+							}
+
+							// Track current checked state and pending desired state
+							let currentChecked = !!sw.checked;
+							let pendingChecked = null;
+
+							// Ensure focus is outside modal before it becomes aria-hidden
+							function shiftFocusOutOfModal(){
+								try {
+									if (modalEl && modalEl.contains(document.activeElement)) {
+										// Move focus back to the switch; prevent scroll jumps
+										sw && sw.focus({ preventScroll: true });
+										// As a fallback, blur the currently focused element
+										if (document.activeElement && typeof document.activeElement.blur === 'function') {
+											document.activeElement.blur();
+										}
+									}
+								} catch(e) { /* noop */ }
+							}
+
+							// Pre-emptively shift focus before Bootstrap applies aria-hidden on hide
+							if (modalEl && hasBootstrap) {
+								modalEl.addEventListener('hide.bs.modal', shiftFocusOutOfModal);
+								modalEl.addEventListener('hidden.bs.modal', function(){ sw && sw.focus({ preventScroll: true }); });
 							}
 
 							// Initial fetch to sync presence
 							apiFetch(`/api1/competition/${competitionId}/climber/${climberId}`)
 								.then(data => {
-									// Expect data.present boolean
 									if (data && typeof data.present !== 'undefined') {
 										sw.checked = !!data.present;
+										currentChecked = sw.checked;
 										renderBadge(sw.checked);
 									}
 								})
 								.catch(err => { console.warn('Presence load failed', err); });
 
-							sw.addEventListener('change', function(){
-								const endpoint = sw.checked ? `/api1/competition/${competitionId}/climber/${climberId}/present/True` : `/api1/competition/${competitionId}/climber/${climberId}/present/False`;
-								renderBadge(sw.checked);
+							function openConfirmDialog(desiredChecked){
+								pendingChecked = desiredChecked;
+								if(bodyEl){ bodyEl.textContent = desiredChecked ? confirmBodyPresentLang : confirmBodyAbsentLang; }
+								if(modal){ modal.show(); }
+								else {
+									// Fallback prompt if Bootstrap modal isn't available
+									var ok = window.confirm(desiredChecked ? confirmBodyPresentLang : confirmBodyAbsentLang);
+									if(ok){
+										confirmSave();
+									} else {
+										confirmCancel();
+									}
+								}
+							}
+
+							function confirmCancel(){
+								sw.checked = currentChecked;
+								pendingChecked = null;
+								shiftFocusOutOfModal();
+								if(modal){ modal.hide(); }
+							}
+
+							function confirmSave(){
+								if(pendingChecked === null){ if(modal){ modal.hide(); } return; }
+								const endpoint = pendingChecked ? `/api1/competition/${competitionId}/climber/${climberId}/present/True` : `/api1/competition/${competitionId}/climber/${climberId}/present/False`;
 								apiFetch(endpoint, { method: 'POST' })
+									.then(() => {
+										currentChecked = pendingChecked;
+										renderBadge(currentChecked);
+										pendingChecked = null;
+										shiftFocusOutOfModal();
+										if(modal){ modal.hide(); }
+									})
 									.catch(err => {
 										console.error('Failed to update presence', err);
 										// revert UI on failure
-										sw.checked = !sw.checked;
-										renderBadge(sw.checked);
+										sw.checked = currentChecked;
+										pendingChecked = null;
+										shiftFocusOutOfModal();
+										if(modal){ modal.hide(); }
 									});
+							}
+
+							// Wire buttons
+							if(cancelBtn){ cancelBtn.addEventListener('click', confirmCancel); }
+							if(saveBtn){ saveBtn.addEventListener('click', confirmSave); }
+							if(closeBtn){ closeBtn.addEventListener('click', confirmCancel); }
+
+							// Handle switch change: open confirmation, do NOT call API here
+							sw.addEventListener('change', function(){
+								if(!canUpdateRoutes){ return; }
+								// desired state after user toggle
+								openConfirmDialog(sw.checked);
 							});
 						})();
 						</script>
+                      
+			</div>
 
-					</div>
+        </div>
+    </div>
 
-</div></div>
+{% if routes is not none and routes is not undefined   %}
+<br><br>
 
-{% if routes is not none and routes is not undefined  %}
-
-
-<div class="container">
+<div class="container-fluid">
 
 <form action="/competitionRoutesEntry/{{competitionId}}/climber/{{climberId}}" method="post">
-<h2><input type="submit" value="{{ reference_data['current_language'].save}}"></h2>
+<h2><div class="justify-content-center text-center">
+	<input type="submit" class="btn btn-lg btn-primary w-50" value="{{ reference_data['current_language'].save}}" {% if not can_update_routes_for_competition %}disabled{% endif %}>
+    <span id="presenceLock" class="ms-2 text-muted {% if can_update_routes %}d-none{% endif %}" ><i class="bi bi-lock-fill"></i></span>
+							
+	<span id="saveLock" class="ms-2 text-muted {% if can_update_routes_for_competition %}d-none{% endif %}"><i class="bi bi-lock-fill"></i></span>
+    </div>
+</h2>
 
-<div class="row">
-         {# here we iterate over every item in our list which we will pass from bar() #}
+    <div class="row m-0">
+				 {# here we iterate over every item in our list which we will pass from bar() #}
 		 {% for route in routes['routes'] %}
 		 
-		 <div class="col-3" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
-		 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb){cb.checked=!cb.checked;} return false;">
+				 <div class="col-2" style="width: 9rem; padding-bottom: 40px; font-weight: 600;" 
+				 onclick="var cb=document.getElementById('route{{route['routenum']}}'); if(cb && !cb.disabled){cb.checked=!cb.checked;} return false;">
 			  <font style="text-shadow: 0px 0px 4px white; font-size: 2.4rem"><b>{{ route['routenum'] }}</b> </font>  
               
                 <input type="checkbox" id="route{{route['routenum']}}" name="route{{route['routenum']}}" value="{{route['routenum']}}"
-                              onclick="event.stopPropagation();" style="width: 2rem; height: 2rem;"
+															onclick="event.stopPropagation();" style="width: 2rem; height: 2rem;" {% if not can_update_routes_for_competition %}disabled{% endif %}
                        {% if route['routenum']|int in climber['routesClimbed'] %}checked{% endif %}
                        >
                    
@@ -127,7 +246,7 @@
 
 			 
 
-            </div>
+        </div>
 						 {% endfor %}
 <script>
 (function(){
@@ -147,7 +266,17 @@
 
 </div>
 
+{% else  %}
 
+    {% if not can_update_routes_for_competition %}
+        <div class="alert alert-warning" role="alert" data-translate-key="no_permission_update_routes">
+            You do not have permission to update routes for this competition.
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert" data-translate-key="no_routes_defined_competition">
+            No routes have been defined for this competition.
+        </div>
+    {% endif %}
 
 
 				{%endif %}

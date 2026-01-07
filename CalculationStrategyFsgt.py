@@ -1,11 +1,13 @@
 # CalculationStrategyFsgt0.py
 
+from datetime import datetime, date, timedelta
 import json
 import copy
 from CalculationStrategy import CalculationStrategy
 
 
 class CalculationStrategyFsgt0(CalculationStrategy):
+    name = "fsgt0"
 
     def recalculate(self, comp):    
         comp['results'] = copy.deepcopy(CalculationStrategy.emptyResults)
@@ -109,6 +111,7 @@ class CalculationStrategyFsgt0(CalculationStrategy):
 
 
 class CalculationStrategyFsgt1(CalculationStrategyFsgt0):
+    name = "fsgt1"
     def _getRouteRepeats(self, sex, comp):
         pointsPerRoute = [0 for i in range(200)]
         for climber in comp['climbers']:
@@ -132,3 +135,11 @@ class CalculationStrategyFsgt1(CalculationStrategyFsgt0):
 
         return pointsPerRoute
 
+    # End class CalculationStrategyFsgt1
+
+
+
+
+# Register strategies with human-readable labels
+CalculationStrategy.register(CalculationStrategyFsgt0.name, CalculationStrategyFsgt0, label='FSGT: sex-separated route repeats')
+CalculationStrategy.register(CalculationStrategyFsgt1.name, CalculationStrategyFsgt1, label='FSGT: all climbers combined route repeats')

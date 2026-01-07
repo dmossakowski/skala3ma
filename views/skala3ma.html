@@ -3,7 +3,7 @@
 {% block topcontent %}
 
 <style>
-    #map { height: 540px; width: 100%; }
+    #map { height: 640px; width: 100%; }
 </style>
 
 <div style="background:  linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.75) ), url(/public/images/main-back.jpg); height: auto; background-repeat: no-repeat;
@@ -116,13 +116,29 @@ function processGyms(gyms)
             
             height = img.naturalHeight;
             width = img.naturalWidth;
-            let proportionalWidth = (95 / height) * width; // Calculate proportional width
-     
-            //console.log(gyms[i].name+" - "+img.naturalWidth+ " "+img.naturalHeight+" "+proportionalWidth+ ":"+95) // Error: undefined is not an object
+
+            ratio = width / height; // 1 = square, >1 = landscape, <1 = portrait
+            desiredScale = 55;
+
+            if (ratio < 0.8) {
+                desiredScale = 150; // smaller height for landscape images
+            }else if (ratio < 1.6) {
+                desiredScale = 120; // larger height for very tall images
+            }else if (ratio < 2.1) {
+                desiredScale = 90; // larger height for very tall images
+            } else {
+                desiredScale = 60; // larger height for very tall images
+            }
+
+            let proportionalWidth = (desiredScale / height) * width; // Calculate proportional width
+            let proportionalHeight = desiredScale; // Set desired height
             
-            var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id,iconSize: [proportionalWidth, 95], 
-                shadowUrl: '/public/images/white-dot.png', shadowSize: [proportionalWidth*2.7 , 250], 
-                shadowAnchor: [proportionalWidth-10, 140],
+            //console.log(gyms[i].name+" - "+ratio+" "+img.naturalWidth+ " "+img.naturalHeight+" "+proportionalWidth+ ":"+proportionalHeight) // Error: undefined is not an object
+            
+            var icon = new LeafIcon ({iconUrl: '/image/'+gyms[i].logo_img_id, iconSize: [proportionalWidth, proportionalHeight], 
+                shadowUrl: '/public/images/white-dot.png', 
+                shadowSize: [proportionalWidth*2.7 , 250], 
+                shadowAnchor: [proportionalWidth-10, 150],
                 
             })
 

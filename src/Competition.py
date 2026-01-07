@@ -21,7 +21,7 @@ class Competition:
     max_participants: int = 80
     results: Dict[str, Any] = field(default_factory=dict)
     calc_type: Any = 1
-    competition_type: int = 0
+    competition_type: str = "adult"
     routes: List[Dict[str, Any]] = field(default_factory=list)
     instructions: str = ""
     added_by: Optional[str] = None
@@ -43,7 +43,7 @@ class Competition:
             max_participants=int(data.get('max_participants', 80)),
             results=data.get('results', {}) or {},
             calc_type=data.get('calc_type', 1),
-            competition_type=int(data.get('competition_type', 0)),
+            competition_type=data.get('competition_type', "adult"),
             routes=data.get('routes', []) or [],
             instructions=data.get('instructions', ''),
             added_by=data.get('added_by'),
