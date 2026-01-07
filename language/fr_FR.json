@@ -233,6 +233,8 @@
     "Reset": "Réinitialiser",
     "Present": "Présent",
     "Absent": "Absent",
+    "confirm_set_to_present_question": "Confirmer le passage à Présent ?",
+    "confirm_set_to_absent_question": "Confirmer le passage à Absent ?",
     "registered_date": "Date d'inscription",
     "sex": "Sexe",
     "error5314": "La mise à jour des voies n'est pas autorisée pour cet utilisateur ou la compétition n'est pas dans le bon état",

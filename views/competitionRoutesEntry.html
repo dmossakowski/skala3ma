@@ -49,8 +49,8 @@
 						      </div>
 						      <div class="modal-body" id="presenceConfirmBody">Are you sure you want to change presence?</div>
 						      <div class="modal-footer">
-						        <button type="button" class="btn btn-secondary" id="presenceCancelBtn" data-translate-key="Cancel">Cancel</button>
-						        <button type="button" class="btn btn-primary" id="presenceSaveBtn" data-translate-key="Save">Save</button>
+						        <button type="button" class="btn btn-secondary" id="presenceCancelBtn" data-translate-key="cancel">Cancel</button>
+						        <button type="button" class="btn btn-primary" id="presenceSaveBtn" data-translate-key="save">Save</button>
 						      </div>
 						    </div>
 						  </div>
@@ -85,11 +85,11 @@
 							// i18n labels
 							var presentLang = (typeof getTranslation === 'function' ? getTranslation('Present') : null) || 'present-key';
 							var absentLang = (typeof getTranslation === 'function' ? getTranslation('Absent') : null) || 'absent-key';
-							var confirmTitleLang = (typeof getTranslation === 'function' ? getTranslation('Confirm Change') : null) || 'Confirm Change';
-							var confirmBodyPresentLang = (typeof getTranslation === 'function' ? getTranslation('Confirm set to Present?') : null) || 'Confirm set to Present?';
-							var confirmBodyAbsentLang = (typeof getTranslation === 'function' ? getTranslation('Confirm set to Absent?') : null) || 'Confirm set to Absent?';
-							var saveLang = (typeof getTranslation === 'function' ? getTranslation('Save') : null) || 'Save';
-							var cancelLang = (typeof getTranslation === 'function' ? getTranslation('Cancel') : null) || 'Cancel';
+							var confirmTitleLang = '';
+							var confirmBodyPresentLang = (typeof getTranslation === 'function' ? getTranslation('confirm_set_to_present_question') : null) || 'Confirm set to Present?';
+							var confirmBodyAbsentLang = (typeof getTranslation === 'function' ? getTranslation('confirm_set_to_absent_question') : null) || 'Confirm set to Absent?';
+							var saveLang = (typeof getTranslation === 'function' ? getTranslation('save') : null);
+							var cancelLang = (typeof getTranslation === 'function' ? getTranslation('cancel') : null);
 							if(titleEl) titleEl.textContent = confirmTitleLang;
 							if(cancelBtn) cancelBtn.textContent = cancelLang;
 							if(saveBtn) saveBtn.textContent = saveLang;

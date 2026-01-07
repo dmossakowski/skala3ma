@@ -231,6 +231,8 @@
     "Reset": "Reset",
     "Present": "Present",
     "Absent": "Absent",
+    "confirm_set_to_present_question": "Confirm setting to Present?",
+    "confirm_set_to_absent_question": "Confirm setting to Absent?",
     "registered_date": "Registered Date",
     "sex": "Sex",
     "error5314": "Updating routes is not permitted for this user or the competition is not in the right status",

@@ -251,6 +251,8 @@
     "Reset": "Resetuj",
     "Present": "Obecny",
     "Absent": "Nieobecny",
+    "confirm_set_to_present_question": "Czy potwierdzić ustawienie na Obecny?",
+    "confirm_set_to_absent_question": "Czy potwierdzić ustawienie na Nieobecny?",
     "registered_date": "Data rejestracji",
     "sex": "Płeć",
     "error5314": "Ten użytkownik nie moze zmieniać dróg lub zawody nie są w odpowiednim statusie",
