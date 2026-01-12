@@ -1719,12 +1719,10 @@ def update_routes_climbed(competitionId, climberId):
         if not competitionsEngine.has_permission_for_competition(competitionId, user):
             return render_template('competitionLogin.html')
 
-        if len(routesUpdated) > 0:
-            competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-        if len(competition.get('climbers').values())>0 and 'lastname' in list(competition.get('climbers').values())[0].keys():
-            competition['climbers'] = dict(sorted(competition.get('climbers').items(), key=lambda x: x[1]['lastname'].upper()))
-
-            return render_template('competitionClimberList.html',
+        #if len(routesUpdated) > 0:
+        competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
+            
+        return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,
                                    subheader_message="Routes saved",

@@ -730,7 +730,7 @@ def register_with_email():
 # the user wants to register so send the confirmation email
 # or the user needs to reset the password
 @app.route('/register', methods=['POST'])
-@limiter.limit("2 per minute")
+@limiter.limit("20 per minute")
 def register():
     result = email_login_service.register(request.form)
     return render_template(result['template'], **result['context'])
@@ -748,7 +748,7 @@ def forgot_password():
 # the user must already be confirmed which means that their email is valid and they are in the database
 # they would also then have the email put in their session
 @app.route('/change_password', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("20 per minute")
 def change_password():
     result = email_login_service.change_password(request.form.get('password'), request.form.get('password2'))
     return render_template(result['template'], **result['context'])
