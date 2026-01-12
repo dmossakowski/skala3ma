@@ -624,8 +624,8 @@ div.cs-select span {
   background: rgba(0, 0, 0, 0.04); }
 
 .heading-section {
-  padding-bottom: 1em;
-  margin-bottom: 2em; }
+  padding-bottom: 0.5em;
+  margin-bottom: 1em; }
 .heading-section h3 {
   font-size: 40px;
   font-weight: 400;

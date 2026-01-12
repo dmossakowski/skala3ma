@@ -1,6 +1,3 @@
-
-
-
 {% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
@@ -34,7 +31,8 @@
 
 
 						<br>
-						<h3>{{ reference_data['current_language'].competition_climber_list }} <br>
+						{{ reference_data['current_language'].competition_climber_list }} 
+                        <h3>
 								{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
 
 
@@ -79,146 +77,177 @@
 </style>
 <div id="climberTable"></div>
 <script>
-(function(){
-	if (typeof apiFetchJson !== 'function' && typeof apiFetch !== 'function') { console.error('apiFetch/apiFetchJson global helper missing'); return; }
-	if (typeof Tabulator === 'undefined') { console.error('Tabulator not available'); return; }
+document.addEventListener('DOMContentLoaded', function(){
+  // Polyfill for very old browsers
+  if (!Object.entries) {
+    Object.entries = function(obj){
+      var keys = Object.keys(obj), i = keys.length, res = new Array(i);
+      while (i--) res[i] = [keys[i], obj[keys[i]]];
+      return res;
+    };
+  }
 
-	const tableEl = document.getElementById('climberTable');
-	if(!tableEl) return;
+  function waitForDeps(timeout=8000, interval=100){
+    return new Promise(function(resolve, reject){
+      var start = Date.now();
+      (function check(){
+        var ok = (typeof Tabulator !== 'undefined') &&
+                 (typeof apiFetchJson === 'function' || typeof apiFetch === 'function');
+        if (ok) return resolve();
+        if (Date.now() - start >= timeout) return reject(new Error('Dependencies timeout'));
+        setTimeout(check, interval);
+      })();
+    });
+  }
 
-	// Determine competition ID from URL or Jinja fallback
-	const path = window.location.pathname;
-	let match = path.match(/competitionClimberList\/([^\/]+)/);
-	if(!match){ match = path.match(/competition\/([^\/]+)/); }
-	const competitionIdFromJinja = {{ competition['id'] | default('') | tojson }};
-	const competitionId = (match && match[1]) ? match[1] : (competitionIdFromJinja || '');
-	if(!competitionId){ console.error('Cannot determine competitionId'); return; }
+  function fmtDate(val){
+    if(val == null) return '';
+    try{
+      var d = (typeof val === 'number') ? new Date(val*1000) : new Date(val);
+      if(isNaN(d.getTime())) return '';
+      return d.toLocaleDateString();
+    } catch(e){ return ''; }
+  }
 
-	function getCatKey(calc_type, competition_type, age_category_type, category)
-    {   
-        key = '';
-        //console.log("calc_type:", calc_type, " competition_type:", competition_type, " category:", category, " age_category_type:", age_category_type);
+  function renderFallbackList(comp){
+    var tableEl = document.getElementById('climberTable');
+    if (!tableEl || !comp || !comp.climbers) return;
+    var html = '<ul class="list-unstyled">';
+    Object.entries(comp.climbers).forEach(function(pair){
+      var c = pair[1] || {};
+      var name = c.name || '';
+      var club = c.club || '';
+      var routes = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
+      html += '<li class="climber-row"><div class="climber-name">'+name+
+              '</div><div class="climber-meta"><span>'+club+
+              '</span><span>'+routes+' {{ reference_data["current_language"].routes }}</span></div></li>';
+    });
+    html += '</ul>';
+    tableEl.innerHTML = html;
+  }
 
-        // fsgt1_adult_0
-        // fsgt1_youth_0 etc..
-        key = age_category_type+'_' + competition_type+'_' + category;
-        
-        //console.log("key:", key);
-        return `competition_category_${key}`; 
-        
+  function getCompId(){
+    var path = window.location.pathname;
+    var m = path.match(/competitionClimberList\/([^\/]+)/) || path.match(/competition\/([^\/]+)/);
+    var competitionIdFromJinja = {{ competition['id'] | default('') | tojson }};
+    return (m && m[1]) ? m[1] : (competitionIdFromJinja || '');
+  }
+
+  function fetchCompetition(competitionId){
+    return (typeof apiFetchJson === 'function')
+      ? apiFetchJson('/api1/competition/'+competitionId+'?remove=routesClimbed2')
+      : apiFetch('/api1/competition/'+competitionId).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+  }
+
+  function initClimberTable(){
+    var tableEl = document.getElementById('climberTable');
+    if(!tableEl) return;
+
+    var competitionId = getCompId();
+    if(!competitionId){ console.error('Cannot determine competitionId'); return; }
+
+    function getCatKey(calc_type, competition_type, age_category_type, category){
+      var key = age_category_type+'_' + competition_type+'_' + category;
+      return 'competition_category_' + key;
     }
 
     var table = new Tabulator(tableEl, {
-				layout: "fitDataStretch",
-				responsiveLayout: "collapse",
-				responsiveLayoutCollapseStartOpen: true,
-				initialSort: [
-					{column: "name", dir: "asc"}
-				],
-				columns: [
-					{title: "{{ reference_data['current_language'].name }}", field: "name", responsive: 0, headerSort: true,
-						formatter: function(cell){
-							const d = cell.getRow().getData();
-							const url = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
-							const val = cell.getValue() || '';
-							return `<a href="${url}"><b>${val}</b></a>`;
-						}
-					},
-					{title: "{{ reference_data['current_language'].registered }}", field: "status", responsive: 1,
-						formatter: function(cell){
-							const v = (cell.getValue() || '').toLowerCase();
-                            reg_text = getTranslation('registered');
-                            wait_text = getTranslation('waitlist');
-							if(v === 'registered') return `<span class="reg-status registered show" >${reg_text}</span>`;
-							if(v === 'waitlist') return `<span class="reg-status waitlist show" >${wait_text}</span>`;
-							return '';
-						}
-					},
-						{title: "{{ reference_data['current_language'].Present }}", field: "present", responsive: 2, hozAlign: "center", width: 120,
-							formatter: function(cell){
-								const isPresent = !!cell.getValue();
-								const presentText = "{{ reference_data['current_language'].Present }}";
-								const absentText = "{{ reference_data['current_language'].Absent }}";
-								const label = isPresent ? presentText : absentText;
-								// Use Unicode check/cross for robustness, with accessible label
-								const symbol = isPresent ? '✓' : '✗';
-								return `<span class="presence-badge ${isPresent ? 'present' : 'absent'}" aria-label="${label}" title="${label}">${symbol}</span>`;
-							}
-						},
-					{title: "{{ reference_data['current_language'].registered_date }}", field: "registeredOn", responsive: 3},
-					{title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
-					{title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5},
-					{title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
-					{title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
-                        formatter: function(cell){
-                            const routeCount = cell.getValue() || 0;
-                            let barsHtml = '<div class="routes-bars" aria-label="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}" title="'+routeCount+' {{ reference_data['current_language'].routes_climbed }}">';
-                            /*for(let i=0; i<routeCount; i++){
-                                let calc_height = Math.min(100, i*3 +10);
-                                if (routeCount == 26)(
-                                    console.log("26 routes: height: "+calc_height)
-                                )
-                                barsHtml += '<div class="routes-bar" style="height:'+calc_height+'%"></div>';
-                            }*/
-                            barsHtml += routeCount+'</div>';
-                            return barsHtml;
-                        }
-                    }
-				],
-				rowClick: function(e, row){
-					const d = row.getData();
-					window.location.href = `/competitionRoutesEntry/${competitionId}/climber/${d.id}`;
-				}
-			});
+      layout: "fitDataStretch",
+      responsiveLayout: "collapse",
+      responsiveLayoutCollapseStartOpen: true,
+      initialSort: [{column: "name", dir: "asc"}],
+      columns: [
+        {title: "{{ reference_data['current_language'].name }}", field: "name", responsive: 0, headerSort: true,
+          formatter: function(cell){
+            var d = cell.getRow().getData();
+            var url = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
+            var val = cell.getValue() || '';
+            return '<a href="'+url+'"><b>'+val+'</b></a>';
+          }
+        },
+        {title: "{{ reference_data['current_language'].registered }}", field: "status", responsive: 1,
+          formatter: function(cell){
+            var v = (cell.getValue() || '').toLowerCase();
+            var reg_text = (typeof getTranslation === 'function' ? getTranslation('registered') : '{{ reference_data["current_language"].registered }}');
+            var wait_text = (typeof getTranslation === 'function' ? getTranslation('waitlist') : '{{ reference_data["current_language"].waitlist }}');
+            if(v === 'registered') return '<span class="reg-status registered show">'+reg_text+'</span>';
+            if(v === 'waitlist') return '<span class="reg-status waitlist show">'+wait_text+'</span>';
+            return '';
+          }
+        },
+        {title: "{{ reference_data['current_language'].Present }}", field: "present", responsive: 2, hozAlign: "center", width: 120,
+          formatter: function(cell){
+            var isPresent = !!cell.getValue();
+            var presentText = "{{ reference_data['current_language'].Present }}";
+            var absentText = "{{ reference_data['current_language'].Absent }}";
+            var label = isPresent ? presentText : absentText;
+            var symbol = isPresent ? '✓' : '✗';
+            return '<span class="presence-badge '+(isPresent ? 'present' : 'absent')+'" aria-label="'+label+'" title="'+label+'">'+symbol+'</span>';
+          }
+        },
+        {title: "{{ reference_data['current_language'].registered_date }}", field: "registeredOn", responsive: 3},
+        {title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
+        {title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5},
+        {title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
+        {title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
+          formatter: function(cell){
+            var routeCount = cell.getValue() || 0;
+            return '<div class="routes-bars" aria-label="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}" title="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}">'+routeCount+'</div>';
+          }
+        }
+      ],
+      rowClick: function(e, row){
+        var d = row.getData();
+        window.location.href = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
+      }
+    });
 
-	function fmtDate(val){
-		if(val == null) return '';
-		try{
-			const d = (typeof val === 'number') ? new Date(val*1000) : new Date(val);
-			if(isNaN(d.getTime())) return '';
-			return d.toLocaleDateString();
-		} catch(e){ return ''; }
-	}
+    fetchCompetition(competitionId)
+      .then(function(comp){
+        var rows = [];
+        if(comp && comp.climbers){
+          Object.entries(comp.climbers).forEach(function(pair){
+            var climberId = pair[0];
+            var c = pair[1] || {};
+            var routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
+            var rs = (c.registration_status || '').toLowerCase();
+            var catKey = getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
+            var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
+            rows.push({
+              id: climberId,
+              name: c.name || '',
+              sex: c.sex || '',
+              club: c.club || '',
+              category: catLabel,
+              routes: routeCount,
+              registeredOn: fmtDate(c.registration_timestamp),
+              present: !!c.present,
+              status: rs.indexOf('wait') >= 0 ? 'Waitlist' : (rs.indexOf('register') >= 0 ? 'Registered' : '')
+            });
+          });
+        }
+        if (rows.length > 0) { table.updateOrAddData(rows); }
+      })
+      .catch(function(err){ console.error('Failed to load competition', err); });
+  }
 
-	const fetchComp = (typeof apiFetchJson === 'function')
-		? apiFetchJson(`/api1/competition/${competitionId}?remove=routesClimbed2`)
-		: apiFetch(`/api1/competition/${competitionId}`).then(r => { if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+  var competitionId = getCompId();
+  if(!competitionId) return;
 
-	fetchComp
-		.then(comp => {
-			const rows = [];
-			if(comp && comp.climbers){
-				for(const [climberId, c] of Object.entries(comp.climbers)){
-					const routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
-					const rs = (c.registration_status || '').toLowerCase();
-					const catKey =  getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
-					const catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
-					rows.push({
-						id: climberId,
-						name: c.name || '',
-						sex: c.sex || '',
-						club: c.club || '',
-						category: catLabel,
-						routes: routeCount,
-						registeredOn: fmtDate(c.registration_timestamp),
-						present: !!c.present,
-						status: rs.includes('wait') ? 'Waitlist' : (rs.includes('register') ? 'Registered' : '')
-					});
-				}
-			}
-            //console.log("Loaded climbers:", rows.length);
-            const startTime = new Date().getTime();
-            //console.log("Time before updateOrAddData:", new Date().getTime() - startTime, "ms");
-            if (rows.length > 0) {
-                table.updateOrAddData(rows);
-            }
-            
-            //console.log("Time after updateOrAddData:", new Date().getTime() - startTime, "ms");
-
-			
-		})
-		.catch(err => { console.error('Failed to load competition', err); });
-})();
+  waitForDeps()
+    .then(function(){
+      if (typeof Tabulator === 'undefined') {
+        // Fallback render if Tabulator missing
+        fetchCompetition(competitionId).then(renderFallbackList).catch(function(e){ console.error('Fallback render failed', e); });
+      } else {
+        initClimberTable();
+      }
+    })
+    .catch(function(){
+      // As a last resort, render a minimal list without Tabulator
+      fetchCompetition(competitionId).then(renderFallbackList).catch(function(e){ console.error('Fallback render failed', e); });
+    });
+});
 </script>
 
 
