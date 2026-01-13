@@ -919,8 +919,12 @@ def addCompetitionClimber(competitionId):
     category = request.args.get('category')
     dob = request.args.get('dob')
     
-    
+    # TODO this happens in logs but not sure why
     comp = competitionsEngine.getCompetition(competitionId)
+    if comp is None:
+        logging.error('addCompetitionClimber - competition not found '+str(competitionId))
+        
+    
     user = competitionsEngine.get_user_by_email(useremail)
     climber_id = str(uuid.uuid4().hex)
     if user is not None:
@@ -1611,6 +1615,10 @@ def competitionRoutes(competitionId):
     user = competitionsEngine.get_user_by_email(session.get('email'))
 
     competition = competitionsEngine.getCompetition(competitionId)
+
+    # TODO this error is found in logs.. it shouldn't happen
+    if competition is None:
+        logging.error('competitionRoutes: competition not found '+str(competitionId))
 
     error_code = ""
     if not competitionsEngine.can_update_routes(user,competition):
