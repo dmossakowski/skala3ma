@@ -391,21 +391,20 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
 
 
 // Function to load the language pack
-function loadLanguagePack(language= 'fr_FR', force = false) {
+function loadLanguagePack(language = 'fr_FR', force = false) {
     return new Promise((resolve, reject) => {
-        // Check if the language pack is in local storage and force is not true
-        const storedTranslations = localStorage.getItem('translations');
         const storedTimestamp = localStorage.getItem('translations-timestamp');
         const storedLanguage = localStorage.getItem('translations-language');
-        const currentTime = new Date().getTime();
+        const currentTime = Date.now();
         const threeHoursInMillis = 3 * 60 * 60 * 1000;
-        const difference = currentTime - new Date(storedTimestamp).getTime()
+        const storedTime = storedTimestamp ? new Date(storedTimestamp).getTime() : 0;
+        const difference = currentTime - storedTime;
 
         if (storedLanguage !== language) {
             force = true;
-        }   
+        }
         if (!storedTimestamp || difference > threeHoursInMillis) {
-            force = true;   
+            force = true;
         }
 
         if (force) {
@@ -413,9 +412,7 @@ function loadLanguagePack(language= 'fr_FR', force = false) {
             apiFetch('/api1/langpack/' + language)
                 .then(response => response.json())
                 .then(data => {
-                    // Store the language pack in local storage
                     localStorage.setItem('translations', JSON.stringify(data));
-                    console.log('Language pack loaded:', data);
                     localStorage.setItem('translations-timestamp', new Date().toISOString());
                     localStorage.setItem('translations-language', language);
                     replaceTranslations();
@@ -425,6 +422,44 @@ function loadLanguagePack(language= 'fr_FR', force = false) {
                     console.error('Error fetching language pack:', error);
                     reject(error);
                 });
+        } else {
+            // Use cached translations if available
+            try {
+                const raw = localStorage.getItem('translations');
+                if (raw) {
+                    // Validate JSON to ensure it's an object
+                    JSON.parse(raw);
+                    replaceTranslations();
+                } else {
+                    console.warn('Translations cache empty; fetching language pack.');
+                    return apiFetch('/api1/langpack/' + language)
+                        .then(response => response.json())
+                        .then(data => {
+                            localStorage.setItem('translations', JSON.stringify(data));
+                            localStorage.setItem('translations-timestamp', new Date().toISOString());
+                            localStorage.setItem('translations-language', language);
+                            replaceTranslations();
+                        })
+                        .catch(err => console.error('Fallback fetch failed:', err))
+                        .finally(() => resolve());
+                }
+                resolve();
+            } catch (e) {
+                console.warn('Invalid translations cache; refetching.', e);
+                apiFetch('/api1/langpack/' + language)
+                    .then(response => response.json())
+                    .then(data => {
+                        localStorage.setItem('translations', JSON.stringify(data));
+                        localStorage.setItem('translations-timestamp', new Date().toISOString());
+                        localStorage.setItem('translations-language', language);
+                        replaceTranslations();
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching language pack:', error);
+                        reject(error);
+                    });
+            }
         }
     });
 }
@@ -434,39 +469,47 @@ function loadLanguagePack(language= 'fr_FR', force = false) {
 
 // Function to replace translations in the DOM
 function replaceTranslations() {
-    const translations = JSON.parse(localStorage.getItem('translations'));
-    //console.log('replaceTranslations called');
-    if (!translations) {
-        console.warn('No translations found in local storage.');
+    let translations = null;
+    try {
+        const raw = localStorage.getItem('translations');
+        translations = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        console.warn('Failed to parse translations from localStorage.', e);
+        translations = null;
+    }
+    if (!translations || typeof translations !== 'object') {
+        console.warn('No valid translations found in local storage.');
         return;
     }
     document.querySelectorAll('[data-translate-key]').forEach(element => {
         const key = element.getAttribute('data-translate-key');
-        element.innerHTML = translations[key] || key;
+        const value = translations[key];
+        element.innerHTML = (value !== undefined && value !== null) ? value : key;
     });
 }
 
 function getTranslation(key) {
-    //console.log('getTranslation:', key);
-
-    const stored = JSON.parse(localStorage.getItem('translations'));
-    //const translations = stored ? JSON.parse(stored) : null;
-
-    //key='name'
-    //console.log('t1:', t1);
-    //console.log('t1:', t1[key]);
-    //console.log('t2:', translations[key]);
-
-    const translation = stored[key] 
-    if (translation) {
-        return translation;
-    }else{
-        //console.log('Missing translation for key:', key);
-        //console.log(t1);
-        //console.log(localStorage.getItem('translations-timestamp'));
-        return key +' x';
+    try {
+        const raw = localStorage.getItem('translations');
+        if (!raw) {
+            return key;
+        }
+        let stored = null;
+        try {
+            stored = JSON.parse(raw);
+        } catch (e) {
+            console.warn('Translations JSON parse error:', e);
+            return key;
+        }
+        if (stored && typeof stored === 'object') {
+            const value = stored[key];
+            return (value !== undefined && value !== null) ? value : key;
+        }
+        return key;
+    } catch (e) {
+        console.warn('getTranslation error:', e);
+        return key;
     }
-    return stored[key] || key+' x';
 }
 
 // Function to clear translations from local storage
