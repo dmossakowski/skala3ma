@@ -1518,6 +1518,8 @@ def can_register(user, competition):
 
 def competition_accepts_registrations(competition):
         # competition is in the correct state then allow
+    if competition is None:
+        return False
     return competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]
 
 
