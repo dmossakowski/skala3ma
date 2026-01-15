@@ -187,7 +187,12 @@ document.addEventListener('DOMContentLoaded', function(){
         },
         {title: "{{ reference_data['current_language'].registered_date }}", field: "registeredOn", responsive: 3},
         {title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
-        {title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5},
+        {title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5,
+            formatter: function(cell){
+            var catKey = cell.getValue() || 'n/a';
+            return '<span data-translate-key='+catKey+'>'+catKey+'</span>';
+          }
+        },
         {title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
         {title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
           formatter: function(cell){
@@ -212,13 +217,13 @@ document.addEventListener('DOMContentLoaded', function(){
             var routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
             var rs = (c.registration_status || '').toLowerCase();
             var catKey = getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
-            var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
+            //var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
             rows.push({
               id: climberId,
               name: c.name || '',
               sex: c.sex || '',
               club: c.club || '',
-              category: catLabel,
+              category: catKey,
               routes: routeCount,
               registeredOn: fmtDate(c.registration_timestamp),
               present: !!c.present,
@@ -226,7 +231,11 @@ document.addEventListener('DOMContentLoaded', function(){
             });
           });
         }
-        if (rows.length > 0) { table.updateOrAddData(rows); }
+        if (rows.length > 0) { 
+            table.updateOrAddData(rows); 
+            replaceTranslations();
+            console.log('Climber table loaded with '+rows.length+' entries.');
+        }
       })
       .catch(function(err){ console.error('Failed to load competition', err); });
   }
