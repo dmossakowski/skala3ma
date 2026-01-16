@@ -1538,6 +1538,8 @@ def get_user():
         return jsonify({'error': 'not_found'}), 404
     picture = user.get('gpictureurl') or user.get('fpictureurl') or user.get('picture')
     user['picture'] = picture
+    if competitionsEngine.can_create_gym(user):
+        user['permissions']['general'].append("create_gym")
     return user
 
 

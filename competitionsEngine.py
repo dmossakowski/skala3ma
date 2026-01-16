@@ -1568,6 +1568,8 @@ def can_create_gym(user):
     permissions = user.get('permissions')
     if 'create_gym' in permissions['general'] or permissions['godmode'] == True:
         return True
+    if len(skala_db.search_gym_by_owner(user['id'])) == 0:
+        return True
     return False
 
 
@@ -1624,6 +1626,17 @@ def get_gyms_by_ids(ids):
         logging.info("retrieved gyms by ids: " + str(ids))
     return gyms
 
+
+def get_gym_by_owner(user_id):
+    gym = None
+    try:
+        sql_lock.acquire()
+        gym = skala_db.get_gym_by_owner(user_id)
+    finally:
+        sql_lock.release()
+        logging.info("retrieved gym by owner id  "+str(user_id))
+        return gym
+    
 
 def get_routes(routesid):
     if routesid is None:

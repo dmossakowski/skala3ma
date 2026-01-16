@@ -415,7 +415,7 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
                     localStorage.setItem('translations', JSON.stringify(data));
                     localStorage.setItem('translations-timestamp', new Date().toISOString());
                     localStorage.setItem('translations-language', language);
-                    replaceTranslations();
+                    replaceTranslations('loadLanguagePack');
                     resolve();
                 })
                 .catch(error => {
@@ -429,7 +429,7 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
                 if (raw) {
                     // Validate JSON to ensure it's an object
                     JSON.parse(raw);
-                    replaceTranslations();
+                    replaceTranslations('loadLanguagePack not forced');
                 } else {
                     console.warn('Translations cache empty; fetching language pack.');
                     return apiFetch('/api1/langpack/' + language)
@@ -438,7 +438,7 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
                             localStorage.setItem('translations', JSON.stringify(data));
                             localStorage.setItem('translations-timestamp', new Date().toISOString());
                             localStorage.setItem('translations-language', language);
-                            replaceTranslations();
+                            replaceTranslations('loadLanguagePack fallback fetch');
                         })
                         .catch(err => console.error('Fallback fetch failed:', err))
                         .finally(() => resolve());
@@ -452,7 +452,7 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
                         localStorage.setItem('translations', JSON.stringify(data));
                         localStorage.setItem('translations-timestamp', new Date().toISOString());
                         localStorage.setItem('translations-language', language);
-                        replaceTranslations();
+                        replaceTranslations('loadLanguagePack invalid cache refetch');
                         resolve();
                     })
                     .catch(error => {
@@ -468,8 +468,9 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
 
 
 // Function to replace translations in the DOM
-function replaceTranslations() {
+function replaceTranslations(id='') {
     let translations = null;
+    //console.log('Replacing translations in DOM elements id='+id);
     try {
         const raw = localStorage.getItem('translations');
         translations = raw ? JSON.parse(raw) : null;
@@ -485,6 +486,7 @@ function replaceTranslations() {
         const key = element.getAttribute('data-translate-key');
         const value = translations[key];
         element.innerHTML = (value !== undefined && value !== null) ? value : key;
+        //console.log(`Translated key: ${key} => ${element.innerHTML}`);
     });
 }
 

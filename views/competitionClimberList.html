@@ -77,28 +77,8 @@
 </style>
 <div id="climberTable"></div>
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  // Polyfill for very old browsers
-  if (!Object.entries) {
-    Object.entries = function(obj){
-      var keys = Object.keys(obj), i = keys.length, res = new Array(i);
-      while (i--) res[i] = [keys[i], obj[keys[i]]];
-      return res;
-    };
-  }
 
-  function waitForDeps(timeout=8000, interval=100){
-    return new Promise(function(resolve, reject){
-      var start = Date.now();
-      (function check(){
-        var ok = (typeof Tabulator !== 'undefined') &&
-                 (typeof apiFetchJson === 'function' || typeof apiFetch === 'function');
-        if (ok) return resolve();
-        if (Date.now() - start >= timeout) return reject(new Error('Dependencies timeout'));
-        setTimeout(check, interval);
-      })();
-    });
-  }
+  
 
   function fmtDate(val){
     if(val == null) return '';
@@ -139,17 +119,24 @@ document.addEventListener('DOMContentLoaded', function(){
       : apiFetch('/api1/competition/'+competitionId).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
   }
 
-  function initClimberTable(){
-    var tableEl = document.getElementById('climberTable');
-    if(!tableEl) return;
-
-    var competitionId = getCompId();
-    if(!competitionId){ console.error('Cannot determine competitionId'); return; }
 
     function getCatKey(calc_type, competition_type, age_category_type, category){
       var key = age_category_type+'_' + competition_type+'_' + category;
       return 'competition_category_' + key;
     }
+    
+
+
+
+
+
+  
+
+
+document.addEventListener('DOMContentLoaded', function()
+{
+    var tableEl = document.getElementById('climberTable');
+    if(!tableEl) return;
 
     var table = new Tabulator(tableEl, {
       layout: "fitDataStretch",
@@ -168,8 +155,8 @@ document.addEventListener('DOMContentLoaded', function(){
         {title: "{{ reference_data['current_language'].registered }}", field: "status", responsive: 1,
           formatter: function(cell){
             var v = (cell.getValue() || '').toLowerCase();
-            var reg_text = (typeof getTranslation === 'function' ? getTranslation('registered') : '{{ reference_data["current_language"].registered }}');
-            var wait_text = (typeof getTranslation === 'function' ? getTranslation('waitlist') : '{{ reference_data["current_language"].waitlist }}');
+            var reg_text =  '{{ reference_data["current_language"].registered }}';
+            var wait_text = '{{ reference_data["current_language"].waitlist }}';
             if(v === 'registered') return '<span class="reg-status registered show">'+reg_text+'</span>';
             if(v === 'waitlist') return '<span class="reg-status waitlist show">'+wait_text+'</span>';
             return '';
@@ -190,14 +177,15 @@ document.addEventListener('DOMContentLoaded', function(){
         {title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5,
             formatter: function(cell){
             var catKey = cell.getValue() || 'n/a';
-            return '<span data-translate-key='+catKey+'>'+catKey+'</span>';
+            //var label = (typeof getTranslation === 'function') ? getTranslation(catKey) : catKey;
+            return '<span data-translate-key="'+catKey+'">'+catKey+'</span>';
           }
         },
         {title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
-        {title: "{{ reference_data['current_language'].routes }}", field: "routes", responsive: 7, hozAlign: "right",
+        {title: "{{ reference_data['current_language'].routes_climbed }}", field: "routes", responsive: 7, hozAlign: "right",
           formatter: function(cell){
             var routeCount = cell.getValue() || 0;
-            return '<div class="routes-bars" aria-label="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}" title="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}">'+routeCount+'</div>';
+            return '<div  title="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}">'+routeCount+'</div>';
           }
         }
       ],
@@ -206,6 +194,26 @@ document.addEventListener('DOMContentLoaded', function(){
         window.location.href = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
       }
     });
+
+    var competitionId = getCompId();
+    if(!competitionId){ console.error('Cannot determine competitionId'); return; }
+
+
+    // Ensure translations are applied after Tabulator renders/updates
+    try {
+      table.on('renderComplete', function(){ replaceTranslations('renderComplete'); });
+      table.on('dataProcessed', function(){ replaceTranslations('dataProcessed'); });
+      table.on('dataLoaded', function(){ replaceTranslations('dataLoaded'); });
+    } catch(e) {
+      // Fallback single call
+      replaceTranslations('fallback');
+    }
+
+  function loadCompetition(){
+    console.log('loadCompetition table loaded with entries.');
+    var competitionId = getCompId();
+    if(!competitionId) return;
+    console.log('loadCompetition table loaded with entries.'+competitionId);
 
     fetchCompetition(competitionId)
       .then(function(comp){
@@ -232,31 +240,19 @@ document.addEventListener('DOMContentLoaded', function(){
           });
         }
         if (rows.length > 0) { 
-            table.updateOrAddData(rows); 
-            replaceTranslations();
             console.log('Climber table loaded with '+rows.length+' entries.');
+            table.updateOrAddData(rows);
+            
         }
       })
       .catch(function(err){ console.error('Failed to load competition', err); });
-  }
+}
+  loadCompetition();
 
-  var competitionId = getCompId();
-  if(!competitionId) return;
-
-  waitForDeps()
-    .then(function(){
-      if (typeof Tabulator === 'undefined') {
-        // Fallback render if Tabulator missing
-        fetchCompetition(competitionId).then(renderFallbackList).catch(function(e){ console.error('Fallback render failed', e); });
-      } else {
-        initClimberTable();
-      }
-    })
-    .catch(function(){
-      // As a last resort, render a minimal list without Tabulator
-      fetchCompetition(competitionId).then(renderFallbackList).catch(function(e){ console.error('Fallback render failed', e); });
-    });
 });
+
+  //fetchCompetition(competitionId).then(renderFallbackList).catch(function(e){ console.error('Fallback render failed', e); });
+   
 </script>
 
 
