@@ -897,6 +897,26 @@ def search_gym_by_name_address(search_string):
     return users
 
 
+def search_gym_by_owner(owner_id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+
+    query = '''
+    SELECT jsondata FROM ''' + GYM_TABLE + '''
+    WHERE lower(trim(json_extract(jsondata, '$.added_by'))) = lower(trim(?));
+    '''
+    
+    rows = cursor.execute(query, [owner_id])
+    
+    gyms = []
+    if rows is not None:
+        for row in rows.fetchall():
+            gym = json.loads(row[0])
+            gyms.append(gym)
+    
+    return gyms
+
+
 def get_gym_by_ref_id(ref_id):
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()

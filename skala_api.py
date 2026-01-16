@@ -1538,6 +1538,8 @@ def get_user():
         return jsonify({'error': 'not_found'}), 404
     picture = user.get('gpictureurl') or user.get('fpictureurl') or user.get('picture')
     user['picture'] = picture
+    if competitionsEngine.can_create_gym(user):
+        user['permissions']['general'].append("create_gym")
     return user
 
 
@@ -2590,7 +2592,8 @@ def route_save(gymid, routesid):
                 x.update(routedata)
             break
         # check if routenum is 3.5
-        if float(routedata['routenum']) > float(x['routenum']) and float(routedata['routenum']) < float(x['routenum'])+1:
+        ##if float(routedata['routenum']) > float(x['routenum']) and float(routedata['routenum']) < float(x['routenum'])+1:
+        if float(routedata['routenum']) % 1 == 0.5:
             routedata['routenum']= int(x['routenum'])+1
             routes.insert(int(x['routenum']),routedata )
            
@@ -2599,7 +2602,7 @@ def route_save(gymid, routesid):
     
     competitionsEngine.upsert_routes(routesid, gymid, routeset)
 
-    return json.dumps(routeset)
+    return routeset
 
 
 
