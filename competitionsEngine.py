@@ -352,7 +352,9 @@ def get_category_from_dob(dob, competition_date, competition_type, age_category_
     dob_dt = datetime.strptime(dob, "%Y-%m-%d")
     competition_dt = datetime.strptime(competition_date, "%Y-%m-%d")
     
-    age = competition_dt.year - dob_dt.year - ((competition_dt.month, competition_dt.day) < (dob_dt.month, dob_dt.day))
+    # Calculate age as of August 31st of the competition year (beginning of season) to avoid category changes mid-season
+    august_31st = datetime(competition_dt.year, 8, 31)
+    age = august_31st.year - dob_dt.year - ((august_31st.month, august_31st.day) < (dob_dt.month, dob_dt.day))
 
     if age < 12:
         return -1  # Return -1 for under 12
