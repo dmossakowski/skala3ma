@@ -223,8 +223,20 @@
             }
           },
           y: {
-            formatter: function (val) {
-              return val + " repeats"
+            formatter: function (val, opts) {
+              // Show repeat count and climber names
+              var result = val + " repeat" + (val !== 1 ? "s" : "");
+              
+              // Access climber names from stored data
+              if (window.chart2ClimberNames && opts.seriesIndex !== undefined && opts.dataPointIndex !== undefined) {
+                var seriesName = opts.w.config.series[opts.seriesIndex].name;
+                var climbers = window.chart2ClimberNames[seriesName];
+                if (climbers && climbers[opts.dataPointIndex] && climbers[opts.dataPointIndex].length > 0) {
+                  result += "<br/><small>" + climbers[opts.dataPointIndex].join(",<br> ") + "</small>";
+                }
+              }
+              
+              return result;
             }
           }
         },
@@ -264,11 +276,23 @@
 	function processData2(fullresponse)
 	{
         ylabels = fullresponse['y_labels'];
+        
+        // Store climber names globally for tooltip access
+        window.chart2ClimberNames = fullresponse['climber_names'];
+        
+        // Calculate dynamic height based on number of routes
+        var chartHeight = Math.max(400, fullresponse['routedata'].length * 30);
+        
         chart2.updateOptions({
+            chart: {
+                height: chartHeight
+            },
             xaxis: {
                 categories: ylabels
             },
-            
+            yaxis: {
+                categories: ylabels
+            }
         });
 		chart2.updateSeries(fullresponse['chartdata']);
 	}
