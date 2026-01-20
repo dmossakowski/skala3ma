@@ -915,6 +915,7 @@ def addCompetitionClimber(competitionId):
     email = request.args.get('email')
     sex = request.args.get('sex')
     club = request.args.get('club')
+    clubid = request.args.get('clubid') # preparation for future use
     otherclub = request.args.get('otherclub')
     category = request.args.get('category')
     dob = request.args.get('dob')
@@ -958,9 +959,10 @@ def addCompetitionClimber(competitionId):
         name = firstname + " " + lastname
 
         try:
-            if club not in competitionsEngine.clubs.values():
-                club = otherclub
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
+            #if club not in competitionsEngine.clubs.values():
+            #    club = otherclub
+
+            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, clubid, sex, category)
             if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
                 competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
                                                                climber['club'],  dob)
@@ -992,6 +994,7 @@ def addCompetitionClimber(competitionId):
     if competition_accepts_registrations and not is_registered and not error_code:
         enable_registration = True
 
+    
     return render_template('competitionClimber.html',
                            error_code=error_code,
                            competition=comp,

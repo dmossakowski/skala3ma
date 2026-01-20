@@ -65,15 +65,23 @@
 				
 <script>
 	const ctx2 = document.getElementById('myChart2');
-                const url = '/api1/competition/{{competition['id']}}/stats';
-                const url2 = '/api1/competition_results/{{competition['id']}}/stats';
-                
+                const url2 = '/api1/competition_results/{{competition['id']}}/stats_points_per_difficulty';
+                const url = '/api1/competition_results/{{competition['id']}}/stats_repeats_per_route';
+               
+
                 async function getData() {
+                  try {
+                  
+                    const rangejsondata = await apiFetchJson(url2);
+                    processDataRange(rangejsondata);
+                  } catch (err) {
+                    console.error('Failed to load competition stats', err);
+                  }
+
                   try {
                     const jsondata = await apiFetchJson(url);
                     processData2(jsondata);
-                    const rangejsondata = await apiFetchJson(url2);
-                    processDataRange(rangejsondata);
+                    
                   } catch (err) {
                     console.error('Failed to load competition stats', err);
                   }
@@ -85,33 +93,31 @@
             
                 
 	
-// graph with all routes for all categories
-	var options2 = {
-		labels: ['Femme Senior', 'Femme Titane', 'Femme Diamante', 'Homme Senior'],
-		colors: ['#4CAF50','#C5D86D','#1B998B', '#FF9800', '#FEC029', '#F9E83E'],
+// graph with all routes for all categories - Route Repeats by Sex/Category
+	var chart2options = {
+		colors: ['#1B998B', '#4CAF50', '#C5D86D', '#FF9800', '#FEC029', '#F9E83E'],
         series: [{
-          name: '{{ reference_data["current_language"].women }} Senior',
+          name: 'M0',
           data: []
         }, {
-          name: '{{ reference_data["current_language"].woman }} Titane',
+          name: 'M1',
           data: []
         }, {
-          name: '{{ reference_data["current_language"].women }} Diamant',
+          name: 'M2',
           data: []
         }, {
-          name: '{{ reference_data["current_language"].men }} Senior',
+          name: 'F0',
           data: []
         }, {
-          name: '{{ reference_data["current_language"].men }} Titane',
+          name: 'F1',
           data: []
         }, {
-          name: '{{ reference_data["current_language"].men }} Diamant',
+          name: 'F2',
           data: []
         }],
           chart: {
           type: 'bar',
           height: 800,
-          
           stacked: true,
           toolbar: {
             show: true
@@ -133,48 +139,98 @@
         plotOptions: {
           bar: {
             horizontal: true,
-            borderRadius: 0,
+            borderRadius: 2,
             dataLabels: {
-              total: {
-                enabled: true,
-                style: {
-                  fontSize: '10px',
-                  fontWeight: 500
-                }
-              }
+              position: 'top'
             }
           },
         },
+        dataLabels: {
+          enabled: true,
+          style: {
+            fontSize: '11px',
+            colors: ['#333']
+          }
+        },
         xaxis: {
-          //type: 'datetime',
-          categories: [1,2],
+          title: { 
+            text: 'Number of Repeats',
+            style: {
+              fontSize: '14px',
+              fontWeight: 600
+            }
+          },
+          labels: { 
+            style: { fontSize: '12px' } 
+          },
+          categories: [],
+        },
+        yaxis: {
+          title: { 
+            text: 'Route (Number | Line | Grade)',
+            style: {
+              fontSize: '11px',
+              fontWeight: 600
+            }
+          },
+          categories: [],
+          labels: { 
+            formatter: function (value, opts) {
+                
+                return value ;
+            },
+            show: true,
+            align: 'left',
+            minWidth: 0,
+            maxWidth: 250,
+            style: { 
+              fontSize: '10px',
+              cssClass: 'apexcharts-yaxis-label'
+            },
+          
+          },
+          axisBorder: {
+            show: true
+          },
+          axisTicks: {
+            show: true
+          }
         },
         legend: {
           position: 'top',
-          offsetZ: 40,
+          horizontalAlign: 'left',
+          offsetY: 0,
 		  onItemHover: {
       		highlightDataSeries: true
     		},
         },
         fill: {
-          opacity: 1
+          opacity: 0.9
         },
 		tooltip: {
-                shared: false,
-                x: {
-                  formatter: function (val) {
-                    return val
-                  }
-                },
-                y: {
-                  formatter: function (val) {
-                    return Math.abs(val) + ""
-                  }
+          shared: false,
+          x: {
+            formatter: function (val, opts) {
+              // Display the y-axis category (route info) in tooltip
+              // For horizontal bar charts, the category is stored in w.config.yaxis[0].categories
+              if (opts && opts.w && opts.w.config && opts.w.config.yaxis && opts.w.config.yaxis[0]) {
+                var categories = opts.w.config.yaxis[0].categories;
+                if (categories && categories[opts.dataPointIndex]) {
+                  return categories[opts.dataPointIndex];
                 }
-              },
+              }
+              return val;
+            }
+          },
+          y: {
+            formatter: function (val) {
+              return val + " repeats"
+            }
+          }
+        },
         };
 
-        var chart2 = new ApexCharts(document.getElementById("myChart2"), options2);
+        var chart2 = new ApexCharts(document.getElementById("myChart2"), chart2options);
         chart2.render();
       
 
@@ -207,23 +263,13 @@
 
 	function processData2(fullresponse)
 	{
-		//console.log('here2');
-		//console.log(fullresponse['F0']);
-		//
-
-		var routes = []
-		for (routeid in fullresponse['routedata'])
-		{
-			routes.push(fullresponse['routedata'][routeid]['grade']+' - '+fullresponse['routedata'][routeid]['routenum']);
-		}
-
-		chart2.updateOptions({
-   			xaxis: {
-      			categories: routes
-   			}
-   			
-			
-		});
+        ylabels = fullresponse['y_labels'];
+        chart2.updateOptions({
+            xaxis: {
+                categories: ylabels
+            },
+            
+        });
 		chart2.updateSeries(fullresponse['chartdata']);
 	}
 
@@ -245,126 +291,6 @@
 
 	}
 
-    var optionsMFchart = {
-          series: [76, 67, 61, 90],
-          chart: {
-          height: 390,
-          width: 400,
-          type: 'radialBar',
-        },
-        plotOptions: {
-          radialBar: {
-            offsetY: 0,
-            startAngle: 0,
-            endAngle: 270,
-            hollow: {
-              margin: 5,
-              size: '30%',
-              background: 'transparent',
-              image: undefined,
-            },
-            dataLabels: {
-              name: {
-                show: false,
-              },
-              value: {
-                show: false,
-              }
-            }
-          }
-        },
-        colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5'],
-        labels: ['Vimeo', 'Messenger', 'Facebook', 'LinkedIn'],
-        legend: {
-          show: true,
-          floating: true,
-          fontSize: '16px',
-          position: 'left',
-          offsetX: 20,
-          offsetY: 15,
-          labels: {
-            useSeriesColors: true,
-          },
-          markers: {
-            size: 0
-          },
-          formatter: function(seriesName, opts) {
-            return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
-          },
-          itemMargin: {
-            vertical: 3
-          }
-        },
-        responsive: [{
-          breakpoint: 480,
-          options: {
-            legend: {
-                show: false
-            }
-          }
-        }]
-        };
-
-    var optionsMFchartORIG = {
-          series: [24, 54],
-          chart: {
-          height: 250,
-          
-          type: 'radialBar',
-        },
-        plotOptions: {
-          radialBar: {
-            endAngle: 270,
-            dataLabels: {
-              name: {
-                show: true,
-                fontSize: '22px',
-              },
-              value: {
-                fontSize: '32px',
-                formatter: function (val) {
-                    return val 
-                  }
-              },
-              total: {
-                show: true,
-                label: '',
-                formatter: function (w) {
-                    return w.globals.seriesTotals.reduce((a, b) => {
-                      return a + b
-                    }, 0) 
-                  }
-              }
-            }
-          }
-        },
-        labels: ['Man', 'Woman'],
-        legend: {
-          show: true,
-          floating: true,
-          fontSize: '16px',
-          position: 'left',
-          offsetX: 10,
-          offsetY: 15,
-          horizontalAlign: 'left',
-          labels: {
-            useSeriesColors: true,
-          },
-          markers: {
-            size: 3
-          },
-          formatter: function(seriesName, opts) {
-            return seriesName //+ ":  " + opts.w.globals.series[opts.seriesIndex]
-          },
-          itemMargin: {
-            vertical: 3
-          }
-        },
-        };
-
-        //var chartMF = new ApexCharts(document.querySelector("#chartMF"), optionsMFchart);
-        //chartMF.render();
-      
 
     var optionsRouteschart = {
           series: [12],
@@ -399,42 +325,6 @@
         },
         labels: ['Apples', 'Oranges', "soooo"],
        };
-
-        //var chartRoutes = new ApexCharts(document.querySelector("#chartRoutes"), optionsRouteschart);
-        //chartRoutes.render();
-      
-    
-
-        var optionsScatter = {
-          series: [{
-          name: "SAMPLE A",
-          data: [
-          ['4c', 5.4], ['4c', 2] ]
-        },{
-          name: "SAMPLE B",
-          data: [
-          ["5a", 13.4], ["5a", 11], ["5a", 8]]
-        }],
-          chart: {
-          height: 350,
-          type: 'scatter',
-          zoom: {
-            enabled: true,
-            type: 'xy'
-          }
-        },
-        xaxis: {
-          tickAmount: 10,
-          labels: {
-            formatter: function(val) {
-              return parseFloat(val).toFixed(1)
-            }
-          }
-        },
-        yaxis: {
-          tickAmount: 7
-        }
-        };
 
       
 

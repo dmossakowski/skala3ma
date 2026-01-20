@@ -276,7 +276,7 @@ def update_competition_climbers_category(competition, competition_type):
 
 
 # add or register climber to a competition
-def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category):
+def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, club_id, sex, category):
     logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
@@ -311,7 +311,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         climbers[climberId] = {
             "id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
-            "club" :club, "sex":sex, "category":category, 
+            "club" :club_name, "club_id": club_id, "sex":sex, "category":category, 
             "age_category_type": age_category_type2026, # default to fsgt1 age categories
             "score":0, "rank":0,
             "registration_timestamp": datetime.now().isoformat(),
