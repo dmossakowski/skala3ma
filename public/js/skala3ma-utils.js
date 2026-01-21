@@ -388,13 +388,17 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
 
 
 
-
+function reloadTranslations() {
+    const storedLanguage = localStorage.getItem('translations-language');
+    loadLanguagePack(storedLanguage || 'fr_FR', false)
+}
 
 // Function to load the language pack
 function loadLanguagePack(language = 'fr_FR', force = false) {
     return new Promise((resolve, reject) => {
         const storedTimestamp = localStorage.getItem('translations-timestamp');
         const storedLanguage = localStorage.getItem('translations-language');
+        const storedTranslations = localStorage.getItem('translations');
         const currentTime = Date.now();
         const threeHoursInMillis = 3 * 60 * 60 * 1000;
         const storedTime = storedTimestamp ? new Date(storedTimestamp).getTime() : 0;
@@ -407,6 +411,10 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
             force = true;
         }
 
+        if (storedTranslations === null) {
+            force = true;
+        }
+
         if (force) {
             // Fetch the language pack from the API
             apiFetch('/api1/langpack/' + language)
@@ -415,7 +423,7 @@ function loadLanguagePack(language = 'fr_FR', force = false) {
                     localStorage.setItem('translations', JSON.stringify(data));
                     localStorage.setItem('translations-timestamp', new Date().toISOString());
                     localStorage.setItem('translations-language', language);
-                    replaceTranslations('loadLanguagePack');
+                    replaceTranslations('loadLanguagePack forced fetch');
                     resolve();
                 })
                 .catch(error => {

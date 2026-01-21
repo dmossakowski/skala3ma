@@ -184,7 +184,12 @@
     "competition_category_fsgt2026_ado_0": "Nastolatki 12-13",
     "competition_category_fsgt2026_ado_1": "Nastolatki 14-15",
     "competition_category_fsgt2026_ado_2": "Nastolatki 16-17",
-    
+    "competition_category_men_senior": "Mężczyźni Senior",
+    "competition_category_women_senior": "Kobiety Senior",
+    "competition_category_men_titan": "Mężczyźni Tytan",
+    "competition_category_women_titan": "Kobiety Tytan",
+    "competition_category_men_diamond": "Mężczyźni Diament",
+    "competition_category_women_diamond": "Kobiety Diament",
     "activities": "Wyczyny",
     "add_activity": "Dodaj wyczyn <i class=\"bi bi-plus-circle\"></i>",
     "delete_activity": "Wymaż wyczyn",

@@ -906,19 +906,65 @@ def new_competition_post():
 
 
 
-@app_ui.route('/competitionDashboard/<competitionId>/register')
+@app_ui.route('/competitionDashboard/<competitionId>/register', methods=['GET'])
+#@login_required
+def registerCompetitionClimber(competitionId):
+    useremail = session.get('email')
+
+    comp = competitionsEngine.getCompetition(competitionId)
+    if comp is None:
+        logging.error('addCompetitionClimber - competition not found '+str(competitionId))
+        
+    user = competitionsEngine.get_user_by_email(useremail)
+    
+    competition_accepts_registrations = competitionsEngine.competition_accepts_registrations(comp)
+    error_code = ''
+    if not competition_accepts_registrations:
+        error_code = "error5322"
+    
+    is_registered = competitionsEngine.is_registered(user, comp)
+           
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    can_unregister = competitionsEngine.can_unregister(user, comp)
+    enable_registration = False
+    if competition_accepts_registrations and not is_registered and not error_code:
+        enable_registration = True
+
+    return render_template('competitionClimber.html',
+                           error_code=error_code,
+                           competition=comp,
+                           competitionId=competitionId,
+                           user = user,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=useremail,
+                           logged_name=name,
+                           can_unregister=can_unregister,
+                           is_registered=is_registered,
+                           enable_registration=enable_registration,
+                            **session)
+
+
+
+
+
+
+@app_ui.route('/competitionDashboard/<competitionId>/register', methods=['POST'])
 #@login_required
 def addCompetitionClimber(competitionId):
     useremail = session.get('email')
-    firstname = request.args.get('firstname')
-    lastname = request.args.get('lastname')
-    email = request.args.get('email')
-    sex = request.args.get('sex')
-    club = request.args.get('club')
-    clubid = request.args.get('clubid') # preparation for future use
-    otherclub = request.args.get('otherclub')
-    category = request.args.get('category')
-    dob = request.args.get('dob')
+    firstname = request.form.get('firstname')
+    lastname = request.form.get('lastname')
+    email = request.form.get('email')
+    sex = request.form.get('sex')
+    club_id = request.form.get('club')
+    #clubid = request.form.get('clubid') # preparation for future use
+    otherclub = request.form.get('otherclub')
+    category = request.form.get('category')
+    dob = request.form.get('dob')
     
     # TODO this happens in logs but not sure why
     comp = competitionsEngine.getCompetition(competitionId)
@@ -940,6 +986,12 @@ def addCompetitionClimber(competitionId):
     is_registered = competitionsEngine.is_registered(user, comp)
     climber = None
 
+    user_club_name = 'Unknown'
+    if club_id != '-1':
+        user_club = competitionsEngine.get_gym(club_id)
+        if user_club is not None:
+            user_club_name = user_club.get('name')
+
     # check if user with this email is known and should login themselves to register
     if user is None and form_user is not None and form_user.get('is_confirmed') == 1:
         error_code = "error5316" 
@@ -954,7 +1006,7 @@ def addCompetitionClimber(competitionId):
         if category == -1:
             error_code = "error5325"
 
-    if not error_code and not is_registered and firstname is not None and sex is not None and club is not None and email is not None:
+    if not error_code and not is_registered and firstname is not None and sex is not None and club_id is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
@@ -962,10 +1014,10 @@ def addCompetitionClimber(competitionId):
             #if club not in competitionsEngine.clubs.values():
             #    club = otherclub
 
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, clubid, sex, category)
+            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, club_id, sex, category)
             if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
                 competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               climber['club'],  dob)
+                                                               user_club_name, club_id, dob)
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'
@@ -1008,7 +1060,6 @@ def addCompetitionClimber(competitionId):
                            is_registered=is_registered,
                            enable_registration=enable_registration,
                             **session)
-
 
 
 

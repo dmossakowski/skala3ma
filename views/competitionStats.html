@@ -55,7 +55,7 @@
                    
 						<div id="myChart2"></div>
 				  </div>
-                   <br><br>
+                  <br><br>
                     <div class="">
                         <div  id="myChart3"></div>
                     </div>
@@ -126,6 +126,20 @@
           },
           zoom: {
             enabled: true
+          },
+          events: {
+            mounted: function(chartContext, config) {
+              // Call replaceTranslations when chart is initially rendered
+              if (typeof replaceTranslations === 'function') {
+                replaceTranslations();
+              }
+            },
+            updated: function(chartContext, config) {
+              // Call replaceTranslations when chart is updated
+              if (typeof replaceTranslations === 'function') {
+                replaceTranslations();
+              }
+            }
           }
         },
         responsive: [{
@@ -156,7 +170,7 @@
         },
         xaxis: {
           title: { 
-            text: 'Number of Repeats',
+            text: '',
             style: {
               fontSize: '14px',
               fontWeight: 600
@@ -205,6 +219,23 @@
 		  onItemHover: {
       		highlightDataSeries: true
     		},
+          formatter: function(seriesName, opts) {
+            // Map category codes to translation keys
+            const categories = {
+              'M0': 'competition_category_men_senior',
+              'M1': 'competition_category_men_titan',
+              'M2': 'competition_category_men_diamond',
+              'F0': 'competition_category_women_senior',
+              'F1': 'competition_category_women_titan',
+              'F2': 'competition_category_women_diamond'
+            };
+            
+            const translationKey = categories[seriesName];
+            if (translationKey) {
+              return '<span data-translate-key="' + translationKey + '">' + seriesName + translationKey + '</span>';
+            }
+            return seriesName;
+          }
         },
         fill: {
           opacity: 0.9

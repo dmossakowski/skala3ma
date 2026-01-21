@@ -1968,14 +1968,13 @@ def stats_repeats_per_route(competitionId):
     routes = routes_dict['routes']
     categories = ["M0", "M1", "M2", "F0", "F1", "F2"]
     
-    # Initialize repeat counts and climber names for each category and route
+    # Initialize repeat counts for each category
     repeats = {cat: [0 for _ in routes] for cat in categories}
-    climber_names = {cat: [[] for _ in routes] for cat in categories}
     
     # Build route index lookup
     route_id_to_index = {route.get('id'): idx for idx, route in enumerate(routes)}
     
-    # Count repeats per route per category and collect climber names
+    # Count repeats per route per category
     for climber in comp.get('climbers', {}).values():
         sex = climber.get('sex')
         category = climber.get('category')
@@ -1984,18 +1983,12 @@ def stats_repeats_per_route(competitionId):
         if cat_key not in repeats:
             continue
         
-        # Get climber name (firstname + lastname)
-        firstname = climber.get('firstname', '')
-        lastname = climber.get('lastname', '')
-        climber_name = f"{firstname} {lastname}".strip() or climber.get('name', 'Unknown')
-        
         # Check routesClimbed2 for detailed route info
         for route in climber.get('routesClimbed2', []):
             route_id = route.get('id')
             if route_id in route_id_to_index:
                 idx = route_id_to_index[route_id]
                 repeats[cat_key][idx] += 1
-                climber_names[cat_key][idx].append(climber_name)
     
     # Prepare series data for ApexCharts
     series = []
@@ -2013,11 +2006,11 @@ def stats_repeats_per_route(competitionId):
         grade = route.get('grade', '?')
         y_labels.append(f"{routenum} - {grade}")
     
+    
     return {
         "chartdata": series,
         "routedata": routes,
-        "y_labels": y_labels,
-        "climber_names": climber_names
+        "y_labels": y_labels
     }
 
 

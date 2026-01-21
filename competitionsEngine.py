@@ -352,8 +352,14 @@ def get_category_from_dob(dob, competition_date, competition_type, age_category_
     dob_dt = datetime.strptime(dob, "%Y-%m-%d")
     competition_dt = datetime.strptime(competition_date, "%Y-%m-%d")
     
-    # Calculate age as of August 31st of the competition year (beginning of season) to avoid category changes mid-season
-    august_31st = datetime(competition_dt.year, 8, 31)
+    # Calculate age as of August 31st of the season start year
+    # Season runs Sep-Jun, so if competition is Jan-Aug, use previous year's Aug 31
+    if competition_dt.month < 9:  # January to August
+        reference_year = competition_dt.year - 1
+    else:  # September to December
+        reference_year = competition_dt.year
+    
+    august_31st = datetime(reference_year, 8, 31)
     age = august_31st.year - dob_dt.year - ((august_31st.month, august_31st.day) < (dob_dt.month, dob_dt.day))
 
     if age < 12:
@@ -1578,8 +1584,8 @@ def can_create_gym(user):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
-    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob)
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, club_id, dob):
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, club_id, dob)
 
 
 def update_gym_routes(gymid, routesid, jsondata):

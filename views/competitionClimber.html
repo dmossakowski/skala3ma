@@ -35,7 +35,7 @@
                     
 					{% if enable_registration %}
 
-						<form action="/competitionDashboard/{{competitionId}}/register">
+						<form action="/competitionDashboard/{{competitionId}}/register" method="post">
                             <div class="form-floating">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
 							<input class="form-control mb-2" id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br>
@@ -46,16 +46,11 @@
                             <label for="lastname"><span data-translate-key="lastname"></span></label>
                             
                         </div>
-                        <!--
-                        {% if climber['email'] is none or logged_email is none %}
-                        <label for="email">Email:</label><br> <input id="email" name="email" size="40" required /><br><br>
-                                                                                {% else %}
-                        <label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
-                                                                                {% endif %}
--->
+                     
+                        
                             <div class="form-floating">
                              
-							{% if climber['email'] is none or logged_email is none %}
+							{% if user['email'] is none or logged_email is none %}
                             <input  class="form-control mb-2" name="email" id="email" size="40">
                         
                            
@@ -81,7 +76,7 @@
 
 						
                         
-                        <br>
+                        <br><br>
 
                         <div class="form-floating">
 							
@@ -92,6 +87,8 @@
                                 <input class="form-control mb-2" id="otherclub" name="otherclub" size="40" placeholder="{{ reference_data['current_language'].other_club_not_listed}}" />
                             </div>
                             <script>
+                            var climber_club_id = "{{ user['gymid'] if user['gymid'] is not none else '' }}";
+                            console.log('Climber club id: '+climber_club_id);
                             document.addEventListener('DOMContentLoaded', function() {
                                 if (typeof window.apiFetchJson !== 'function') {
                                     console.error('apiFetchJson not loaded');
@@ -105,6 +102,9 @@
                                             option.value = gym.id;
                                             option.textContent = gym.name;
                                             option.setAttribute('data-gymid', gym.id);
+                                            if (gym.id == climber_club_id) {
+                                                option.selected = true;
+                                            }   
                                             clubSelect.appendChild(option);
                                         });
                                         // Add 'Other' option
