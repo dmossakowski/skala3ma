@@ -462,7 +462,6 @@ def competition_admin_post(competition_id):
     if update_status is not None:
         competition['status'] = int(competition_status)
         competitionsEngine.update_competition(competition_id, competition)
-        competitionsEngine.setRoutesClimbed2(competition)
         resultMessage= "Status updated"
 
     if remove_climber is not None:
@@ -987,10 +986,15 @@ def addCompetitionClimber(competitionId):
     climber = None
 
     user_club_name = 'Unknown'
-    if club_id != '-1':
+    if club_id == 'other':
+        user_club_name = otherclub
+    else:
         user_club = competitionsEngine.get_gym(club_id)
         if user_club is not None:
             user_club_name = user_club.get('name')
+        else:
+            logging.error(f'During registration club with id {club_id} not found')
+            user_club_name = 'Unknown'
 
     # check if user with this email is known and should login themselves to register
     if user is None and form_user is not None and form_user.get('is_confirmed') == 1:
@@ -1782,8 +1786,9 @@ def update_routes_climbed(competitionId, climberId):
             return render_template('competitionLogin.html')
 
         #if len(routesUpdated) > 0:
+       
         competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-            
+
         return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,
