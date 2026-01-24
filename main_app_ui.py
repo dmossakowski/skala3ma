@@ -1034,6 +1034,8 @@ def addCompetitionClimber(competitionId):
     user_club_name = 'Unknown'
     if club_id == 'other':
         user_club_name = otherclub
+    elif club_id == '--':
+        error_code = "error5324"
     else:
         user_club = competitionsEngine.get_gym(club_id)
         if user_club is not None:
