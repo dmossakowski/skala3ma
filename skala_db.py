@@ -1158,39 +1158,7 @@ def update_gym_data(reference_data):
     # check if all gyms from the local reference list are in the database  
     # we try to retrieve by gym name but also by ref_id in case the gym name has changed
     # this check by gym name should be removed in the future and only ref_id should be used
-    for ref_id, club_name in reference_data.get('clubs').items():
-        gym = get_gym_by_gym_name(club_name)
-        if gym is not None:
-            logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')} ref_id='{ref_id}'")
-            if gym.get('ref_id') is None:
-                gym['ref_id'] = ref_id
-                _update_gym(gym.get('id'), gym)
-        else:
-            gym = get_gym_by_ref_id(ref_id)
-
-            if gym is not None:
-                logging.info(f"Club '{club_name}' ref_id='{ref_id}' exists with ID: {gym.get('id')}")
-            else:
-                logging.warning(f"gym doesn't exist in db: {club_name} ref_id='{ref_id}' ")
-                route_set = RouteSet()
-                route_set.generate_dummy_routes(14)
-
-                gym_id = str(uuid.uuid4().hex)
-                gym = Gym(
-                    gymid=gym_id,
-                    routesid=route_set.get_id(),
-                    name=club_name,
-                    added_by="admin",
-                    logo_img_id=None,
-                    homepage=None,
-                    address=None,
-                    organization='FSGT',
-                    routesA=None
-                )
-                gym.set_ref_id(ref_id)
-                
-                _add_routes(route_set.get_id(), gym_id, route_set.get_routes())
-                _add_gym(gym_id, route_set.get_id(), gym.get_gym_json()) 
+    
 
     # Retrieve all gyms from the GYM_TABLE
     conn = lite.connect(COMPETITIONS_DB)
