@@ -1204,6 +1204,7 @@ def update_user():
     elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
         club = request.args.get('otherclub').strip()
         clubid =  -1 # id for an unknown club
+        logging.info(f'User {email} {firstname} {lastname} provided other club name: {club}')
     else:
         club = None
 
