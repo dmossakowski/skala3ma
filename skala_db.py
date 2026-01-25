@@ -1153,12 +1153,7 @@ def get_image(img_id):
 # sample query to get non confirmed users
 # select email  from climbers  where lower(trim(json_extract(jsondata, '$.is_confirmed'))) like '0' ;
 def update_gym_data(reference_data):
-    # Connect to the database
-    logging.info("-----  checking if clubs exist in db")
-    # check if all gyms from the local reference list are in the database  
-    # we try to retrieve by gym name but also by ref_id in case the gym name has changed
-    # this check by gym name should be removed in the future and only ref_id should be used
-    
+    logging.info("-----  updating gym data -----")    
 
     # Retrieve all gyms from the GYM_TABLE
     conn = lite.connect(COMPETITIONS_DB)
