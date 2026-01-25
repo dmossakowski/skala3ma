@@ -47,8 +47,8 @@
                        </h3>
                         </div>
                         <div id="ud-homegym-update-note" class="card-subtext" style="display:none;">
-                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span>
-                            &nbsp;<a href="/user" class="btn btn-sm btn-outline-primary">Update your details</a>
+                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span><br>
+                            <a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
                         </div>
                          <div style="margin: 10px 0px 0 0">
                             <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
@@ -320,13 +320,7 @@
                         if (addActBtn) addActBtn.style.display = 'none';
                         if (els.homeNote) {
                             const clubName = (user.club || '').trim();
-                            if (clubName) {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} If your club "${clubName}" isn’t available yet, please <a href="/contact" style="color: #3caf57;">contact us</a> so we can add it. `+
-                                   
-                                    ` `;
-                            } else {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET}  <a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>`;
-                            }
+                            
                             els.homeNote.style.display = 'block';
                         }
                     }
