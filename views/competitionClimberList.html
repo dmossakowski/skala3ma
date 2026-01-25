@@ -210,10 +210,10 @@ document.addEventListener('DOMContentLoaded', function()
     }
 
   function loadCompetition(){
-    console.log('loadCompetition table loaded with entries.');
+    //console.log('loadCompetition table loaded with entries.');
     var competitionId = getCompId();
     if(!competitionId) return;
-    console.log('loadCompetition table loaded with entries.'+competitionId);
+    //console.log('loadCompetition table loaded with entries.'+competitionId);
 
     fetchCompetition(competitionId)
       .then(function(comp){
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function()
           });
         }
         if (rows.length > 0) { 
-            console.log('Climber table loaded with '+rows.length+' entries.');
+            //console.log('Climber table loaded with '+rows.length+' entries.');
             table.updateOrAddData(rows);
             
         }

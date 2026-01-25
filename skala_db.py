@@ -653,7 +653,8 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
 # these details are deemed the most recent and correct
 # this should not be called when registering an anonmymous user as they could provide any details
 # and thus overwrite the actual, confirmed user details
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
+# TODO refactor this as it's easy to make a mistake .. this is users table.. not competition climbers table!
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob):
     email = email.lower()
     user = get_user_by_email(email)
 
@@ -667,6 +668,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
     newclimber['lastname'] = lastname
     newclimber['sex'] = sex
     newclimber['club'] = club
+    newclimber['gymid'] = gymid
     newclimber['dob'] = dob
 
     try:
@@ -1151,44 +1153,7 @@ def get_image(img_id):
 # sample query to get non confirmed users
 # select email  from climbers  where lower(trim(json_extract(jsondata, '$.is_confirmed'))) like '0' ;
 def update_gym_data(reference_data):
-    # Connect to the database
-    logging.info("-----  checking if clubs exist in db")
-    # check if all gyms from the local reference list are in the database  
-    # we try to retrieve by gym name but also by ref_id in case the gym name has changed
-    # this check by gym name should be removed in the future and only ref_id should be used
-    for ref_id, club_name in reference_data.get('clubs').items():
-        gym = get_gym_by_gym_name(club_name)
-        if gym is not None:
-            logging.info(f"Club '{club_name}' exists with ID: {gym.get('id')} ref_id='{ref_id}'")
-            if gym.get('ref_id') is None:
-                gym['ref_id'] = ref_id
-                _update_gym(gym.get('id'), gym)
-        else:
-            gym = get_gym_by_ref_id(ref_id)
-
-            if gym is not None:
-                logging.info(f"Club '{club_name}' ref_id='{ref_id}' exists with ID: {gym.get('id')}")
-            else:
-                logging.warning(f"gym doesn't exist in db: {club_name} ref_id='{ref_id}' ")
-                route_set = RouteSet()
-                route_set.generate_dummy_routes(14)
-
-                gym_id = str(uuid.uuid4().hex)
-                gym = Gym(
-                    gymid=gym_id,
-                    routesid=route_set.get_id(),
-                    name=club_name,
-                    added_by="admin",
-                    logo_img_id=None,
-                    homepage=None,
-                    address=None,
-                    organization='FSGT',
-                    routesA=None
-                )
-                gym.set_ref_id(ref_id)
-                
-                _add_routes(route_set.get_id(), gym_id, route_set.get_routes())
-                _add_gym(gym_id, route_set.get_id(), gym.get_gym_json()) 
+    logging.info("-----  updating gym data -----")    
 
     # Retrieve all gyms from the GYM_TABLE
     conn = lite.connect(COMPETITIONS_DB)

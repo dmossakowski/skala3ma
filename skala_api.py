@@ -1926,7 +1926,7 @@ def migrategyms():
 
 
 
-@skala_api_app.route('/competition_results/<competitionId>/stats')
+@skala_api_app.route('/competition_results/<competitionId>/stats_points_per_difficulty')
 def get_competition_stats(competitionId):
     comp = competitionsEngine.get_competition(competitionId)
     routes = competitionsEngine.get_routes(comp['routesid'])
@@ -1954,39 +1954,71 @@ def get_competition_stats(competitionId):
 
 
 
-    male_data = []
-    female_data = []
+@skala_api_app.route('/competition_results/<competitionId>/stats_repeats_per_route')
+def stats_repeats_per_route(competitionId):
+    comp = competitionsEngine.get_competition(competitionId)
     
-    male_points = []
-    female_points = []
-
-    male_grades = {}
-    female_grades = {}
-    for route in routes["routes"]:
-        grade = route['grade']
-        male_points.append(int(route["pointsM"]))
-        female_points.append(int(route["pointsF"]))
+    if comp is None:
+        return {}
+    
+    routes_dict = competitionsEngine.get_routes(comp['routesid'])
+    if not routes_dict or 'routes' not in routes_dict:
+        return {}
+    
+    routes = routes_dict['routes']
+    categories = ["M0", "M1", "M2", "F0", "F1", "F2"]
+    
+    # Initialize repeat counts for each category
+    repeats = {cat: [0 for _ in routes] for cat in categories}
+    
+    # Initialize climber names tracker for each category
+    climber_names = {cat: [[] for _ in routes] for cat in categories}
+    
+    # Build route index lookup
+    route_id_to_index = {route.get('id'): idx for idx, route in enumerate(routes)}
+    
+    # Count repeats per route per category and track climber names
+    for climber in comp.get('climbers', {}).values():
+        sex = climber.get('sex')
+        category = climber.get('category')
+        cat_key = f"{sex}{category}"
         
-        male_grades[grade] = male_points
-        female_grades[grade] = female_points
+        if cat_key not in repeats:
+            continue
+        
+        climber_name = f"{climber.get('firstname', '')} {climber.get('lastname', '')}".strip()
+        
+        # Check routesClimbed2 for detailed route info
+        for route in climber.get('routesClimbed2', []):
+            route_id = route.get('id')
+            if route_id in route_id_to_index:
+                idx = route_id_to_index[route_id]
+                repeats[cat_key][idx] += 1
+                climber_names[cat_key][idx].append(climber_name)
     
-        male_y = [male_points-3, male_points] if male_points else [None, None]
-        female_y = [female_points-3, female_points] if female_points else [None, None]
+    # Prepare series data for ApexCharts
+    series = []
+    for cat in categories:
+        series.append({
+            "name": cat,
+            "data": repeats[cat]
+        })
     
-        male_data.append({"x": grade, "y": male_y})
-        female_data.append({"x": grade, "y": female_y})
+    # Y-axis labels: route number | line | grade
+    y_labels = []
+    for route in routes:
+        routenum = route.get('routenum', '?')
+        line = route.get('line', '?')
+        grade = route.get('grade', '?')
+        y_labels.append(f"{routenum} - {grade}")
+    
 
-    male_data = sorted(male_data, key=lambda k: k['x'])
-    female_data = sorted(female_data, key=lambda k: k['x'])
-
-    series_json = [
-        {"name": "Male", "data": male_data},
-        {"name": "Female", "data": female_data}
-    ]
-
-    routes['rangeData'] = series_json
-
-    return routes
+    return {
+        "chartdata": series,
+        "routedata": routes,
+        "y_labels": y_labels,
+        "climber_names": climber_names
+    }
 
 
 

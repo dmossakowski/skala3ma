@@ -29,7 +29,7 @@
                         <div id="ud-profile-update-note" class="card-subtext" style="display:none;">
                             <span data-translate-key="profile_missing_details">Your profile is missing some details (first and/or last name). Please update your info.</span>
                         </div>
-                        <div ><a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
+                        <div><a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
                         <a href="/myactivities" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="my_activities">My activities <i class="bi bi-pencil-square"></i></a>
                         <a href="/myresultats" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="my_resultats">My results <i class="bi bi-pencil-square"></i></a>
                         </div>
@@ -47,10 +47,11 @@
                        </h3>
                         </div>
                         <div id="ud-homegym-update-note" class="card-subtext" style="display:none;">
-                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span>
-                            &nbsp;<a href="/user" class="btn btn-sm btn-outline-primary">Update your details</a>
+                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span><br>
+                            <a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
                         </div>
-                         <div style="margin: 10px 0px 0 0"><a href="/user" class="btn btn-sm btn-success" title="Edit profile" data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>  <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
+                         <div style="margin: 10px 0px 0 0">
+                            <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
                              
                         </div>
                     </div>
@@ -319,13 +320,7 @@
                         if (addActBtn) addActBtn.style.display = 'none';
                         if (els.homeNote) {
                             const clubName = (user.club || '').trim();
-                            if (clubName) {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET} If your club "${clubName}" isn’t available yet, please <a href="/contact" style="color: #3caf57;">contact us</a> so we can add it. `+
-                                   
-                                    ` `;
-                            } else {
-                                els.homeNote.innerHTML = `${HOME_GYM_NOT_SET}  `;
-                            }
+                            
                             els.homeNote.style.display = 'block';
                         }
                     }

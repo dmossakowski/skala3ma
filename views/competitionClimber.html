@@ -35,7 +35,7 @@
                     
 					{% if enable_registration %}
 
-						<form action="/competitionDashboard/{{competitionId}}/register">
+						<form action="/competitionDashboard/{{competitionId}}/register" method="post">
                             <div class="form-floating">
 							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
 							<input class="form-control mb-2" id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br>
@@ -46,16 +46,11 @@
                             <label for="lastname"><span data-translate-key="lastname"></span></label>
                             
                         </div>
-                        <!--
-                        {% if climber['email'] is none or logged_email is none %}
-                        <label for="email">Email:</label><br> <input id="email" name="email" size="40" required /><br><br>
-                                                                                {% else %}
-                        <label for="email">Email:</label><br> {{logged_email}}<input id="email" name="email" size="40" value="{{logged_email}}" type="hidden" /><br><br>
-                                                                                {% endif %}
--->
+                     
+                        
                             <div class="form-floating">
                              
-							{% if climber['email'] is none or logged_email is none %}
+							{% if user['email'] is none or logged_email is none %}
                             <input  class="form-control mb-2" name="email" id="email" size="40">
                         
                            
@@ -81,23 +76,57 @@
 
 						
                         
-                        <br>
+                        <br><br>
 
                         <div class="form-floating">
 							
-                            <select class="form-control mb-2" name="club" id="club">
-							<option value="--" size="20" >{{ reference_data['current_language'].choose}}</option>
-							{% for club in reference_data['clubs'] %}
-
-							{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
-							<option value="{{reference_data['clubs'][club]}}"
-									{% if reference_data['clubs'][club] == user['club'] %}selected{% endif %}
-									size="20" >{{reference_data['clubs'][club]}}</option>
-							{% endfor %}
-							<!--option value="other" size="20" >{{ reference_data['current_language'].other}}</option-->
-
-
-							</select>
+                            <select class="form-control mb-2" name="gymid" id="gymid">
+                                <option value="--">{{ reference_data['current_language'].choose}}</option>
+                            </select>
+                            <div id="other-club-container" style="display:none; margin-top:10px;">
+                                <input class="form-control mb-2" id="otherclub" name="otherclub" size="40" placeholder="{{ reference_data['current_language'].other_club_not_listed}}" />
+                            </div>
+                            <script>
+                            var climber_gymid = "{{ user['gymid'] if user['gymid'] is not none else '' }}";
+                            console.log('Climber gym id: '+climber_gymid);
+                            document.addEventListener('DOMContentLoaded', function() {
+                                if (typeof window.apiFetchJson !== 'function') {
+                                    console.error('apiFetchJson not loaded');
+                                    return;
+                                }
+                                window.apiFetchJson('/api1/gyms')
+                                    .then(gyms => {
+                                        const clubSelect = document.getElementById('club');
+                                        gyms.forEach(gym => {
+                                            const option = document.createElement('option');
+                                            option.value = gym.id;
+                                            option.textContent = gym.name;
+                                            option.setAttribute('data-gymid', gym.id);
+                                            if (gym.id == climber_gymid) {
+                                                option.selected = true;
+                                            }   
+                                            clubSelect.appendChild(option);
+                                        });
+                                        // Add 'Other' option
+                                        const otherOption = document.createElement('option');
+                                        otherOption.value = 'other';
+                                        otherOption.textContent = '{{ reference_data['current_language'].other }}';
+                                        clubSelect.appendChild(otherOption);
+                                    })
+                                    .catch(err => {
+                                        console.error('Failed to fetch gyms:', err);
+                                    });
+                                // Show/hide manual entry
+                                document.getElementById('club').addEventListener('change', function() {
+                                    const otherContainer = document.getElementById('other-club-container');
+                                    if (this.value === 'other') {
+                                        otherContainer.style.display = 'block';
+                                    } else {
+                                        otherContainer.style.display = 'none';
+                                    }
+                                });
+                            });
+                            </script>
                             <label for="club">{{ reference_data['current_language'].club}}:</label>
                             </div>
 							<br>

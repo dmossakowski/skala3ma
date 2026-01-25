@@ -166,6 +166,12 @@
     "competition_category_fsgt2026_ado_0": "Ado 12-13",
     "competition_category_fsgt2026_ado_1": "Ado 14-15",
     "competition_category_fsgt2026_ado_2": "Ado 16-17",
+    "competition_category_men_senior": "Homme Sénior",
+    "competition_category_women_senior": "Femme Sénior",
+    "competition_category_men_titan": "Homme Titane",
+    "competition_category_women_titan": "Femme Titane",
+    "competition_category_men_diamond": "Homme Diamant",
+    "competition_category_women_diamond": "Femme Diamant",
 
     "activities": "Activités",
     "add_activity": "Ajouter une activité <i class=\"bi bi-plus-circle\"></i>",

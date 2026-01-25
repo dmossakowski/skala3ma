@@ -370,6 +370,17 @@ def competition_admin_get(competition_id):
 
     all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
 
+    all_gyms = competitionsEngine.get_gyms()
+
+    all_clubs = []
+
+    for gymid in all_gyms:
+        gymname = all_gyms[gymid]['name']
+        all_clubs.append ({'gymname':gymname, 'gymid':gymid})
+    # sort clubs by gymname
+    all_clubs = sorted(all_clubs, key=lambda x: x['gymname'])
+
+
     return render_template('competitionAdmin.html',
                            user=user,
                            competition=competition,
@@ -377,9 +388,11 @@ def competition_admin_get(competition_id):
                            competitionId=competition_id,
                            all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
+                            all_clubs=all_clubs,
                            id=id)
 
 
+# called from admin page to update a climber or competition details
 @app_ui.route('/competition_admin/<competition_id>', methods=['POST'])
 @login_required
 def competition_admin_post(competition_id):
@@ -430,6 +443,16 @@ def competition_admin_post(competition_id):
     competition = competitionsEngine.getCompetition(competition_id)
     resultMessage = None
     resultError = None
+    all_gyms = competitionsEngine.get_gyms()
+
+    all_clubs = []
+
+    for gymid in all_gyms:
+        gymname = all_gyms[gymid]['name']
+        all_clubs.append ({'gymname':gymname, 'gymid':gymid})
+    # sort clubs by gymname
+    all_clubs = sorted(all_clubs, key=lambda x: x['gymname'])
+
 
     if user is None or competition is None or not competitionsEngine.can_edit_competition(user,competition):
         session["wants_url"] = request.url
@@ -462,7 +485,6 @@ def competition_admin_post(competition_id):
     if update_status is not None:
         competition['status'] = int(competition_status)
         competitionsEngine.update_competition(competition_id, competition)
-        competitionsEngine.setRoutesClimbed2(competition)
         resultMessage= "Status updated"
 
     if remove_climber is not None:
@@ -471,25 +493,44 @@ def competition_admin_post(competition_id):
         resultMessage= "Climber removed"
 
     if climber_id is not None:
-        climber_club = request.form.get('club_'+ climber_id)
-        if climber_club == '-1':
-            climber_club = None
-        competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
-        competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
-        competition['climbers'][climber_id]['club'] = climber_club
-        competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
-        try:
-            # Attempt to retrieve the category from the form data and convert it to an integer
-            competition['climbers'][climber_id]['category'] = int(request.form.get('category_' + str(climber_id)))
-        except (ValueError, TypeError):
-            # Handle the exception if the conversion fails
-            print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id]['name'])
-            # Set to a default value or handle the error as appropriate
-            competition['climbers'][climber_id]['category'] = 0  # Replace default_value with whatever default you wish to use
-        # TODO check but this is probably not necessary so commenting it out
-        # competitionsEngine.update_competition_climbers_category(competition, competition.get('competition_type'))
+        climber = competition['climbers'][climber_id]
+        if climber is None:
+            resultError = "Climber not found"
+            logging.error("Climber not found in competition admin "+climber_id)
+        else:    
+            climber_club_option = request.form.get('club_'+ climber_id)
+            climber_club_name = climber.get('club')
+            climber_gymid = climber.get('gymid')
+             
+            try:
+                # climber_club is json like all_clubs.append ({'gymname':gymname, 'gymid':gymid})
+                climber_club_option = json.loads(climber_club_option)
+                # in case the user entered othe gym in registration, it will be overwritten here by other:Other
+                # we will add a way to add a new club during registration (this will not be possible for anonymous registration)
+                # TODO investigate this further later
+                climber_club_name = climber_club_option.get('gymname')
+                climber_gymid = climber_club_option.get('gymid')
+            except Exception as e:
+                logging.error("Error parsing climber club in competition admin "+str(e))
+               
+            competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
+            competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
+            competition['climbers'][climber_id]['club'] = climber_club_name
+            competition['climbers'][climber_id]['gymid'] = climber_gymid
+                                                                        
+            competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
+            try:
+                # Attempt to retrieve the category from the form data and convert it to an integer
+                competition['climbers'][climber_id]['category'] = int(request.form.get('category_' + str(climber_id)))
+            except (ValueError, TypeError):
+                # Handle the exception if the conversion fails
+                print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id]['name'])
+                # Set to a default value or handle the error as appropriate
+                competition['climbers'][climber_id]['category'] = 0  # Replace default_value with whatever default you wish to use
+            # TODO check but this is probably not necessary so commenting it out
+            # competitionsEngine.update_competition_climbers_category(competition, competition.get('competition_type'))
 
-        competitionsEngine.update_competition(competition['id'], competition)
+            competitionsEngine.update_competition(competition['id'], competition)
 
     if competition_update_button is not None:
         competition_name = request.form.get('competition_name')
@@ -549,7 +590,9 @@ def competition_admin_post(competition_id):
                            reference_data=competitionsEngine.reference_data,
                            id=id,
                            resultMessage=resultMessage,
-                           resultError=resultError)
+                           resultError=resultError,
+                            all_clubs=all_clubs
+                           )
 
 
 @app_ui.route('/fsgtadmin/<edittype>')
@@ -906,18 +949,65 @@ def new_competition_post():
 
 
 
-@app_ui.route('/competitionDashboard/<competitionId>/register')
+@app_ui.route('/competitionDashboard/<competitionId>/register', methods=['GET'])
+#@login_required
+def registerCompetitionClimber(competitionId):
+    useremail = session.get('email')
+
+    comp = competitionsEngine.getCompetition(competitionId)
+    if comp is None:
+        logging.error('addCompetitionClimber - competition not found '+str(competitionId))
+        
+    user = competitionsEngine.get_user_by_email(useremail)
+    
+    competition_accepts_registrations = competitionsEngine.competition_accepts_registrations(comp)
+    error_code = ''
+    if not competition_accepts_registrations:
+        error_code = "error5322"
+    
+    is_registered = competitionsEngine.is_registered(user, comp)
+           
+    name = session.get('name')
+
+    if name is None:
+        name = ""
+
+    can_unregister = competitionsEngine.can_unregister(user, comp)
+    enable_registration = False
+    if competition_accepts_registrations and not is_registered and not error_code:
+        enable_registration = True
+
+    return render_template('competitionClimber.html',
+                           error_code=error_code,
+                           competition=comp,
+                           competitionId=competitionId,
+                           user = user,
+                           reference_data=competitionsEngine.reference_data,
+                           logged_email=useremail,
+                           logged_name=name,
+                           can_unregister=can_unregister,
+                           is_registered=is_registered,
+                           enable_registration=enable_registration,
+                            **session)
+
+
+
+
+
+
+@app_ui.route('/competitionDashboard/<competitionId>/register', methods=['POST'])
 #@login_required
 def addCompetitionClimber(competitionId):
     useremail = session.get('email')
-    firstname = request.args.get('firstname')
-    lastname = request.args.get('lastname')
-    email = request.args.get('email')
-    sex = request.args.get('sex')
-    club = request.args.get('club')
-    otherclub = request.args.get('otherclub')
-    category = request.args.get('category')
-    dob = request.args.get('dob')
+    firstname = request.form.get('firstname')
+    lastname = request.form.get('lastname')
+    email = request.form.get('email')
+    sex = request.form.get('sex')
+    gymid = request.form.get('gymid')
+    #clubid = request.form.get('clubid') # preparation for future use
+    otherclub = request.form.get('otherclub')
+    category = request.form.get('category')
+    dob = request.form.get('dob')
     
     # TODO this happens in logs but not sure why
     comp = competitionsEngine.getCompetition(competitionId)
@@ -939,6 +1029,21 @@ def addCompetitionClimber(competitionId):
     is_registered = competitionsEngine.is_registered(user, comp)
     climber = None
 
+    # TODO this differs with how admin works - need to standardize
+    # in adming the club is a json gymname/gymid pair gymname=other gymid=-1
+    user_club_name = 'Unknown'
+    if gymid == 'other':
+        user_club_name = otherclub
+    elif gymid == '--':
+        error_code = "error5324"
+    else:
+        user_club = competitionsEngine.get_gym(gymid)
+        if user_club is not None:
+            user_club_name = user_club.get('name')
+        else:
+            logging.error(f'During registration club with id {gymid} not found')
+            user_club_name = 'Unknown'
+
     # check if user with this email is known and should login themselves to register
     if user is None and form_user is not None and form_user.get('is_confirmed') == 1:
         error_code = "error5316" 
@@ -953,17 +1058,16 @@ def addCompetitionClimber(competitionId):
         if category == -1:
             error_code = "error5325"
 
-    if not error_code and not is_registered and firstname is not None and sex is not None and club is not None and email is not None:
+    if not error_code and not is_registered and firstname is not None and sex is not None and gymid is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
         try:
-            if club not in competitionsEngine.clubs.values():
-                club = otherclub
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, club, sex, category)
+
+            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, gymid, sex, category)
             if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
                 competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               climber['club'],  dob)
+                                                               user_club_name, gymid, dob)
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'
@@ -992,6 +1096,7 @@ def addCompetitionClimber(competitionId):
     if competition_accepts_registrations and not is_registered and not error_code:
         enable_registration = True
 
+    
     return render_template('competitionClimber.html',
                            error_code=error_code,
                            competition=comp,
@@ -1005,7 +1110,6 @@ def addCompetitionClimber(competitionId):
                            is_registered=is_registered,
                            enable_registration=enable_registration,
                             **session)
-
 
 
 
@@ -1100,6 +1204,7 @@ def update_user():
     elif clubid == 'other' and request.args.get('otherclub') is not None and len(request.args.get('otherclub').strip()) > 0:
         club = request.args.get('otherclub').strip()
         clubid =  -1 # id for an unknown club
+        logging.info(f'User {email} {firstname} {lastname} provided other club name: {club}')
     else:
         club = None
 
@@ -1728,8 +1833,9 @@ def update_routes_climbed(competitionId, climberId):
             return render_template('competitionLogin.html')
 
         #if len(routesUpdated) > 0:
+       
         competition = competitionsEngine.setRoutesClimbed(competitionId, climberId, routesUpdated)
-            
+
         return render_template('competitionClimberList.html',
                                    competition=competition,
                                    competitionId=competitionId,

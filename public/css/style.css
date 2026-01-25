@@ -1443,7 +1443,7 @@ div.cs-select span {
 .stats-row { display:flex; align-items:flex-end; gap:1.1rem; flex-wrap:wrap; margin:.25rem 0 .55rem; }
 .stat-block { min-width:120px; }
 .stat-label { font-size:.55rem; text-transform:uppercase; letter-spacing:.7px; opacity:.7; margin-top:.15rem; }
-.card-subtext { font-size:.85rem; opacity:.75; }
+.card-subtext { font-size:.85rem; opacity:.95; }
 .status-strip { display:flex; gap:.5rem; flex-wrap:wrap; margin:.2rem 0 .1rem; }
 .status-badge { font-size:.7rem; }
 

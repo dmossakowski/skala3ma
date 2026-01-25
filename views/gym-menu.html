@@ -1,19 +1,21 @@
 
-<ul class="nav justify-content-left ">
-   
-    <table width="100%" style=" table-border:1"><tr><td width="50%">
-    <a href="/gyms/{{ gymid}}/main"  class="nav-link sf-menu2"><img src="/image/{{  gym.get('logo_img_id') }}"  height="80dvh"/><br>
-    <span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
+<ul class="nav d-flex flex-nowrap align-items-start">
+   <div class="flex-shrink-0"> <a href="/gyms/{{ gymid}}/main"  class="nav-link d-flex align-items-center"><img src="/image/{{  gym.get('logo_img_id') }}"  height="40" class="me-2"/>
+    </a></div>
 
-    </td><td>
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="sf-menu2 nav-link">{{ reference_data['current_language'].topo }}</a> 
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="sf-menu2 nav-link">Stats</a>
+    <div class="flex-grow-1 d-flex flex-wrap align-items-start">
+    
+    <a href="/gyms/{{ gymid}}/main"  class="nav-link"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
+   
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link">{{ reference_data['current_language'].topo }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link">Stats</a>
                         <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
     <!--a href="/gyms/{{gymid}}/climbers" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a-->
-    <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="sf-menu2 nav-link">{{ reference_data['current_language'].routes }} (beta)</a--> 
+    <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="nav-link">{{ reference_data['current_language'].routes }} (beta)</a--> 
 
-    <a href="/gyms/{{gymid}}/qrcode" class="sf-menu2 nav-link">QR Code</a> 
+    <a href="/gyms/{{gymid}}/qrcode" class="nav-link">QR Code</a> 
 
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="sf-menu2 nav-link">{{ reference_data['current_language'].Discs }}</a> 
-    </td></tr></table>
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link">{{ reference_data['current_language'].Discs }}</a> 
+    
+ </div>
 </ul>

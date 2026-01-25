@@ -88,6 +88,21 @@ colors = { 'Vert':'#2E8B57',
 'Violet': '#9400D3',
 'Saumon':'#FFE4C4'}
 
+# Mapping of club names to gym IDs
+CLUB_TO_GYMID = {
+    'ROC 14': '005d3b0d78b5477db673f6424b0fbeba',
+    'Entente Sportive de Nanterre': '1',
+    'ESC XV': '591a28aa8e924d25a3c9c0cc6a0c883f',
+    'US Ivry': '8b797c6675934ad197b15d6f7950c8e2',
+    'RSC Champigny': 'ca09c1dab6c04bb7b8e224bd9344d4c9',
+    'US Fontenay': '1a088f939d1b4a82a359bda05fed0f24',
+    'USF Escalade': '1a088f939d1b4a82a359bda05fed0f24',
+    'CPS 10 - Faites le mur': '20605d959edc4bee8a212935973590e4',
+    'AS Pierrefitte': 'a247c13c9ae54e898d2651cf7369145a',
+    'Grimpe Heureuse de Pierrefitte': 'a247c13c9ae54e898d2651cf7369145a',
+    'US Ivry - Orme au Chat' : '8b797c6675934ad197b15d6f7950c8e2'
+}
+
 
 #categories = {0:"Séniors 16-49 ans | Ado 12-13", 
 #              1:"Titane 50-64 ans | Ado 14-15 ", 
@@ -233,10 +248,15 @@ def update_competition_details(competition, name, date, instructions):
     return competition
     
 
-
+# this updates the routeset of a competition
 def update_competition_routes(competition, routesid, force=False):
     # only update routes if it is different
     #if competition.get('routes') is None or competition.get('routesid') != routesid:
+    if routesid is None:
+        logging.error('Routesid cannot be None '+str(routesid))
+        return 'Error: routesid competitioncannot be None'
+        #raise ValueError('routesid cannot be None')
+
     competition['routesid'] = routesid
     routes = skala_db.get_routes_by_id(routesid)
 
@@ -253,6 +273,7 @@ def update_competition_routes(competition, routesid, force=False):
 
     competition['routes'] = routes.get('routes')
 
+    # after a new routeset is set, we need to update each climber with routes they climbed
     try:
         setRoutesClimbed2(competition)
     except:
@@ -276,7 +297,7 @@ def update_competition_climbers_category(competition, competition_type):
 
 
 # add or register climber to a competition
-def addClimber(climberId, competitionId, email, name, firstname, lastname, club, sex, category):
+def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, gymid, sex, category):
     logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
@@ -311,7 +332,9 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club,
 
         climbers[climberId] = {
             "id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
-            "club" :club, "sex":sex, "category":category, 
+            "club" :club_name, 
+            "gymid": gymid, 
+            "sex":sex, "category":category, 
             "age_category_type": age_category_type2026, # default to fsgt1 age categories
             "score":0, "rank":0,
             "registration_timestamp": datetime.now().isoformat(),
@@ -352,7 +375,15 @@ def get_category_from_dob(dob, competition_date, competition_type, age_category_
     dob_dt = datetime.strptime(dob, "%Y-%m-%d")
     competition_dt = datetime.strptime(competition_date, "%Y-%m-%d")
     
-    age = competition_dt.year - dob_dt.year - ((competition_dt.month, competition_dt.day) < (dob_dt.month, dob_dt.day))
+    # Calculate age as of August 31st of the season start year
+    # Season runs Sep-Jun, so if competition is Jan-Aug, use previous year's Aug 31
+    if competition_dt.month < 9:  # January to August
+        reference_year = competition_dt.year - 1
+    else:  # September to December
+        reference_year = competition_dt.year
+    
+    august_31st = datetime(reference_year, 8, 31)
+    age = august_31st.year - dob_dt.year - ((august_31st.month, august_31st.day) < (dob_dt.month, dob_dt.day))
 
     if age < 12:
         return -1  # Return -1 for under 12
@@ -541,6 +572,7 @@ def setRoutesClimbed(competitionId, climberId, routeList):
             routes_climbed = climber['routesClimbed']
             #print(routes_climbed)
             routes_climbed.append(route)
+        setRoutesClimbed2(comp)
         comp = recalculate(competitionId, comp)
         comp = _update_competition(competitionId, comp)
     finally:
@@ -885,29 +917,8 @@ def init():
                     user['gymid'] = gym['id']
                     logging.info('adding gymid: '+str(gym['id'])+' for user '+str(user['email']))
                     skala_db.upsert_user(user)
-                elif user.get('club') == 'ROC 14':
-                    user['gymid'] = '005d3b0d78b5477db673f6424b0fbeba'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'Entente Sportive de Nanterre':
-                    user['gymid'] = '1'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'ESC XV':
-                    user['gymid'] = '591a28aa8e924d25a3c9c0cc6a0c883f'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'US Ivry':
-                    user['gymid'] = '8b797c6675934ad197b15d6f7950c8e2'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'RSC Champigny':
-                    user['gymid'] = 'ca09c1dab6c04bb7b8e224bd9344d4c9'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'US Fontenay' or user.get('club') == 'USF Escalade':
-                    user['gymid'] = '1a088f939d1b4a82a359bda05fed0f24'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'CPS 10 - Faites le mur':
-                    user['gymid'] = '20605d959edc4bee8a212935973590e4'
-                    skala_db.upsert_user(user)
-                elif user.get('club') == 'AS Pierrefitte' or user.get('club') == 'Grimpe Heureuse de Pierrefitte':
-                    user['gymid'] = 'a247c13c9ae54e898d2651cf7369145a'
+                elif user.get('club') in CLUB_TO_GYMID:
+                    user['gymid'] = CLUB_TO_GYMID[user.get('club')]
                     skala_db.upsert_user(user)
                 else:    
                     logging.info('no gym found for club: '+str(user['club'])+' for user '+str(user['email'])+' confirmed='+str(user.get('is_confirmed')))
@@ -1046,6 +1057,21 @@ def _migrate_competition(competition):
         competition = setRoutesClimbed2(competition)
         needs_updating = True
 
+
+    # migrate competition climbers gyms
+    for climberid in competition['climbers']:
+        climber = competition['climbers'][climberid]
+        if climber.get('gymid') is None and climber.get('club') is not None:
+            gym = skala_db.get_gym_by_gym_name(climber['club'])
+            if gym is not None:
+                climber['gymid'] = gym['id']
+                needs_updating = True
+            else:
+                if climber.get('club') in CLUB_TO_GYMID:
+                    climber['gymid'] = CLUB_TO_GYMID[climber.get('club')]
+                    needs_updating = True
+                else:
+                    logging.info('Competition climber migration: no gym found for club: '+str(climber['club'])+' for climber id '+str(climberid))
 
     if needs_updating:
         update_competition(competition['id'], competition)
@@ -1542,7 +1568,7 @@ def can_unregister(user, competition):
     if competition is None:
         raise ValueError('competition cannot be None')
 
-    if competition['status'] not in [competition_status_open]:
+    if competition['status'] not in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
         return False
     
     if user is not None:
@@ -1576,8 +1602,8 @@ def can_create_gym(user):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob):
-    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, dob)
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob):
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob)
 
 
 def update_gym_routes(gymid, routesid, jsondata):

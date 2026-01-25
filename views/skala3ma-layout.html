@@ -100,17 +100,15 @@
     // Load the language pack and replace 
     //const userLang = navigator.language || navigator.userLanguage;
     //const langCode = userLang.replace('-', '_'); // e.g., 'en-US' to 'en_US'
-    //loadTranslations();
-    replaceTranslations();
+    reloadTranslations();
     initializeApp();
     
 });
 
-function loadTranslations(languagePack, force=true) {
+function loadTranslations(languagePack, force=false) {
 
-    console.log('Loading translations for language pack:', languagePack, 'force:', force);
+    //console.log('Loading translations for language pack:', languagePack, 'force:', force);
     loadLanguagePack(languagePack, force).then(() => {
-        replaceTranslations();
         // Call other functions that depend on translations being loaded
         initializeApp();
     }).catch(error => {
