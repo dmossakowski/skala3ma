@@ -80,15 +80,15 @@
 
                         <div class="form-floating">
 							
-                            <select class="form-control mb-2" name="club" id="club">
+                            <select class="form-control mb-2" name="gymid" id="gymid">
                                 <option value="--">{{ reference_data['current_language'].choose}}</option>
                             </select>
                             <div id="other-club-container" style="display:none; margin-top:10px;">
                                 <input class="form-control mb-2" id="otherclub" name="otherclub" size="40" placeholder="{{ reference_data['current_language'].other_club_not_listed}}" />
                             </div>
                             <script>
-                            var climber_club_id = "{{ user['gymid'] if user['gymid'] is not none else '' }}";
-                            console.log('Climber club id: '+climber_club_id);
+                            var climber_gymid = "{{ user['gymid'] if user['gymid'] is not none else '' }}";
+                            console.log('Climber gym id: '+climber_gymid);
                             document.addEventListener('DOMContentLoaded', function() {
                                 if (typeof window.apiFetchJson !== 'function') {
                                     console.error('apiFetchJson not loaded');
@@ -102,7 +102,7 @@
                                             option.value = gym.id;
                                             option.textContent = gym.name;
                                             option.setAttribute('data-gymid', gym.id);
-                                            if (gym.id == climber_club_id) {
+                                            if (gym.id == climber_gymid) {
                                                 option.selected = true;
                                             }   
                                             clubSelect.appendChild(option);

@@ -654,7 +654,7 @@ def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
 # this should not be called when registering an anonmymous user as they could provide any details
 # and thus overwrite the actual, confirmed user details
 # TODO refactor this as it's easy to make a mistake .. this is users table.. not competition climbers table!
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, club_id, dob):
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob):
     email = email.lower()
     user = get_user_by_email(email)
 
@@ -668,7 +668,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
     newclimber['lastname'] = lastname
     newclimber['sex'] = sex
     newclimber['club'] = club
-    newclimber['gymid'] = club_id
+    newclimber['gymid'] = gymid
     newclimber['dob'] = dob
 
     try:

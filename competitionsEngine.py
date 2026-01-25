@@ -297,7 +297,7 @@ def update_competition_climbers_category(competition, competition_type):
 
 
 # add or register climber to a competition
-def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, club_id, sex, category):
+def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, gymid, sex, category):
     logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
@@ -332,7 +332,9 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club_
 
         climbers[climberId] = {
             "id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
-            "club" :club_name, "club_id": club_id, "sex":sex, "category":category, 
+            "club" :club_name, 
+            "gymid": gymid, 
+            "sex":sex, "category":category, 
             "age_category_type": age_category_type2026, # default to fsgt1 age categories
             "score":0, "rank":0,
             "registration_timestamp": datetime.now().isoformat(),
@@ -1059,14 +1061,14 @@ def _migrate_competition(competition):
     # migrate competition climbers gyms
     for climberid in competition['climbers']:
         climber = competition['climbers'][climberid]
-        if climber.get('club_id') is None and climber.get('club') is not None:
+        if climber.get('gymid') is None and climber.get('club') is not None:
             gym = skala_db.get_gym_by_gym_name(climber['club'])
             if gym is not None:
-                climber['club_id'] = gym['id']
+                climber['gymid'] = gym['id']
                 needs_updating = True
             else:
                 if climber.get('club') in CLUB_TO_GYMID:
-                    climber['club_id'] = CLUB_TO_GYMID[climber.get('club')]
+                    climber['gymid'] = CLUB_TO_GYMID[climber.get('club')]
                     needs_updating = True
                 else:
                     logging.info('Competition climber migration: no gym found for club: '+str(climber['club'])+' for climber id '+str(climberid))
@@ -1600,8 +1602,8 @@ def can_create_gym(user):
 # this overwrites details from competition registration to the main user entry
 # these details will be used for next competition registration
 # these details are deemed the most recent and correct
-def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, club_id, dob):
-    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, club_id, dob)
+def user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob):
+    skala_db.user_registered_for_competition(climberId, name, firstname, lastname, email, sex, club, gymid, dob)
 
 
 def update_gym_routes(gymid, routesid, jsondata):

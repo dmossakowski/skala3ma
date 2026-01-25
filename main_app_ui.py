@@ -500,7 +500,7 @@ def competition_admin_post(competition_id):
         else:    
             climber_club_option = request.form.get('club_'+ climber_id)
             climber_club_name = climber.get('club')
-            climber_club_id = climber.get('club_id')
+            climber_gymid = climber.get('gymid')
              
             try:
                 # climber_club is json like all_clubs.append ({'gymname':gymname, 'gymid':gymid})
@@ -509,14 +509,14 @@ def competition_admin_post(competition_id):
                 # we will add a way to add a new club during registration (this will not be possible for anonymous registration)
                 # TODO investigate this further later
                 climber_club_name = climber_club_option.get('gymname')
-                climber_club_id = climber_club_option.get('gymid')
+                climber_gymid = climber_club_option.get('gymid')
             except Exception as e:
                 logging.error("Error parsing climber club in competition admin "+str(e))
                
             competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
             competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
             competition['climbers'][climber_id]['club'] = climber_club_name
-            competition['climbers'][climber_id]['club_id'] = climber_club_id
+            competition['climbers'][climber_id]['gymid'] = climber_gymid
                                                                         
             competition['climbers'][climber_id]['email'] = request.form.get('email_'+ climber_id)
             try:
@@ -1003,7 +1003,7 @@ def addCompetitionClimber(competitionId):
     lastname = request.form.get('lastname')
     email = request.form.get('email')
     sex = request.form.get('sex')
-    club_id = request.form.get('club')
+    gymid = request.form.get('gymid')
     #clubid = request.form.get('clubid') # preparation for future use
     otherclub = request.form.get('otherclub')
     category = request.form.get('category')
@@ -1032,16 +1032,16 @@ def addCompetitionClimber(competitionId):
     # TODO this differs with how admin works - need to standardize
     # in adming the club is a json gymname/gymid pair gymname=other gymid=-1
     user_club_name = 'Unknown'
-    if club_id == 'other':
+    if gymid == 'other':
         user_club_name = otherclub
-    elif club_id == '--':
+    elif gymid == '--':
         error_code = "error5324"
     else:
-        user_club = competitionsEngine.get_gym(club_id)
+        user_club = competitionsEngine.get_gym(gymid)
         if user_club is not None:
             user_club_name = user_club.get('name')
         else:
-            logging.error(f'During registration club with id {club_id} not found')
+            logging.error(f'During registration club with id {gymid} not found')
             user_club_name = 'Unknown'
 
     # check if user with this email is known and should login themselves to register
@@ -1058,18 +1058,16 @@ def addCompetitionClimber(competitionId):
         if category == -1:
             error_code = "error5325"
 
-    if not error_code and not is_registered and firstname is not None and sex is not None and club_id is not None and email is not None:
+    if not error_code and not is_registered and firstname is not None and sex is not None and gymid is not None and email is not None:
         #climber = competitionsEngine.get_climber_by_email(email)
         name = firstname + " " + lastname
 
         try:
-            #if club not in competitionsEngine.clubs.values():
-            #    club = otherclub
 
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, club_id, sex, category)
+            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, gymid, sex, category)
             if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
                 competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               user_club_name, club_id, dob)
+                                                               user_club_name, gymid, dob)
             comp = competitionsEngine.getCompetition(competitionId)
             competitionName = comp['name']
             #subheader_message = 'You have been registered! Thanks!'

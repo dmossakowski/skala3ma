@@ -220,13 +220,13 @@
 					</td>
 					<td><select name="club_{{ climberId }}" >
                         <option value='{"gymid": "other", "gymname": "Other"}' size="20" >{{ reference_data['current_language'].other}}</option>
-								{% for club in all_clubs %}
+								{% for gym in all_clubs %}
                                 
 
-								{% if club  == competition['climbers'][climberId]['club'] %}selected{% endif %}
-								<option value="{{ club | tojson | forceescape }}"
-									{% if club['gymid'] == competition['climbers'][climberId]['club_id'] %}selected{% endif %}
-									size="20" >{{club['gymname']}}</option>
+								{% if gym  == competition['climbers'][climberId]['club'] %}selected{% endif %}
+								<option value="{{ gym | tojson | forceescape }}"
+									{% if gym['gymid'] == competition['climbers'][climberId]['gymid'] %}selected{% endif %}
+									size="20" >{{gym['gymname']}}</option>
 							{% endfor %}
 						</select></td>
 					<td><select name="category_{{ climberId }}" >
