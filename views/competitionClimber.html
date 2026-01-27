@@ -96,7 +96,7 @@
                                 }
                                 window.apiFetchJson('/api1/gyms')
                                     .then(gyms => {
-                                        const clubSelect = document.getElementById('club');
+                                        const clubSelect = document.getElementById('gymid');
                                         gyms.forEach(gym => {
                                             const option = document.createElement('option');
                                             option.value = gym.id;
@@ -117,7 +117,7 @@
                                         console.error('Failed to fetch gyms:', err);
                                     });
                                 // Show/hide manual entry
-                                document.getElementById('club').addEventListener('change', function() {
+                                document.getElementById('gymid').addEventListener('change', function() {
                                     const otherContainer = document.getElementById('other-club-container');
                                     if (this.value === 'other') {
                                         otherContainer.style.display = 'block';
@@ -127,7 +127,7 @@
                                 });
                             });
                             </script>
-                            <label for="club">{{ reference_data['current_language'].club}}:</label>
+                            <label for="gymid">{{ reference_data['current_language'].club}}:</label>
                             </div>
 							<br>
 
