@@ -31,7 +31,7 @@
         <!-- Custom Filter Panel -->
         <div class="card mb-3">
             <div class="card-header">
-                <h5 style="margin-bottom: 0;">{{ reference_data['current_language'].filter if reference_data['current_language'].filter is defined else 'Filters' }}</h5>
+                <h5 style="margin-bottom: 0;">{{ reference_data['current_language'].filters }}</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -68,7 +68,7 @@
                 </div>
                 <div class="row">
                     <div class="col-md-12">
-                        <button id="clearAllFilters" class="btn btn-secondary btn-sm">Clear All Filters</button>
+                        <button id="clearAllFilters" class="btn btn-secondary btn-sm">{{ reference_data['current_language'].clear_all_filters }}</button>
                         <span id="filterStatus" class="ml-3 text-muted"></span>
                     </div>
                 </div>
