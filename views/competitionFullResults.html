@@ -28,10 +28,57 @@
 </div>
     <div class="table-responsive">
 
+        <!-- Custom Filter Panel -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 style="margin-bottom: 0;">{{ reference_data['current_language'].filters }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="climberNameFilter"><strong>{{ reference_data['current_language'].climbers }}</strong></label>
+                        <select id="climberNameFilter" class="form-control">
+                            <option value="">{{ reference_data['current_language'].climbers if reference_data['current_language'].climbers is defined else 'Select Climber' }}...</option>
+                        </select>
+                        <div id="climberNameTags" class="filter-tags mt-2"></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="clubFilter"><strong>{{ reference_data['current_language'].club }}</strong></label>
+                        <select id="clubFilter" class="form-control">
+                            <option value="">{{ reference_data['current_language'].club if reference_data['current_language'].club is defined else 'Select Club' }}...</option>
+                        </select>
+                        <div id="clubTags" class="filter-tags mt-2"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="routeNumFilter"><strong>{{ reference_data['current_language'].route_num }}</strong></label>
+                        <select id="routeNumFilter" class="form-control">
+                            <option value="">{{ reference_data['current_language'].route_num if reference_data['current_language'].route_num is defined else 'Select Route' }}...</option>
+                        </select>
+                        <div id="routeNumTags" class="filter-tags mt-2"></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="gradeFilter"><strong>{{ reference_data['current_language'].grade }}</strong></label>
+                        <select id="gradeFilter" class="form-control">
+                            <option value="">{{ reference_data['current_language'].grade if reference_data['current_language'].grade is defined else 'Select Grade' }}...</option>
+                        </select>
+                        <div id="gradeTags" class="filter-tags mt-2"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <button id="clearAllFilters" class="btn btn-secondary btn-sm">{{ reference_data['current_language'].clear_all_filters }}</button>
+                        <span id="filterStatus" class="ml-3 text-muted"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group">
-            <label for="groupBy"></label>
+            <label for="groupBy"><strong>Group By:</strong></label>
             <select id="groupBy" class="form-control" onchange="handleGroupByChange(this.value)">
-                <option value="none"></option>
+                <option value="none">None</option>
                 <option value="climber">{{ reference_data['current_language'].climbers }} </option>
                 <option value="club">{{ reference_data['current_language'].club }} </option>
             </select>
@@ -48,147 +95,346 @@
 
 
 
-<script>
-
-
-
-const url = '/api1/competition/{{competition['id']}}/fullresults';
-//const url2 = '/api1/competition_results/{{competition['id']}}/stats';
-var fulldata;
-var table;
-async function getData() {
-const jsondata = await (await fetch(url)).json();
-processData(jsondata);
-
-//const rangejsondata = await (await fetch(url2)).json();
-//processDataRange(rangejsondata);
-
+<style>
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #007bff;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.filter-tag .remove-tag {
+    margin-left: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.filter-tag .remove-tag:hover {
+    color: #ffcccc;
+}
+</style>
+
+<script>
+
+const url = '/api1/competition/{{competition['id']}}/fullresults';
+var fulldata;
+var table;
+
+// Filter state management
+const filterState = {
+    climberNames: [],
+    clubs: [],
+    routeNums: [],
+    grades: []
+};
+
+async function getData() {
+    const jsondata = await (await fetch(url)).json();
+    processData(jsondata);
+}
 
 getData();
 
-
-function processData(fullresponse)
-{
-//console.log('here2');
-//console.log(fullresponse['F0']);
-//
-
-
-//document.querySelector("#routes_climbed_count").innerHTML = fulldata['personalstats']['routes_climbed_count']
-//document.querySelector("#competitions_count").innerHTML = fulldata['personalstats']['competitions_count']
-renderTabulatorTable(fullresponse)
+function processData(fullresponse) {
+    populateFilterOptions(fullresponse);
+    renderTabulatorTable(fullresponse);
 }
 
-function customInHeaderFilter(headerValue, rowValue, rowData, filterParams){
-    //headerValue - the value of the header filter element
-    //rowValue - the value of the column in this row
-    //rowData - the data for the row being filtered
-    //filterParams - params object passed to the headerFilterFuncParams property
-
-    const filterValues = headerValue.split(/[\s,]+/);
-
-    // Check if any of the split strings is in the rowValue
-    match = filterValues.some(value => rowValue && rowValue.toString().toLowerCase().includes(value.toLowerCase()));
-
-    return match;
-    //return rowData.name == filterParams.name && rowValue < headerValue; //must return a boolean, true if it passes the filter.
+function populateFilterOptions(data) {
+    // Extract unique values from the data
+    const climbers = new Set();
+    const clubs = new Set();
+    const routeNums = new Set();
+    const grades = new Set();
+    
+    data.forEach(row => {
+        if (row.firstname && row.lastname) {
+            climbers.add(`${row.firstname} ${row.lastname}`);
+        }
+        if (row.club) {
+            clubs.add(row.club);
+        }
+        if (row.routenum) {
+            routeNums.add(row.routenum);
+        }
+        if (row.grade) {
+            grades.add(row.grade);
+        }
+    });
+    
+    // Populate climber select
+    const climberSelect = document.getElementById('climberNameFilter');
+    Array.from(climbers).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        climberSelect.appendChild(option);
+    });
+    
+    // Populate club select
+    const clubSelect = document.getElementById('clubFilter');
+    Array.from(clubs).sort().forEach(club => {
+        const option = document.createElement('option');
+        option.value = club;
+        option.textContent = club;
+        clubSelect.appendChild(option);
+    });
+    
+    // Populate route number select
+    const routeNumSelect = document.getElementById('routeNumFilter');
+    Array.from(routeNums).sort((a, b) => a - b).forEach(num => {
+        const option = document.createElement('option');
+        option.value = num;
+        option.textContent = num;
+        routeNumSelect.appendChild(option);
+    });
+    
+    // Populate grade select
+    const gradeSelect = document.getElementById('gradeFilter');
+    Array.from(grades).sort().forEach(grade => {
+        const option = document.createElement('option');
+        option.value = grade;
+        option.textContent = grade;
+        gradeSelect.appendChild(option);
+    });
 }
 
-function customEqualHeaderFilter(headerValue, rowValue, rowData, filterParams){
-    //headerValue - the value of the header filter element
-    //rowValue - the value of the column in this row
-    //rowData - the data for the row being filtered
-    //filterParams - params object passed to the headerFilterFuncParams property
-
-    //console.log('filterParams', filterParams);
-    const filterValues = headerValue.split(/[\s,]+/);
-
-    // Check if any of the split strings is in the rowValue
-    match = filterValues.some(value => rowValue && rowValue.toString().toLowerCase() === value.toLowerCase());
-    return match;
-    //return rowData.name == filterParams.name && rowValue < headerValue; //must return a boolean, true if it passes the filter.
-}
-
-
-function renderTabulatorTable(routesA)
-{
-var columns = [
-{title:"{{ reference_data['current_language'].name}}", field:"firstname", headerFilterFunc:customInHeaderFilter, headerFilter:true},
-{title:"{{ reference_data['current_language'].lastname}}", field:"lastname", headerFilterFunc:customInHeaderFilter, headerFilter:"input"},
-{title:"{{ reference_data['current_language'].sex}}", field:"sex", headerFilter:"input"},
-
-{title: "{{ reference_data['current_language'].club}}", field: "club", headerFilter:"input", topCalc:"unique"},
-{title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100, type: "number", headerFilter:"input", headerFilterFunc:"<=", topCalc:"avg",},
-{title:"{{ reference_data['current_language'].route_num}}", field:"routenum",headerFilter:"input", headerFilterFunc:"=", topCalc:"count", headerFilterFunc:customEqualHeaderFilter, },
-{title: "{{ reference_data['current_language'].color }}", field: "color1", 
-           "responsive": 0 , minWidth:10, 
-           formatter:function(cell, formatterParams, onRendered){ 
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
+function renderTabulatorTable(routesA) {
+    var columns = [
+        {title:"{{ reference_data['current_language'].name}}", field:"firstname"},
+        {title:"{{ reference_data['current_language'].lastname}}", field:"lastname"},
+        {title:"{{ reference_data['current_language'].sex}}", field:"sex"},
+        {title: "{{ reference_data['current_language'].club}}", field: "club", topCalc:"unique"},
+        {title: "{{ reference_data['current_language'].rank}}", field: "rank", width: 100, type: "number", topCalc:"avg"},
+        {title:"{{ reference_data['current_language'].route_num}}", field:"routenum", topCalc:"count"},
+        {title: "{{ reference_data['current_language'].color }}", field: "color1", 
+            "responsive": 0, minWidth:10, 
+            formatter:function(cell, formatterParams, onRendered){ 
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
             },
-        
             formatterPrint:function(cell, formatterParams, onRendered){
-              return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
+                return getColorSVGDiv(cell.getValue(), cell.getRow().getData().color2, cell.getRow().getData().color_modifier, '90px', '40px');
             },
         },
-//{title:"Line", field:"line"},
-{title:"{{ reference_data['current_language'].grade}}", field:"grade", headerFilterFunc:customEqualHeaderFilter, headerFilter:"input"},
-{title:"{{ reference_data['current_language'].points}}", field:"points", topCalc:"sum", topCalcParams:{
-    precision:1,
-}},
-];
+        {title:"{{ reference_data['current_language'].grade}}", field:"grade"},
+        {title:"{{ reference_data['current_language'].points}}", field:"points", topCalc:"sum", topCalcParams:{
+            precision:1,
+        }},
+    ];
 
-// Create the Tabulator table
-table = new Tabulator("#tabulator-table", {
-  columns: columns,
-  data: routesA ,
-  //layout:"fitDataFill",
-  layout:"fitColumns",
-  movableRows: false,
-  selectable: false,
-  //responsiveLayout:"collapse",
-  resizableRows:false,
-  //groupBy:"routenum",
-  //groupToggleElement:"header",
-  groupStartOpen:false,
-  //virtualDomBuffer:600, //set virtual DOM buffer to 300px
+    // Create the Tabulator table
+    table = new Tabulator("#tabulator-table", {
+        columns: columns,
+        data: routesA,
+        layout:"fitColumns",
+        movableRows: false,
+        selectable: false,
+        resizableRows:false,
+        groupStartOpen:false,
+    });
 
-});
-
-
-
-
-
+    // Initialize filter controls
+    initializeFilterControls();
 }
 
+// Filter management functions
+function addFilterTag(filterType, value, containerId) {
+    value = value.trim();
+    if (!value) return;
+    
+    const filterArray = filterState[filterType];
+    const lowerValue = value.toLowerCase();
+    
+    if (!filterArray.some(v => v.toLowerCase() === lowerValue)) {
+        filterArray.push(value);
+        renderFilterTags(filterType, containerId);
+        applyFilters();
+    }
+}
+
+function removeFilterTag(filterType, value, containerId) {
+    const filterArray = filterState[filterType];
+    const index = filterArray.findIndex(v => v.toLowerCase() === value.toLowerCase());
+    if (index > -1) {
+        filterArray.splice(index, 1);
+        renderFilterTags(filterType, containerId);
+        applyFilters();
+    }
+}
+
+function renderFilterTags(filterType, containerId) {
+    const container = document.getElementById(containerId);
+    const filterArray = filterState[filterType];
+    
+    container.innerHTML = filterArray.map(value => `
+        <span class="filter-tag">
+            ${value}
+            <span class="remove-tag" onclick="removeFilterTag('${filterType}', '${value.replace(/'/g, "\\'")}', '${containerId}')">&times;</span>
+        </span>
+    `).join('');
+}
+
+function applyFilters() {
+    if (!table) return;
+    
+    // Build a custom filter function
+    table.setFilter(customMultiFilter);
+    
+    // Update filter status
+    updateFilterStatus();
+}
+
+function customMultiFilter(data) {
+    // Climber name filter (full name match)
+    if (filterState.climberNames.length > 0) {
+        const matchesName = filterState.climberNames.some(name => {
+            const fullName = `${data.firstname} ${data.lastname}`;
+            return fullName.toLowerCase() === name.toLowerCase();
+        });
+        if (!matchesName) return false;
+    }
+    
+    // Club filter
+    // Club filter
+    if (filterState.clubs.length > 0) {
+        const matchesClub = filterState.clubs.some(club => {
+            return data.club && data.club.toLowerCase() === club.toLowerCase();
+        });
+        if (!matchesClub) return false;
+    }
+    // Route number filter
+    if (filterState.routeNums.length > 0) {
+        const matchesRouteNum = filterState.routeNums.some(routeNum => {
+            return data.routenum && data.routenum.toString() === routeNum.toString();
+        });
+        if (!matchesRouteNum) return false;
+    }
+    
+    // Grade filter
+    if (filterState.grades.length > 0) {
+        const matchesGrade = filterState.grades.some(grade => {
+            return data.grade && data.grade.toLowerCase() === grade.toLowerCase();
+        });
+        if (!matchesGrade) return false;
+    }
+    
+    return true;
+}
+
+function updateFilterStatus() {
+    const totalFilters = filterState.climberNames.length + 
+                        filterState.clubs.length + 
+                        filterState.routeNums.length + 
+                        filterState.grades.length;
+    
+    const statusEl = document.getElementById('filterStatus');
+    if (totalFilters > 0) {
+        const rowCount = table.getDataCount("active");
+        statusEl.textContent = `Showing ${rowCount} routes (${totalFilters} filter${totalFilters > 1 ? 's' : ''} active)`;
+    } else {
+        statusEl.textContent = '';
+    }
+}
+
+function clearAllFilters() {
+    filterState.climberNames = [];
+    filterState.clubs = [];
+    filterState.routeNums = [];
+    filterState.grades = [];
+    
+    renderFilterTags('climberNames', 'climberNameTags');
+    renderFilterTags('clubs', 'clubTags');
+    renderFilterTags('routeNums', 'routeNumTags');
+    renderFilterTags('grades', 'gradeTags');
+    
+    // Reset select dropdowns to default
+    const selects = ['climberNameFilter', 'clubFilter', 'routeNumFilter', 'gradeFilter'];
+    selects.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) select.selectedIndex = 0;
+    });
+    
+    if (table) {
+        table.clearFilter();
+        updateFilterStatus();
+    }
+}
+
+function initializeFilterControls() {
+    // Climber name filter
+    const climberSelect = document.getElementById('climberNameFilter');
+    climberSelect.addEventListener('change', function() {
+        if (this.value) {
+            addFilterTag('climberNames', this.value, 'climberNameTags');
+            this.selectedIndex = 0; // Reset to placeholder
+        }
+    });
+    
+    // Club filter
+    const clubSelect = document.getElementById('clubFilter');
+    clubSelect.addEventListener('change', function() {
+        if (this.value) {
+            addFilterTag('clubs', this.value, 'clubTags');
+            this.selectedIndex = 0; // Reset to placeholder
+        }
+    });
+    
+    // Route number filter
+    const routeNumSelect = document.getElementById('routeNumFilter');
+    routeNumSelect.addEventListener('change', function() {
+        if (this.value) {
+            addFilterTag('routeNums', this.value, 'routeNumTags');
+            this.selectedIndex = 0; // Reset to placeholder
+        }
+    });
+    
+    // Grade filter
+    const gradeSelect = document.getElementById('gradeFilter');
+    gradeSelect.addEventListener('change', function() {
+        if (this.value) {
+            addFilterTag('grades', this.value, 'gradeTags');
+            this.selectedIndex = 0; // Reset to placeholder
+        }
+    });
+    
+    // Clear all button
+    document.getElementById('clearAllFilters').addEventListener('click', clearAllFilters);
+}
 
 function groupByClimber(group = true) {
-            if (group) {
-                table.setGroupBy("lastname");
-            } else {
-                table.setGroupBy(false);
-            }
-        }
+    if (group) {
+        table.setGroupBy("lastname");
+    } else {
+        table.setGroupBy(false);
+    }
+}
 
 function groupByClub(group = true) {
-            if (group) {
-                table.setGroupBy("club");
-            } else {
-                table.setGroupBy(false);
-            }
-        }
+    if (group) {
+        table.setGroupBy("club");
+    } else {
+        table.setGroupBy(false);
+    }
+}
 
-
-        function handleGroupByChange(value) {
-            if (value === "climber") {
-                groupByClimber(true);
-            } else if (value === "club") {
-                groupByClub(true);
-            } else {
-                table.setGroupBy(false);
-            }
-        }
+function handleGroupByChange(value) {
+    if (value === "climber") {
+        groupByClimber(true);
+    } else if (value === "club") {
+        groupByClub(true);
+    } else {
+        table.setGroupBy(false);
+    }
+}
 
 </script>
 
