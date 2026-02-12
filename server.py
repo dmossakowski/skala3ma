@@ -61,6 +61,7 @@ from logging_config import init_logging, attach_request_logging
 
 from main_app_ui import app_ui, languages
 from skala_api import skala_api_app, create_jwt
+from skala_admin_api import skala_admin_api
 
 import competitionsEngine
 
@@ -124,10 +125,11 @@ class CustomRequest(Request):
 #app = OpenAPI(__name__, static_folder='public', template_folder='views', info=info)
 app = Flask(__name__, static_folder='public', template_folder='views')
 app.request_class = CustomRequest
-# limit image upload size to 4mb
-app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
+# limit image upload size to 4mb (database uploads can be larger - handled per route)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB to allow database uploads
 app.register_blueprint(app_ui)
 app.register_blueprint(skala_api_app)
+app.register_blueprint(skala_admin_api)
 
 app.debug = True
 app.secret_key = 'development'
@@ -305,7 +307,7 @@ def init():
         app_name='web',
         skip_blueprints={'skala_api'},
         allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
-                                 '/competitionCalendar','/competitionRawAdmin','/competition_admin','/competitionResults',
+                                 '/competitionCalendar','/app_admin1','/competition_admin','/competitionResults',
                                  '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser','/climbers',
                                  '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
 

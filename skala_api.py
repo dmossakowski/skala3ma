@@ -377,71 +377,6 @@ def testapi():
 
 
 
-@skala_api_app.post('/competitionRawAdmin')
-@session_or_jwt_required
-def fsgtadmin():
-    edittype = request.form.get('edittype')
-    id = request.form.get('id')
-    action = request.form.get('action')
-    jsondata = request.form.get('jsondata')
-    comp = {}
-    jsonobject = None
-
-    if jsondata is not None and len(jsondata) > 2:
-        jsonobject = json.loads(jsondata)
-
-    if edittype == 'user':
-        if jsonobject is not None and action == 'update':
-            competitionsEngine.upsert_user(jsonobject)
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_user_by_email(id)
-
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_user_emails()
-
-    elif edittype == 'competition':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine._update_competition(jsonobject['id'],jsonobject)
-        if id is not None  and action == 'delete':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine.delete_competition(id)
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.getCompetition(id)
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_competition_ids()
-
-    elif edittype == 'gym':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine.update_gym(jsonobject['id'], jsonobject)
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_gym(id)
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_gyms()
-
-    elif edittype == 'routes':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            # None is gymid but this is ok as the routes id will be found
-            competitionsEngine.upsert_routes(id, None, jsonobject)
-
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_routes(id)
-
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_routes_ids()
-
-    else:
-        jsonobject = {"error": "choose edit type" }
-
-    return render_template('competitionRawAdmin.html',
-                           jsondata=json.dumps(jsonobject),
-                           reference_data=competitionsEngine.reference_data,
-                           id=id)
 
 
 @skala_api_app.post('/auth/login')
@@ -1400,6 +1335,32 @@ def getCompetitionStats(competitionId):
     return json.dumps(statresponse)
 
 
+
+@skala_api_app.route('/competition/<competitionId>/rankings')
+#@session_or_jwt_required
+def getCompetitionRankings(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return []
+    elif competition is LookupError:
+        return []
+    elif len(competition) == 0:
+        return []
+
+    rankings = competitionsEngine.get_sorted_rankings(competition)
+    # walk through the rankings and remove email 
+    for category in rankings:
+        for climber in rankings[category]:
+            climber.pop('email', None)
+       
+    return rankings
+
+
+
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/fullresults')
 #@session_or_jwt_required
@@ -1489,7 +1450,7 @@ def getCompetitionFlatFullTable(competitionId):
     statresponse = { "chartdata": statout,
                     "routedata" : routes}
     
-    return json.dumps(full_routes_table)
+    return full_routes_table
     #return full_routes_table
 
 

@@ -158,7 +158,8 @@ function populateFilterOptions(data) {
     
     data.forEach(row => {
         if (row.firstname && row.lastname) {
-            climbers.add(`${row.firstname} ${row.lastname}`);
+            const fullName = `${row.firstname.trim()} ${row.lastname.trim()}`;
+            climbers.add(fullName);
         }
         if (row.club) {
             clubs.add(row.club);
@@ -297,7 +298,8 @@ function customMultiFilter(data) {
     // Climber name filter (full name match)
     if (filterState.climberNames.length > 0) {
         const matchesName = filterState.climberNames.some(name => {
-            const fullName = `${data.firstname} ${data.lastname}`;
+            if (!data.firstname || !data.lastname) return false;
+            const fullName = `${data.firstname.trim()} ${data.lastname.trim()}`;
             return fullName.toLowerCase() === name.toLowerCase();
         });
         if (!matchesName) return false;

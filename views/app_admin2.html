@@ -1,0 +1,373 @@
+
+<!-- Admin Database Management Page -->
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+{% block secondarycontent %}
+
+<div style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg); background-size: cover;">
+	{% include "app_admin_menu.html" %}
+
+	<div class="container">
+		<div class="row">
+			<div class="col-md-10 col-md-offset-1 text-left heading-section animate-box">
+				<br>
+				<h3>Database Management</h3>
+				<p class="text-muted">Backup, download, and restore the Skala3ma database</p>
+
+				<!-- Alert Messages -->
+				<div id="alertContainer"></div>
+
+				<!-- Database Info Card -->
+				<div class="panel panel-default" style="margin-top: 20px;">
+					<div class="panel-heading">
+						<h4 class="panel-title">
+							<i class="glyphicon glyphicon-info-sign"></i> Database Information
+						</h4>
+					</div>
+					<div class="panel-body">
+						<button class="btn btn-info" onclick="loadDatabaseInfo()">
+							<i class="glyphicon glyphicon-refresh"></i> Refresh Info
+						</button>
+						<div id="dbInfo" style="margin-top: 15px;">
+							<p class="text-muted">Click "Refresh Info" to load database information</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Download Database Card -->
+				<div class="panel panel-success" style="margin-top: 20px;">
+					<div class="panel-heading">
+						<h4 class="panel-title">
+							<i class="glyphicon glyphicon-download-alt"></i> Download Database
+						</h4>
+					</div>
+					<div class="panel-body">
+						<p>Download the current SQLite database file as a backup.</p>
+						<button class="btn btn-success btn-lg" onclick="downloadDatabase()">
+							<i class="glyphicon glyphicon-download-alt"></i> Download Database
+						</button>
+					</div>
+				</div>
+
+				<!-- Upload Database Card -->
+				<div class="panel panel-warning" style="margin-top: 20px;">
+					<div class="panel-heading">
+						<h4 class="panel-title">
+							<i class="glyphicon glyphicon-upload"></i> Upload & Restore Database
+						</h4>
+					</div>
+					<div class="panel-body">
+						<div class="alert alert-warning">
+							<strong><i class="glyphicon glyphicon-warning-sign"></i> Warning!</strong>
+							Uploading a database will replace the current one. A backup will be created automatically before replacement.
+						</div>
+						
+						<form id="uploadForm" onsubmit="uploadDatabase(event)">
+							<div class="form-group">
+								<label for="dbFile">Select SQLite Database File (.sqlite, .db, .sqlite3):</label>
+								<input type="file" class="form-control" id="dbFile" name="file" accept=".sqlite,.db,.sqlite3" required>
+							</div>
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" name="create_backup" id="createBackup" checked>
+									Create backup before replacing database
+								</label>
+							</div>
+							<button type="submit" class="btn btn-warning btn-lg" id="uploadBtn">
+								<i class="glyphicon glyphicon-upload"></i> Upload & Replace Database
+							</button>
+							<div class="progress" id="uploadProgress" style="display: none; margin-top: 15px;">
+								<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">
+									Uploading...
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Database Backups List -->
+				<div class="panel panel-info" style="margin-top: 20px;">
+					<div class="panel-heading">
+						<h4 class="panel-title">
+							<i class="glyphicon glyphicon-list"></i> Available Backups
+						</h4>
+					</div>
+					<div class="panel-body">
+						<button class="btn btn-info" onclick="loadBackupsList()">
+							<i class="glyphicon glyphicon-refresh"></i> Refresh List
+						</button>
+						<div id="backupsList" style="margin-top: 15px;">
+							<p class="text-muted">Click "Refresh List" to load available backups</p>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<script>
+// Get JWT token from cookie or session
+function getAuthToken() {
+	const cookies = document.cookie.split(';');
+	for (let cookie of cookies) {
+		const [name, value] = cookie.trim().split('=');
+		if (name === 'skala3ma_jwt') {
+			return value;
+		}
+	}
+	return null;
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+	const alertContainer = document.getElementById('alertContainer');
+	const alertHtml = `
+		<div class="alert alert-${type} alert-dismissible" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			${message}
+		</div>
+	`;
+	alertContainer.innerHTML = alertHtml;
+	
+	// Auto-dismiss after 5 seconds
+	setTimeout(() => {
+		$('.alert').fadeOut();
+	}, 5000);
+}
+
+// Load database information
+async function loadDatabaseInfo() {
+	const token = getAuthToken();
+	const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+	
+	try {
+		const response = await fetch('/api1/admin/database/info', { 
+			headers,
+			credentials: 'include'
+		});
+		
+		// Check if response is JSON
+		const contentType = response.headers.get('content-type');
+		if (!contentType || !contentType.includes('application/json')) {
+			throw new Error('Not authenticated. Please log in.');
+		}
+		
+		const data = await response.json();
+		
+		if (data.success) {
+			const db = data.database;
+			const infoHtml = `
+				<table class="table table-bordered">
+					<tr><th style="width: 30%;">Database Path</th><td>${db.path}</td></tr>
+					<tr><th>File Size</th><td>${db.file_size_mb} MB (${db.file_size.toLocaleString()} bytes)</td></tr>
+					<tr><th>Last Modified</th><td>${new Date(db.modified).toLocaleString()}</td></tr>
+					<tr><th>Created</th><td>${new Date(db.created).toLocaleString()}</td></tr>
+					<tr><th>Number of Tables</th><td>${db.table_count}</td></tr>
+				</table>
+				<h5>Tables:</h5>
+				<table class="table table-striped table-condensed">
+					<thead>
+						<tr><th>Table Name</th><th>Row Count</th></tr>
+					</thead>
+					<tbody>
+						${Object.entries(db.tables).map(([name, info]) => 
+							`<tr><td>${name}</td><td>${info.row_count}</td></tr>`
+						).join('')}
+					</tbody>
+				</table>
+			`;
+			document.getElementById('dbInfo').innerHTML = infoHtml;
+		} else {
+			showAlert(`Error: ${data.message || data.error}`, 'danger');
+		}
+	} catch (error) {
+		showAlert(`Failed to load database info: ${error.message}`, 'danger');
+	}
+}
+
+// Download database
+async function downloadDatabase() {
+	const token = getAuthToken();
+	const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+	
+	try {
+		showAlert('Preparing database download...', 'info');
+		const response = await fetch('/api1/admin/database/download', { 
+			headers,
+			credentials: 'include'
+		});
+		
+		if (!response.ok) {
+			const contentType = response.headers.get('content-type');
+			if (contentType && contentType.includes('application/json')) {
+				const error = await response.json();
+				throw new Error(error.message || 'Download failed');
+			} else {
+				throw new Error('Not authenticated or download failed');
+			}
+		}
+		
+		// Get filename from Content-Disposition header or use default
+		const contentDisposition = response.headers.get('Content-Disposition');
+		let filename = 'skala3ma_database.sqlite';
+		if (contentDisposition) {
+			const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+			if (filenameMatch) filename = filenameMatch[1];
+		}
+		
+		// Download file
+		const blob = await response.blob();
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		window.URL.revokeObjectURL(url);
+		
+		showAlert(`Database downloaded successfully: ${filename}`, 'success');
+	} catch (error) {
+		showAlert(`Failed to download database: ${error.message}`, 'danger');
+	}
+}
+
+// Upload database
+async function uploadDatabase(event) {
+	event.preventDefault();
+	
+	const token = getAuthToken();
+	const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+	
+	const form = document.getElementById('uploadForm');
+	const fileInput = document.getElementById('dbFile');
+	const createBackup = document.getElementById('createBackup').checked;
+	const uploadBtn = document.getElementById('uploadBtn');
+	const progressBar = document.getElementById('uploadProgress');
+	
+	if (!fileInput.files.length) {
+		showAlert('Please select a file', 'warning');
+		return;
+	}
+	
+	const file = fileInput.files[0];
+	const formData = new FormData();
+	formData.append('file', file);
+	formData.append('create_backup', createBackup ? 'true' : 'false');
+	
+	try {
+		uploadBtn.disabled = true;
+		progressBar.style.display = 'block';
+		
+		const response = await fetch('/api1/admin/database/upload', {
+			method: 'POST',
+			headers: headers,
+			credentials: 'include',
+			body: formData
+		});
+		
+		// Check if response is JSON
+		const contentType = response.headers.get('content-type');
+		if (!contentType || !contentType.includes('application/json')) {
+			throw new Error('Not authenticated. Please log in.');
+		}
+		
+		const data = await response.json();
+		
+		if (data.success) {
+			let message = `Database uploaded successfully! (${data.file_size} bytes, ${data.tables_found} tables found)`;
+			if (data.backup_created) {
+				message += `<br>Backup created: ${data.backup_path}`;
+			}
+			showAlert(message, 'success');
+			
+			// Refresh info and backups list
+			loadDatabaseInfo();
+			loadBackupsList();
+			
+			// Reset form
+			form.reset();
+		} else {
+			showAlert(`Upload failed: ${data.message || data.error}`, 'danger');
+		}
+	} catch (error) {
+		showAlert(`Failed to upload database: ${error.message}`, 'danger');
+	} finally {
+		uploadBtn.disabled = false;
+		progressBar.style.display = 'none';
+	}
+}
+
+// Load backups list
+async function loadBackupsList() {
+	const token = getAuthToken();
+	const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+	
+	try {
+		const response = await fetch('/api1/admin/database/backups', { 
+			headers,
+			credentials: 'include'
+		});
+		
+		// Check if response is JSON
+		const contentType = response.headers.get('content-type');
+		if (!contentType || !contentType.includes('application/json')) {
+			throw new Error('Not authenticated. Please log in.');
+		}
+		
+		const data = await response.json();
+		
+		if (data.success) {
+			if (data.backups.length === 0) {
+				document.getElementById('backupsList').innerHTML = '<p class="text-muted">No backups found</p>';
+			} else {
+				const listHtml = `
+					<p><strong>${data.backup_count} backup(s) found</strong></p>
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Filename</th>
+								<th>Size</th>
+								<th>Created</th>
+							</tr>
+						</thead>
+						<tbody>
+							${data.backups.map(backup => `
+								<tr>
+									<td><code>${backup.filename}</code></td>
+									<td>${backup.size_mb} MB</td>
+									<td>${new Date(backup.created).toLocaleString()}</td>
+								</tr>
+							`).join('')}
+						</tbody>
+					</table>
+				`;
+				document.getElementById('backupsList').innerHTML = listHtml;
+			}
+		} else {
+			showAlert(`Error: ${data.message || data.error}`, 'danger');
+		}
+	} catch (error) {
+		showAlert(`Failed to load backups list: ${error.message}`, 'danger');
+	}
+}
+
+// Auto-load info on page load
+document.addEventListener('DOMContentLoaded', function() {
+	loadDatabaseInfo();
+	loadBackupsList();
+});
+</script>
+
+{% endblock %}

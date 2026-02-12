@@ -214,12 +214,12 @@ def index11():
 
 
 
-@app_ui.route('/competitionRawAdmin', methods=['GET'])
+@app_ui.route('/app_admin1', methods=['GET'])
 @login_required
 @admin_required
 def fsgtadminget():
     """
-    Load Admin page from competitionRawAdmin.html
+    Load Admin page from app_admin1.html
     """
     edittype = request.args.get('edittype')
     id = request.args.get('id')
@@ -227,13 +227,13 @@ def fsgtadminget():
     jsondata = request.args.get('jsondata')
     jsonobject = None
 
-    return render_template('competitionRawAdmin.html',
+    return render_template('app_admin1.html',
                            jsondata=json.dumps(jsonobject),
                            reference_data=competitionsEngine.reference_data,
                            id=id)
 
 
-@app_ui.post('/competitionRawAdmin')
+@app_ui.post('/app_admin1')
 @login_required
 @admin_required
 def fsgtadmin():
@@ -328,13 +328,13 @@ def fsgtadmin():
     else :
         jsonobject = {"error": "choose edit type" }
 
-    return render_template('competitionRawAdmin.html',
+    return render_template('app_admin1.html',
                            jsondata=json.dumps(jsonobject),
                            reference_data=competitionsEngine.reference_data,
                            id=id)
 
 
-@app_ui.route('/adminv2', methods=['GET'])
+@app_ui.route('/admin2', methods=['GET'])
 @login_required
 @admin_required
 def adminv2():
@@ -595,16 +595,13 @@ def competition_admin_post(competition_id):
                            )
 
 
-@app_ui.route('/fsgtadmin/<edittype>')
-def fsgtadminedit(edittype):
-    j = request.args.get('jsondata')
-
-    if edittype == 'user' and j['email'] is not None:
-        competitionsEngine.upsert_user(j)
-
-    return render_template('competitionRawAdmin.html',
-                           reference_data=competitionsEngine.reference_data)
-
+@app_ui.route('/app_admin2', methods=['GET'])
+@login_required
+@admin_required
+def app_admin2():
+    return render_template('app_admin2.html',
+                           reference_data=competitionsEngine.reference_data
+                           )
 
 # for some reason I added a case here to go to the home page
 # no idea why
