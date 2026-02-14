@@ -1,0 +1,457 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+{% block secondarycontent %}
+
+{% include "competitions-menu.html" %}
+
+<style>
+    /* Rankings Layout */
+    .rankings-container { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+    
+    /* Filter Controls */
+    .rankings-filters { background:#f1f3f4; padding:1rem 1.2rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; }
+    .filter-row { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; }
+    .filter-group { flex:1 1 200px; }
+    .filter-label { font-size:0.85rem; font-weight:600; margin-bottom:0.35rem; color:#555; }
+    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
+    .filter-select:hover { background:#e8f5e9; }
+    .filter-select:focus { outline:none; border-color:#53be6b; background:#fff; }
+    
+    /* Type Toggle Buttons */
+    .type-toggle-group { display:flex; gap:0.5rem; }
+    .type-toggle-btn { font-size:0.9rem; padding:0.6rem 1.2rem; border:2px solid #53be6b; border-radius:8px; font-weight:600; cursor:pointer; background:#fff; color:#53be6b; transition:all 0.2s ease; }
+    .type-toggle-btn:hover { background:#e8f5e9; }
+    .type-toggle-btn.active { background:#53be6b; color:#fff; }
+    
+    /* Rankings Summary */
+    .rankings-summary { background:#fff; border-radius:12px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,.1); margin-bottom:2rem; }
+    .summary-title { font-size:1.3rem; font-weight:700; margin-bottom:1rem; color:#333; }
+    .summary-stats { display:flex; gap:2rem; flex-wrap:wrap; }
+    .stat-item { flex:1 1 150px; }
+    .stat-label { font-size:0.85rem; color:#666; margin-bottom:0.25rem; }
+    .stat-value { font-size:1.5rem; font-weight:700; color:#53be6b; }
+    
+    /* Rankings Sections */
+    .rankings-section { background:#fff; border-radius:12px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,.1); margin-bottom:2rem; }
+    .section-header { font-size:1.3rem; font-weight:700; margin-bottom:1rem; color:#333; display:flex; justify-content:space-between; align-items:center; }
+    .category-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .category-tab { padding:0.5rem 1rem; border-radius:8px; border:2px solid #e0e0e0; background:#fff; cursor:pointer; font-weight:600; transition:all 0.2s ease; }
+    .category-tab:hover { border-color:#53be6b; background:#e8f5e9; }
+    .category-tab.active { border-color:#53be6b; background:#53be6b; color:#fff; }
+    
+    /* Rankings Table */
+    .rankings-table { width:100%; border-collapse:collapse; }
+    .rankings-table thead th { background:#53be6b; color:#fff; padding:0.75rem 0.5rem; text-align:left; font-weight:600; font-size:0.9rem; position:sticky; top:0; z-index:10; }
+    .rankings-table tbody td { padding:0.75rem 0.5rem; border-bottom:1px solid #eee; }
+    .rankings-table tbody tr:hover { background:#f8f9fa; }
+    .rank-cell { font-weight:700; color:#53be6b; min-width:50px; }
+    .rank-cell.rank-1 { color:#FFD700; font-size:1.1rem; }
+    .rank-cell.rank-2 { color:#C0C0C0; font-size:1.05rem; }
+    .rank-cell.rank-3 { color:#CD7F32; font-size:1.05rem; }
+    .points-cell { font-weight:700; color:#333; }
+    .empty-state { text-align:center; padding:3rem; color:#999; }
+    
+    /* Loading State */
+    .loading-spinner { text-align:center; padding:3rem; color:#999; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .rankings-container { padding:0.5rem; }
+        .rankings-filters { padding:0.75rem 0.85rem; margin-bottom:1rem; }
+        .filter-row { flex-direction:column; gap:0.6rem; }
+        .filter-group { flex:1 1 auto; min-width:100%; }
+        .filter-label { font-size:0.8rem; margin-bottom:0.25rem; }
+        .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; }
+        .type-toggle-group { width:100%; display:flex; gap:0.4rem; }
+        .type-toggle-btn { flex:1 1 0; min-width:0; text-align:center; padding:0.5rem 0.3rem; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        
+        .rankings-summary, .rankings-section { padding:1rem 0.75rem; margin-bottom:1rem; }
+        .section-header { font-size:1.1rem; flex-direction:column; align-items:flex-start; gap:0.5rem; }
+        .category-tabs { gap:0.3rem; }
+        .category-tab { padding:0.4rem 0.7rem; font-size:0.85rem; }
+        
+        .rankings-table { font-size:0.8rem; }
+        .rankings-table thead th, .rankings-table tbody td { padding:0.5rem 0.3rem; }
+        .summary-stats { gap:1rem; }
+        .stat-item { flex:1 1 100%; }
+    }
+</style>
+
+<div class="rankings-container">
+    
+    <!-- Filter Controls -->
+    <div class="rankings-filters">
+        <div class="filter-row">
+            <div class="filter-group">
+                <div class="filter-label" data-translate-key="Season">Season</div>
+                <select id="seasonFilter" class="filter-select">
+                    <option value="">Select Season</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label" data-translate-key="competition_type">Competition Type</div>
+                <div class="type-toggle-group">
+                    <button class="type-toggle-btn active" data-type="" data-translate-key="all">All</button>
+                    <button class="type-toggle-btn" data-type="adult" data-translate-key="competition_type_adult">Adult</button>
+                    <button class="type-toggle-btn" data-type="ado" data-translate-key="competition_type_ado">Ado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rankings Summary -->
+    <div id="rankingsSummary" class="rankings-summary" style="display:none;">
+        <div class="summary-title" data-translate-key="season_summary">Season Summary</div>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div class="stat-label" data-translate-key="competitions_count">Competitions</div>
+                <div class="stat-value" id="competitionsCount">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label" data-translate-key="results_counted">Results Counted</div>
+                <div class="stat-value" id="resultsCount">-</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Club Rankings Section -->
+    <div id="clubRankingsSection" class="rankings-section" style="display:none;">
+        <h3 class="section-header">
+            <span data-translate-key="club_leaderboard">Club Rankings</span>
+        </h3>
+        <div id="clubRankingsContent">
+            <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Individual Rankings Section -->
+    <div id="individualRankingsSection" class="rankings-section" style="display:none;">
+        <h3 class="section-header">
+            <span data-translate-key="individual_rankings">Individual Rankings</span>
+        </h3>
+        <div class="category-tabs" id="categoryTabs"></div>
+        <div id="individualRankingsContent">
+            <div class="loading-spinner">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    // State management
+    const state = {
+        currentSeason: null,
+        currentType: '',
+        rankingsData: null,
+        activeCategory: null,
+        seasons: []
+    };
+    
+    // Compute season label from date (Sept = start of new season)
+    function computeSeason(dateStr) {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // 1-12
+        
+        // Season runs Sept-June: if month >= 9, season is year/year+1, else (year-1)/year
+        if (month >= 9) {
+            return `${year}-${year + 1}`;
+        } else {
+            return `${year - 1}-${year}`;
+        }
+    }
+    
+    // Get unique seasons from competitions
+    function extractSeasons(competitions) {
+        const seasonSet = new Set();
+        competitions.forEach(comp => {
+            const season = computeSeason(comp.date);
+            if (season) seasonSet.add(season);
+        });
+        return Array.from(seasonSet).sort().reverse(); // Most recent first
+    }
+    
+    // Load rankings data
+    async function loadRankings() {
+        if (!state.currentSeason) {
+            document.getElementById('rankingsSummary').style.display = 'none';
+            document.getElementById('clubRankingsSection').style.display = 'none';
+            document.getElementById('individualRankingsSection').style.display = 'none';
+            return;
+        }
+        
+        try {
+            const url = `/api1/season/${state.currentSeason}/rankings${state.currentType ? '?competition_type=' + state.currentType : ''}`;
+            const data = await apiFetchJson(url);
+            
+            state.rankingsData = data;
+            
+            // Show sections
+            document.getElementById('rankingsSummary').style.display = 'block';
+            document.getElementById('clubRankingsSection').style.display = 'block';
+            document.getElementById('individualRankingsSection').style.display = 'block';
+            
+            // Update summary
+            document.getElementById('competitionsCount').textContent = data.competitions_count || 0;
+            document.getElementById('resultsCount').textContent = data.results_counted || 0;
+            
+            // Render rankings
+            renderClubRankings(data.club || []);
+            renderIndividualRankings(data.individual || {});
+            
+        } catch (error) {
+            console.error('Error loading rankings:', error);
+            document.getElementById('clubRankingsContent').innerHTML = 
+                '<div class="empty-state"><p data-translate-key="error_loading_rankings">Error loading rankings</p></div>';
+            document.getElementById('individualRankingsContent').innerHTML = 
+                '<div class="empty-state"><p data-translate-key="error_loading_rankings">Error loading rankings</p></div>';
+        }
+    }
+    
+    // Render club rankings
+    function renderClubRankings(clubs) {
+        const content = document.getElementById('clubRankingsContent');
+        
+        if (!clubs || clubs.length === 0) {
+            content.innerHTML = '<div class="empty-state"><p data-translate-key="no_club_rankings">No club rankings available</p></div>';
+            return;
+        }
+        
+        let tableHTML = `
+            <table class="rankings-table">
+                <thead>
+                    <tr>
+                        <th data-translate-key="rank">Rank</th>
+                        <th data-translate-key="club">Club</th>
+                        <th data-translate-key="points">Points</th>
+                        <th data-translate-key="total_participants">Participants</th>
+                        <th>F</th>
+                        <th>M</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        clubs.forEach(club => {
+            const rankClass = club.rank <= 3 ? `rank-${club.rank}` : '';
+            tableHTML += `
+                <tr>
+                    <td class="rank-cell ${rankClass}">${club.rank}</td>
+                    <td><strong>${escapeHtml(club.club)}</strong></td>
+                    <td class="points-cell">${club.points}</td>
+                    <td>${club.total_participants}</td>
+                    <td>${club.participants_f}</td>
+                    <td>${club.participants_m}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += '</tbody></table>';
+        content.innerHTML = tableHTML;
+    }
+    
+    // Render individual rankings - now with gender separation
+    function renderIndividualRankings(individual) {
+        const tabsContainer = document.getElementById('categoryTabs');
+        const content = document.getElementById('individualRankingsContent');
+        
+        // individual is now structured as {gender: {category: [climbers]}}
+        const genders = Object.keys(individual).sort().reverse(); // F, M order
+        
+        if (genders.length === 0) {
+            tabsContainer.innerHTML = '';
+            content.innerHTML = '<div class="empty-state"><p data-translate-key="no_individual_rankings">No individual rankings available</p></div>';
+            return;
+        }
+        
+        // Create gender+category tabs
+        let tabsHTML = '';
+        let firstTab = null;
+        
+        genders.forEach(gender => {
+            const categories = Object.keys(individual[gender]).sort();
+            categories.forEach((category, index) => {
+                const tabKey = `${gender}:${category}`;  // Use : separator to avoid conflicts
+                if (!firstTab) firstTab = tabKey;
+                
+                const isActive = state.activeCategory === tabKey || (tabKey === firstTab && !state.activeCategory);
+                if (isActive && !state.activeCategory) state.activeCategory = tabKey;
+                
+                const categoryLabel = getCategoryLabel(category);
+                const genderLabel = gender === 'F' ? getTranslation('women') : getTranslation('men');
+                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}">${genderLabel} - ${categoryLabel}</button>`;
+            });
+        });
+        tabsContainer.innerHTML = tabsHTML;
+        
+        // Add click handlers
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                state.activeCategory = e.target.dataset.category;
+                const gender = e.target.dataset.gender;
+                const cat = e.target.dataset.cat;
+                renderCategoryRankings(individual[gender][cat]);
+            });
+        });
+        
+        // Render first/active category
+        if (state.activeCategory && state.activeCategory.includes(':')) {
+            const [gender, cat] = state.activeCategory.split(':');
+            if (individual[gender] && individual[gender][cat]) {
+                renderCategoryRankings(individual[gender][cat]);
+            }
+        } else if (firstTab) {
+            const [gender, cat] = firstTab.split(':');
+            renderCategoryRankings(individual[gender][cat]);
+        }
+    }
+    
+    // Render a specific category ranking
+    function renderCategoryRankings(climbers) {
+        const content = document.getElementById('individualRankingsContent');
+        
+        if (!climbers || climbers.length === 0) {
+            content.innerHTML = '<div class="empty-state"><p data-translate-key="no_rankings_category">No rankings for this category</p></div>';
+            return;
+        }
+        
+        let tableHTML = `
+            <table class="rankings-table">
+                <thead>
+                    <tr>
+                        <th data-translate-key="rank">Rank</th>
+                        <th data-translate-key="name">Name</th>
+                        <th data-translate-key="club">Club</th>
+                        <th data-translate-key="points">Points</th>
+                        <th data-translate-key="participations">Participations</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        climbers.forEach(climber => {
+            const rankClass = climber.rank <= 3 ? `rank-${climber.rank}` : '';
+            const fullName = `${climber.firstname} ${climber.lastname}`;
+            tableHTML += `
+                <tr>
+                    <td class="rank-cell ${rankClass}">${climber.rank}</td>
+                    <td><strong>${escapeHtml(fullName)}</strong></td>
+                    <td>${escapeHtml(climber.club)}</td>
+                    <td class="points-cell">${climber.total_points}</td>
+                    <td>${climber.participations}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += '</tbody></table>';
+        content.innerHTML = tableHTML;
+    }
+    
+    // Get category label
+    function getCategoryLabel(category) {
+        const categoryMap = {
+            '0F': getTranslation('competition_category_fsgt2026_adult_0') + ' F',
+            '1F': getTranslation('competition_category_fsgt2026_adult_1') + ' F',
+            '2F': getTranslation('competition_category_fsgt2026_adult_2') + ' F',
+            '0M': getTranslation('competition_category_fsgt2026_adult_0') + ' M',
+            '1M': getTranslation('competition_category_fsgt2026_adult_1') + ' M',
+            '2M': getTranslation('competition_category_fsgt2026_adult_2') + ' M'
+        };
+        return categoryMap[category] || category;
+    }
+    
+    // Initialize filters
+    function initializeFilters() {
+        // Populate season dropdown
+        const seasonSelect = document.getElementById('seasonFilter');
+        seasonSelect.innerHTML = '<option value="">Select Season</option>';
+        state.seasons.forEach(season => {
+            const option = document.createElement('option');
+            option.value = season;
+            option.textContent = season;
+            seasonSelect.appendChild(option);
+        });
+        
+        // Set default to current season
+        const today = new Date();
+        const currentSeason = computeSeason(today.toISOString().split('T')[0]);
+        if (state.seasons.includes(currentSeason)) {
+            seasonSelect.value = currentSeason;
+            state.currentSeason = currentSeason;
+        }
+        
+        // Season change handler
+        seasonSelect.addEventListener('change', (e) => {
+            state.currentSeason = e.target.value;
+            loadRankings();
+        });
+        
+        // Type toggle handlers
+        document.querySelectorAll('.type-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentType = e.target.dataset.type;
+                loadRankings();
+            });
+        });
+    }
+    
+    // Utility functions
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    
+    // Load data and initialize
+    async function initialize() {
+        try {
+            // Get all competitions to extract seasons
+            const competitions = await apiFetchJson('/api1/competition/list');
+            state.seasons = extractSeasons(competitions);
+            
+            initializeFilters();
+            
+            // Load rankings if season is selected
+            if (state.currentSeason) {
+                await loadRankings();
+            }
+            
+        } catch (error) {
+            console.error('Error initializing:', error);
+            document.querySelector('.rankings-container').innerHTML = 
+                '<div class="empty-state"><h3 data-translate-key="error_loading_dashboard">Error loading page</h3></div>';
+        }
+    }
+    
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
+    }
+    
+})();
+</script>
+
+{% endblock %}
