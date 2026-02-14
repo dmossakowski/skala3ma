@@ -33,7 +33,9 @@ if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
 
 COMPETITIONS_DB = DATA_DIRECTORY + "/db/competitions.sqlite"
+UPLOAD_FOLDER = os.path.join(DATA_DIRECTORY, 'uploads')
 ALLOWED_DB_EXTENSIONS = {'sqlite', 'db', 'sqlite3'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
 
 # Create admin blueprint with /api1/admin prefix
 skala_admin_api = Blueprint('skala_admin', __name__, url_prefix='/api1/admin')
@@ -49,6 +51,12 @@ def allowed_file(filename):
     """Check if file has allowed extension for database files."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_DB_EXTENSIONS
+
+
+def allowed_image(filename):
+    """Check if file has allowed extension for image files."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
 # ============= Database Management Endpoints =============
@@ -329,6 +337,402 @@ def list_backups():
         return jsonify({
             'success': False,
             'error': 'list_failed',
+            'message': str(e)
+        }), 500
+
+
+# ============= Image Management Endpoints =============
+
+@skala_admin_api.route('/images/list', methods=['GET'])
+@admin_required
+def list_images():
+    """List all uploaded images in the uploads directory.
+    
+    Returns list of all image files with metadata.
+    Requires admin permissions.
+    """
+    try:
+        if not os.path.exists(UPLOAD_FOLDER):
+            return jsonify({
+                'success': True,
+                'image_count': 0,
+                'images': [],
+                'total_size': 0
+            })
+        
+        images = []
+        total_size = 0
+        
+        # Walk through uploads directory
+        for root, dirs, files in os.walk(UPLOAD_FOLDER):
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                rel_path = os.path.relpath(filepath, UPLOAD_FOLDER)
+                
+                try:
+                    file_stats = os.stat(filepath)
+                    file_size = file_stats.st_size
+                    total_size += file_size
+                    
+                    images.append({
+                        'filename': filename,
+                        'path': rel_path,
+                        'full_path': filepath,
+                        'size': file_size,
+                        'size_kb': round(file_size / 1024, 2),
+                        'modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat(),
+                        'is_image': allowed_image(filename)
+                    })
+                except Exception as e:
+                    logging.warning(f"Error reading file {filepath}: {e}")
+        
+        # Sort by modification time, newest first
+        images.sort(key=lambda x: x['modified'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'image_count': len(images),
+            'images': images,
+            'total_size': total_size,
+            'total_size_mb': round(total_size / (1024 * 1024), 2),
+            'upload_folder': UPLOAD_FOLDER
+        })
+    
+    except Exception as e:
+        logging.error(f"Error listing images: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'list_failed',
+            'message': str(e)
+        }), 500
+
+
+@skala_admin_api.route('/images/download-all', methods=['GET'])
+@admin_required
+def download_all_images():
+    """Download all images as a zip archive.
+    
+    Creates a zip file containing all images from the uploads directory.
+    Requires admin permissions.
+    """
+    try:
+        if not os.path.exists(UPLOAD_FOLDER):
+            return jsonify({
+                'success': False,
+                'error': 'folder_not_found',
+                'message': 'Uploads folder does not exist'
+            }), 404
+        
+        import zipfile
+        import io
+        
+        # Create zip file in memory
+        memory_file = io.BytesIO()
+        
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Walk through uploads directory
+            for root, dirs, files in os.walk(UPLOAD_FOLDER):
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    arcname = os.path.relpath(filepath, UPLOAD_FOLDER)
+                    try:
+                        zf.write(filepath, arcname)
+                    except Exception as e:
+                        logging.warning(f"Error adding {filepath} to zip: {e}")
+        
+        memory_file.seek(0)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        download_name = f'skala3ma_images_{timestamp}.zip'
+        
+        logging.info(f"Admin {session.get('email')} downloading all images: {download_name}")
+        
+        return send_file(
+            memory_file,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype='application/zip'
+        )
+    
+    except Exception as e:
+        logging.error(f"Error downloading images: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'download_failed',
+            'message': str(e)
+        }), 500
+
+
+@skala_admin_api.route('/images/upload-all', methods=['POST'])
+@admin_required
+def upload_all_images():
+    """Upload a zip archive of images and extract to uploads directory.
+    
+    Accepts a zip file and extracts all contents to the uploads folder.
+    Can optionally clear existing images before upload.
+    Requires admin permissions.
+    
+    Form data:
+      - file: Zip archive containing images
+      - clear_existing: (optional) 'true' to delete all existing images first
+      - create_backup: (optional) 'true' to create backup before replacing (default: true)
+    """
+    try:
+        # Check if file was uploaded
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'no_file',
+                'message': 'No file provided in request'
+            }), 400
+        
+        file = request.files['file']
+        
+        # Check if file was selected
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'empty_filename',
+                'message': 'No file selected'
+            }), 400
+        
+        # Validate file is a zip
+        if not file.filename.lower().endswith('.zip'):
+            return jsonify({
+                'success': False,
+                'error': 'invalid_file_type',
+                'message': 'File must be a zip archive'
+            }), 400
+        
+        clear_existing = request.form.get('clear_existing', 'false').lower() == 'true'
+        create_backup = request.form.get('create_backup', 'true').lower() != 'false'
+        
+        # Create backup if requested
+        backup_path = None
+        if create_backup and os.path.exists(UPLOAD_FOLDER):
+            import shutil
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_filename = f'uploads_backup_{timestamp}.zip'
+            backup_path = os.path.join(DATA_DIRECTORY, backup_filename)
+            
+            try:
+                import zipfile
+                with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                    for root, dirs, files in os.walk(UPLOAD_FOLDER):
+                        for filename in files:
+                            filepath = os.path.join(root, filename)
+                            arcname = os.path.relpath(filepath, UPLOAD_FOLDER)
+                            zf.write(filepath, arcname)
+                logging.info(f"Created images backup: {backup_path}")
+            except Exception as backup_error:
+                logging.error(f"Failed to create backup: {backup_error}")
+                return jsonify({
+                    'success': False,
+                    'error': 'backup_failed',
+                    'message': f'Failed to create backup: {str(backup_error)}'
+                }), 500
+        
+        # Clear existing images if requested
+        if clear_existing and os.path.exists(UPLOAD_FOLDER):
+            import shutil
+            try:
+                shutil.rmtree(UPLOAD_FOLDER)
+                os.makedirs(UPLOAD_FOLDER)
+                logging.info(f"Cleared existing uploads folder")
+            except Exception as clear_error:
+                logging.error(f"Failed to clear uploads folder: {clear_error}")
+                return jsonify({
+                    'success': False,
+                    'error': 'clear_failed',
+                    'message': f'Failed to clear existing images: {str(clear_error)}'
+                }), 500
+        
+        # Ensure uploads folder exists
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        
+        # Extract zip file
+        import zipfile
+        import io
+        
+        try:
+            zip_data = io.BytesIO(file.read())
+            extracted_count = 0
+            skipped_count = 0
+            
+            with zipfile.ZipFile(zip_data, 'r') as zip_ref:
+                file_list = zip_ref.namelist()
+                
+                for file_info in zip_ref.filelist:
+                    # Skip directories and system files
+                    if file_info.is_dir() or file_info.filename.startswith('__MACOSX'):
+                        continue
+                    
+                    # Extract file
+                    try:
+                        zip_ref.extract(file_info, UPLOAD_FOLDER)
+                        extracted_count += 1
+                    except Exception as extract_error:
+                        logging.warning(f"Failed to extract {file_info.filename}: {extract_error}")
+                        skipped_count += 1
+            
+            logging.info(f"Admin {session.get('email')} uploaded images zip: {extracted_count} files extracted, {skipped_count} skipped")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Images uploaded successfully',
+                'extracted_count': extracted_count,
+                'skipped_count': skipped_count,
+                'backup_created': backup_path is not None,
+                'backup_path': os.path.basename(backup_path) if backup_path else None,
+                'cleared_existing': clear_existing
+            })
+        
+        except zipfile.BadZipFile:
+            return jsonify({
+                'success': False,
+                'error': 'invalid_zip',
+                'message': 'Uploaded file is not a valid zip archive'
+            }), 400
+        except Exception as extract_error:
+            logging.error(f"Failed to extract images: {extract_error}")
+            return jsonify({
+                'success': False,
+                'error': 'extract_failed',
+                'message': f'Failed to extract images: {str(extract_error)}'
+            }), 500
+    
+    except Exception as e:
+        logging.error(f"Error uploading images: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'upload_failed',
+            'message': str(e)
+        }), 500
+
+
+@skala_admin_api.route('/images/info', methods=['GET'])
+@admin_required
+def images_info():
+    """Get information about the uploads directory.
+    
+    Returns metadata including folder size, file count, and image count.
+    Requires admin permissions.
+    """
+    try:
+        if not os.path.exists(UPLOAD_FOLDER):
+            return jsonify({
+                'success': True,
+                'uploads_folder': UPLOAD_FOLDER,
+                'exists': False,
+                'total_files': 0,
+                'image_files': 0,
+                'total_size': 0
+            })
+        
+        total_files = 0
+        image_files = 0
+        total_size = 0
+        
+        for root, dirs, files in os.walk(UPLOAD_FOLDER):
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                try:
+                    file_stats = os.stat(filepath)
+                    total_size += file_stats.st_size
+                    total_files += 1
+                    if allowed_image(filename):
+                        image_files += 1
+                except Exception:
+                    pass
+        
+        return jsonify({
+            'success': True,
+            'uploads_folder': UPLOAD_FOLDER,
+            'exists': True,
+            'total_files': total_files,
+            'image_files': image_files,
+            'other_files': total_files - image_files,
+            'total_size': total_size,
+            'total_size_mb': round(total_size / (1024 * 1024), 2)
+        })
+    
+    except Exception as e:
+        logging.error(f"Error getting images info: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'info_failed',
+            'message': str(e)
+        }), 500
+
+
+@skala_admin_api.route('/images/delete', methods=['POST'])
+@admin_required
+def delete_image():
+    """Delete a specific image file.
+    
+    Accepts JSON with the relative path of the image to delete.
+    Requires admin permissions.
+    
+    JSON body:
+      - path: Relative path to the image file (from uploads folder)
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        rel_path = data.get('path')
+        
+        if not rel_path:
+            return jsonify({
+                'success': False,
+                'error': 'missing_path',
+                'message': 'Image path is required'
+            }), 400
+        
+        # Construct full path
+        full_path = os.path.join(UPLOAD_FOLDER, rel_path)
+        
+        # Security check: ensure path is within uploads folder
+        full_path = os.path.abspath(full_path)
+        uploads_abs = os.path.abspath(UPLOAD_FOLDER)
+        if not full_path.startswith(uploads_abs):
+            return jsonify({
+                'success': False,
+                'error': 'invalid_path',
+                'message': 'Invalid file path'
+            }), 400
+        
+        # Check if file exists
+        if not os.path.exists(full_path):
+            return jsonify({
+                'success': False,
+                'error': 'file_not_found',
+                'message': 'Image file not found'
+            }), 404
+        
+        # Delete the file
+        try:
+            os.remove(full_path)
+            logging.info(f"Admin {session.get('email')} deleted image: {rel_path}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Image deleted successfully',
+                'path': rel_path
+            })
+        except Exception as delete_error:
+            logging.error(f"Failed to delete image {rel_path}: {delete_error}")
+            return jsonify({
+                'success': False,
+                'error': 'delete_failed',
+                'message': f'Failed to delete image: {str(delete_error)}'
+            }), 500
+    
+    except Exception as e:
+        logging.error(f"Error deleting image: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'delete_failed',
             'message': str(e)
         }), 500
 

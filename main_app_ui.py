@@ -603,6 +603,16 @@ def app_admin2():
                            reference_data=competitionsEngine.reference_data
                            )
 
+
+@app_ui.route('/app_admin3', methods=['GET'])
+@login_required
+@admin_required
+def app_admin3():
+    return render_template('app_admin3.html',
+                           reference_data=competitionsEngine.reference_data
+                           )
+
+
 # for some reason I added a case here to go to the home page
 # no idea why
 @app_ui.route('/loginchoice')
@@ -844,6 +854,20 @@ def competitions_by_year(year):
                            #langpack=languages['en_US'],
                            can_create_competition=can_create_competition,
                             **session
+                           )
+
+
+@app_ui.route('/competitionSeasonRankings')
+def getCompetitionSeasonRankings():
+    """Display season rankings page"""
+    username = session.get('username')
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    
+    return render_template('competitionSeasonRankings.html',
+                           session=session,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           **session
                            )
 
 

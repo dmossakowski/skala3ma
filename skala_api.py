@@ -1361,6 +1361,266 @@ def getCompetitionRankings(competitionId):
 
 
 
+@skala_api_app.route('/season/<season>/rankings')
+def getSeasonRankings(season):
+    """
+    Calculate season rankings based on FSGT rules with separate men's and women's categories.
+    
+    Rules:
+    - If n competitions <= 5: aggregate (n-1) best results
+    - If n competitions > 5: aggregate (n-2) best results
+    - Top 30 climbers score points: 1st=30pts, 2nd=29pts, ..., 30th=1pt
+    - Categories by age (as of 1/1/26): Seniors (18-39), Titane (40-49), Diamant (50+)
+    - Separate rankings for men (0M, 1M, 2M) and women (0F, 1F, 2F)
+    - Tie-breaker: most participations wins
+    
+    Club rankings:
+    - 1 point per unique participant (counted once across all categories)
+    - Plus bonus for top 5 in each category: 1st=5pts, 2nd=4pts, 3rd=3pts, 4th=2pts, 5th=1pt
+    - Tie-breaker: most participants total, then most women participants
+    
+    Args:
+        season: Season string like "2025-2026"
+        
+    Query params:
+        competition_type: Filter by 'adult' or 'ado' (optional)
+        
+    Returns:
+        JSON with structure:
+        {
+            "individual": {
+                "F": {"0F": [...], "1F": [...], "2F": [...]},
+                "M": {"0M": [...], "1M": [...], "2M": [...]}
+            },
+            "club": [...]
+        }
+    """
+    try:
+        # Get competition type filter
+        competition_type = request.args.get('competition_type')
+        
+        # Parse season to get date range
+        season_parts = season.split('-')
+        if len(season_parts) != 2:
+            return jsonify({"error": "Invalid season format. Use YYYY-YYYY"}), 400
+        
+        start_year = int(season_parts[0])
+        end_year = int(season_parts[1])
+        
+        # Season runs from September to June
+        season_start = datetime(start_year, 9, 1)
+        season_end = datetime(end_year, 6, 30)
+        
+        # Get all competitions in the season
+        all_comps = competitionsEngine.getCompetitions()
+        season_competitions = []
+        
+        for comp_id, comp in all_comps.items():
+            comp_date = datetime.strptime(comp['date'], '%Y-%m-%d')
+            if season_start <= comp_date <= season_end:
+                # Filter by competition type if specified
+                if competition_type and comp.get('competition_type') != competition_type:
+                    continue
+                season_competitions.append(comp_id)
+        
+        if len(season_competitions) == 0:
+            return jsonify({
+                "season": season,
+                "competition_type": competition_type,
+                "competitions_count": 0,
+                "individual": {},
+                "club": []
+            })
+        
+        # Calculate how many results to count
+        n = len(season_competitions)
+        results_to_count = n - 1 if n <= 5 else n - 2
+        
+        # Collect all results from season competitions
+        participant_results = {}  # {climber_id: {category, club, sex, firstname, lastname, results: [{comp_id, rank, participations}]}}
+        
+        for comp_id in season_competitions:
+            competition = competitionsEngine.recalculate(comp_id)
+            if not competition:
+                continue
+                
+            rankings = competitionsEngine.get_sorted_rankings(competition)
+            
+            # Log what categories are available
+            logging.debug(f"Competition {comp_id} has categories: {list(rankings.keys())}")
+            
+            # Process each category (0F, 1F, 2F, 0M, 1M, 2M, plus F, M, A for older formats)
+            for category_key, climbers_list in rankings.items():
+                # Skip non-age categories or combined categories
+                if category_key in ['F', 'M', 'A']:
+                    continue
+                    
+                for idx, climber in enumerate(climbers_list):
+                    rank = idx + 1
+                    climber_id = climber.get('id')
+                    
+                    # Calculate points (top 30 only)
+                    points = max(0, 31 - rank) if rank <= 30 else 0
+                    
+                    if climber_id not in participant_results:
+                        participant_results[climber_id] = {
+                            'category': category_key,
+                            'club': climber.get('club', ''),
+                            'sex': climber.get('sex', ''),
+                            'firstname': climber.get('firstname', ''),
+                            'lastname': climber.get('lastname', ''),
+                            'results': []
+                        }
+                    
+                    participant_results[climber_id]['results'].append({
+                        'comp_id': comp_id,
+                        'rank': rank,
+                        'points': points
+                    })
+        
+        # Calculate individual rankings - separate by gender and category
+        # Structure: {gender: {category: [climbers]}}
+        # Categories: 0=Seniors(18-39), 1=Titane(40-49), 2=Diamant(50+)
+        gender_category_rankings = {
+            'M': {'0M': [], '1M': [], '2M': []},  # Men's rankings by category
+            'F': {'0F': [], '1F': [], '2F': []}   # Women's rankings by category
+        }
+        
+        for climber_id, data in participant_results.items():
+            category = data['category']  # e.g., '0F', '1M', '2F'
+            sex = data['sex']  # 'M' or 'F'
+            
+            # Sort results by points descending and take best N
+            sorted_results = sorted(data['results'], key=lambda x: x['points'], reverse=True)
+            best_results = sorted_results[:results_to_count]
+            
+            total_points = sum(r['points'] for r in best_results)
+            participations = len(data['results'])
+            
+            # Debug logging
+            if climber_id and category and sex:
+                logging.debug(f"Processing climber {climber_id}: category={category}, sex={sex}, points={total_points}")
+            
+            # Only add if category exists in our structure
+            if sex in gender_category_rankings and category in gender_category_rankings[sex]:
+                gender_category_rankings[sex][category].append({
+                    'climber_id': climber_id,
+                    'firstname': data['firstname'],
+                    'lastname': data['lastname'],
+                    'club': data['club'],
+                    'sex': data['sex'],
+                    'category': category,
+                    'total_points': total_points,
+                    'participations': participations,
+                    'results_counted': results_to_count,
+                    'best_results': best_results
+                })
+            else:
+                # Log when category/sex doesn't match
+                logging.warning(f"Skipping climber {climber_id} ({data.get('firstname')} {data.get('lastname')}): sex={sex}, category={category} - not in expected structure")
+        
+        # Sort each gender+category by total_points desc, then participations desc
+        for gender in gender_category_rankings:
+            for category in gender_category_rankings[gender]:
+                gender_category_rankings[gender][category].sort(
+                    key=lambda x: (x['total_points'], x['participations']),
+                    reverse=True
+                )
+                # Add rank within category
+                for idx, climber in enumerate(gender_category_rankings[gender][category]):
+                    climber['rank'] = idx + 1
+        
+        # Remove empty categories from the response
+        for gender in list(gender_category_rankings.keys()):
+            for category in list(gender_category_rankings[gender].keys()):
+                if len(gender_category_rankings[gender][category]) == 0:
+                    del gender_category_rankings[gender][category]
+            # Remove gender if no categories left
+            if len(gender_category_rankings[gender]) == 0:
+                del gender_category_rankings[gender]
+        
+        # Calculate club rankings based on individual category results
+        club_scores = {}  # {club_name: {points, participants_m, participants_f, category_points}}
+        
+        for gender in gender_category_rankings:
+            for category, climbers_list in gender_category_rankings[gender].items():
+                for climber in climbers_list:
+                    club = climber['club']
+                    if not club:
+                        continue
+                    
+                    if club not in club_scores:
+                        club_scores[club] = {
+                            'club': club,
+                            'points': 0,
+                            'participants_m': 0,
+                            'participants_f': 0,
+                            'total_participants': 0
+                        }
+                    
+                    # 1 point per participant (counted once per person, not per category)
+                    climber_id = climber['climber_id']
+                    # We need to track unique participants
+                    if 'participants' not in club_scores[club]:
+                        club_scores[club]['participants'] = set()
+                    
+                    if climber_id not in club_scores[club]['participants']:
+                        club_scores[club]['participants'].add(climber_id)
+                        club_scores[club]['points'] += 1
+                        club_scores[club]['total_participants'] += 1
+                        
+                        # Track M/F participants
+                        if climber['sex'] == 'F':
+                            club_scores[club]['participants_f'] += 1
+                        else:
+                            club_scores[club]['participants_m'] += 1
+                    
+                    # Bonus points for top 5 in each category
+                    rank = climber['rank']
+                    if rank == 1:
+                        club_scores[club]['points'] += 5
+                    elif rank == 2:
+                        club_scores[club]['points'] += 4
+                    elif rank == 3:
+                        club_scores[club]['points'] += 3
+                    elif rank == 4:
+                        club_scores[club]['points'] += 2
+                    elif rank == 5:
+                        club_scores[club]['points'] += 1
+        
+        # Clean up participants set before JSON serialization
+        for club in club_scores.values():
+            if 'participants' in club:
+                del club['participants']
+        
+        # Sort clubs by points desc, then total_participants, then participants_f
+        club_rankings = sorted(
+            club_scores.values(),
+            key=lambda x: (x['points'], x['total_participants'], x['participants_f']),
+            reverse=True
+        )
+        
+        # Add rank to clubs
+        for idx, club in enumerate(club_rankings):
+            club['rank'] = idx + 1
+        
+        return jsonify({
+            'season': season,
+            'competition_type': competition_type,
+            'competitions_count': n,
+            'results_counted': results_to_count,
+            'competitions': season_competitions,
+            'individual': gender_category_rankings,  # Now structured as {gender: {category: [climbers]}}
+            'club': club_rankings
+        })
+        
+    except Exception as e:
+        logging.error(f"Error calculating season rankings: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/fullresults')
 #@session_or_jwt_required
