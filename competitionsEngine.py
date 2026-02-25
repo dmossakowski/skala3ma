@@ -1383,13 +1383,12 @@ def get_permissions(user):
         permissions = User.generate_permissions()
     
     if user.get('email') in ADMIN_USERS:
-        user['permissions']['godmode'] = True
-        user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
+        permissions['godmode'] = True
+        permissions['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
     else:
-        user['permissions']['godmode'] = False
+        permissions['godmode'] = False
 
-
-    return user['permissions']
+    return permissions
 
 
 
@@ -1419,7 +1418,7 @@ def add_user_permission_edit_competition(user):
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
     #huh = gym_id in permissions['gyms']
-    return gym_id in permissions['gyms'] or permissions['godmode'] == True
+    return gym_id in permissions['gyms'] or is_god(user) == True
 
 
 # modify permission to edit specific competition to a user
@@ -1451,7 +1450,7 @@ def can_create_competition(climber):
 
 def can_edit_competition(climber, competition):
     permissions = get_permissions(climber)
-    if permissions['godmode'] == True  \
+    if is_god(climber) == True  \
         or ('edit_competition' in permissions['general'] \
         and competition['id'] in permissions['competitions']):
         return True
