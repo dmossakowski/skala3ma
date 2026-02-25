@@ -1802,6 +1802,7 @@ def get_users_by_gym(gym_id):
         user.pop('email', None)
         #user.pop('permissions', None)
         user.pop('isgod',None)
+        user.pop('godmode',None)
         
         if user.get('fpictureurl') is not None:
             user['pictureurl'] = user.get('fpictureurl')
@@ -1828,6 +1829,7 @@ def get_all_users():
         user.pop('email', None)
         #user.pop('permissions', None)
         user.pop('isgod',None)
+        user.pop('godmode',None)
         
         if user.get('fpictureurl') is not None:
             user['pictureurl'] = user.get('fpictureurl')
@@ -2535,6 +2537,7 @@ def search_gyms():
         gym.pop('email', None)
         #user.pop('permissions', None)
         gym.pop('isgod',None)
+        gym.pop('godmode',None)
         
         if gym.get('fpictureurl') is not None:
             gym['pictureurl'] = gym.get('fpictureurl')

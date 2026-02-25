@@ -32,7 +32,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-GODMODE = os.getenv('GODMODE') == 'true'
+ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',')
 
 print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 
@@ -569,7 +569,7 @@ def facebook_auth():
     session['authsource'] = 'facebook'
 
     user = competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
-    if competitionsEngine.is_god(user) or GODMODE:
+    if competitionsEngine.is_god(user):
         session['godmode'] = True   
 
     if session.get('wants_url') is not None:
@@ -639,7 +639,7 @@ def googleauth_reply():
     session['authsource'] = 'google'
     
     user = competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
-    if competitionsEngine.is_god(user) or GODMODE:
+    if competitionsEngine.is_god(user):
         session['godmode'] = True   
 
     log_request_details('google auth successful '+profile['email'])
@@ -699,7 +699,7 @@ def email_login():
         session['picture'] = '/public/images/favicon.png'
         session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         session['authsource'] = 'self'
-        if competitionsEngine.is_god(user) or GODMODE:
+        if competitionsEngine.is_god(user):
             session['godmode'] = True
         # Also issue a JWT and hand off to the client for API calls
         try:

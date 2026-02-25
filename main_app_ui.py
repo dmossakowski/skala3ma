@@ -180,8 +180,7 @@ def login_required(fn):
 def admin_required(fn):
     @wraps(fn)
     def decorated_function(*args, **kwargs):
-        if session != None and (session.get('name') == 'David Mossakowski' or 
-            session.get('name') == 'Sebastiao Correia'):
+        if session != None and (session.get('email') in competitionsEngine.ADMIN_USERS):
             now = int(datetime.now().timestamp())
             return fn(*args, **kwargs)
         else:

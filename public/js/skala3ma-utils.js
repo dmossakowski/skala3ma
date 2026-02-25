@@ -338,6 +338,7 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
         const userSearch = document.getElementById('user-search');
         const suggestions = document.getElementById('suggestions');
         const userIdField = document.getElementById('userId');
+        let debounceTimer;
 
         // Named function to handle user input
         function handleUserInput() {
@@ -349,37 +350,43 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
                 return;
             }
 
-            apiFetch('/api1/users/search?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
+            // Clear any existing timer
+            clearTimeout(debounceTimer);
 
-                    suggestions.innerHTML = '';
-                    data.forEach(user => {
-                        const suggestionItem = document.createElement('a');
-                        suggestionItem.classList.add('list-group-item', 'list-group-item-action');
-                        suggestionItem.href = '#';
+            // Set a new timer to delay the API call by 300ms
+            debounceTimer = setTimeout(() => {
+                apiFetch('/api1/users/search?q=' + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(data => {
 
-                        const nick = user.nick ? `<i>(${user.nick})</i>` : '';
+                        suggestions.innerHTML = '';
+                        data.forEach(user => {
+                            const suggestionItem = document.createElement('a');
+                            suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+                            suggestionItem.href = '#';
 
-                        suggestionItem.innerHTML = `
-                            <div class="media">
-                                <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
-                                <div class="media-body">
-                                    <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
+                            const nick = user.nick ? `<i>(${user.nick})</i>` : '';
+
+                            suggestionItem.innerHTML = `
+                                <div class="media">
+                                    <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
+                                    <div class="media-body">
+                                        <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                        suggestionItem.addEventListener('click', function(event) {
-                            event.preventDefault();
-                            userSearch.value = `${user.firstname} ${user.lastname}`;
-                            userSearch.dataset.userId = user.id;
-                            userIdField.value = user.id;
-                            suggestions.innerHTML = '';
+                            `;
+                            suggestionItem.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                userSearch.value = `${user.firstname} ${user.lastname}`;
+                                userSearch.dataset.userId = user.id;
+                                userIdField.value = user.id;
+                                suggestions.innerHTML = '';
+                            });
+                            suggestions.appendChild(suggestionItem);
                         });
-                        suggestions.appendChild(suggestionItem);
-                    });
-                })
-                .catch(error => console.error('Error fetching users:', error));
+                    })
+                    .catch(error => console.error('Error fetching users:', error));
+            }, 300);
         }
 
         // Add event listener using the named function

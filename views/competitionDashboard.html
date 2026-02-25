@@ -49,16 +49,6 @@
     .carousel-control-prev-icon, .carousel-control-next-icon { width:2.5rem; height:2.5rem; background-color:rgba(0,0,0,0.3); border-radius:50%; padding:0.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
     .carousel-control-prev-icon:hover, .carousel-control-next-icon:hover { background-color:rgba(80, 79, 79, 0.8); }
     
-    /* Leaderboard */
-    .leaderboard-section { background:#fff; border-radius:12px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,.1); margin-bottom:2rem; }
-    .leaderboard-header { font-size:1.3rem; font-weight:700; margin-bottom:1rem; color:#333; }
-    .leaderboard-table { width:100%; border-collapse:collapse; }
-    .leaderboard-table thead th { background:#53be6b; color:#fff; padding:0.75rem 0.5rem; text-align:left; font-weight:600; font-size:0.9rem; }
-    .leaderboard-table tbody td { padding:0.75rem 0.5rem; border-bottom:1px solid #eee; }
-    .leaderboard-table tbody tr:hover { background:#f8f9fa; }
-    .leaderboard-rank { font-weight:700; color:#53be6b; }
-    .leaderboard-empty { text-align:center; padding:2rem; color:#999; }
-    
     /* Competition Grid */
     .competitions-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem; }
     .competition-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.08); transition:all 0.2s ease; cursor:pointer; }
@@ -95,11 +85,6 @@
         .carousel-details { font-size:0.8rem; line-height:1.2; }
         .carousel-details div { margin-bottom:0.05rem; }
         .carousel-details .btn { padding:0.4rem 0.8rem; font-size:0.85rem; margin-top:0.5rem; }
-        
-        .leaderboard-section { padding:1rem 0.75rem; margin-bottom:1rem; }
-        .leaderboard-header { font-size:1.1rem; margin-bottom:0.75rem; }
-        .leaderboard-table { font-size:0.75rem; }
-        .leaderboard-table thead th, .leaderboard-table tbody td { padding:0.4rem 0.25rem; }
         
         .competitions-grid { grid-template-columns:1fr; gap:1rem; }
         .competition-card { margin-bottom:0; }
@@ -156,18 +141,6 @@
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
             </button>
-        </div>
-    </div>
-    
-    <!-- Leaderboard Section -->
-    <div class="leaderboard-section">
-        <h3 class="leaderboard-header" data-translate-key="club_leaderboard">Club Leaderboard</h3>
-        <div id="leaderboardContent">
-            <div class="loading-spinner">
-                <div class="spinner-border text-success" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
         </div>
     </div>
     
@@ -353,98 +326,6 @@
         });
     }
     
-    // Fetch and aggregate club rankings
-    async function updateLeaderboard() {
-        const content = document.getElementById('leaderboardContent');
-        const filtered = state.filteredCompetitions;
-        
-        if (filtered.length === 0) {
-            content.innerHTML = '<div class="leaderboard-empty" data-translate-key="no_competitions_leaderboard">No competitions to display leaderboard</div>';
-            return;
-        }
-        
-        content.innerHTML = '<div class="loading-spinner"><div class="spinner-border text-success" role="status"></div></div>';
-        
-        try {
-            // Fetch rankings for all filtered competitions
-            const rankingsPromises = filtered.map(comp => 
-                apiFetchJson(`/api1/competition/${comp.id}/rankings`)
-                    .catch(() => ({ club: [] }))
-            );
-            
-            const allRankings = await Promise.all(rankingsPromises);
-            
-            // Aggregate club totals
-            const clubTotals = {};
-            allRankings.forEach(ranking => {
-                if (ranking.club) {
-                    ranking.club.forEach(clubData => {
-                        const name = clubData.name;
-                        if (!clubTotals[name]) {
-                            clubTotals[name] = { name, F: 0, FC: 0, M: 0, MC: 0, TOTAL: 0, competitions: 0 };
-                        }
-                        clubTotals[name].F += clubData.F || 0;
-                        clubTotals[name].FC += clubData.FC || 0;
-                        clubTotals[name].M += clubData.M || 0;
-                        clubTotals[name].MC += clubData.MC || 0;
-                        clubTotals[name].TOTAL += clubData.TOTAL || 0;
-                        clubTotals[name].competitions++;
-                    });
-                }
-            });
-            
-            // Convert to array and sort by TOTAL
-            const sortedClubs = Object.values(clubTotals)
-                .sort((a, b) => b.TOTAL - a.TOTAL)
-                .slice(0, 10); // Top 10
-            
-            if (sortedClubs.length === 0) {
-                content.innerHTML = '<div class="leaderboard-empty" data-translate-key="no_club_rankings">No club rankings available</div>';
-                return;
-            }
-            
-            // Render table
-            let tableHTML = `
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th data-translate-key="rank">Rank</th>
-                            <th data-translate-key="club">Club</th>
-                            <th>F</th>
-                            <th>FC</th>
-                            <th>M</th>
-                            <th>MC</th>
-                            <th>TOTAL</th>
-                            <th data-translate-key="events">Events</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            sortedClubs.forEach((club, index) => {
-                tableHTML += `
-                    <tr>
-                        <td class="leaderboard-rank">${index + 1}</td>
-                        <td>${escapeHtml(club.name)}</td>
-                        <td>${club.F}</td>
-                        <td>${club.FC}</td>
-                        <td>${club.M}</td>
-                        <td>${club.MC}</td>
-                        <td><strong>${club.TOTAL}</strong></td>
-                        <td>${club.competitions}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHTML += '</tbody></table>';
-            content.innerHTML = tableHTML;
-            
-        } catch (error) {
-            console.error('Error loading leaderboard:', error);
-            content.innerHTML = '<div class="leaderboard-empty" data-translate-key="error_loading_leaderboard">Error loading leaderboard data</div>';
-        }
-    }
-    
     // Render competition grid
     function updateCompetitionGrid() {
         const grid = document.getElementById('competitionsGrid');
@@ -483,7 +364,6 @@
     async function updateDashboard() {
         filterCompetitions();
         await updateCarousel();
-        await updateLeaderboard();
         updateCompetitionGrid();
     }
     

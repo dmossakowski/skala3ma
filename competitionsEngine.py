@@ -47,10 +47,8 @@ from flask import Flask, redirect, url_for, session, request, render_template, s
 from functools import lru_cache, reduce
 import logging
 
-
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-GODMODE = os.getenv('GODMODE') == "true"
-
+ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',') 
 
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
@@ -1012,7 +1010,7 @@ def _migrate_competition(competition):
         # if competition is in or after year 2026 apply fsgt2 
         # Determine strategy from year when possible; fallback to legacy mapping
 
-        calc_type = competition['calc_type'] = CalculationStrategy.normalize_strategy_key(str(competition['calc_type']))
+        calc_type = competition['calc_type'] = CalculationStrategy.normalize_strategy_key(str(competition.get('calc_type')))
 
         if calc_type is None:
             year = None
@@ -1374,26 +1372,26 @@ def _common_user_validation(user):
     if user.get('gpictureurl') is not None or user.get('fpictureurl') is not None:
         user['is_confirmed'] = True
 
+    
+
 
 # returns base empty permissions dictionary
 # who can create new competition? gym admins?
-# if this is the first user who logs in then this user becomes the godmode user
 def get_permissions(user):
-    if user is None:
-        return User.generate_permissions()
+    permissions = {}
+    if user is None or user.get('permissions') is None:
+        permissions = User.generate_permissions()
+    
+    if user.get('email') in ADMIN_USERS:
+        user['permissions']['godmode'] = True
+        user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
+    else:
+        user['permissions']['godmode'] = False
 
-    if user.get('permissions') is None:
-        all_users = get_all_user_emails()
-        if len(all_users)==0 or GODMODE == True:
-            user['permissions'] = {}
-            user['permissions']['godmode'] = True
-            user['permissions']['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
-            user['permissions']['competitions'] = ['abc','def','ghi']
-            user['permissions']['gyms'] = ['1']
-        else:
-            user['permissions'] = User.generate_permissions()
 
     return user['permissions']
+
+
 
 
 
@@ -1401,7 +1399,7 @@ def get_permissions(user):
 def has_permission_for_competition(competitionId, user):
     permissions = get_permissions(user)
     huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or permissions['godmode'] == True
+    return competitionId in permissions['competitions'] or is_god(user) == True
 
 
 def add_user_permission_create_competition(user):
@@ -1452,7 +1450,7 @@ def can_create_competition(climber):
 
 
 def can_edit_competition(climber, competition):
-    permissions = climber.get('permissions')
+    permissions = get_permissions(climber)
     if permissions['godmode'] == True  \
         or ('edit_competition' in permissions['general'] \
         and competition['id'] in permissions['competitions']):
@@ -1469,7 +1467,10 @@ def can_edit_users(user):
 
 
 def is_god(user):
-    return user.get('permissions').get('godmode') == True
+    if user is None:
+        return False
+    if user.get('email') in ADMIN_USERS:
+        return True
 
 
 def competition_can_be_deleted(competition):

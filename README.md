@@ -65,13 +65,15 @@ Minimum version of Python is 3.7. You will need to have either Google or Faceboo
 ```
 4. Modify the .env file to set the correct values
 
+You should 
+
 ```
   DATA_DIRECTORY=<path to the data directory>
   GOOGLE_CLIENT_ID=<your Google client id>
   GOOGLE_CLIENT_SECRET=<your Google client secret>
   FACEBOOK_CLIENT_ID=<facebook client id>
   FACEBOOK_CLIENT_SECRET=<facebook client secret>
-  GODMODE=true
+  ADMIN_USERS=user@email.com,user2@email.com
 ```
 DATA_DIRECTORY can be relative but must exist. If omitted the system will create db and uploads directories in the current working directory.
 
@@ -94,9 +96,8 @@ You can also run the server using gunicorn:
 
 6. Using your favorite browser go to https://localhost:5000/
 
-7. The first user that logs in will be given all permissions to create gyms, competitions, etc. This user is assumed to be a full admin. This functionality is independent of the GODMODE setting in .env file. Setting GODMODE=true in .env file will make every user a full admin. This is what happens on [skala3ma-develop.onrender.com](https://skala3ma-develop.onrender.com/) site where we do beta tests.
 
-8. The application starts completely empty so to do any tests you will need to: 
+7. The application starts completely empty so to do any tests you will need to: 
   - create a gym 
   - create a competition 
   - sign up yourself for the competition

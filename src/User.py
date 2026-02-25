@@ -1,3 +1,4 @@
+
 class User:
     def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid):
         self.email = email
@@ -57,7 +58,11 @@ class User:
     def get_permissions(self, type=None):
         return self.permissions.get(type, [])
     
+
     def get_home_gym(self):
         if not self.gymid:
             return None
         return self.gymid
+    
+
+    
