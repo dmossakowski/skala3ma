@@ -72,6 +72,7 @@ from src.email_login import EmailLoginService
 email_sender = EmailSender(
     reference_data=competitionsEngine.reference_data
 )
+from src.User import User
 #import locale
 import glob
 from flask import Flask
@@ -569,8 +570,7 @@ def facebook_auth():
     session['authsource'] = 'facebook'
 
     user = competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
-    if competitionsEngine.is_god(user):
-        session['godmode'] = True   
+    session['is_admin'] = User.is_admin(user)
 
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
@@ -639,8 +639,7 @@ def googleauth_reply():
     session['authsource'] = 'google'
     
     user = competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
-    if competitionsEngine.is_god(user):
-        session['godmode'] = True   
+    session['is_admin'] = User.is_admin(user)
 
     log_request_details('google auth successful '+profile['email'])
 
@@ -699,8 +698,7 @@ def email_login():
         session['picture'] = '/public/images/favicon.png'
         session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         session['authsource'] = 'self'
-        if competitionsEngine.is_god(user):
-            session['godmode'] = True
+        session['is_admin'] = User.is_admin(user)
         # Also issue a JWT and hand off to the client for API calls
         try:
             user_id = user.get('id') if isinstance(user, dict) else None

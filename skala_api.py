@@ -70,6 +70,7 @@ from pydantic import BaseModel
 # Email login service (shared with server)
 from src.email_login import EmailLoginService
 from src.email_sender import EmailSender
+from src.User import User
 import jwt
 # Google auth (optional)
 try:
@@ -355,20 +356,32 @@ def recreate_session_from_jwt():
 
 
 def admin_required(fn):
+    """Admin decorator for API endpoints - returns JSON error"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         email = session.get('email') if session else None
         if email:
             user = competitionsEngine.get_user_by_email(email)
-            if user:
-                perms = user.get('permissions', {}) or {}
-                if perms.get('godmode') or user.get('godmode'):
-                    return fn(*args, **kwargs)
-                gen = perms.get('general') or []
-                if isinstance(gen, list) and ('create_gym' in gen or 'manage_users' in gen):
-                    return fn(*args, **kwargs)
+            if User.is_admin(user):
+                return fn(*args, **kwargs)
         return jsonify({'error': 'admin_required'}), 403
     return wrapper
+
+
+def admin_required_ui(fn):
+    """Admin decorator for UI routes - redirects to login page"""
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None:
+            email = session.get('email')
+            if email:
+                user = competitionsEngine.get_user_by_email(email)
+                if User.is_admin(user):
+                    return fn(*args, **kwargs)
+        from flask import request, redirect, url_for
+        session["wants_url"] = request.url
+        return redirect(url_for("app_ui.fsgtlogin"))
+    return decorated_function
 
 
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
@@ -643,7 +656,7 @@ def api_auth_status():
             'firstname': user.get('firstname'),
             'lastname': user.get('lastname'),
             'club': user.get('club'),
-            'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode'))
+            'is_admin': User.is_admin(user),
         }
     })
 

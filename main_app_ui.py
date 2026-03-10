@@ -46,6 +46,7 @@ from io import BytesIO
 
 from flask import send_file
 import skala_api
+from skala_api import admin_required_ui as admin_required
 
 # Third party libraries
 from flask import Flask, redirect, request, url_for
@@ -177,16 +178,7 @@ def login_required(fn):
 
 
 
-def admin_required(fn):
-    @wraps(fn)
-    def decorated_function(*args, **kwargs):
-        if session != None and (session.get('email') in competitionsEngine.ADMIN_USERS):
-            now = int(datetime.now().timestamp())
-            return fn(*args, **kwargs)
-        else:
-            session["wants_url"] = request.url
-            return redirect(url_for("app_ui.fsgtlogin"))
-    return decorated_function
+
 
 
 

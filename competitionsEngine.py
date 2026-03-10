@@ -48,7 +48,6 @@ from functools import lru_cache, reduce
 import logging
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',') 
 
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()
@@ -1382,11 +1381,10 @@ def get_permissions(user):
     if user is None or user.get('permissions') is None:
         permissions = User.generate_permissions()
     
-    if user.get('email') in ADMIN_USERS:
-        permissions['godmode'] = True
+    if User.is_admin(user):
         permissions['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
     else:
-        permissions['godmode'] = False
+        permissions = user.get('permissions', User.generate_permissions())
 
     return permissions
 
@@ -1398,7 +1396,7 @@ def get_permissions(user):
 def has_permission_for_competition(competitionId, user):
     permissions = get_permissions(user)
     huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or is_god(user) == True
+    return competitionId in permissions['competitions'] or User.is_admin(user)
 
 
 def add_user_permission_create_competition(user):
@@ -1418,7 +1416,7 @@ def add_user_permission_edit_competition(user):
 def has_permission_for_gym(gym_id, user):
     permissions = get_permissions(user)
     #huh = gym_id in permissions['gyms']
-    return gym_id in permissions['gyms'] or is_god(user) == True
+    return gym_id in permissions['gyms'] or User.is_admin(user)
 
 
 # modify permission to edit specific competition to a user
@@ -1442,7 +1440,7 @@ def can_create_competition(climber):
     if climber is None:
         return False
     permissions = climber.get('permissions')
-    if 'create_competition' in permissions['general'] or permissions['godmode'] == True:
+    if 'create_competition' in permissions['general'] or User.is_admin(climber):
         return True
     return False
     
@@ -1450,7 +1448,7 @@ def can_create_competition(climber):
 
 def can_edit_competition(climber, competition):
     permissions = get_permissions(climber)
-    if is_god(climber) == True  \
+    if User.is_admin(climber) \
         or ('edit_competition' in permissions['general'] \
         and competition['id'] in permissions['competitions']):
         return True
@@ -1460,16 +1458,7 @@ def can_edit_competition(climber, competition):
 def can_edit_users(user):
     if user is None:
         return False
-    permissions = user.get('permissions')
-    if permissions['godmode'] == True:
-        return True
-
-
-def is_god(user):
-    if user is None:
-        return False
-    if user.get('email') in ADMIN_USERS:
-        return True
+    return User.is_admin(user)
 
 
 def competition_can_be_deleted(competition):
@@ -1585,14 +1574,14 @@ def can_edit_gym(user, gym):
     if user is None or gym is None: 
         return False
     permissions = user.get('permissions')
-    if gym['id'] in permissions['gyms'] or permissions['godmode'] == True:
+    if gym['id'] in permissions['gyms'] or User.is_admin(user):
         return True
     return False
 
 
 def can_create_gym(user):
     permissions = user.get('permissions')
-    if 'create_gym' in permissions['general'] or permissions['godmode'] == True:
+    if 'create_gym' in permissions['general'] or User.is_admin(user):
         return True
     if len(skala_db.search_gym_by_owner(user['id'])) == 0:
         return True
