@@ -337,6 +337,17 @@
             if (index === defaultActiveIndex) indicator.className = 'active';
             indicators.appendChild(indicator);
         });
+        
+        // Reinitialize Bootstrap carousel to enable touch/swipe after dynamic content update
+        const carouselElement = document.getElementById('competitionCarousel');
+        const carousel = bootstrap.Carousel.getInstance(carouselElement);
+        if (carousel) {
+            carousel.dispose(); // Dispose old instance
+        }
+        new bootstrap.Carousel(carouselElement, {
+            touch: true,
+            interval: false
+        });
     }
     
     // Render competition grid
