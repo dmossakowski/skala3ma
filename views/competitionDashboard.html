@@ -46,7 +46,7 @@
     .carousel-empty { text-align:center; padding:4rem 2rem; color:#999; }
     .carousel-control-prev, .carousel-control-next { width:50px; opacity:0.9; }
     .carousel-control-prev:hover, .carousel-control-next:hover { opacity:1; }
-    .carousel-control-prev-icon, .carousel-control-next-icon { width:2.5rem; height:2.5rem; background-color:rgba(0,0,0,0.3); border-radius:50%; padding:0.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    .carousel-control-prev-icon, .carousel-control-next-icon { width:2.5rem; height:2.5rem; background-color:rgba(0,0,0,0.1); border-radius:50%; padding:0.7rem; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
     .carousel-control-prev-icon:hover, .carousel-control-next-icon:hover { background-color:rgba(80, 79, 79, 0.8); }
     
     /* Competition Grid */
@@ -80,7 +80,7 @@
         .carousel-item-content { min-height:300px; }
         .carousel-affiche { height:300px; object-fit:cover; }
         .carousel-status-badge { top:0.5rem; left:0.5rem; padding:0.35rem 0.7rem; font-size:0.7rem; letter-spacing:0.3px; }
-        .carousel-info-overlay { padding:0.5rem 0.75rem 3rem; background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.95)); }
+        .carousel-info-overlay { padding:0.5rem 0.75rem 3rem; background:linear-gradient(rgba(93, 93, 93, 0), rgba(0,0,0,0.55) 20%, rgba(0,0,0,0.75)); }
         .carousel-title { font-size:0.95rem; margin-bottom:0.2rem; line-height:1.4; }
         .carousel-details { font-size:0.8rem; line-height:1.2; }
         .carousel-details div { margin-bottom:0.05rem; }
@@ -120,7 +120,7 @@
     
     <!-- Carousel Section -->
     <div class="dashboard-carousel">
-        <div id="competitionCarousel" class="carousel slide" data-bs-ride="false">
+        <div id="competitionCarousel" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-interval="false">
             <div class="carousel-indicators" id="carouselIndicators"></div>
             <div class="carousel-inner" id="carouselInner">
                 <div class="carousel-item active">
@@ -279,7 +279,7 @@
             
             item.innerHTML = `
                 <div class="carousel-item-content">
-                    <img src="/image/${comp.id}" class="carousel-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/public/images/placeholder-competition.jpg'" data-url="${comp.url}">
+                    <img src="/image/${comp.id}" class="carousel-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/image/placeholder-competition.jpg'" data-url="${comp.url}">
                     <div class="carousel-status-badge ${statusClass}">${statusLabel}</div>
                     <div class="carousel-info-overlay">
                         <div class="carousel-title">${escapeHtml(comp.title)}</div>
@@ -294,25 +294,37 @@
             
             // Add click handler to the image only (not interfering with swipe)
             const img = item.querySelector('.carousel-affiche');
+            let startX = 0, startY = 0, startTime = 0;
+            
+            img.addEventListener('mousedown', (e) => { 
+                startX = e.clientX;
+                startY = e.clientY;
+                startTime = Date.now();
+            });
+            
+            img.addEventListener('touchstart', (e) => { 
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startTime = Date.now();
+            }, { passive: true });
+            
             img.addEventListener('click', (e) => {
-                // Only navigate on click, not on drag/swipe
-                if (!e.target.dataset.dragging) {
+                // Only navigate if it was a quick click without much movement
+                const timeDiff = Date.now() - startTime;
+                if (timeDiff < 300) {
                     window.location.href = comp.url;
                 }
             });
             
-            // Track dragging to prevent navigation on swipe
-            let startX = 0;
-            img.addEventListener('mousedown', (e) => { startX = e.clientX; });
-            img.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
-            img.addEventListener('mousemove', (e) => { 
-                if (Math.abs(e.clientX - startX) > 10) img.dataset.dragging = 'true';
+            img.addEventListener('mouseup', (e) => {
+                const deltaX = Math.abs(e.clientX - startX);
+                const deltaY = Math.abs(e.clientY - startY);
+                const timeDiff = Date.now() - startTime;
+                // If moved more than 10px or took longer than 300ms, it was a drag
+                if (deltaX > 10 || deltaY > 10 || timeDiff > 300) {
+                    e.preventDefault();
+                }
             });
-            img.addEventListener('touchmove', (e) => { 
-                if (Math.abs(e.touches[0].clientX - startX) > 10) img.dataset.dragging = 'true';
-            });
-            img.addEventListener('mouseup', () => { setTimeout(() => delete img.dataset.dragging, 100); });
-            img.addEventListener('touchend', () => { setTimeout(() => delete img.dataset.dragging, 100); });
             
             inner.appendChild(item);
             
@@ -347,7 +359,7 @@
             const statusText = comp.text.status || '';
             
             card.innerHTML = `
-                <img src="/image/${comp.id}" class="competition-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/public/images/placeholder-competition.jpg'">
+                <img src="/image/${comp.id}" class="competition-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/image/placeholder-competition.jpg'">
                 <div class="competition-body">
                     <div class="competition-title">${escapeHtml(comp.title)}</div>
                     <div class="competition-meta"><i class="bi bi-calendar-event"></i> ${formatDate(comp.date)}</div>
