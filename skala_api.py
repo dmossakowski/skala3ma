@@ -1189,6 +1189,11 @@ def get_competition_by_id(competition_id):
         for climber in competition.get('climbers').values():
             climber.pop('routesClimbed2', None)
 
+    # removing routes does not speed up rendering of climbers 
+    #if request.args.get('remove') == 'routes':
+    #competition.pop('routes', None)
+
+
     if competition is None:
         return {"error": "competition not found"}
     return jsonify(competition)

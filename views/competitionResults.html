@@ -26,13 +26,12 @@
 
 		{% if rankings is not none and rankings is not undefined %}
 
-						<br>{{ reference_data['current_language'].Rankings }} |
-						<a href="{{competition['id']}}/download">{{ reference_data['current_language'].download }} </a>
+					
 
-							<h3>{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
+							
 
 		{% else %}
-            <br><br>
+            <br>
 							<h3>{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}</h3>
 						<br><br>
 						<h3> {{ reference_data['current_language'].competition_results }} <br>
@@ -44,7 +43,8 @@
 
 <div class="table-responsive">
     <div class="row-bottom-padded-md">
-
+        &nbsp;<a href="{{competition['id']}}/download"><i class="bi bi-download"></i> 
+						{{ reference_data['current_language'].download }} </a>
         {% if rankings is not none and rankings is not undefined %}
 
 	    <!-- first do club rankings -->

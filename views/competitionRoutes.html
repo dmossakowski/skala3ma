@@ -23,17 +23,14 @@
                  
 		
         <br>
-        <table width="100%"><tr><td> <span data-translate-key="routes"></span> - </label> {{routesName }}
-        <h3>{{competition['name'] }} - {{ competition['date']| strftime(format='short')}} <br>
-   
-    </h3>           
-    </td><td>           
+     
+        <span data-translate-key="routes"></span> - </label> {{routesName }}      
         <a href="/gyms/{{gym['id']}}/{{routesid}}/download" alt="{{gym['homepage']}}"  class="nav-link active  p-1" target="_tab">
             <img src="/public/images/competition_tiles.png" width="250" height="140" alt="Download competition tiles" title="Download competition tiles">
-            <br><i class="icon-download "></i><span data-translate-key="download"></span>
+            <br><i class="bi bi-download"></i>  </i><span data-translate-key="download"></span>
             <!--br><i class="icon-grid2 "></i> Competition tiles!--></a>
     
-        </td></tr></table>
+       
     </div>
     </div>
 {% include "component-routes.html" %}

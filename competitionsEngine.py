@@ -1380,9 +1380,6 @@ def get_permissions(user):
     permissions = {}
     if user is None or user.get('permissions') is None:
         permissions = User.generate_permissions()
-    
-    if User.is_admin(user):
-        permissions['general'] = ['create_gym','create_competition', 'edit_competition', 'update_routes']
     else:
         permissions = user.get('permissions', User.generate_permissions())
 

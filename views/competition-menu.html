@@ -8,7 +8,7 @@
 <!-- li>{{ competition['name'] }}</li -->
 
     <a href="/competitionDetails/{{ competitionId}}"  class="nav-link sf-menu2"><i class="bi bi-trophy-fill"></i>
-        {{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</a></li>
+       <b> {{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</b></a></li>
 
 					<a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link">{{ reference_data['current_language'].registration }}</a> </li>
 						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
