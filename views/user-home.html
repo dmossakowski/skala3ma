@@ -278,11 +278,7 @@
 
             const renderGeneralPermissions = (perms) => {
                 if (!els.generalPermsList) return;
-                if (perms.godmode) {
-                    const div = document.createElement('div');
-                    div.innerHTML = "<i class='bi bi-lock'></i> Admin";
-                    els.generalPermsList.appendChild(div);
-                }
+                
                 (perms.general || []).forEach(permission => {
                     const div = document.createElement('div');
                     div.innerHTML = permissionLookup[permission] || permission;
@@ -326,7 +322,7 @@
                     }
 
                     const genPerms = Array.isArray(permissions.general) ? permissions.general : [];
-                    const hasAnyPerm = (genPerms.length > 0) || (permissions.godmode === true);
+                    const hasAnyPerm = (genPerms.length > 0);
                     if (!hasAnyPerm && els.actionsCard) {
                         els.actionsCard.style.display = 'none';
                     } else {

@@ -286,9 +286,9 @@ function initializeApp() {
                     <a href="/myresultats" class="nav-link fs-4">{{ reference_data['current_language'].my_resultats }}</a>
                     <a href="/logout" class="nav-link fs-4">{{ reference_data['current_language'].logout }}</a>
 
-                    {% if session['godmode']  %}
-                    <a href="/competitionRawAdmin" class="nav-link fs-4">Admin</a></li>
-                    <a href="/adminV2" class="nav-link fs-4">Admin V2</a></li>
+                    {% if session['is_admin']  %}
+                    <a href="/app_admin1" class="nav-link fs-4">Admin</a></li>
+                  
 
                     {% endif %}
                 
@@ -454,8 +454,8 @@ function initializeApp() {
                 
                     <a href="/logout" class="dropdown-item fs-7">{{ reference_data['current_language'].logout }}</a>
 
-                    {% if session['godmode']  %}
-                    <a href="/competitionRawAdmin" class="dropdown-item fs-7">Admin</a></li>
+                    {% if session['is_admin']  %}
+                    <a href="/app_admin1" class="dropdown-item fs-7">Admin</a></li>
 
                     {% endif %}
                 </div>

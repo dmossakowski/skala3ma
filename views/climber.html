@@ -107,7 +107,7 @@
                         <div class="h-100 p-4 mb-3 ">
                             
         
-                            <!-- General and Godmode Permissions -->
+                            <!-- General and Admin Permissions -->
                         <div class="permissions-section" id="general-permissions">
             
                         <div id="general-permissions-list"></div>
@@ -167,8 +167,8 @@
 
                     // General Permissions
                     const generalPermissionsList = document.getElementById('general-permissions-list');
-                    // Godmode Permissions
-                    if (permissions.godmode) {
+                    // Admin Permissions
+                    if (permissions.is_admin) {
                         const div = document.createElement('div');
                         div.innerHTML = "<i class='bi bi-lock'></i> Admin";
                         generalPermissionsList.appendChild(div);

@@ -32,7 +32,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-GODMODE = os.getenv('GODMODE') == 'true'
+ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',')
 
 print("server DATA_DIRECTORY="+str(DATA_DIRECTORY))
 
@@ -61,6 +61,7 @@ from logging_config import init_logging, attach_request_logging
 
 from main_app_ui import app_ui, languages
 from skala_api import skala_api_app, create_jwt
+from skala_admin_api import skala_admin_api
 
 import competitionsEngine
 
@@ -71,6 +72,7 @@ from src.email_login import EmailLoginService
 email_sender = EmailSender(
     reference_data=competitionsEngine.reference_data
 )
+from src.User import User
 #import locale
 import glob
 from flask import Flask
@@ -124,10 +126,11 @@ class CustomRequest(Request):
 #app = OpenAPI(__name__, static_folder='public', template_folder='views', info=info)
 app = Flask(__name__, static_folder='public', template_folder='views')
 app.request_class = CustomRequest
-# limit image upload size to 4mb
-app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
+# limit image upload size to 4mb (database uploads can be larger - handled per route)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB to allow database uploads
 app.register_blueprint(app_ui)
 app.register_blueprint(skala_api_app)
+app.register_blueprint(skala_admin_api)
 
 app.debug = True
 app.secret_key = 'development'
@@ -305,7 +308,7 @@ def init():
         app_name='web',
         skip_blueprints={'skala_api'},
         allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
-                                 '/competitionCalendar','/competitionRawAdmin','/competition_admin','/competitionResults',
+                                 '/competitionCalendar','/app_admin1','/competition_admin','/competitionResults',
                                  '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser','/climbers',
                                  '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
 
@@ -567,8 +570,7 @@ def facebook_auth():
     session['authsource'] = 'facebook'
 
     user = competitionsEngine.user_authenticated_fb(profile['id'], profile['name'],profile['email'],profile['picture']['data']['url'])
-    if competitionsEngine.is_god(user) or GODMODE:
-        session['godmode'] = True   
+    session['is_admin'] = User.is_admin(user)
 
     if session.get('wants_url') is not None:
         return redirect(session['wants_url'])
@@ -637,8 +639,7 @@ def googleauth_reply():
     session['authsource'] = 'google'
     
     user = competitionsEngine.user_authenticated_google(profile['name'],profile['email'],profile['picture'])
-    if competitionsEngine.is_god(user) or GODMODE:
-        session['godmode'] = True   
+    session['is_admin'] = User.is_admin(user)
 
     log_request_details('google auth successful '+profile['email'])
 
@@ -697,8 +698,7 @@ def email_login():
         session['picture'] = '/public/images/favicon.png'
         session['expires_at'] = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
         session['authsource'] = 'self'
-        if competitionsEngine.is_god(user) or GODMODE:
-            session['godmode'] = True
+        session['is_admin'] = User.is_admin(user)
         # Also issue a JWT and hand off to the client for API calls
         try:
             user_id = user.get('id') if isinstance(user, dict) else None

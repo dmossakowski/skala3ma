@@ -376,12 +376,13 @@ def search_all_users(search_string):
     OR lower(trim(json_extract(jsondata, '$.firstname'))) LIKE lower(trim(?))
     OR lower(trim(json_extract(jsondata, '$.lastname'))) LIKE lower(trim(?))
     OR lower(trim(json_extract(jsondata, '$.nick'))) LIKE lower(trim(?)))
+    OR lower(trim(email)) LIKE lower(trim(?))
     AND json_extract(jsondata, '$.is_confirmed') = true
     LIMIT 10;
     '''
     
     search_pattern = f'%{search_string}%'
-    rows = cursor.execute(query, [search_pattern, search_pattern, search_pattern, search_pattern])
+    rows = cursor.execute(query, [search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
     
     users = []
     if rows is not None:
@@ -537,40 +538,11 @@ def _common_user_validation(user):
 
     permissions = user.get('permissions')
     if permissions is None:
-        permissions = get_permissions(user)
+        permissions = User.generate_permissions()
         user['permissions'] = permissions
 
 
-# returns base empty permissions dictionary
-# who can create new competition? gym admins?
-def get_permissions(user):
-    if user is None:
-        return User.generate_permissions()
 
-    if user.get('permissions') is None:
-        user['permissions'] = User.generate_permissions()
-
-    if user.get('email') == 'dmossakowski@gmail.com':
-        user['permissions']['godmode'] = True
-        user['permissions']['general'] = ['create_competition', 'edit_competition', 'update_routes']
-        user['permissions']['competitions'] = ['abc','def','ghi']
-        user['permissions']['gyms'] = ['1']
-
-    return user['permissions']
-
-
-
-
-def has_permission_for_competition(competitionId, user):
-    permissions = get_permissions(user)
-    huh = competitionId in permissions['competitions']
-    return competitionId in permissions['competitions'] or permissions['godmode'] == True
-
-
-def has_permission_for_gym(gym_id, user):
-    permissions = get_permissions(user)
-    huh = gym_id in permissions['gyms']
-    return gym_id in permissions['gyms'] or permissions['godmode'] == True
 
 
 # Add general permission if it already doesn't exist

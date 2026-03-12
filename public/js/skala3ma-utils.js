@@ -338,6 +338,7 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
         const userSearch = document.getElementById('user-search');
         const suggestions = document.getElementById('suggestions');
         const userIdField = document.getElementById('userId');
+        let debounceTimer;
 
         // Named function to handle user input
         function handleUserInput() {
@@ -349,37 +350,43 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
                 return;
             }
 
-            apiFetch('/api1/users/search?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
+            // Clear any existing timer
+            clearTimeout(debounceTimer);
 
-                    suggestions.innerHTML = '';
-                    data.forEach(user => {
-                        const suggestionItem = document.createElement('a');
-                        suggestionItem.classList.add('list-group-item', 'list-group-item-action');
-                        suggestionItem.href = '#';
+            // Set a new timer to delay the API call by 300ms
+            debounceTimer = setTimeout(() => {
+                apiFetch('/api1/users/search?q=' + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(data => {
 
-                        const nick = user.nick ? `<i>(${user.nick})</i>` : '';
+                        suggestions.innerHTML = '';
+                        data.forEach(user => {
+                            const suggestionItem = document.createElement('a');
+                            suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+                            suggestionItem.href = '#';
 
-                        suggestionItem.innerHTML = `
-                            <div class="media">
-                                <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
-                                <div class="media-body">
-                                    <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
+                            const nick = user.nick ? `<i>(${user.nick})</i>` : '';
+
+                            suggestionItem.innerHTML = `
+                                <div class="media">
+                                    <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
+                                    <div class="media-body">
+                                        <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                        suggestionItem.addEventListener('click', function(event) {
-                            event.preventDefault();
-                            userSearch.value = `${user.firstname} ${user.lastname}`;
-                            userSearch.dataset.userId = user.id;
-                            userIdField.value = user.id;
-                            suggestions.innerHTML = '';
+                            `;
+                            suggestionItem.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                userSearch.value = `${user.firstname} ${user.lastname}`;
+                                userSearch.dataset.userId = user.id;
+                                userIdField.value = user.id;
+                                suggestions.innerHTML = '';
+                            });
+                            suggestions.appendChild(suggestionItem);
                         });
-                        suggestions.appendChild(suggestionItem);
-                    });
-                })
-                .catch(error => console.error('Error fetching users:', error));
+                    })
+                    .catch(error => console.error('Error fetching users:', error));
+            }, 300);
         }
 
         // Add event listener using the named function
@@ -669,3 +676,38 @@ function clearTranslations() {
             
         });
     }
+
+
+// ================= ACTIVE PAGE DETECTION =================
+/**
+ * Determines if a given link href matches the current page based on the first path segment
+ * @param {string} linkHref - The href attribute of the link to check
+ * @returns {boolean} - True if the first path segment matches the current page, false otherwise
+ * 
+ * Example:
+ *   Current page: /climbers/123
+ *   Link href: /climbers/456
+ *   Returns: true (both have '/climbers' as first segment)
+ */
+function isActivePage(linkHref) {
+    if (!linkHref) return false;
+    
+    // Get current pathname
+    const currentPath = window.location.pathname;
+    
+    // Extract first path segment from both URLs
+    // Split by '/' and filter out empty strings
+    const currentSegments = currentPath.split('/').filter(s => s);
+    const linkSegments = linkHref.split('/').filter(s => s);
+    
+    // If either has no segments, no match
+    if (currentSegments.length === 0 || linkSegments.length === 0) {
+        return false;
+    }
+    
+    // Compare first segments
+    return currentSegments[0] === linkSegments[0];
+}
+
+// Attach to window for use in templates
+window.isActivePage = isActivePage;

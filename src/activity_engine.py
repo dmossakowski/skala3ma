@@ -45,7 +45,8 @@ from functools import lru_cache, reduce
 import logging
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
-GODMODE = os.getenv('GODMODE') == "true"
+ADMIN_USERS = os.getenv('ADMIN_USERS', '').split(',')
+
 
 if DATA_DIRECTORY is None:
     DATA_DIRECTORY = os.getcwd()

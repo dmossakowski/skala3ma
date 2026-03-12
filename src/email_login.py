@@ -283,14 +283,13 @@ class EmailLoginService:
             session['picture'] = '/public/images/favicon.png'
             session['expires_at'] = expires_at
             session['authsource'] = 'self'
-            if self.ce.is_god(user):
-                session['godmode'] = True
+            session['is_admin'] = User.is_admin(user)
         public_user = {
             'email': user.get('email'),
             'firstname': user.get('firstname'),
             'lastname': user.get('lastname'),
             'club': user.get('club'),
-            'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode') or session.get('godmode'))
+            'is_admin': User.is_admin(user)
         }
         return {
             'success': True,

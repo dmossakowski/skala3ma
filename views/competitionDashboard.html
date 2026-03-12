@@ -1,79 +1,470 @@
-
-
-
 {% extends "skala3ma-layout.html" %}
 
 {% block topcontent %}
 
-
 {% endblock %}
 
-
 	{% block secondarycontent %}
-
 
     {% include "competitions-menu.html" %}
 
 <style>
-    .competitions-summary { display:flex; flex-wrap:wrap; gap:1rem;}
-    .summary-card { flex:1 1 220px; background:#f1f3f4; border-radius:12px; padding:1rem 1.1rem; position:relative; box-shadow:0 2px 4px rgba(0,0,0,.08); }
-    .summary-card.highlight { border:2px solid #2ecc71; }
-    .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
-    .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
-    .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
-    .summary-card.cursor-pointer:hover { box-shadow:0 6px 16px rgba(0,0,0,.18); transform:translateY(-3px); }
-
+    /* Dashboard Layout */
+    .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+    
+    /* Filter Controls */
+    .dashboard-filters { background:#f1f3f4; padding:1rem 1.2rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; }
+    .filter-row { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; }
+    .filter-group { flex:1 1 200px; }
+    .filter-label { font-size:0.85rem; font-weight:600; margin-bottom:0.35rem; color:#555; }
+    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
+    .filter-select:hover { background:#e8f5e9; }
+    .filter-select:focus { outline:none; border-color:#53be6b; background:#fff; }
+    
+    /* Type Toggle Buttons */
+    .type-toggle-group { display:flex; gap:0.5rem; }
+    .type-toggle-btn { font-size:0.9rem; padding:0.6rem 1.2rem; border:2px solid #53be6b; border-radius:8px; font-weight:600; cursor:pointer; background:#fff; color:#53be6b; transition:all 0.2s ease; }
+    .type-toggle-btn:hover { background:#e8f5e9; }
+    .type-toggle-btn.active { background:#53be6b; color:#fff; }
+    
+    /* Carousel Styles */
+    .dashboard-carousel { margin-bottom:2rem; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+    .carousel-item-content { position:relative; min-height:400px; display:flex; align-items:center; justify-content:center; }
+    .carousel-affiche { width:100%; height:500px; object-fit:contain; background:#f8f9fa; cursor:pointer; transition:opacity 0.2s ease; }
+    .carousel-affiche:hover { opacity:0.9; }
+    .carousel-status-badge { position:absolute; top:1rem; left:1rem; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,0.5); }
+    .carousel-status-badge.status-created { background:#9e9e9e; color:#ffffff; }
+    .carousel-status-badge.status-open { background:#2196f3; color:#fff; }
+    .carousel-status-badge.status-inprogress { background:#ff9800; color:#fff; }
+    .carousel-status-badge.status-scoring { background:#9c27b0; color:#fff; }
+    .carousel-status-badge.status-closed { background:#f44336; color:#fff; }
+    .carousel-status-badge.status-archived { background:#607d8b; color:#fff; }
+    .carousel-status-badge.status-future { background:#4caf50; color:#fff; }
+    .carousel-info-overlay { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(255, 255, 255, 0.75) 20%); padding:2rem 1.5rem 2.5rem; color:#000; pointer-events:none; }
+    .carousel-title { font-size:1.5rem; font-weight:700; margin-bottom:0.5rem; }
+    .carousel-details { font-size:1rem; opacity:0.95; }
+    .carousel-empty { text-align:center; padding:4rem 2rem; color:#999; }
+    .carousel-indicators [data-bs-target] { background-color:#3c3b3b; }
+    .carousel-control-prev, .carousel-control-next { width:50px; opacity:0.9; top:calc(50% - 20px); transform:translateY(-50%); }
+    .carousel-control-prev:hover, .carousel-control-next:hover { opacity:1; }
+    .carousel-control-prev-icon, .carousel-control-next-icon { width:2.5rem; height:2.5rem; background-color:rgba(0,0,0,0.3); border-radius:50%; padding:0.7rem; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .carousel-control-prev-icon:hover, .carousel-control-next-icon:hover { background-color:rgba(80, 79, 79, 0.8); }
+    
+    /* Competition Grid */
+    .competitions-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:1.5rem; }
+    .competition-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.08); transition:all 0.2s ease; cursor:pointer; }
+    .competition-card:hover { box-shadow:0 6px 16px rgba(0,0,0,.15); transform:translateY(-4px); }
+    .competition-affiche { width:100%; height:200px; object-fit:cover; background:#f1f3f4; }
+    .competition-body { padding:1rem; }
+    .competition-title { font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; color:#333; }
+    .competition-meta { font-size:0.9rem; color:#666; margin-bottom:0.25rem; }
+    .competition-badge { display:inline-block; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:6px; background:#e3f2fd; color:#1976d2; font-weight:600; margin-top:0.5rem; }
+    .competition-badge.adult { background:#fff3e0; color:#e65100; }
+    .competition-badge.ado { background:#f3e5f5; color:#7b1fa2; }
+    
+    /* Loading & Empty States */
+    .loading-spinner { text-align:center; padding:3rem; color:#999; }
+    .empty-state { text-align:center; padding:3rem 2rem; color:#999; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-container { padding:0.5rem; }
+        .dashboard-filters { padding:0.75rem 0.85rem; margin-bottom:1rem; }
+        .filter-row { flex-direction:column; gap:0.6rem; }
+        .filter-group { flex:1 1 auto; min-width:100%; }
+        .filter-label { font-size:0.8rem; margin-bottom:0.25rem; }
+        .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; }
+        .type-toggle-group { width:100%; display:flex; gap:0.4rem; }
+        .type-toggle-btn { flex:1 1 0; min-width:0; text-align:center; padding:0.5rem 0.3rem; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        
+        .dashboard-carousel { margin-bottom:1rem; }
+        .carousel-item-content { min-height:370px; }
+        .carousel-affiche { height:400px; object-fit:cover; }
+        .carousel-status-badge { top:0.5rem; left:0.5rem; padding:0.35rem 0.7rem; font-size:0.7rem; letter-spacing:0.3px; }
+        .carousel-info-overlay { padding:0.5rem 0.75rem 3rem; background:linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.80) 5%, rgba(255, 255, 255, 0.95)); color:#000; }
+        .carousel-title { font-size:0.95rem; margin-bottom:0.2rem; line-height:1.4; }
+        .carousel-details { font-size:0.8rem; line-height:1.2; }
+        .carousel-details div { margin-bottom:0.05rem; }
+        .carousel-details .btn { padding:0.4rem 0.8rem; font-size:0.85rem; margin-top:0.5rem; }
+        
+        .competitions-grid { grid-template-columns:repeat(2, 1fr); gap:1rem; }
+        .competition-card { margin-bottom:0; }
+        .competition-affiche { height:160px; }
+        .competition-body { padding:0.75rem 0.85rem; }
+        .competition-title { font-size:0.95rem; margin-bottom:0.4rem; }
+        .competition-meta { font-size:0.8rem; margin-bottom:0.2rem; }
+        .competition-badge { font-size:0.7rem; padding:0.2rem 0.5rem; }
+    }
 </style>
 
-
-		{% include "competition-menu.html" %}
-
-           
-
-
-		<div class="container-fluid" style="margin: 0.1rem 0.1rem; ">
-
-            <div id='calendar'></div>
-           
-				<!-- Search and results rendered client-side -->
-				<!-- Activities-style search bar -->
-				<div id="competitionSearch" class="card-search" >
-					<div class="filter-grid">
-						<div class="filter-group" style="flex:2;">
-							<label class="filter-label" data-translate-key="Search">Search</label>
-							<input type="text" id="searchText" class="filter-input" placeholder="Type to search…" />
-						</div>
-						<div class="filter-group" style="flex:1;">
-							<label class="filter-label" data-translate-key="Season">Season</label>
-							<select id="seasonSelect" class="filter-select"></select>
-						</div>
-						<div class="filter-group" style="flex:1;">
-							<label class="filter-label" data-translate-key="Type">Type</label>
-							<select id="typeSelect" class="filter-select">
-								<option value="all" data-translate-key="All">All</option>
-								<option value="adult" data-translate-key="Adult">Adult</option>
-								<option value="youth" data-translate-key="Youth">Youth</option>
-							</select>
-						</div>
-					</div>
-				</div>
+<div class="dashboard-container">
+    
+    <!-- Filter Controls -->
+    <div class="dashboard-filters">
+        <div class="filter-row">
+            <div class="filter-group">
+                <div class="filter-label" data-translate-key="Season">Season</div>
+                <select id="seasonFilter" class="filter-select">
+                    <option value="all" data-translate-key="all_seasons">All Seasons</option>
+                </select>
             </div>
-            <div class="row">
-				<!-- Grid for competitions -->
-				<div id="competitions-grid" class="row" style="margin-top:1rem;"></div>
+            <div class="filter-group">
+                <div class="filter-label" data-translate-key="competition_type">Competition Type</div>
+                <div class="type-toggle-group">
+                    <button class="type-toggle-btn active" data-type="all" data-translate-key="all">All</button>
+                    <button class="type-toggle-btn" data-type="adult" data-translate-key="competition_type_adult">Adult</button>
+                    <button class="type-toggle-btn" data-type="ado" data-translate-key="competition_type_ado">Ado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carousel Section -->
+    <div class="dashboard-carousel">
+        <div id="competitionCarousel" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-interval="false">
+            <div class="carousel-indicators" id="carouselIndicators"></div>
+            <div class="carousel-inner" id="carouselInner">
+                <div class="carousel-item active">
+                    <div class="carousel-item-content">
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#competitionCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#competitionCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Competition Grid -->
+    <div id="competitionsGrid" class="competitions-grid">
+        <div class="loading-spinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+    
+</div>
 
-		</div>
-
-		    <!-- Client-side dashboard script -->
-			<script src="public/js/competition-dashboard.js"></script>
-
-		</div>
-
-
-			</div>
-		</div>
-		<!-- fh5co-blog-section -->
-
-	</div>
+<script>
+(function() {
+    'use strict';
+    
+    // State management
+    const state = {
+        allCompetitions: [],
+        filteredCompetitions: [],
+        currentSeason: 'all',
+        currentType: 'all',
+        seasons: []
+    };
+    
+    // Compute season label from date (Sept = start of new season)
+    function computeSeason(dateStr) {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // 1-12
+        
+        // Season runs Sept-June: if month >= 9, season is year/year+1, else (year-1)/year
+        if (month >= 9) {
+            return `${year}-${year + 1}`;
+        } else {
+            return `${year - 1}-${year}`;
+        }
+    }
+    
+    // Get unique seasons from competitions
+    function extractSeasons(competitions) {
+        const seasonSet = new Set();
+        competitions.forEach(comp => {
+            const season = computeSeason(comp.date);
+            if (season) seasonSet.add(season);
+        });
+        return Array.from(seasonSet).sort().reverse(); // Most recent first
+    }
+    
+    // Filter competitions based on current state
+    function filterCompetitions() {
+        let filtered = state.allCompetitions;
+        
+        // Filter by season
+        if (state.currentSeason !== 'all') {
+            filtered = filtered.filter(comp => computeSeason(comp.date) === state.currentSeason);
+        }
+        
+        // Filter by type
+        if (state.currentType !== 'all') {
+            filtered = filtered.filter(comp => comp.competition_type === state.currentType);
+        }
+        
+        state.filteredCompetitions = filtered;
+        return filtered;
+    }
+    
+    // Populate carousel with competitions (upcoming first, then past)
+    async function updateCarousel() {
+        const filtered = state.filteredCompetitions;
+        const inner = document.getElementById('carouselInner');
+        const indicators = document.getElementById('carouselIndicators');
+        
+        inner.innerHTML = '';
+        indicators.innerHTML = '';
+        
+        if (filtered.length === 0) {
+            inner.innerHTML = `
+                <div class="carousel-item active">
+                    <div class="carousel-empty">
+                        <h4 data-translate-key="no_competitions_found">No competitions found</h4>
+                        <p data-translate-key="try_adjusting_filters">Try adjusting your filters</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Sort all competitions by date (earliest to latest)
+        const sortedCompetitions = [...filtered].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // Find the first upcoming competition index
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let defaultActiveIndex = sortedCompetitions.findIndex(comp => new Date(comp.date) >= today);
+        
+        // If no upcoming competitions, default to the last (most recent past) competition
+        if (defaultActiveIndex === -1) {
+            defaultActiveIndex = sortedCompetitions.length - 1;
+        }
+        
+        sortedCompetitions.forEach((comp, index) => {
+            // Create carousel item
+            const item = document.createElement('div');
+            item.className = `carousel-item ${index === defaultActiveIndex ? 'active' : ''}`;
+            
+            // Determine if this is the next upcoming competition
+            const compDate = new Date(comp.date);
+            const isNextUpcoming = (index === defaultActiveIndex && compDate >= today);
+            
+            // Get status info
+            const statusMap = {
+                0: { key: 'competition_status_0', class: 'status-created' },
+                1: { key: 'competition_status_1', class: 'status-open' },
+                2: { key: 'competition_status_2', class: 'status-inprogress' },
+                3: { key: 'competition_status_3', class: 'status-scoring' },
+                4: { key: 'competition_status_4', class: 'status-closed' },
+                5: { key: 'competition_status_archived', class: 'status-archived' },
+                6: { key: 'competition_status_future', class: 'status-future' }
+            };
+            
+            // Use "upcoming" for the next upcoming competition, otherwise show status
+            let statusLabel, statusClass;
+            if (isNextUpcoming) {
+                statusLabel = getTranslation('upcoming');
+                statusClass = 'status-future';
+            } else {
+                const status = comp.status !== undefined ? comp.status : 0;
+                const statusInfo = statusMap[status] || statusMap[0];
+                statusLabel = getTranslation(statusInfo.key);
+                statusClass = statusInfo.class;
+            }
+            
+            item.innerHTML = `
+                <div class="carousel-item-content">
+                    <img src="/image/${comp.id}" class="carousel-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/image/placeholder-competition.jpg'" data-url="${comp.url}">
+                    <div class="carousel-status-badge ${statusClass}">${statusLabel}</div>
+                    <div class="carousel-info-overlay">
+                        <div class="carousel-title">${escapeHtml(comp.title)}</div>
+                        <div class="carousel-details">
+                            <div><i class="bi bi-calendar-event"></i> ${formatDate(comp.date)}</div>
+                            <div><i class="bi bi-geo-alt"></i> ${escapeHtml(comp.gym)}</div>
+                            <div><i class="bi bi-trophy"></i> ${comp.text.competition_type}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click handler to the image only (not interfering with swipe)
+            const img = item.querySelector('.carousel-affiche');
+            let startX = 0, startY = 0, startTime = 0;
+            
+            img.addEventListener('mousedown', (e) => { 
+                startX = e.clientX;
+                startY = e.clientY;
+                startTime = Date.now();
+            });
+            
+            img.addEventListener('touchstart', (e) => { 
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startTime = Date.now();
+            }, { passive: true });
+            
+            img.addEventListener('click', (e) => {
+                // Only navigate if it was a quick click without much movement
+                const timeDiff = Date.now() - startTime;
+                if (timeDiff < 300) {
+                    window.location.href = comp.url;
+                }
+            });
+            
+            img.addEventListener('mouseup', (e) => {
+                const deltaX = Math.abs(e.clientX - startX);
+                const deltaY = Math.abs(e.clientY - startY);
+                const timeDiff = Date.now() - startTime;
+                // If moved more than 10px or took longer than 300ms, it was a drag
+                if (deltaX > 10 || deltaY > 10 || timeDiff > 300) {
+                    e.preventDefault();
+                }
+            });
+            
+            inner.appendChild(item);
+            
+            // Create indicator
+            const indicator = document.createElement('button');
+            indicator.type = 'button';
+            indicator.setAttribute('data-bs-target', '#competitionCarousel');
+            indicator.setAttribute('data-bs-slide-to', index);
+            if (index === defaultActiveIndex) indicator.className = 'active';
+            indicators.appendChild(indicator);
+        });
+        
+        // Reinitialize Bootstrap carousel to enable touch/swipe after dynamic content update
+        const carouselElement = document.getElementById('competitionCarousel');
+        const carousel = bootstrap.Carousel.getInstance(carouselElement);
+        if (carousel) {
+            carousel.dispose(); // Dispose old instance
+        }
+        new bootstrap.Carousel(carouselElement, {
+            touch: true,
+            interval: false
+        });
+    }
+    
+    // Render competition grid
+    function updateCompetitionGrid() {
+        const grid = document.getElementById('competitionsGrid');
+        const competitions = state.filteredCompetitions
+            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+        
+        if (competitions.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><h4 data-translate-key="no_competitions_found">No competitions found</h4><p data-translate-key="try_adjusting_filters">Try adjusting your filters</p></div>';
+            return;
+        }
+        
+        grid.innerHTML = '';
+        competitions.forEach(comp => {
+            const card = document.createElement('div');
+            card.className = 'competition-card';
+            card.onclick = () => window.location.href = comp.url;
+            
+            const badgeClass = comp.competition_type === 'adult' ? 'adult' : 'ado';
+            const statusText = comp.text.status || '';
+            
+            card.innerHTML = `
+                <img src="/image/${comp.id}" class="competition-affiche" alt="${escapeHtml(comp.title)}" onerror="this.src='/image/placeholder-competition.jpg'">
+                <div class="competition-body">
+                    <div class="competition-title">${escapeHtml(comp.title)}</div>
+                    <div class="competition-meta"><i class="bi bi-calendar-event"></i> ${formatDate(comp.date)}</div>
+                    <div class="competition-meta"><i class="bi bi-geo-alt"></i> ${escapeHtml(comp.gym)}</div>
+                    <span class="competition-badge ${badgeClass}">${comp.text.competition_type}</span>
+                    ${statusText ? `<span class="competition-badge">${escapeHtml(statusText)}</span>` : ''}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+    
+    // Update all dashboard sections
+    async function updateDashboard() {
+        filterCompetitions();
+        await updateCarousel();
+        updateCompetitionGrid();
+    }
+    
+    // Initialize filters
+    function initializeFilters() {
+        // Populate season dropdown
+        const seasonSelect = document.getElementById('seasonFilter');
+        seasonSelect.innerHTML = '<option value="all">All Seasons</option>';
+        state.seasons.forEach(season => {
+            const option = document.createElement('option');
+            option.value = season;
+            option.textContent = season;
+            seasonSelect.appendChild(option);
+        });
+        
+        // Set default to current season
+        const today = new Date();
+        const currentSeason = computeSeason(today.toISOString().split('T')[0]);
+        if (state.seasons.includes(currentSeason)) {
+            seasonSelect.value = currentSeason;
+            state.currentSeason = currentSeason;
+        }
+        
+        // Season change handler
+        seasonSelect.addEventListener('change', (e) => {
+            state.currentSeason = e.target.value;
+            updateDashboard();
+        });
+        
+        // Type toggle handlers
+        document.querySelectorAll('.type-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentType = e.target.dataset.type;
+                updateDashboard();
+            });
+        });
+    }
+    
+    // Utility functions
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    
+    // Load data and initialize
+    async function initialize() {
+        try {
+            const competitions = await apiFetchJson('/api1/competition/list');
+            state.allCompetitions = competitions;
+            state.seasons = extractSeasons(competitions);
+            
+            initializeFilters();
+            await updateDashboard();
+            
+        } catch (error) {
+            console.error('Error loading competitions:', error);
+            document.querySelector('.dashboard-container').innerHTML = 
+                '<div class="empty-state"><h3 data-translate-key="error_loading_dashboard">Error loading dashboard</h3><p data-translate-key="please_try_again">Please try again later</p></div>';
+        }
+    }
+    
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
+    }
+    
+})();
+</script>
 
 {% endblock %}

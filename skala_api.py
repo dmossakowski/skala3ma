@@ -70,6 +70,7 @@ from pydantic import BaseModel
 # Email login service (shared with server)
 from src.email_login import EmailLoginService
 from src.email_sender import EmailSender
+from src.User import User
 import jwt
 # Google auth (optional)
 try:
@@ -355,20 +356,32 @@ def recreate_session_from_jwt():
 
 
 def admin_required(fn):
+    """Admin decorator for API endpoints - returns JSON error"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         email = session.get('email') if session else None
         if email:
             user = competitionsEngine.get_user_by_email(email)
-            if user:
-                perms = user.get('permissions', {}) or {}
-                if perms.get('godmode') or user.get('godmode'):
-                    return fn(*args, **kwargs)
-                gen = perms.get('general') or []
-                if isinstance(gen, list) and ('create_gym' in gen or 'manage_users' in gen):
-                    return fn(*args, **kwargs)
+            if User.is_admin(user):
+                return fn(*args, **kwargs)
         return jsonify({'error': 'admin_required'}), 403
     return wrapper
+
+
+def admin_required_ui(fn):
+    """Admin decorator for UI routes - redirects to login page"""
+    @wraps(fn)
+    def decorated_function(*args, **kwargs):
+        if session != None:
+            email = session.get('email')
+            if email:
+                user = competitionsEngine.get_user_by_email(email)
+                if User.is_admin(user):
+                    return fn(*args, **kwargs)
+        from flask import request, redirect, url_for
+        session["wants_url"] = request.url
+        return redirect(url_for("app_ui.fsgtlogin"))
+    return decorated_function
 
 
 #@skala_api_app.get('/apitest', tags=[book_tag, comp_tag])
@@ -377,71 +390,6 @@ def testapi():
 
 
 
-@skala_api_app.post('/competitionRawAdmin')
-@session_or_jwt_required
-def fsgtadmin():
-    edittype = request.form.get('edittype')
-    id = request.form.get('id')
-    action = request.form.get('action')
-    jsondata = request.form.get('jsondata')
-    comp = {}
-    jsonobject = None
-
-    if jsondata is not None and len(jsondata) > 2:
-        jsonobject = json.loads(jsondata)
-
-    if edittype == 'user':
-        if jsonobject is not None and action == 'update':
-            competitionsEngine.upsert_user(jsonobject)
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_user_by_email(id)
-
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_user_emails()
-
-    elif edittype == 'competition':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine._update_competition(jsonobject['id'],jsonobject)
-        if id is not None  and action == 'delete':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine.delete_competition(id)
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.getCompetition(id)
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_competition_ids()
-
-    elif edittype == 'gym':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            competitionsEngine.update_gym(jsonobject['id'], jsonobject)
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_gym(id)
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_gyms()
-
-    elif edittype == 'routes':
-        if jsonobject is not None  and action == 'update':
-            #jsonobject = {"success": "competition updated"}
-            # None is gymid but this is ok as the routes id will be found
-            competitionsEngine.upsert_routes(id, None, jsonobject)
-
-
-        if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_routes(id)
-
-        if id is not None and action == 'findall':
-            jsonobject = competitionsEngine.get_all_routes_ids()
-
-    else:
-        jsonobject = {"error": "choose edit type" }
-
-    return render_template('competitionRawAdmin.html',
-                           jsondata=json.dumps(jsonobject),
-                           reference_data=competitionsEngine.reference_data,
-                           id=id)
 
 
 @skala_api_app.post('/auth/login')
@@ -708,7 +656,7 @@ def api_auth_status():
             'firstname': user.get('firstname'),
             'lastname': user.get('lastname'),
             'club': user.get('club'),
-            'godmode': bool(user.get('permissions', {}).get('godmode') or user.get('godmode'))
+            'is_admin': User.is_admin(user),
         }
     })
 
@@ -1241,6 +1189,11 @@ def get_competition_by_id(competition_id):
         for climber in competition.get('climbers').values():
             climber.pop('routesClimbed2', None)
 
+    # removing routes does not speed up rendering of climbers 
+    #if request.args.get('remove') == 'routes':
+    #competition.pop('routes', None)
+
+
     if competition is None:
         return {"error": "competition not found"}
     return jsonify(competition)
@@ -1400,6 +1353,292 @@ def getCompetitionStats(competitionId):
     return json.dumps(statresponse)
 
 
+
+@skala_api_app.route('/competition/<competitionId>/rankings')
+#@session_or_jwt_required
+def getCompetitionRankings(competitionId):
+    competition = None
+
+    if competitionId is not None:
+        competition = competitionsEngine.recalculate(competitionId)
+
+    if competition is None:
+        return []
+    elif competition is LookupError:
+        return []
+    elif len(competition) == 0:
+        return []
+
+    rankings = competitionsEngine.get_sorted_rankings(competition)
+    # walk through the rankings and remove email 
+    for category in rankings:
+        for climber in rankings[category]:
+            climber.pop('email', None)
+       
+    return rankings
+
+
+
+@skala_api_app.route('/season/<season>/rankings')
+def getSeasonRankings(season):
+    """
+    Calculate season rankings based on FSGT rules with separate men's and women's categories.
+    
+    Rules:
+    - If n competitions <= 5: aggregate (n-1) best results
+    - If n competitions > 5: aggregate (n-2) best results
+    - Top 30 climbers score points: 1st=30pts, 2nd=29pts, ..., 30th=1pt
+    - Categories by age (as of 1/1/26): Seniors (18-39), Titane (40-49), Diamant (50+)
+    - Separate rankings for men (0M, 1M, 2M) and women (0F, 1F, 2F)
+    - Tie-breaker: most participations wins
+    
+    Club rankings:
+    - 1 point per unique participant (counted once across all categories)
+    - Plus bonus for top 5 in each category: 1st=5pts, 2nd=4pts, 3rd=3pts, 4th=2pts, 5th=1pt
+    - Tie-breaker: most participants total, then most women participants
+    
+    Args:
+        season: Season string like "2025-2026"
+        
+    Query params:
+        competition_type: Filter by 'adult' or 'ado' (optional)
+        
+    Returns:
+        JSON with structure:
+        {
+            "individual": {
+                "F": {"0F": [...], "1F": [...], "2F": [...]},
+                "M": {"0M": [...], "1M": [...], "2M": [...]}
+            },
+            "club": [...]
+        }
+    """
+    try:
+        # Get competition type filter
+        competition_type = request.args.get('competition_type')
+        
+        # Parse season to get date range
+        season_parts = season.split('-')
+        if len(season_parts) != 2:
+            return jsonify({"error": "Invalid season format. Use YYYY-YYYY"}), 400
+        
+        start_year = int(season_parts[0])
+        end_year = int(season_parts[1])
+        
+        # Season runs from September to June
+        season_start = datetime(start_year, 9, 1)
+        season_end = datetime(end_year, 6, 30)
+        
+        # Get all competitions in the season
+        all_comps = competitionsEngine.getCompetitions()
+        season_competitions = []
+        
+        for comp_id, comp in all_comps.items():
+            comp_date = datetime.strptime(comp['date'], '%Y-%m-%d')
+            if season_start <= comp_date <= season_end:
+                # Filter by competition type if specified
+                if competition_type and comp.get('competition_type') != competition_type:
+                    continue
+                season_competitions.append(comp_id)
+        
+        if len(season_competitions) == 0:
+            return jsonify({
+                "season": season,
+                "competition_type": competition_type,
+                "competitions_count": 0,
+                "individual": {},
+                "club": []
+            })
+        
+        # Calculate how many results to count
+        n = len(season_competitions)
+        results_to_count = n - 1 if n <= 5 else n - 2
+        
+        # Collect all results from season competitions
+        participant_results = {}  # {climber_id: {category, club, sex, firstname, lastname, results: [{comp_id, rank, participations}]}}
+        
+        for comp_id in season_competitions:
+            competition = competitionsEngine.recalculate(comp_id)
+            if not competition:
+                continue
+                
+            rankings = competitionsEngine.get_sorted_rankings(competition)
+            
+            # Log what categories are available
+            logging.debug(f"Competition {comp_id} has categories: {list(rankings.keys())}")
+            
+            # Process each category (0F, 1F, 2F, 0M, 1M, 2M, plus F, M, A for older formats)
+            for category_key, climbers_list in rankings.items():
+                # Skip non-age categories or combined categories
+                if category_key in ['F', 'M', 'A']:
+                    continue
+                    
+                for idx, climber in enumerate(climbers_list):
+                    rank = idx + 1
+                    climber_id = climber.get('id')
+                    
+                    # Calculate points (top 30 only)
+                    points = max(0, 31 - rank) if rank <= 30 else 0
+                    
+                    if climber_id not in participant_results:
+                        participant_results[climber_id] = {
+                            'category': category_key,
+                            'club': climber.get('club', ''),
+                            'sex': climber.get('sex', ''),
+                            'firstname': climber.get('firstname', ''),
+                            'lastname': climber.get('lastname', ''),
+                            'results': []
+                        }
+                    
+                    participant_results[climber_id]['results'].append({
+                        'comp_id': comp_id,
+                        'rank': rank,
+                        'points': points
+                    })
+        
+        # Calculate individual rankings - separate by gender and category
+        # Structure: {gender: {category: [climbers]}}
+        # Categories: 0=Seniors(18-39), 1=Titane(40-49), 2=Diamant(50+)
+        gender_category_rankings = {
+            'M': {'0M': [], '1M': [], '2M': []},  # Men's rankings by category
+            'F': {'0F': [], '1F': [], '2F': []}   # Women's rankings by category
+        }
+        
+        for climber_id, data in participant_results.items():
+            category = data['category']  # e.g., '0F', '1M', '2F'
+            sex = data['sex']  # 'M' or 'F'
+            
+            # Sort results by points descending and take best N
+            sorted_results = sorted(data['results'], key=lambda x: x['points'], reverse=True)
+            best_results = sorted_results[:results_to_count]
+            
+            total_points = sum(r['points'] for r in best_results)
+            participations = len(data['results'])
+            
+            # Debug logging
+            if climber_id and category and sex:
+                logging.debug(f"Processing climber {climber_id}: category={category}, sex={sex}, points={total_points}")
+            
+            # Only add if category exists in our structure
+            if sex in gender_category_rankings and category in gender_category_rankings[sex]:
+                gender_category_rankings[sex][category].append({
+                    'climber_id': climber_id,
+                    'firstname': data['firstname'],
+                    'lastname': data['lastname'],
+                    'club': data['club'],
+                    'sex': data['sex'],
+                    'category': category,
+                    'total_points': total_points,
+                    'participations': participations,
+                    'results_counted': results_to_count,
+                    'best_results': best_results
+                })
+            else:
+                # Log when category/sex doesn't match
+                logging.warning(f"Skipping climber {climber_id} ({data.get('firstname')} {data.get('lastname')}): sex={sex}, category={category} - not in expected structure")
+        
+        # Sort each gender+category by total_points desc, then participations desc
+        for gender in gender_category_rankings:
+            for category in gender_category_rankings[gender]:
+                gender_category_rankings[gender][category].sort(
+                    key=lambda x: (x['total_points'], x['participations']),
+                    reverse=True
+                )
+                # Add rank within category
+                for idx, climber in enumerate(gender_category_rankings[gender][category]):
+                    climber['rank'] = idx + 1
+        
+        # Remove empty categories from the response
+        for gender in list(gender_category_rankings.keys()):
+            for category in list(gender_category_rankings[gender].keys()):
+                if len(gender_category_rankings[gender][category]) == 0:
+                    del gender_category_rankings[gender][category]
+            # Remove gender if no categories left
+            if len(gender_category_rankings[gender]) == 0:
+                del gender_category_rankings[gender]
+        
+        # Calculate club rankings based on individual category results
+        club_scores = {}  # {club_name: {points, participants_m, participants_f, category_points}}
+        
+        for gender in gender_category_rankings:
+            for category, climbers_list in gender_category_rankings[gender].items():
+                for climber in climbers_list:
+                    club = climber['club']
+                    if not club:
+                        continue
+                    
+                    if club not in club_scores:
+                        club_scores[club] = {
+                            'club': club,
+                            'points': 0,
+                            'participants_m': 0,
+                            'participants_f': 0,
+                            'total_participants': 0
+                        }
+                    
+                    # 1 point per participant (counted once per person, not per category)
+                    climber_id = climber['climber_id']
+                    # We need to track unique participants
+                    if 'participants' not in club_scores[club]:
+                        club_scores[club]['participants'] = set()
+                    
+                    if climber_id not in club_scores[club]['participants']:
+                        club_scores[club]['participants'].add(climber_id)
+                        club_scores[club]['points'] += 1
+                        club_scores[club]['total_participants'] += 1
+                        
+                        # Track M/F participants
+                        if climber['sex'] == 'F':
+                            club_scores[club]['participants_f'] += 1
+                        else:
+                            club_scores[club]['participants_m'] += 1
+                    
+                    # Bonus points for top 5 in each category
+                    rank = climber['rank']
+                    if rank == 1:
+                        club_scores[club]['points'] += 5
+                    elif rank == 2:
+                        club_scores[club]['points'] += 4
+                    elif rank == 3:
+                        club_scores[club]['points'] += 3
+                    elif rank == 4:
+                        club_scores[club]['points'] += 2
+                    elif rank == 5:
+                        club_scores[club]['points'] += 1
+        
+        # Clean up participants set before JSON serialization
+        for club in club_scores.values():
+            if 'participants' in club:
+                del club['participants']
+        
+        # Sort clubs by points desc, then total_participants, then participants_f
+        club_rankings = sorted(
+            club_scores.values(),
+            key=lambda x: (x['points'], x['total_participants'], x['participants_f']),
+            reverse=True
+        )
+        
+        # Add rank to clubs
+        for idx, club in enumerate(club_rankings):
+            club['rank'] = idx + 1
+        
+        return jsonify({
+            'season': season,
+            'competition_type': competition_type,
+            'competitions_count': n,
+            'results_counted': results_to_count,
+            'competitions': season_competitions,
+            'individual': gender_category_rankings,  # Now structured as {gender: {category: [climbers]}}
+            'club': club_rankings
+        })
+        
+    except Exception as e:
+        logging.error(f"Error calculating season rankings: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
 # Statistics for a competition for apex charts
 @skala_api_app.route('/competition/<competitionId>/fullresults')
 #@session_or_jwt_required
@@ -1489,7 +1728,7 @@ def getCompetitionFlatFullTable(competitionId):
     statresponse = { "chartdata": statout,
                     "routedata" : routes}
     
-    return json.dumps(full_routes_table)
+    return full_routes_table
     #return full_routes_table
 
 
@@ -1581,6 +1820,7 @@ def get_users_by_gym(gym_id):
         user.pop('email', None)
         #user.pop('permissions', None)
         user.pop('isgod',None)
+        user.pop('godmode',None)
         
         if user.get('fpictureurl') is not None:
             user['pictureurl'] = user.get('fpictureurl')
@@ -1607,6 +1847,7 @@ def get_all_users():
         user.pop('email', None)
         #user.pop('permissions', None)
         user.pop('isgod',None)
+        user.pop('godmode',None)
         
         if user.get('fpictureurl') is not None:
             user['pictureurl'] = user.get('fpictureurl')
@@ -2314,6 +2555,7 @@ def search_gyms():
         gym.pop('email', None)
         #user.pop('permissions', None)
         gym.pop('isgod',None)
+        gym.pop('godmode',None)
         
         if gym.get('fpictureurl') is not None:
             gym['pictureurl'] = gym.get('fpictureurl')

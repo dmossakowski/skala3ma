@@ -1,3 +1,5 @@
+import os
+
 class User:
     def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid):
         self.email = email
@@ -42,22 +44,50 @@ class User:
 
     # returns base empty permissions dictionary
     # who can create new competition? gym admins?
-    # if this is the first user who logs in then this user becomes the godmode user
     @staticmethod
     def generate_permissions():
         return {
-            "godmode": False,
             "general": [], # crud_competition crud_gym
             "users":[''],
             "competitions":['abc','def'], # everyone has ability to modify these test competitions
             "gyms":[] # contains gym ids
         }
     
+    @staticmethod
+    def is_admin(user):
+        """
+        Check if a user has admin privileges based on ADMIN_USERS environment variable.
+        
+        Args:
+            user: User dictionary or User object with 'email' field
+            
+        Returns:
+            bool: True if user is an admin, False otherwise
+        """
+        if user is None:
+            return False
+        
+        # Get email from dict or object
+        email = user.get('email') if isinstance(user, dict) else getattr(user, 'email', None)
+        
+        if email is None:
+            return False
+        
+        # Load admin users from environment variable
+        admin_users = os.getenv('ADMIN_USERS', '').split(',')
+        admin_users = [e.strip() for e in admin_users if e.strip()]
+        
+        return email in admin_users
+    
     
     def get_permissions(self, type=None):
         return self.permissions.get(type, [])
     
+
     def get_home_gym(self):
         if not self.gymid:
             return None
         return self.gymid
+    
+
+    
