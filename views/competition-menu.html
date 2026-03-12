@@ -1,61 +1,171 @@
 					<!-- START #fh5co-menu-wrap -->
-					<div class="nav">
+<div class="navbar">
 
 {% if competition is defined %}
 
+<!-- Mobile Menu Bar (visible only on mobile) -->
+<div class="d-md-none d-flex align-items-center justify-content-between w-100 px-3 py-2 border-bottom">
+    <div class="flex-grow-1 me-3">
+        <strong>{{ competition['name'] }}</strong><br>
+        <small class="text-muted">({{ reference_data['current_language']['competition_status_'~competition['status']] }})</small>
+    </div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#competitionMenuOffcanvas" aria-controls="competitionMenuOffcanvas" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon" style="background-image: none; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-list" style="font-size: 1.5rem; color: #29c05c;"></i>
+        </span>
+    </button>
+</div>
 
-<ul class="nav justify-content-center ">
-<!-- li>{{ competition['name'] }}</li -->
+<!-- Desktop Navigation (hidden on mobile) -->
+<ul class="nav justify-content-center d-none d-md-flex">
+    <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
+        <i class="bi bi-trophy-fill me-1"></i>
+        <b>{{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</b>
+    </a>
 
-    <a href="/competitionDetails/{{ competitionId}}"  class="nav-link sf-menu2"><i class="bi bi-trophy-fill"></i>
-       <b> {{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</b></a></li>
+    <a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link competition-menu-link">
+        <i class="bi bi-person-check me-1"></i>{{ reference_data['current_language'].registration }}
+    </a>
 
-					<a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link">{{ reference_data['current_language'].registration }}</a> </li>
-						<!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
-					<a href="/climbers/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a></li>
+    <a href="/climbers/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
+        <i class="bi bi-people me-1"></i>{{ reference_data['current_language'].climbers }}
+    </a>
 
-                    <a href="/competitionRoutes/{{ competitionId}}" class="nav-link sf-menu2">{{ reference_data['current_language'].routes }}</a></li>
-                    <a href="/competitionFullResults/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].resultats }}</a></li>
+    <a href="/competitionRoutes/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
+        <i class="bi bi-pin-map me-1"></i>{{ reference_data['current_language'].routes }}
+    </a>
 
-				<a href="/competitionResults/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].Rankings }}</a></li>
+    <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-list-check me-1"></i>{{ reference_data['current_language'].resultats }}
+    </a>
 
-					<a href="/competitionStats/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].statistics }}</a>
+    <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-trophy me-1"></i>{{ reference_data['current_language'].Rankings }}
+    </a>
 
-                    <a href="/competition_contact/{{ competitionId}}" class="nav-link">{{ reference_data['current_language'].Contact }}</a>
-                   
-                                
-                                    <!--ul class="fh5co-sub-menu">
-                                        <li><a href="/user" class="fh5co-sub-down">{{ reference_data['current_language'].myprofile }}</a></li>
-                                    </ul-->
-                                
+    <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-graph-up me-1"></i>{{ reference_data['current_language'].statistics }}
+    </a>
 
-						
-							<!-- <ul class="fh5co-sub-menu">
-							<li><a href="/competitionResults/{{ competitionId}}/download">Download</a> </li>
-								</li></ul>-->
+    <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
+    </a>
+    <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
+    </a>
+
+    {% if competition is defined and competition is not none %}
+    <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link">
+        <i class="bi bi-gear me-1"></i>Admin
+    </a>
+    {% endif %}
+</ul>
+
+
+
+
+
+<!-- Mobile Offcanvas Menu -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="competitionMenuOffcanvasLabel">
+            {{ competition['name'] }}<br>
+            <small class="text-muted">({{ reference_data['current_language']['competition_status_'~competition['status']] }})</small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <nav class="nav flex-column">
+            <a href="/competitionDetails/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-trophy-fill me-2"></i>{{ reference_data['current_language'].competition_details|default('Competition Details') }}
+            </a>
+
+            <a href="/competitionDashboard/{{ competitionId}}/register" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-person-check me-2"></i>{{ reference_data['current_language'].registration }}
+            </a>
+
+            <a href="/climbers/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-people me-2"></i>{{ reference_data['current_language'].climbers }}
+            </a>
+
+            <a href="/competitionRoutes/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-pin-map me-2"></i>{{ reference_data['current_language'].routes }}
+            </a>
+
+            <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-list-check me-2"></i>{{ reference_data['current_language'].resultats }}
+            </a>
+
+            <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-trophy me-2"></i>{{ reference_data['current_language'].Rankings }}
+            </a>
+
+            <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-graph-up me-2"></i>{{ reference_data['current_language'].statistics }}
+            </a>
+
+            <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-envelope me-2"></i>{{ reference_data['current_language'].Contact }}
+            </a>
+
+            {% if competition is defined and competition is not none %}
+            <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+                <i class="bi bi-gear me-2"></i>Admin
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+</div>
+
+<style>
+    /* Icon spacing for desktop menu */
+    .competition-menu-link i {
+        margin-right: 0.25rem;
+    }
+    
+    /* Mobile offcanvas link styling */
+    .competition-menu-link-mobile {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        color: rgba(51, 51, 51, 0.7);
+        transition: all 0.3s ease;
+    }
+    
+    .competition-menu-link-mobile:hover {
+        color: #29c05c;
+        background-color: rgba(41, 192, 92, 0.1);
+    }
+    
+    .competition-menu-link-mobile i {
+        font-size: 1.3rem;
+        width: 30px;
+    }
+    
+    /* Active page styling */
+    .competition-menu-link.active,
+    .competition-menu-link-mobile.active {
+        font-weight: bold !important;
+        color: #29c05c !important;
+    }
+</style>
+
+<script>
+    // Highlight active page links on load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all competition menu links (both desktop and mobile)
+        const allLinks = document.querySelectorAll('.competition-menu-link, .competition-menu-link-mobile');
+        
+        allLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && window.isActivePage && window.isActivePage(href)) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
 
 {% endif %}
-
-						{% if username is defined %}
-
-							<!--li><a href="/progresstest">Progress</a></li-->
-
-
-
-								{% endif %}
-							<!--li><a href="blog.html">Blog</a></li-->
-							<!--li class="active"><a href="blog.html">Blog</a></li-->
-							<!--li><a href="contact.html">Contact</a></li-->
-							{% if username is not defined %}
-
-							{% endif %}
-
-
-{% if competition is defined and competition is not none %}
-
-				<a href="/competition_admin/{{competitionId}}" class="nav-link">Admin</a></li>
-							{% endif %}
-						</ul>
-
 </div>
 					

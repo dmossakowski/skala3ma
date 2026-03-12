@@ -676,3 +676,38 @@ function clearTranslations() {
             
         });
     }
+
+
+// ================= ACTIVE PAGE DETECTION =================
+/**
+ * Determines if a given link href matches the current page based on the first path segment
+ * @param {string} linkHref - The href attribute of the link to check
+ * @returns {boolean} - True if the first path segment matches the current page, false otherwise
+ * 
+ * Example:
+ *   Current page: /climbers/123
+ *   Link href: /climbers/456
+ *   Returns: true (both have '/climbers' as first segment)
+ */
+function isActivePage(linkHref) {
+    if (!linkHref) return false;
+    
+    // Get current pathname
+    const currentPath = window.location.pathname;
+    
+    // Extract first path segment from both URLs
+    // Split by '/' and filter out empty strings
+    const currentSegments = currentPath.split('/').filter(s => s);
+    const linkSegments = linkHref.split('/').filter(s => s);
+    
+    // If either has no segments, no match
+    if (currentSegments.length === 0 || linkSegments.length === 0) {
+        return false;
+    }
+    
+    // Compare first segments
+    return currentSegments[0] === linkSegments[0];
+}
+
+// Attach to window for use in templates
+window.isActivePage = isActivePage;
