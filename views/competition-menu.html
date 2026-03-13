@@ -3,7 +3,7 @@
 
 {% if competition is defined %}
 
-<!-- Mobile Menu Bar (visible only on mobile) -->
+<!-- Mobile Menu Bar (visible only on mobile/tablet) -->
 <div class="d-md-none d-flex align-items-center justify-content-between w-100 px-3 py-2 border-bottom">
     <div class="flex-grow-1 me-3">
         <strong>{{ competition['name'] }}</strong><br>
@@ -16,7 +16,7 @@
     </button>
 </div>
 
-<!-- Desktop Navigation (hidden on mobile) -->
+<!-- Desktop Navigation (hidden on mobile/tablet) -->
 <ul class="nav justify-content-center d-none d-md-flex">
     <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
         <i class="bi bi-trophy-fill me-1"></i>
@@ -50,9 +50,6 @@
     <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link">
         <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
     </a>
-    <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link">
-        <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
-    </a>
 
     {% if competition is defined and competition is not none %}
     <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link">
@@ -66,7 +63,7 @@
 
 
 <!-- Mobile Offcanvas Menu -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
+<div class="offcanvas offcanvas-end d-md-none" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="competitionMenuOffcanvasLabel">
             {{ competition['name'] }}<br>
