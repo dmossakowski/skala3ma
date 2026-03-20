@@ -1296,38 +1296,6 @@ def myskala():
 
 
 
-@app_ui.route('/mygyms')
-@login_required
-def get_mygyms():
-    if session.get('email') is None:
-        return render_template('competitionDashboard.html', sortedA=None,
-                               reference_data=competitionsEngine.reference_data,
-                               subheader_message="No user found",
-                               **session)
-
-    climber = competitionsEngine.get_user_by_email(session.get('email'))
-    user = User.from_dict(climber)
-    ids = user.get_permissions('gyms')
-    
-    homegym = competitionsEngine.get_gym(user.get_home_gym())
-    
-    gyms = competitionsEngine.get_gyms_by_ids(ids)
-
-    email = session.get('email')
-    name = session.get('name')
-
-    if name is None:
-        name = ""
-
-    return render_template('gyms-home.html',
-                           #subheader_message=subheader_message,
-                           competitionId=None,
-                           climber=climber,
-                           gyms=gyms,
-                           reference_data=competitionsEngine.reference_data,
-                           logged_email=email,
-                           logged_name=email,
-                            **session)
 
 
 @app_ui.route('/myactivities', methods=['GET'])

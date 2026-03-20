@@ -58,12 +58,10 @@
     {% endif %}
 </ul>
 
+</div>
 
-
-
-
-<!-- Mobile Offcanvas Menu -->
-<div class="offcanvas offcanvas-end d-md-none" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
+<!-- Mobile Offcanvas Menu (outside navbar so navbar-expand-md doesn't force it visible) -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="competitionMenuOffcanvasLabel">
             {{ competition['name'] }}<br>
@@ -164,5 +162,4 @@
 </script>
 
 {% endif %}
-</div>
 					
