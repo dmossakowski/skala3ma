@@ -53,9 +53,9 @@
                     })();
                     // Disc visualization logic for gym routes
                     // Requirements implemented:
-                    //  * Maintain original route order
-                    //  * Group into discs of 5..10 routes (soft preferred size)
-                    //  * Each disc: no duplicate color1 (line count no longer limited)
+                    //  * Maintain original route order (sorted by line then routenum)
+                    //  * Divide sequentially into discs of configurable size (default 6, max 8)
+                    //  * Per-disc size adjustable; only the last disc absorbs the change
                     //  * Render each disc as an SVG radial chart ("disc") with slices colored
                     //  * color_modifier "marble" -> gradient / mixed look
                     //  * Provide small badges for quick route reference
@@ -64,11 +64,10 @@
                     const userConfig = {
                         gymid: "{{gymid}}",
                         routeListId: "{{routesid}}",
-                        preferredRoutesPerDisc: 8, // soft target
-                        minPerDisc: 4,
+                        defaultRoutesPerDisc: 6,
                         maxPerDisc: 8,
                         discSizePx: 220,
-                        faviconPath: '/public/images/favicon.png',
+                        faviconPath: '/public/images/favicon-skala3ma-128.png',
                         //faviconPath: '/gym/{{gymid}}/{{routesid}}/qr',
                         // Optional positional array of per-disc size overrides (string or number); empty entries mean no override.
                         discSizeOverrides: []
@@ -241,79 +240,30 @@
                         return lum > 0.55 ? 'rgba(30,30,30,0.55)' : 'rgba(255,255,255,0.55)';
                     }
 
-                    function groupRoutesIntoDiscs(routes, cfg) {
+                    function groupRoutesIntoDiscs(routes, cfg, perDiscTargets) {
+                        if (!routes.length) return [];
+                        const maxPerDisc = cfg.maxPerDisc || 8;
+                        const defaultSize = cfg.defaultRoutesPerDisc || 6;
                         const discs = [];
-                        let current = [];
-                        let colors = new Set();
-                        // Lines are tracked only for informational display now (no limitation)
-                        let lines = new Set();
-
-                        function reset() { current = []; colors = new Set(); lines = new Set(); }
-                        function finalize() { if (current.length) { discs.push(current); reset(); } }
-
-                        for (let i=0;i<routes.length;i++) {
-                            const rt = routes[i];
-                            const color = (rt.color1||'#888888').trim();
-                            const line = (rt.line||'na').trim();
-                            const colorConflict = colors.has(color);
-                            const sizeLimit = current.length >= cfg.maxPerDisc;
-
-                            if (current.length === 0) {
-                                current.push(rt); colors.add(color); lines.add(line); continue;
+                        let offset = 0;
+                        let discIdx = 0;
+                        while (offset < routes.length) {
+                            const remaining = routes.length - offset;
+                            // Use stored target for this disc if available, otherwise default
+                            let size = (perDiscTargets[discIdx] != null) ? perDiscTargets[discIdx] : defaultSize;
+                            // Clamp between 1 and maxPerDisc
+                            size = Math.max(1, Math.min(size, maxPerDisc));
+                            // Don't take more than remaining routes
+                            size = Math.min(size, remaining);
+                            // If this is the last chunk (what's left fits), take all remaining
+                            if (remaining <= size) {
+                                discs.push(routes.slice(offset, offset + remaining));
+                                break;
                             }
-
-                            if (!colorConflict && !sizeLimit) {
-                                current.push(rt); colors.add(color); lines.add(line); continue;
-                            }
-
-                            if (current.length >= cfg.minPerDisc) {
-                                finalize();
-                                current.push(rt); colors.add(color); lines.add(line); continue;
-                            }
-
-                            // Need to reach minimum size but blocked only by color conflict: attempt limited look-ahead reorder
-                            if (colorConflict) {
-                                let inserted = false;
-                                for (let j=i+1; j<routes.length && j<i+6; j++) { // peek ahead a few
-                                    const cand = routes[j];
-                                    const cColor = (cand.color1||'#888888').trim();
-                                    if (!colors.has(cColor)) {
-                                        routes.splice(j,1);
-                                        routes.splice(i,0,cand);
-                                        inserted = true; i--; // reprocess with candidate
-                                        break;
-                                    }
-                                }
-                                if (inserted) continue;
-                            }
-
-                            // Fallback: try merge with previous disc if possible, else finalize early
-                            if (current.length < cfg.minPerDisc) {
-                                const prev = discs[discs.length-1];
-                                if (prev) {
-                                    let prevColors = new Set(prev.map(r=> (r.color1||'#888888').trim()));
-                                    let canMerge = true;
-                                    if (prev.length + current.length > cfg.maxPerDisc) canMerge = false;
-                                    if (canMerge) {
-                                        for (const r of current) {
-                                            const c = (r.color1||'#888888').trim();
-                                            if (prevColors.has(c)) { canMerge = false; break; }
-                                        }
-                                    }
-                                    if (canMerge) {
-                                        current.forEach(r=>{ prev.push(r); prevColors.add((r.color1||'#888888').trim()); });
-                                        reset();
-                                    } else {
-                                        finalize();
-                                    }
-                                } else {
-                                    finalize();
-                                }
-                                // Start new disc with rt
-                                current.push(rt); colors.add(color); lines.add(line); continue;
-                            }
+                            discs.push(routes.slice(offset, offset + size));
+                            offset += size;
+                            discIdx++;
                         }
-                        finalize();
                         return discs;
                     }
 
@@ -327,9 +277,13 @@
                         const defs = [];
                         svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="disc-svg" data-disc="${discIndex}">`);
                         svg.push('<defs>');
-                        const faviconSize = r * 0.55; // relative size of center icon (20% larger than previous 0.45r)
+                        // Make the inner circle larger so it is easier to read line numbers and has more real estate.
+                        const faviconSize = r * 0.15; // relative size of center icon (previously 0.55r)
+                        // Position the center icon above the geometric center of the disc (near the top)
+                        const iconCx = cx;
+                        const iconCy = cy - (r * 0.89);
                         // Clip path for favicon so it stays circular
-                        defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
+                        defs.push(`<clipPath id="clip_favicon_${discIndex}"><circle cx="${iconCx}" cy="${iconCy}" r="${(faviconSize/2).toFixed(2)}" /></clipPath>`);
                         discRoutes.forEach((rt,i)=>{
                             if (rt.color_modifier === 'marble') {
                                 const base = (rt.color1||'#999999').trim();
@@ -340,6 +294,9 @@
                         });
                         svg.push(defs.join(''));
                         svg.push('</defs>');
+
+
+                        
                         discRoutes.forEach((rt,i)=>{
                             const start = i*anglePer - Math.PI/2;
                             const end = start + anglePer;
@@ -366,79 +323,46 @@
                             const rectW = textWidth + 6;
                             const rectH = textHeight + 4;
                             svg.push(`<path d="${d}" fill="${fill}" stroke="#222" stroke-width="1" data-route-id="${rt.id}"><title>#${routeNum} ${rt.grade||''} line:${rt.line||''}</title></path>`);
+                            // Add line number nearer the center (inside the inner circle) and grade label closer to edge.
+                            const lineRadius = r * 0.28;
+                            const lineFontSize = Math.max(9, r/8);
+                            const lxLine = cx + lineRadius*Math.cos(mid);
+                            const lyLine = cy + lineRadius*Math.sin(mid);
+                            const lineText = lineVal ? lineVal : '';
                             svg.push(`<g pointer-events="none">`+
+                                     // Line number label inside the disc with light circle background
+                                     (lineText ? `<circle cx="${lxLine.toFixed(1)}" cy="${lyLine.toFixed(1)}" r="${(lineFontSize * 0.95).toFixed(1)}" fill="rgba(255,255,255,0.75)" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/>`+
+                                                `<text class="slice-line" x="${lxLine.toFixed(1)}" y="${lyLine.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${lineFontSize.toFixed(0)}" fill="#000" style="font-family:Arial,sans-serif;font-weight:700;">${lineText}</text>` : '')+
                                      `<rect x="${rectX.toFixed(1)}" y="${rectY.toFixed(1)}" rx="4" ry="4" width="${rectW.toFixed(1)}" height="${rectH.toFixed(1)}" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>`+
-                                     `<text class="slice-grade" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:700;">${label}</text>`+
+                                     `<text class="slice-grade" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize.toFixed(0)}" fill="#111" style="font-family:Arial,sans-serif;font-weight:800;">${label}</text>`+
                                      `</g>`);
                         });
+
+                        // Disc boundary (stroke) is drawn first so the centered icon can appear on top.
                         svg.push(`<circle cx="${cx}" cy="${cy}" r="${r-0.5}" fill="none" stroke="#555" stroke-width="2"/>`);
                         // Base circle backdrop (slightly larger than favicon) for contrast
-                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${(faviconSize/2 + 4).toFixed(2)}" fill="#ffffffdd" stroke="#444" stroke-width="1"/>`);
+                        svg.push(`<circle cx="${iconCx}" cy="${iconCy}" r="${(faviconSize/2 + 2).toFixed(2)}" fill="#eeeeeeff" stroke="#ccc" stroke-width="1"/>`);
                         // Favicon image (will fail silently if not found)
-                        svg.push(`<image href="${cfg.faviconPath}" x="${(cx - faviconSize/2).toFixed(2)}" y="${(cy - faviconSize/2).toFixed(2)}" width="${faviconSize.toFixed(2)}" height="${faviconSize.toFixed(2)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#clip_favicon_${discIndex})" />`);
+                        svg.push(`<image href="${cfg.faviconPath}" x="${(iconCx - faviconSize/2).toFixed(2)}" y="${(iconCy - faviconSize/2).toFixed(2)}" width="${faviconSize.toFixed(2)}" height="${faviconSize.toFixed(2)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#clip_favicon_${discIndex})" />`);
+
                         svg.push('</svg>');
                         return svg.join('');
                     }
 
-                    function applyPerDiscTargets(discs) {
-                        // Adjust discs sequentially according to per-disc targets while preserving order & constraints (only color uniqueness now)
-                        function canAdd(disc, route) {
-                            const color = (route.color1||'#').trim();
-                            if (disc.some(r => (r.color1||'#').trim() === color)) return false;
-                            return true; // line count no longer restricted
-                        }
-                        // Work on mutable copy
-                        for (let i=0; i<discs.length; i++) {
-                            let target = __perDiscTargets[i];
-                            if (!target || target < 1) continue;
-                            let disc = discs[i];
-                            if (target > disc.length) {
-                                // expand by borrowing from subsequent discs
-                                let needed = target - disc.length;
-                                let lookIdx = i+1;
-                                while (needed > 0 && lookIdx < discs.length) {
-                                    let donor = discs[lookIdx];
-                                    if (!donor.length) { lookIdx++; continue; }
-                                    // Try first movable route or scan for candidate
-                                    let moved = false;
-                                    for (let di=0; di<donor.length; di++) {
-                                        const cand = donor[di];
-                                        if (canAdd(disc, cand)) {
-                                            disc.push(cand);
-                                            donor.splice(di,1);
-                                            needed--; moved=true; break;
-                                        }
-                                    }
-                                    if (!moved) lookIdx++; // can't take from this donor currently
-                                    if (donor.length === 0) {
-                                        discs.splice(lookIdx,1); // remove empty donor; indices shift
-                                    }
-                                }
-                            } else if (target < disc.length) {
-                                // shrink by moving last routes forward to next disc (create if needed)
-                                while (disc.length > target) {
-                                    const moved = disc.pop();
-                                    let nextDisc;
-                                    if (i === discs.length-1) {
-                                        nextDisc = [];
-                                        discs.push(nextDisc);
-                                    } else {
-                                        nextDisc = discs[i+1];
-                                    }
-                                    nextDisc.unshift(moved);
-                                }
-                            }
-                        }
-                        // Cleanup empty discs if any
-                        return discs.filter(d=>d.length>0);
-                    }
+                    
 
                     function computeDiscs(routes, cfg) {
-                        let base = groupRoutesIntoDiscs([...routes], cfg);
-                        if (Object.keys(__perDiscTargets).length) {
-                            base = applyPerDiscTargets(base);
-                        }
-                        return base;
+                        // Sort routes by line (natural/alphanumeric) then route number
+                        const sortedRoutes = [...routes].sort((a, b) => {
+                            const lineA = (a.line || '').trim();
+                            const lineB = (b.line || '').trim();
+                            const lineCmp = lineA.localeCompare(lineB, undefined, { numeric: true, sensitivity: 'base' });
+                            if (lineCmp !== 0) return lineCmp;
+                            const rnA = typeof a.routenum === 'number' ? a.routenum : (parseInt(a.routenum, 10) || 0);
+                            const rnB = typeof b.routenum === 'number' ? b.routenum : (parseInt(b.routenum, 10) || 0);
+                            return rnA - rnB;
+                        });
+                        return groupRoutesIntoDiscs(sortedRoutes, cfg, __perDiscTargets);
                     }
 
                     function displayRouteDiscs(routes, cfg) {
@@ -550,7 +474,14 @@
                                 </div>`;
                             container.appendChild(col);
                         });
-                        // After rendering we can sync URL (building array requires __currentDiscs length)
+                        // Capture actual disc sizes into targets (preserving explicit overrides,
+                        // recording computed sizes for discs that had no override yet)
+                        const newTargets = {};
+                        discs.forEach((disc, idx) => {
+                            newTargets[idx] = disc.length;
+                        });
+                        __perDiscTargets = newTargets;
+                        // Sync the complete state to URL (building array requires __currentDiscs length)
                         serializeDiscSizeOverridesToURL();
                     }
 
@@ -559,8 +490,28 @@
                         .then(data=>{
                             console.log('Fetched routes:', data?.routes?.length);
                             __cachedRoutes = data.routes || [];
+                            // Sort routes by line (natural/alphanumeric order) then by route number
+                            __cachedRoutes.sort((a, b) => {
+                                const lineA = (a.line || '').trim();
+                                const lineB = (b.line || '').trim();
+                                // Natural sort: handles numeric (1,2,10), alpha (A,B,C), and mixed (B1,B2,B10)
+                                const lineCmp = lineA.localeCompare(lineB, undefined, { numeric: true, sensitivity: 'base' });
+                                if (lineCmp !== 0) return lineCmp;
+                                // Same line: sort by route number
+                                const routeNumA = typeof a.routenum === 'number' ? a.routenum : (parseInt(a.routenum, 10) || 0);
+                                const routeNumB = typeof b.routenum === 'number' ? b.routenum : (parseInt(b.routenum, 10) || 0);
+                                return routeNumA - routeNumB;
+                            });
                             // Parse overrides from URL before initial display so they influence grouping
                             parseDiscSizeOverridesFromURL();
+                            // On first access (no URL overrides), initialize all discs with default size (6)
+                            if (Object.keys(__perDiscTargets).length === 0 && __cachedRoutes.length > 0) {
+                                const defSize = userConfig.defaultRoutesPerDisc || 6;
+                                const numDiscs = Math.ceil(__cachedRoutes.length / defSize);
+                                for (let i = 0; i < numDiscs; i++) {
+                                    __perDiscTargets[i] = defSize;
+                                }
+                            }
                             displayRouteDiscs(__cachedRoutes, userConfig);
                             // Global min/max controls removed
                             initPrintDiscs();
@@ -578,12 +529,62 @@
                             if (!btn) return;
                             const idx = parseInt(btn.dataset.discIndex,10);
                             if (isNaN(idx)) return;
-                            const delta = btn.dataset.delta === 'inc' ? 1 : -1;
-                            const current = __perDiscTargets[idx] || (__currentDiscs[idx]?.length || 1);
-                            let next = current + delta;
-                            if (next < 1) next = 1;
-                            if (next > 20) next = 20;
-                            __perDiscTargets[idx] = next;
+                            const maxPerDisc = userConfig.maxPerDisc || 8;
+                            const totalRoutes = __cachedRoutes.length;
+                            const discCount = __currentDiscs.length;
+                            if (discCount === 0) return;
+                            const isInc = btn.dataset.delta === 'inc';
+                            const currentSize = __perDiscTargets[idx] || (__currentDiscs[idx]?.length || 1);
+                            const lastIdx = discCount - 1;
+                            const lastSize = __perDiscTargets[lastIdx] || (__currentDiscs[lastIdx]?.length || 1);
+
+                            if (isInc) {
+                                // Cannot exceed max
+                                if (currentSize >= maxPerDisc) return;
+                                // Sum of all non-last disc targets + proposed increase must leave >= 0 for last
+                                // Compute routes consumed by discs 0..lastIdx-1 (excluding last)
+                                let consumed = 0;
+                                for (let i = 0; i < discCount; i++) {
+                                    if (i === lastIdx && idx !== lastIdx) continue; // last disc is flex
+                                    consumed += (__perDiscTargets[i] || __currentDiscs[i]?.length || 0);
+                                }
+                                if (idx === lastIdx) {
+                                    // Increasing last disc itself: not allowed (it's the flex absorber)
+                                    // unless there's only one disc, then it can't change
+                                    return;
+                                }
+                                // After increasing idx by 1, last disc would have: totalRoutes - (consumed + 1)
+                                // But consumed already includes idx's current size, so:
+                                const newConsumed = consumed + 1; // +1 for the increase on disc idx
+                                const newLastSize = totalRoutes - newConsumed;
+                                if (newLastSize < 0) return; // not enough routes
+                                if (newLastSize === 0) {
+                                    // Last disc disappears
+                                    __perDiscTargets[idx] = currentSize + 1;
+                                    delete __perDiscTargets[lastIdx];
+                                } else {
+                                    __perDiscTargets[idx] = currentSize + 1;
+                                    __perDiscTargets[lastIdx] = newLastSize;
+                                }
+                            } else {
+                                // Decrease
+                                if (currentSize <= 1) return;
+                                if (idx === lastIdx) {
+                                    // Decreasing last disc: split off remaining routes into a new disc
+                                    __perDiscTargets[lastIdx] = currentSize - 1;
+                                    __perDiscTargets[lastIdx + 1] = 1;
+                                } else {
+                                    __perDiscTargets[idx] = currentSize - 1;
+                                    const newLastSize = lastSize + 1;
+                                    if (newLastSize > maxPerDisc) {
+                                        // Last disc overflows: keep it at max, create a new disc with the overflow
+                                        __perDiscTargets[lastIdx] = maxPerDisc;
+                                        __perDiscTargets[lastIdx + 1] = newLastSize - maxPerDisc;
+                                    } else {
+                                        __perDiscTargets[lastIdx] = newLastSize;
+                                    }
+                                }
+                            }
                             displayRouteDiscs(__cachedRoutes, userConfig); // will trigger serialization
                         });
                     }

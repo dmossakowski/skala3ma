@@ -1379,6 +1379,27 @@ def getCompetitionRankings(competitionId):
 
 
 
+# returns users with permissions for a competition (for admin use)
+@skala_api_app.route('/competition/<competitionId>/admins')
+def getCompetitionPermissions(competitionId):
+    # Implementation for getting competition permissions
+    users = skala_db.get_users_with_competition_id(competitionId)
+    
+    permissioned_users = []
+    for userd in users:
+        user = User.from_dict(userd)
+        p = user.get_general_permissions()
+        permissioned_users.append({
+            'id': user.id,
+            'firstname': user.firstname,
+            'lastname': user.lastname,
+            'permissions':  p,
+            'pictureurl' : user.getPictureUrl()
+        })
+
+    return permissioned_users
+
+
 @skala_api_app.route('/season/<season>/rankings')
 def getSeasonRankings(season):
     """
