@@ -11,7 +11,7 @@
 	{% block secondarycontent %}
 
 
-	<div >{% include "competition-menu.html" %}
+	{% include "competition-menu.html" %}
 
 
 		{% if session is defined and session['name'] is defined %}
@@ -32,7 +32,7 @@
 
 
 
-<div align="center">
+<div >
 	<br><br>
 
     <!-- create a login form with email and password fields and a button called login and 
@@ -70,22 +70,20 @@
         <div class="col-md-4"></div>
     </div>
 
-    <br><br>
-
+    <br>
+    <center> 
 	<a href="/google"><img id="googlelogin"
             src="/public/images/googlelogin.jpeg" height="40"
             alt="Facebook"></a>
 
 	
-	<br><br>
+	<!--br><br>
 	<a href="/facebook/"><img id="facebooklogin	"
             src="/public/images/facebooklogin.png" height="40"
             alt="Facebook">
-         </a>
+         </a-->
+</center>
 
-
-	<br><br>
-	<br><br>
 	<br><br>
 	<br><br>
 </div>
