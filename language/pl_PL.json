@@ -351,5 +351,8 @@
     "home_gym": "Ścianka domowa",
     "profile_missing_details": "Twój profil jest niekompletny (imię i/lub nazwisko). Zaktualizuj swoje dane.",
     "home_gym_not_set": "Twoja ścianka domowa nie jest ustawiona. Zaktualizuj swoją ściankę domową w profilu.",
-    "competitions_you_manage": "Zawody, którymi zarządzasz"
+    "competitions_you_manage": "Zawody, którymi zarządzasz",
+    "camembert": "Camembert",
+    "info_pie": "Info kółko",
+    "table": "Tabela"
 }
