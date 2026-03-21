@@ -930,11 +930,14 @@
                             /* Hide print button itself */
                             body.print-discs-mode #print_discs_btn { display:none !important; }
                             body.print-discs-mode #discs-gallery { display: block; }
-                            body.print-discs-mode #discs-gallery > div { page-break-after: always; break-after: page; width: 100% !important; margin: 0 !important; }
-                            body.print-discs-mode #discs-gallery > div:last-child { page-break-after: auto; break-after: auto; }
+                            body.print-discs-mode #discs-gallery > div { width: 100% !important; margin: 0 !important; }
                             body.print-discs-mode #discs-gallery .card { box-shadow: none !important; border: none !important; }
                             body.print-discs-mode #discs-gallery .card-header { display:none !important; }
-                            body.print-discs-mode #discs-gallery .card-body { display: flex; justify-content: center; align-items: center; min-height: auto; padding: 1rem 0; }
+                            body.print-discs-mode #discs-gallery .card-body { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: auto; padding: 1rem 0; }
+                            /* Let content flow naturally; avoid splitting any single view across pages */
+                            body.print-discs-mode .disc-view { break-inside: avoid; page-break-inside: avoid; }
+                            /* Keep the table together on one page */
+                            body.print-discs-mode .disc-view-table { break-inside: avoid; page-break-inside: avoid; }
                         }
                     </style>
                 
