@@ -18,6 +18,11 @@
                     <div class="ctl dropdown-ctl">
                         <select name="default_routes" class="form-select form-select-sm uniform-ctl" id="default_routes"></select>
             </div>
+                    <div class="ctl view-toggles d-flex align-items-center gap-2">
+                        <label class="view-toggle-label" title="Color wheel"><input type="checkbox" id="toggle_color_disc" checked> <span>{{ reference_data['current_language'].camembert }}</span></label>
+                        <label class="view-toggle-label" title="Info disc"><input type="checkbox" id="toggle_info_disc" checked> <span>{{ reference_data['current_language'].info_pie }}</span></label>
+                        <label class="view-toggle-label" title="Route table"><input type="checkbox" id="toggle_route_table" checked> <span>{{ reference_data['current_language'].table }}</span></label>
+                    </div>
                     <div class="print-unit d-flex align-items-stretch">
                         <button type="button" id="print_discs_btn" class="uniform-ctl w-100 print-btn" title="Print discs (one per page)">
                     <i class="icon-print me-1"></i><span>{{ reference_data['current_language'].Print }}</span>
@@ -66,7 +71,7 @@
                         routeListId: "{{routesid}}",
                         defaultRoutesPerDisc: 6,
                         maxPerDisc: 8,
-                        discSizePx: 220,
+                        discSizePx: 420,
                         faviconPath: '/public/images/favicon-skala3ma-128.png',
                         //faviconPath: '/gym/{{gymid}}/{{routesid}}/qr',
                         // Optional positional array of per-disc size overrides (string or number); empty entries mean no override.
@@ -186,40 +191,37 @@
                         return variants;
                     }
 
-                    function generateCamoPattern(baseColor, discIndex, sliceIndex, size, customId) {
+                    function generateCamoPattern(baseColor, discIndex, sliceIndex, size, customId, secondaryColor) {
                         const patId = customId || `camo_${discIndex}_${sliceIndex}`;
-                        const rand = prng((discIndex+1)*1000 + sliceIndex*97 + baseColor.length*31);
-                        // Derive variant colors with enforced contrast
-                        const [varA, varB] = generateVariantColors(baseColor);
-                        const darkRef = contrastRatioHex(baseColor,varA) > contrastRatioHex(baseColor,varB) ? varA: varB;
-                        const patchCount = 8 + Math.floor(rand()*6); // 8-13 patches for richer texture
-                        // We'll build organic-ish blobs using path composed of arcs (simplified) or circles with slight scale.
-                        const w = size, h = size; // pattern size in user units
-                        let shapes = [`<rect width="${w}" height="${h}" fill="${baseColor}"/>`];
-                        for (let i=0; i<patchCount; i++) {
-                            const color = rand() > 0.45 ? varA : varB;
-                            const cx = (rand()*w);
-                            const cy = (rand()*h);
-                            const rBase = (Math.min(w,h) * (0.12 + rand()*0.18));
-                            // Create blobby path by overlapping 3 circles (simplified union look)
-                            const offset1x = cx + rBase*0.6*(rand()-0.5);
-                            const offset1y = cy + rBase*0.6*(rand()-0.5);
-                            const offset2x = cx + rBase*0.6*(rand()-0.5);
-                            const offset2y = cy + rBase*0.6*(rand()-0.5);
-                            shapes.push(`<g fill="${color}" fill-opacity="0.9">`+
-                                        `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rBase.toFixed(1)}"/>`+
-                                        `<circle cx="${offset1x.toFixed(1)}" cy="${offset1y.toFixed(1)}" r="${(rBase*0.8).toFixed(1)}"/>`+
-                                        `<circle cx="${offset2x.toFixed(1)}" cy="${offset2y.toFixed(1)}" r="${(rBase*0.65).toFixed(1)}"/>`+
-                                        `</g>`);
-                        }
-                        // Add higher-contrast speckles to increase visibility on very dark colors
-                        const speckCount = 22;
-                        for (let s=0; s<speckCount; s++) {
-                            const scx = rand()*w;
-                            const scy = rand()*h;
-                            const sr = 1 + rand()*2.4;
-                            shapes.push(`<circle cx="${scx.toFixed(1)}" cy="${scy.toFixed(1)}" r="${sr.toFixed(1)}" fill="${darkRef}" fill-opacity="0.55"/>`);
-                        }
+                        const filtId = `${patId}_tint`;
+                        // Small tile for tight, overlapping repetition
+                        const tileSize = Math.round(size * 0.28);
+                        const w = tileSize, h = tileSize;
+                        const imgS = Math.round(tileSize * 1.35); // slightly larger than tile = overlap
+                        const offset = Math.round(-tileSize * 0.17); // shift to create overlap bleed
+                        const color2 = secondaryColor || (getLuminance(baseColor) < 0.45 ? lightenColor(baseColor, 50) : darkenColor(baseColor, 50));
+                        // Extract RGB components (0-1) for the tint filter
+                        const c2rgb = hexToRgb(color2);
+                        const r01 = (c2rgb.r / 255).toFixed(3);
+                        const g01 = (c2rgb.g / 255).toFixed(3);
+                        const b01 = (c2rgb.b / 255).toFixed(3);
+                        // SVG filter: desaturate, then replace color channel with color2 using
+                        // feColorMatrix to flatten to alpha-based luminance, then flood with color2.
+                        // This makes the icon shape appear solidly in color2 regardless of light/dark.
+                        const tintFilter = `<filter id="${filtId}" color-interpolation-filters="sRGB">`
+                            + `<feColorMatrix type="matrix" values="0 0 0 0 ${r01}  0 0 0 0 ${g01}  0 0 0 0 ${b01}  0.2126 0.7152 0.0722 0 0"/>`
+                            + `</filter>`;
+                        let shapes = [
+                            tintFilter,
+                            // Base color fill
+                            `<rect width="${w}" height="${h}" fill="${baseColor}"/>`,
+                            // Secondary color fill at stronger opacity for pronounced two-tone
+                            `<rect width="${w}" height="${h}" fill="${color2}" fill-opacity="0.45"/>`,
+                            // Tightly tiled logo tinted to color2 — high opacity for strong color2 presence
+                            `<image href="/public/images/favicon-skala3ma-128.png" x="${offset}" y="${offset}" width="${imgS}" height="${imgS}" opacity="0.7" preserveAspectRatio="none" filter="url(#${filtId})"/>`,
+                            // Another copy offset for denser coverage
+                            `<image href="/public/images/favicon-skala3ma-128.png" x="${Math.round(w*0.4)}" y="${Math.round(h*0.4)}" width="${imgS}" height="${imgS}" opacity="0.55" preserveAspectRatio="none" filter="url(#${filtId})"/>`,
+                        ];
                         return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${w}" height="${h}">`+ shapes.join('') + `</pattern>`;
                     }
 
@@ -287,9 +289,10 @@
                         discRoutes.forEach((rt,i)=>{
                             if (rt.color_modifier === 'marble') {
                                 const base = (rt.color1||'#999999').trim();
+                                const secondary = (rt.color2||'').trim() || undefined;
                                 // pattern size relative to full disc to have a few patches per slice
                                 const patternSize = size * 0.4; 
-                                defs.push(generateCamoPattern(base, discIndex, i, patternSize));
+                                defs.push(generateCamoPattern(base, discIndex, i, patternSize, undefined, secondary));
                             }
                         });
                         svg.push(defs.join(''));
@@ -349,7 +352,133 @@
                         return svg.join('');
                     }
 
-                    
+                    function createInfoDiscSVG(discRoutes, cfg, discIndex) {
+                        const size = cfg.discSizePx;
+                        const r = size / 2;
+                        const cx = r, cy = r;
+                        const n = discRoutes.length;
+                        if (!n) return '';
+                        const svg = [];
+                        const defs = [];
+
+                        svg.push(`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="info-disc-svg" data-disc="${discIndex}">`);
+                        svg.push('<defs>');
+                        // Clip everything to a circle
+                        svg.push(`<clipPath id="info_clip_${discIndex}"><circle cx="${cx}" cy="${cy}" r="${r - 1}"/></clipPath>`);
+                        // Marble patterns
+                        discRoutes.forEach((rt, i) => {
+                            if (rt.color_modifier === 'marble') {
+                                const base = (rt.color1 || '#999999').trim();
+                                const secondary = (rt.color2||'').trim() || undefined;
+                                defs.push(generateCamoPattern(base, discIndex * 100 + 50, i, size * 0.4, `info_camo_${discIndex}_${i}`, secondary));
+                            }
+                        });
+                        svg.push(defs.join(''));
+                        svg.push('</defs>');
+
+                        // Diamond row layout: wider in the middle to match the circle
+                        const rowLayouts = {
+                            1: [1],
+                            2: [1, 1],
+                            3: [1, 2],
+                            4: [1, 2, 1],
+                            5: [1, 2, 2],
+                            6: [1, 2, 2, 1],
+                            7: [1, 2, 2, 2],
+                            8: [2, 2, 2, 2]
+                        };
+                        const rows = rowLayouts[Math.min(n, 8)] || rowLayouts[8];
+                        const numRows = rows.length;
+                        const rowH = size / numRows;
+                        const gap = 2; // gap between cells
+
+                        const sanitizeInfo = txt => {
+                            if (txt == null) return '';
+                            if (typeof txt !== 'string') txt = String(txt);
+                            return txt.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+                        };
+
+                        // Clipped group — colored rects extend to edges, clipped to circle
+                        svg.push(`<g clip-path="url(#info_clip_${discIndex})">`);
+
+                        let routeIdx = 0;
+                        for (let ri = 0; ri < numRows; ri++) {
+                            const itemsInRow = rows[ri];
+                            const y = ri * rowH;
+                            const cellW = size / itemsInRow;
+
+                            for (let col = 0; col < itemsInRow; col++) {
+                                if (routeIdx >= n) break;
+                                const rt = discRoutes[routeIdx];
+                                const x = col * cellW;
+                                const color = (rt.color1 || '#888888').trim();
+                                const fill = rt.color_modifier === 'marble' ? `url(#info_camo_${discIndex}_${routeIdx})` : color;
+
+                                // Full color background (will be clipped to circle)
+                                svg.push(`<rect x="${x}" y="${y}" width="${cellW}" height="${rowH}" fill="${fill}"/>`);
+
+                                // Semi-transparent overlay for text readability
+                                const baseLum = getLuminance(color);
+                                const lum = (rt.color_modifier === 'marble' && rt.color2)
+                                    ? baseLum * 0.35 + getLuminance(rt.color2.trim()) * 0.65
+                                    : baseLum;
+                                const overlayColor = lum > 0.45 ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.35)';
+                                const overlayPadX   = cellW * 0.920;
+                                const overlayPadY = rowH * 0.917;
+                                const olx = x + overlayPadX, oly = y + overlayPadY;
+                                const olw = cellW - overlayPadX * 2, olh = rowH - overlayPadY * 2;
+                                svg.push(`<rect x="${olx.toFixed(1)}" y="${oly.toFixed(1)}" width="${olw.toFixed(1)}" height="${olh.toFixed(1)}" rx="6" ry="6" fill="${overlayColor}"/>`);
+
+                                // Cell border lines
+                                if (col > 0) {
+                                    svg.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${(y + rowH)}" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>`);
+                                }
+                                if (ri > 0) {
+                                    svg.push(`<line x1="${x}" y1="${y}" x2="${(x + cellW)}" y2="${y}" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>`);
+                                }
+
+                                // Text content
+                                const textColor = lum > 0.45 ? '#111' : '#fff';
+                                const subColor = lum > 0.45 ? '#333' : 'rgba(255,255,255,0.9)';
+                                const shadow = lum > 0.45 ? '0 1px 2px rgba(255,255,255,0.5)' : '0 1px 2px rgba(0,0,0,0.5)';
+
+                                const grade = sanitizeInfo((rt.grade || '').trim() || '?');
+                                const line = sanitizeInfo((rt.line || '').trim());
+                                const name = sanitizeInfo((rt.name || '').trim());
+                                const openedBy = sanitizeInfo((rt.openedby || '').trim());
+                                const openDate = sanitizeInfo((rt.opendate || '').trim());
+                                const noteRaw = rt.note || rt.notes || rt.comment;
+                                const rawNote = noteRaw == null ? '' : (typeof noteRaw === 'string' ? noteRaw : String(noteRaw));
+                                const note = sanitizeInfo(rawNote.length > 45 ? rawNote.slice(0, 45) + '\u2026' : rawNote);
+
+                                const foX = x + 4, foY = y + 2;
+                                const foW = cellW - 8, foH = rowH - 4;
+                                let html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${foW.toFixed(0)}px;height:${foH.toFixed(0)}px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-family:Arial,sans-serif;line-height:1.25;padding:2px;">`;
+                                html += `<div style="display:flex;gap:4px;align-items:baseline;justify-content:center;white-space:nowrap;"><span style="font-weight:800;font-size:22px;color:${textColor};text-shadow:${shadow};">${grade}</span>${line ? `<span style="font-size:13px;font-weight:700;color:${subColor};text-shadow:${shadow};">- ${line}</span>` : ''}</div>`;
+                                if (name) html += `<div style="font-size:12px;font-weight:600;color:${textColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">${name}</div>`;
+                                if (openedBy || openDate) {
+                                    html += `<div style="font-size:10px;color:${subColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">`;
+                                    if (openedBy) html += `<span style="font-style:italic;">${openedBy}</span>`;
+                                    if (openDate) html += `${openedBy ? ' · ' : ''}${openDate}`;
+                                    html += `</div>`;
+                                }
+                                if (note) html += `<div style="font-size:9px;color:${subColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};" title="${sanitizeInfo(rawNote)}">${note}</div>`;
+                                html += `</div>`;
+
+                                svg.push(`<foreignObject x="${foX.toFixed(1)}" y="${foY.toFixed(1)}" width="${foW.toFixed(0)}" height="${foH.toFixed(0)}">${html}</foreignObject>`);
+
+                                routeIdx++;
+                            }
+                        }
+
+                        svg.push('</g>'); // end clipped group
+
+                        // Circle border on top — cutting guide
+                        svg.push(`<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="none" stroke="#333" stroke-width="2.5"/>`);
+
+                        svg.push('</svg>');
+                        return svg.join('');
+                    }
 
                     function computeDiscs(routes, cfg) {
                         // Sort routes by line (natural/alphanumeric) then route number
@@ -414,8 +543,9 @@
                                     if (isMarble) {
                                         const patSize = 36; // pattern tile size for chip texture
                                         const patId = `chip_${discIndex}_${routeIdx}`;
+                                        const secondary = (rt.color2||'').trim() || undefined;
                                         colorBar = `<svg class="color-chip-svg" viewBox="0 0 ${CHIP_W} 70" preserveAspectRatio="none" aria-hidden="true" role="img" aria-label="route color">`+
-                                                   `<defs>${generateCamoPattern(color, discIndex, routeIdx, patSize, patId)}</defs>`+
+                                                   `<defs>${generateCamoPattern(color, discIndex, routeIdx, patSize, patId, secondary)}</defs>`+
                                                    `<rect x="0" y="0" width="${CHIP_W}" height="70" fill="url(#${patId})" />${gradeOverlay}</svg>`;
                                     } else {
                                         const lighter = lightenColor(color, 35);
@@ -470,7 +600,7 @@
                                             <button type="button" class="disc-size-btn" data-delta="inc" data-disc-index="${idx}" aria-label="Increase disc ${idx+1} size">&#x25B6;</button>
                                         </div>
                                     </div>
-                                    <div class="card-body d-flex flex-column align-items-center justify-content-start">${createDiscSVG(discRoutes, cfg, idx)}${buildRouteTable(discRoutes, idx)}</div>
+                                    <div class="card-body d-flex flex-column align-items-center justify-content-start"><div class="disc-view disc-view-color">${createDiscSVG(discRoutes, cfg, idx)}</div><div class="disc-view disc-view-info">${createInfoDiscSVG(discRoutes, cfg, idx)}</div><div class="disc-view disc-view-table">${buildRouteTable(discRoutes, idx)}</div></div>
                                 </div>`;
                             container.appendChild(col);
                         });
@@ -483,6 +613,8 @@
                         __perDiscTargets = newTargets;
                         // Sync the complete state to URL (building array requires __currentDiscs length)
                         serializeDiscSizeOverridesToURL();
+                        // Re-apply view toggle visibility after re-render
+                        if (window.__initViewToggles) window.__initViewToggles();
                     }
 
                     fetch(`/api1/gym/${userConfig.gymid}/${userConfig.routeListId}`)
@@ -516,6 +648,7 @@
                             // Global min/max controls removed
                             initPrintDiscs();
                             initPerDiscSizeControls();
+                            initViewToggles();
                         })
                         .catch(err=>console.error('Error fetching routes data:', err));
 
@@ -524,6 +657,26 @@
                     function initPerDiscSizeControls() {
                         const gallery = document.getElementById('discs-gallery');
                         if (!gallery) return;
+
+                        // --- View toggle logic ---
+                        function applyViewToggles() {
+                            const showColor = document.getElementById('toggle_color_disc')?.checked;
+                            const showInfo = document.getElementById('toggle_info_disc')?.checked;
+                            const showTable = document.getElementById('toggle_route_table')?.checked;
+                            document.querySelectorAll('.disc-view-color').forEach(el => el.style.display = showColor ? '' : 'none');
+                            document.querySelectorAll('.disc-view-info').forEach(el => el.style.display = showInfo ? '' : 'none');
+                            document.querySelectorAll('.disc-view-table').forEach(el => el.style.display = showTable ? '' : 'none');
+                        }
+                        function initViewToggles() {
+                            ['toggle_color_disc', 'toggle_info_disc', 'toggle_route_table'].forEach(id => {
+                                const cb = document.getElementById(id);
+                                if (cb) cb.addEventListener('change', applyViewToggles);
+                            });
+                            applyViewToggles();
+                        }
+                        // Expose so it can be called after initial render
+                        window.__initViewToggles = initViewToggles;
+
                         gallery.addEventListener('click', (e) => {
                             const btn = e.target.closest('.disc-size-btn');
                             if (!btn) return;
@@ -589,6 +742,10 @@
                         });
                     }
 
+                    function initViewToggles() {
+                        if (window.__initViewToggles) window.__initViewToggles();
+                    }
+
                     // Print logic: one disc per page
                     function initPrintDiscs() {
                         const btn = document.getElementById('print_discs_btn');
@@ -597,7 +754,7 @@
                             document.body.classList.add('print-discs-mode');
                             // Optionally enlarge SVGs dynamically by scaling attribute if needed
                             const originalSizes = [];
-                            document.querySelectorAll('.print-discs-mode .disc-svg').forEach(svg => {
+                            document.querySelectorAll('.print-discs-mode .disc-svg, .print-discs-mode .info-disc-svg').forEach(svg => {
                                 originalSizes.push({svg, w: svg.getAttribute('width'), h: svg.getAttribute('height')});
                                 svg.setAttribute('width','700');
                                 svg.setAttribute('height','700');
@@ -619,6 +776,16 @@
                         .disc-svg text { font-weight: 600; }
                         .disc-svg text.slice-grade { font-weight:700; }
                         .disc-svg image { pointer-events: none; }
+                        /* View toggle wrappers */
+                        .disc-view { width: 100%; display: flex; flex-direction: column; align-items: center; }
+                        .disc-view-color, .disc-view-info { margin-bottom: .3rem; }
+                        /* View toggle checkboxes */
+                        .view-toggles { flex: 0 0 auto; }
+                        .view-toggle-label { display: inline-flex; align-items: center; gap: .25rem; font-size: .8rem; font-weight: 500; cursor: pointer; white-space: nowrap; user-select: none; color: #444; }
+                        .view-toggle-label input[type="checkbox"] { accent-color: #29c05c; width: 15px; height: 15px; cursor: pointer; }
+                        /* Info disc (full-detail circular view) */
+                        .info-disc-svg { max-width: 100%; height: auto; margin: .5rem 0; }
+                        @media print { .info-disc-svg { max-width: 680px; } }
                         /* Route table styles */
                         .disc-routes-table-wrapper { width:100%; margin-top:.1rem; }
                         .disc-routes-table { width:100%; border-collapse:separate; border-spacing:.24rem .2rem; font-size:.9rem; }
@@ -692,7 +859,7 @@
                                                 #disc-controls { font-size:.85rem; }
                                                                                                 /* Responsive layout container */
                                                                                                 #disc-controls .controls-responsive { display:flex; flex-wrap:nowrap; gap:.6rem; align-items:stretch; }
-                                                                                                #disc-controls .controls-responsive > .ctl { flex:1 1 auto; min-width:160px; }
+                                                                                                #disc-controls .controls-responsive > .ctl { min-width:160px; }
                                                                                                 #disc-controls .controls-responsive .dropdown-ctl { display:flex; flex:1 1 auto; }
                                                                                                 #disc-controls .controls-responsive .dropdown-ctl select { width:100%; }
                                                                                                 /* Removed global spinners-group (min/max) */
@@ -700,7 +867,9 @@
                                                                                                 /* Center min/max group on its line for narrow widths */
                                                                                                 /* Keep dropdown & print button on one line even on narrow screens */
                                                                                                 @media (max-width: 575.98px) {
-                                                                                                    #disc-controls .controls-responsive { gap:.4rem; }
+                                                                                                    #disc-controls .controls-responsive { flex-wrap:wrap; gap:.4rem; }
+                                                                                                    #disc-controls .controls-responsive .dropdown-ctl { flex:1 1 0; min-width:0; }
+                                                                                                    #disc-controls .controls-responsive .view-toggles { order:10; flex:1 1 100%; justify-content:center; }
                                                                                                     #disc-controls .controls-responsive .print-unit { flex:0 0 95px; }
                                                                                                 }
                                                 #disc-controls .uniform-ctl { background:#fff; border:1px solid #c0c7cc; border-radius:.55rem; box-shadow:0 1px 1px rgba(0,0,0,0.05) inset; height:40px; display:flex; align-items:center; padding:0 .6rem; }
@@ -719,7 +888,7 @@
                                                 }
                         /* Controls layout enhancements */
                         #disc-controls { --disc-gap: .5rem; }
-                        #disc-controls input { min-width: 70px; }
+                        #disc-controls input { min-width: 30px; }
                         #print_discs_btn { transition: background-color .15s, color .15s, box-shadow .15s; }
                         #print_discs_btn.btn-outline-secondary { 
                             background: linear-gradient(180deg, #f8f9fa 0%, #eceeef 100%);

@@ -334,5 +334,8 @@
     "home_gym_not_set": "Your home gym isn’t set. Please update your home gym on your profile.",
     "competitions_you_manage": "Competitions you manage",
     "calc_type_fsgt0": "Calculation strategy with men and women calculated separately",
-    "calc_type_fsgt1": "Calculation strategy with men and women calculated together"
+    "calc_type_fsgt1": "Calculation strategy with men and women calculated together",
+    "camembert": "Camembert",
+    "info_pie": "Info pie",
+    "table": "Table"
 }
