@@ -1,7 +1,8 @@
 import os
 
 class User:
-    def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid):
+    def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid,
+                 fpictureurl='', gpictureurl=''):
         self.email = email
         self.role = role
         self.isgod = isgod
@@ -16,6 +17,8 @@ class User:
         self.permissions = permissions
         self.name = name
         self.gymid = gymid
+        self.fpictureurl = fpictureurl
+        self.gpictureurl = gpictureurl
 
 
 
@@ -35,11 +38,23 @@ class User:
             lastname=data.get('lastname', ''),
             permissions=data.get('permissions', {}),
             name=data.get('name', ''),
-            gymid=data.get('gymid', '')
+            gymid=data.get('gymid', ''),
+            fpictureurl=data.get('fpictureurl', ''),
+            gpictureurl=data.get('gpictureurl', '')
         )
 
     def __str__(self):
-        return self.fid+" "+self.fname + " " + self.email + " " + self.fpictureurl + " " + self.role + " " + self.isgod + " " + self.id + " " + self.fullname + " " + self.nick + " "
+        return " ".join(str(x) for x in [
+            self.id,
+            self.name,
+            self.email,
+            self.fpictureurl,
+            self.gpictureurl,
+            self.role,
+            self.isgod,
+            self.fullname,
+            self.nick,
+        ])
     
 
     # returns base empty permissions dictionary
@@ -83,6 +98,23 @@ class User:
     def get_permissions(self, type=None):
         return self.permissions.get(type, [])
     
+
+    def get_general_permissions(self):
+        return {"general": self.permissions.get("general", [])}
+
+    def getPictureUrl(self):
+        """Return a picture URL for this user.
+
+        Preference order:
+          1) fpictureurl (first party / custom profile picture)
+          2) gpictureurl (Google / external picture)
+          3) fallback default icon
+        """
+        if getattr(self, 'gpictureurl', None):
+            return self.gpictureurl
+        if getattr(self, 'fpictureurl', None):
+            return self.fpictureurl
+        return '/public/images/favicon.png'
 
     def get_home_gym(self):
         if not self.gymid:

@@ -159,7 +159,13 @@
 
     <div class="card mb-3 border-dark">
         <div class="card-body">
+        <div class="card-body">
+			<h5>{{ reference_data['current_language'].authorized_user or 'Enabled users' }}</h5>
+			<div id="enabled-admins-list" class="list-group"></div>
+		</div>
+            
             <!-- Input field for look-ahead search -->
+
             <div class="form-group">
                 <label for="user-search"> {{ reference_data['current_language'].authorized_user}} </label>
                 <input type="text" class="form-control" id="user-search" name="user-search" placeholder="..">
@@ -171,6 +177,7 @@
 	&nbsp;&nbsp;
 	<button name="permission_scorer_user" value="permission_scorer_user" class="btn btn-primary btn-sm">{{ reference_data['current_language'].addscoreruser}}</button>
 </div></div>
+	
     <br>
 <br>
 
@@ -326,9 +333,57 @@
 </div>
 
 <script>
-       
-    // Add DOMContentLoaded event listener using the named function
-    document.addEventListener('DOMContentLoaded', loadUserLookAhead());
+	const competitionId = '{{ competition["id"] }}';
+
+	function renderEnabledAdmins(users) {
+		const container = document.getElementById('enabled-admins-list');
+		if (!container) return;
+		container.innerHTML = '';
+
+		if (!Array.isArray(users) || users.length === 0) {
+			container.innerHTML = '<div class="list-group-item">-</div>';
+			return;
+		}
+
+		users.forEach((user) => {
+			const item = document.createElement('div');
+			item.className = 'list-group-item d-flex align-items-center';
+
+			const img = document.createElement('img');
+			img.src = user.pictureurl || '/public/images/favicon.png';
+			img.alt = 'avatar';
+			img.width = 40;
+			img.height = 40;
+			img.className = 'rounded-circle me-2';
+
+			const info = document.createElement('div');
+			info.innerHTML = `<strong>${user.firstname || ''} ${user.lastname || ''}</strong><br><small>${(user.permissions && user.permissions.general) ? user.permissions.general.join(', ') : ''}</small>`;
+
+			item.appendChild(img);
+			item.appendChild(info);
+			container.appendChild(item);
+		});
+	}
+
+	async function loadEnabledAdmins() {
+		try {
+			const data = await apiFetch(`/api1/competition/${competitionId}/admins`).then((r) => r.json());
+			renderEnabledAdmins(data);
+		} catch (err) {
+			const container = document.getElementById('enabled-admins-list');
+			if (container) {
+				container.innerHTML = `<div class="list-group-item text-danger">Unable to load enabled users: ${err.message || err}</div>`;
+			}
+		}
+	}
+
+	// Add DOMContentLoaded event listener using the named function
+	document.addEventListener('DOMContentLoaded', () => {
+		if (typeof loadUserLookAhead === 'function') {
+			loadUserLookAhead();
+		}
+		loadEnabledAdmins();
+	});
  </script>
 
 {% endblock %}
