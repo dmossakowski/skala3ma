@@ -251,44 +251,83 @@ def update_competition_routes(competition, routesid, force=False):
     #if competition.get('routes') is None or competition.get('routesid') != routesid:
     if routesid is None:
         logging.error('Routesid cannot be None '+str(routesid))
-        return 'Error: routesid competitioncannot be None'
-        #raise ValueError('routesid cannot be None')
+        raise ValueError('Cannot update competition routeset. routesid cannot be None')
 
     competition['routesid'] = routesid
     routes = skala_db.get_routes_by_id(routesid)
 
     if (routes is None or len(routes)==0):
         logging.error('Routes not found '+str(competition.get('id')))
-        return 'Error: Routes not found'
-        #raise ValueError('Routes not found')
+        raise ValueError('Routes not found')
     
     if competition.get('status') in [competition_status_closed]:
         if not force:
-            logging.error('Cannot update routes when competition is in progress/scoring/closed '+str(competition.get('id')))
-            return 'Error: Cannot update routes when competition is closed'
-            #raise ValueError('Cannot update routes when competition is in progress/scoring/closed')
+            logging.error('Cannot update routes when competition is closed '+str(competition.get('id')))
+            raise ValueError('Cannot update routes when competition is closed')
 
     competition['routes'] = routes.get('routes')
 
     # after a new routeset is set, we need to update each climber with routes they climbed
     try:
         setRoutesClimbed2(competition)
-    except:
-        logging.error('error setting routes climbed2')
-        return 'Error: error setting routes climbed2'
+    except Exception as e:
+        logging.error('error setting routes climbed2: ' + str(e))
+        raise ValueError('Cannot update competition routeset.  ' + str(e))
     
     skala_db._update_competition(competition['id'], competition)
 
     return competition
 
 
-# 
-def update_competition_climbers_category(competition, competition_type):
+# compare the competition's static routeset with the current routeset in the db
+# the competition routeset is a snapshot taken when the routeset was assigned
+# if the db routeset has been modified since, this returns the differences
+def get_routeset_differences(competition):
+    routesid = competition.get('routesid')
+    if routesid is None:
+        return None
+
+    comp_routes = competition.get('routes') or []
+    db_routeset = skala_db.get_routes_by_id(routesid)
+    if db_routeset is None:
+        return {'error': 'routeset not found in db', 'routesid': routesid}
+
+    db_routes = db_routeset.get('routes') or []
+
+    # build lookup by route id
+    comp_by_id = {str(r.get('id')): r for r in comp_routes}
+    db_by_id = {str(r.get('id')): r for r in db_routes}
+
+    added = []    # routes in db but not in competition
+    removed = []  # routes in competition but not in db
+    modified = [] # routes present in both but with different field values
+
+    for rid, route in db_by_id.items():
+        if rid not in comp_by_id:
+            added.append(route)
+        elif route != comp_by_id[rid]:
+            modified.append({'id': rid, 'competition': comp_by_id[rid], 'db': route})
+
+    for rid, route in comp_by_id.items():
+        if rid not in db_by_id:
+            removed.append(route)
+
+    has_differences = len(added) > 0 or len(removed) > 0 or len(modified) > 0
+    return {
+        'has_differences': has_differences,
+        'added': added,
+        'removed': removed,
+        'modified': modified
+    }
+
+
+# not used
+def update_competition_climbers_categoryNOTUSED(competition, competition_type):
     for climberId in competition['climbers']:
         dob = competition['climbers'][climberId].get('dob', None)
         new_category = get_category_from_dob(dob, competition.get('date'), competition_type)
         competition['climbers'][climberId]['category'] = new_category
-        competition['climbers'][climberId]['age_category_type'] = get
+        competition['climbers'][climberId]['age_category_type'] = get_age_category_type_from_dob(dob, competition.get('date'), competition_type)
     skala_db._update_competition(competition['id'], competition)
     return competition
 

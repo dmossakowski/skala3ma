@@ -338,5 +338,11 @@
     "competitions_you_manage": "Compétitions que vous gérez",
     "camembert": "Camembert",
     "info_pie": "Info tarte",
-    "table": "Tableau"
+    "table": "Tableau",
+    "update_button": "Mettre à jour",
+    "routeset_out_of_sync": "Les voies de la compétition ne sont plus synchronisées",
+    "routeset_out_of_sync_hint": "Cela peut être normal si des modifications ont été faites récemment. Normalement, le même jeu de voies ne devrait pas être réutilisé pour plusieurs compétitions. Si c'est une ancienne compétition qui a déjà eu lieu, vous pouvez garder l'ancien jeu de voies pour l'exactitude historique. Pour mettre à jour les voies avec la dernière version, cliquez sur le bouton ci-dessous.",
+    "added": "ajoutées",
+    "removed": "supprimées",
+    "modified": "modifiées"
 }
