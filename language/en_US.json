@@ -337,5 +337,11 @@
     "calc_type_fsgt1": "Calculation strategy with men and women calculated together",
     "camembert": "Camembert",
     "info_pie": "Info pie",
-    "table": "Table"
+    "table": "Table",
+    "update_button": "Update",
+    "routeset_out_of_sync": "The competition routeset is out of sync",
+    "routeset_out_of_sync_hint": "This might be expected if changes were made recently. Normally the same routeset should not be reused for multiple competitions. If this is an older competition that has already taken place, you might want to keep the old routeset for historical accuracy. To update the routeset to sync with the latest version click the button below.",
+    "added": "added",
+    "removed": "removed",
+    "modified": "modified"
 }

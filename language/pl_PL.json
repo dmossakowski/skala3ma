@@ -354,5 +354,11 @@
     "competitions_you_manage": "Zawody, którymi zarządzasz",
     "camembert": "Camembert",
     "info_pie": "Info kółko",
-    "table": "Tabela"
+    "table": "Tabela",
+    "update_button": "Aktualizuj",
+    "routeset_out_of_sync": "Zestaw dróg w zawodach jest niezsynchronizowany",
+    "routeset_out_of_sync_hint": "To może być normalne, jeśli ostatnio wprowadzono zmiany. Zwykle ten sam zestaw dróg nie powinien być używany w wielu zawodach. Jeśli to starsze zawody, które już się odbyły, warto zachować stary zestaw dróg dla dokładności historycznej. Aby zaktualizować zestaw dróg do najnowszej wersji, kliknij przycisk poniżej.",
+    "added": "dodane",
+    "removed": "usunięte",
+    "modified": "zmodyfikowane"
 }

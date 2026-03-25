@@ -371,6 +371,8 @@ def competition_admin_get(competition_id):
     # sort clubs by gymname
     all_clubs = sorted(all_clubs, key=lambda x: x['gymname'])
 
+    # compare the competition.get('routes) with the routes of the gym if they match
+    diff = competitionsEngine.get_routeset_differences(competition)
 
     return render_template('competitionAdmin.html',
                            user=user,
@@ -380,6 +382,7 @@ def competition_admin_get(competition_id):
                            all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
                             all_clubs=all_clubs,
+                           routeset_diff=diff,
                            id=id)
 
 
@@ -544,9 +547,10 @@ def competition_admin_post(competition_id):
     if competition_routes_update_button is not None:
         competition_routes = request.form.get('competition_routes')
         resultMessage= "Competition routes updated"
-        message = competitionsEngine.update_competition_routes(competition, competition_routes, True)
-        if message.startswith('Error'):
-            resultError = message
+        try:
+            competitionsEngine.update_competition_routes(competition, competition_routes, True)
+        except ValueError as e:
+            resultError = str(e)
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):

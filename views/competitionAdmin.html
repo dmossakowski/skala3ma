@@ -91,9 +91,17 @@
 </select>
 <br>
 
+{% if routeset_diff and routeset_diff.has_differences %}
+<div class="alert alert-warning mt-2 mb-0" role="alert">
+    <strong>⚠ {{ reference_data['current_language'].routeset_out_of_sync }}</strong>
+    <br>{{ reference_data['current_language'].added }}: {{ routeset_diff.added|length }}, {{ reference_data['current_language'].removed }}: {{ routeset_diff.removed|length }}, {{ reference_data['current_language'].modified }}: {{ routeset_diff.modified|length }}
+    <br><small>{{ reference_data['current_language'].routeset_out_of_sync_hint }}</small>
+</div>
+{% endif %}
+
 </div>
 <div class="card-footer">
-<button name="competition_routes_update_button" value="competition_routes_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save}}</button>
+<button name="competition_routes_update_button" value="competition_routes_update_button" class="btn btn-primary btn-sm">{{ reference_data['current_language'].update_button}}</button>
 
 </div>
 </div>
