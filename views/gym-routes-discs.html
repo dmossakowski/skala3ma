@@ -454,7 +454,7 @@
                                 const foX = x + 4, foY = y + 2;
                                 const foW = cellW - 8, foH = rowH - 4;
                                 let html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${foW.toFixed(0)}px;height:${foH.toFixed(0)}px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-family:Arial,sans-serif;line-height:1.25;padding:2px;">`;
-                                html += `<div style="display:flex;gap:4px;align-items:baseline;justify-content:center;white-space:nowrap;"><span style="font-weight:800;font-size:22px;color:${textColor};text-shadow:${shadow};">${grade}</span>${line ? `<span style="font-size:13px;font-weight:700;color:${subColor};text-shadow:${shadow};">- ${line}</span>` : ''}</div>`;
+                                html += `<div style="display:flex;gap:4px;align-items:baseline;justify-content:center;white-space:nowrap;"><span style="font-weight:800;font-size:44px;color:${textColor};text-shadow:${shadow};">${grade}</span>${line ? `<span style="font-size:26px;font-weight:700;color:${subColor};text-shadow:${shadow};">- ${line}</span>` : ''}</div>`;
                                 if (name) html += `<div style="font-size:12px;font-weight:600;color:${textColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">${name}</div>`;
                                 if (openedBy || openDate) {
                                     html += `<div style="font-size:10px;color:${subColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">`;

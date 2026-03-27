@@ -10,7 +10,7 @@
 
 <style>
     /* Rankings Layout */
-    .rankings-container { max-width: 1800px; margin: 0 auto; padding: 1rem; }
+    .rankings-container { max-width: 1600px; margin: 0 auto; padding: 1rem; }
     
     /* Filter Controls */
     .rankings-filters { background:#f1f3f4; padding:1rem 1.2rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; }
@@ -106,7 +106,7 @@
     
     <!-- Rankings Summary -->
     <div id="rankingsSummary" class="rankings-summary" style="display:none;">
-        <div class="summary-title" data-translate-key="season_summary">Season Summary</div>
+        <div class="summary-title"><span data-translate-key="season_summary">Season Summary</span> <span id="summarySeasonName"></span></div>
         <div class="summary-stats">
             <div class="stat-item">
                 <div class="stat-label" data-translate-key="competitions_count">Competitions</div>
@@ -196,6 +196,19 @@
         return Array.from(seasonSet).sort().reverse(); // Most recent first
     }
     
+    // Show loading state in all sections
+    function showLoading() {
+        const spinnerHTML = '<div class="loading-spinner"><div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div><p style="margin-top:0.5rem;color:#999;">Loading rankings...</p></div>';
+        document.getElementById('clubRankingsContent').innerHTML = spinnerHTML;
+        document.getElementById('individualRankingsContent').innerHTML = spinnerHTML;
+        document.getElementById('categoryTabs').innerHTML = '';
+        // Reset summary values
+        document.getElementById('competitionsCount').textContent = '-';
+        document.getElementById('competitorsTotal').textContent = '-';
+        document.getElementById('competitorsM').textContent = '-';
+        document.getElementById('competitorsF').textContent = '-';
+    }
+    
     // Load rankings data
     async function loadRankings() {
         if (!state.currentSeason) {
@@ -205,16 +218,18 @@
             return;
         }
         
+        // Show sections with loading state immediately
+        document.getElementById('rankingsSummary').style.display = 'block';
+        document.getElementById('clubRankingsSection').style.display = 'block';
+        document.getElementById('individualRankingsSection').style.display = 'block';
+        document.getElementById('summarySeasonName').textContent = state.currentSeason;
+        showLoading();
+        
         try {
             const url = `/api1/season/${state.currentSeason}/rankings${state.currentType ? '?competition_type=' + state.currentType : ''}`;
             const data = await apiFetchJson(url);
             
             state.rankingsData = data;
-            
-            // Show sections
-            document.getElementById('rankingsSummary').style.display = 'block';
-            document.getElementById('clubRankingsSection').style.display = 'block';
-            document.getElementById('individualRankingsSection').style.display = 'block';
             
             // Update summary
             document.getElementById('competitionsCount').textContent = data.competitions_count || 0;
