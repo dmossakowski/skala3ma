@@ -49,9 +49,9 @@
     .rankings-table tbody td { padding:0.75rem 0.5rem; border-bottom:1px solid #eee; }
     .rankings-table tbody tr:hover { background:#f8f9fa; }
     .rank-cell { font-weight:700; color:#53be6b; min-width:50px; }
-    .rank-cell.rank-1 { color:#FFD700; font-size:1.1rem; }
-    .rank-cell.rank-2 { color:#C0C0C0; font-size:1.05rem; }
-    .rank-cell.rank-3 { color:#CD7F32; font-size:1.05rem; }
+    .rank-cell.rank-1 { color:#ead97c; font-size:1.1rem; }
+    .rank-cell.rank-2 { color:#ccbd5a; font-size:1.05rem; }
+    .rank-cell.rank-3 { color:#b39025; font-size:1.05rem; }
     .points-cell { font-weight:700; color:#333; }
     .empty-state { text-align:center; padding:3rem; color:#999; }
     
@@ -76,8 +76,9 @@
         
         .rankings-table { font-size:0.8rem; }
         .rankings-table thead th, .rankings-table tbody td { padding:0.5rem 0.3rem; }
-        .summary-stats { gap:1rem; }
-        .stat-item { flex:1 1 100%; }
+        .summary-stats { gap:0.75rem; flex-wrap:wrap; }
+        .stat-item { flex:1 1 40%; text-align:center; }
+        .stat-value { font-size:1.2rem; }
     }
 </style>
 
@@ -112,8 +113,16 @@
                 <div class="stat-value" id="competitionsCount">-</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label" data-translate-key="results_counted">Results Counted</div>
-                <div class="stat-value" id="resultsCount">-</div>
+                <div class="stat-label" data-translate-key="competitors">Competitors</div>
+                <div class="stat-value" id="competitorsTotal">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label" data-translate-key="men">Men</div>
+                <div class="stat-value" id="competitorsM">-</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label" data-translate-key="women">Women</div>
+                <div class="stat-value" id="competitorsF">-</div>
             </div>
         </div>
     </div>
@@ -209,7 +218,9 @@
             
             // Update summary
             document.getElementById('competitionsCount').textContent = data.competitions_count || 0;
-            document.getElementById('resultsCount').textContent = data.results_counted || 0;
+            document.getElementById('competitorsTotal').textContent = data.competitors_total || 0;
+            document.getElementById('competitorsM').textContent = data.competitors_m || 0;
+            document.getElementById('competitorsF').textContent = data.competitors_f || 0;
             
             // Render rankings
             renderClubRankings(data.club || []);
@@ -250,10 +261,13 @@
         
         clubs.forEach(club => {
             const rankClass = club.rank <= 3 ? `rank-${club.rank}` : '';
+            const clubLink = club.gymid 
+                ? `<a href="/gyms/${escapeHtml(club.gymid)}" style="color:inherit;text-decoration:none;"><strong>${escapeHtml(club.club)}</strong></a>`
+                : `<strong>${escapeHtml(club.club)}</strong>`;
             tableHTML += `
                 <tr>
                     <td class="rank-cell ${rankClass}">${club.rank}</td>
-                    <td><strong>${escapeHtml(club.club)}</strong></td>
+                    <td>${clubLink}</td>
                     <td class="points-cell">${club.points}</td>
                     <td>${club.total_participants}</td>
                     <td>${club.participants_f}</td>
@@ -295,7 +309,7 @@
                 
                 const categoryLabel = getCategoryLabel(category);
                 const genderLabel = gender === 'F' ? getTranslation('women') : getTranslation('men');
-                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}">${genderLabel} - ${categoryLabel}</button>`;
+                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}"> ${categoryLabel}</button>`;
             });
         });
         tabsContainer.innerHTML = tabsHTML;
@@ -368,12 +382,12 @@
     // Get category label
     function getCategoryLabel(category) {
         const categoryMap = {
-            '0F': getTranslation('competition_category_fsgt2026_adult_0') + ' F',
-            '1F': getTranslation('competition_category_fsgt2026_adult_1') + ' F',
-            '2F': getTranslation('competition_category_fsgt2026_adult_2') + ' F',
-            '0M': getTranslation('competition_category_fsgt2026_adult_0') + ' M',
-            '1M': getTranslation('competition_category_fsgt2026_adult_1') + ' M',
-            '2M': getTranslation('competition_category_fsgt2026_adult_2') + ' M'
+            '0F': getTranslation('competition_category_women_senior'),
+            '1F': getTranslation('competition_category_women_titan'),
+            '2F': getTranslation('competition_category_women_diamond'),
+            '0M': getTranslation('competition_category_men_senior'),
+            '1M': getTranslation('competition_category_men_titan'),
+            '2M': getTranslation('competition_category_men_diamond')
         };
         return categoryMap[category] || category;
     }

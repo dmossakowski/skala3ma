@@ -1446,21 +1446,27 @@ def getSeasonRankings(season):
         start_year = int(season_parts[0])
         end_year = int(season_parts[1])
         
-        # Season runs from September to June
+        # Season runs from September to July
         season_start = datetime(start_year, 9, 1)
-        season_end = datetime(end_year, 6, 30)
+        season_end = datetime(end_year, 7, 31)
         
         # Get all competitions in the season
         all_comps = competitionsEngine.getCompetitions()
         season_competitions = []
+        
+        logging.info(f"[SEASON] Looking for competitions between {season_start.date()} and {season_end.date()}, competition_type filter={competition_type}")
         
         for comp_id, comp in all_comps.items():
             comp_date = datetime.strptime(comp['date'], '%Y-%m-%d')
             if season_start <= comp_date <= season_end:
                 # Filter by competition type if specified
                 if competition_type and comp.get('competition_type') != competition_type:
+                    logging.info(f"[SEASON] Skipping comp {comp_id} ({comp.get('name')}, {comp['date']}) - type {comp.get('competition_type')} != {competition_type}")
                     continue
+                logging.info(f"[SEASON] Including comp {comp_id} ({comp.get('name')}, {comp['date']}, type={comp.get('competition_type')})")
                 season_competitions.append(comp_id)
+            else:
+                logging.debug(f"[SEASON] Out of range: comp {comp_id} ({comp.get('name')}, {comp['date']})")
         
         if len(season_competitions) == 0:
             return jsonify({
@@ -1471,12 +1477,25 @@ def getSeasonRankings(season):
                 "club": []
             })
         
-        # Calculate how many results to count
+        # Number of season competitions (used for response metadata)
         n = len(season_competitions)
-        results_to_count = n - 1 if n <= 5 else n - 2
         
         # Collect all results from season competitions
-        participant_results = {}  # {climber_id: {category, club, sex, firstname, lastname, results: [{comp_id, rank, participations}]}}
+        # Key by normalized name to deduplicate climbers who registered with different IDs
+        participant_results = {}  # {name_key: {category, club, sex, firstname, lastname, results: [...]}}
+        
+        def make_name_key(firstname, lastname):
+            """Create a normalized name key for deduplication across competitions.
+            Strips accents, uppercases, and sorts alphabetically so swapped first/last names produce the same key."""
+            import unicodedata
+            def normalize(s):
+                s = (s or '').strip().upper()
+                # Decompose unicode chars and remove combining diacritical marks (accents)
+                return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+            parts = sorted([normalize(firstname), normalize(lastname)])
+            return f"{parts[0]}|{parts[1]}"
+        
+        TRACK_CLIMBERS = { 'ALAIN|VIDALaa', 'JPIERRE|LEOTYaa', 'CHRISTOPHE|VALENTI'}
         
         for comp_id in season_competitions:
             competition = competitionsEngine.recalculate(comp_id)
@@ -1496,26 +1515,33 @@ def getSeasonRankings(season):
                     
                 for idx, climber in enumerate(climbers_list):
                     rank = idx + 1
-                    climber_id = climber.get('id')
+                    name_key = make_name_key(climber.get('firstname', ''), climber.get('lastname', ''))
                     
                     # Calculate points (top 30 only)
                     points = max(0, 31 - rank) if rank <= 30 else 0
                     
-                    if climber_id not in participant_results:
-                        participant_results[climber_id] = {
+                    if name_key in TRACK_CLIMBERS:
+                        logging.info(f"[TRACK] Found {name_key} in comp {comp_id}, category={category_key}, rank={rank}, points={points}, id={climber.get('id')}, firstname={climber.get('firstname')}, lastname={climber.get('lastname')}")
+                    
+                    if name_key not in participant_results:
+                        participant_results[name_key] = {
                             'category': category_key,
                             'club': climber.get('club', ''),
+                            'gymid': climber.get('gymid', ''),
                             'sex': climber.get('sex', ''),
                             'firstname': climber.get('firstname', ''),
                             'lastname': climber.get('lastname', ''),
                             'results': []
                         }
                     
-                    participant_results[climber_id]['results'].append({
+                    participant_results[name_key]['results'].append({
                         'comp_id': comp_id,
                         'rank': rank,
                         'points': points
                     })
+                    
+                    if name_key in TRACK_CLIMBERS:
+                        logging.info(f"[TRACK] {idx} {name_key} now has {len(participant_results[name_key]['results'])} results: {participant_results[name_key]['results']}")
         
         # Calculate individual rankings - separate by gender and category
         # Structure: {gender: {category: [climbers]}}
@@ -1525,28 +1551,34 @@ def getSeasonRankings(season):
             'F': {'0F': [], '1F': [], '2F': []}   # Women's rankings by category
         }
         
-        for climber_id, data in participant_results.items():
+        for name_key, data in participant_results.items():
             category = data['category']  # e.g., '0F', '1M', '2F'
             sex = data['sex']  # 'M' or 'F'
             
-            # Sort results by points descending and take best N
+            # Sort results by points descending and take best 5
+            # If climber participated in fewer than 5, count all their results
+            results_to_count = min(5, len(data['results']))
             sorted_results = sorted(data['results'], key=lambda x: x['points'], reverse=True)
             best_results = sorted_results[:results_to_count]
             
             total_points = sum(r['points'] for r in best_results)
             participations = len(data['results'])
             
+            if name_key in TRACK_CLIMBERS:
+                logging.info(f"[TRACK] Aggregating {name_key}: category={category}, sex={sex}, all_results={sorted_results}, best_{results_to_count}={best_results}, total_points={total_points}, participations={participations}")
+            
             # Debug logging
-            if climber_id and category and sex:
-                logging.debug(f"Processing climber {climber_id}: category={category}, sex={sex}, points={total_points}")
+            if name_key and category and sex:
+                logging.debug(f"Processing climber {name_key}: category={category}, sex={sex}, points={total_points}")
             
             # Only add if category exists in our structure
             if sex in gender_category_rankings and category in gender_category_rankings[sex]:
                 gender_category_rankings[sex][category].append({
-                    'climber_id': climber_id,
+                    'name_key': name_key,
                     'firstname': data['firstname'],
                     'lastname': data['lastname'],
                     'club': data['club'],
+                    'gymid': data.get('gymid', ''),
                     'sex': data['sex'],
                     'category': category,
                     'total_points': total_points,
@@ -1556,7 +1588,7 @@ def getSeasonRankings(season):
                 })
             else:
                 # Log when category/sex doesn't match
-                logging.warning(f"Skipping climber {climber_id} ({data.get('firstname')} {data.get('lastname')}): sex={sex}, category={category} - not in expected structure")
+                logging.warning(f"Skipping climber {name_key} ({data.get('firstname')} {data.get('lastname')}): sex={sex}, category={category} - not in expected structure")
         
         # Sort each gender+category by total_points desc, then participations desc
         for gender in gender_category_rankings:
@@ -1591,6 +1623,7 @@ def getSeasonRankings(season):
                     if club not in club_scores:
                         club_scores[club] = {
                             'club': club,
+                            'gymid': climber.get('gymid', ''),
                             'points': 0,
                             'participants_m': 0,
                             'participants_f': 0,
@@ -1598,13 +1631,13 @@ def getSeasonRankings(season):
                         }
                     
                     # 1 point per participant (counted once per person, not per category)
-                    climber_id = climber['climber_id']
+                    nk = climber['name_key']
                     # We need to track unique participants
                     if 'participants' not in club_scores[club]:
                         club_scores[club]['participants'] = set()
                     
-                    if climber_id not in club_scores[club]['participants']:
-                        club_scores[club]['participants'].add(climber_id)
+                    if nk not in club_scores[club]['participants']:
+                        club_scores[club]['participants'].add(nk)
                         club_scores[club]['points'] += 1
                         club_scores[club]['total_participants'] += 1
                         
@@ -1643,13 +1676,19 @@ def getSeasonRankings(season):
         for idx, club in enumerate(club_rankings):
             club['rank'] = idx + 1
         
+        # Count unique competitors by gender
+        total_competitors_m = sum(len(cats) for cats in gender_category_rankings.get('M', {}).values())
+        total_competitors_f = sum(len(cats) for cats in gender_category_rankings.get('F', {}).values())
+        
         return jsonify({
             'season': season,
             'competition_type': competition_type,
             'competitions_count': n,
-            'results_counted': results_to_count,
+            'competitors_total': total_competitors_m + total_competitors_f,
+            'competitors_m': total_competitors_m,
+            'competitors_f': total_competitors_f,
             'competitions': season_competitions,
-            'individual': gender_category_rankings,  # Now structured as {gender: {category: [climbers]}}
+            'individual': gender_category_rankings,
             'club': club_rankings
         })
         
