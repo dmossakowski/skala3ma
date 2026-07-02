@@ -275,7 +275,7 @@ function initializeApp() {
                      
                     <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
 
-                               {% if session is defined and session['expires_at'] is defined %}
+                    {% if session is defined and session['expires_at'] is defined %}
                                <hr>
                     <a href="/profile" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">

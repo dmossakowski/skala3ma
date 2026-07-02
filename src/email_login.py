@@ -213,11 +213,16 @@ class EmailLoginService:
                     'error': 'User already confirmed. Please login. '
                 }
             }
+        expires_at = int(datetime.datetime.now().timestamp()+int(1000*60*60*24*365*100))
 
         user = self.ce.confirm_user(email)
         session['username'] = user.get('email')
         session['email'] = user.get('email')
         session['access_token'] = token
+        session['expires_at'] = expires_at
+        session['authsource'] = 'self'
+        session['picture'] = '/public/images/favicon.png'
+
         return {
             'template': 'change_password.html',
             'context': {

@@ -2,7 +2,7 @@ import os
 
 class User:
     def __init__(self, email, role, isgod, id, fullname, nick, sex, club, category, firstname, lastname, permissions, name, gymid,
-                 fpictureurl='', gpictureurl=''):
+                 fpictureurl='', gpictureurl='', account_type='standard', guardian_id=None, dob=None):
         self.email = email
         self.role = role
         self.isgod = isgod
@@ -19,6 +19,9 @@ class User:
         self.gymid = gymid
         self.fpictureurl = fpictureurl
         self.gpictureurl = gpictureurl
+        self.account_type = account_type  # 'standard' or 'supervised'
+        self.guardian_id = guardian_id     # user id of the guardian (for supervised accounts)
+        self.dob = dob
 
 
 
@@ -40,7 +43,10 @@ class User:
             name=data.get('name', ''),
             gymid=data.get('gymid', ''),
             fpictureurl=data.get('fpictureurl', ''),
-            gpictureurl=data.get('gpictureurl', '')
+            gpictureurl=data.get('gpictureurl', ''),
+            account_type=data.get('account_type', 'standard'),
+            guardian_id=data.get('guardian_id', None),
+            dob=data.get('dob', None)
         )
 
     def __str__(self):

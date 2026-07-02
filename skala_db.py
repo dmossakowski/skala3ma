@@ -1,5 +1,3 @@
-
-
 import json
 import os
 import glob
@@ -89,6 +87,8 @@ ROUTES_CLIMBED_TABLE = "routes_climbed"
 GYM_TABLE = "gyms"
 CHALLENGE_TABLE = "challenges"
 IMG_TABLE = "images"
+
+MAX_DEPENDENTS_PER_GUARDIAN = 10
 
 def init():
     logging.info('initializing skala_db...')
@@ -292,19 +292,24 @@ def get_user_by_email(email):
     method_start_time = time.time()
     if email is None:
         return None
-    email = email.lower()
+
+    email = email.lower().strip()
+    if email == "":
+        return None
+
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
-    count = 0
-    update_start_time = time.time()
 
     one = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where lower(email) = ? LIMIT 1;''', [email])
-    
-    update_end_time = time.time()
-    update_duration = update_end_time - update_start_time
-    
-    one = one.fetchone()
+        '''
+        SELECT jsondata
+        FROM ''' + USERS_TABLE + '''
+        WHERE lower(email) = ?
+          AND coalesce(json_extract(jsondata, '$.account_type'), 'standard') != 'supervised'
+        LIMIT 1;
+        ''',
+        [email]
+    ).fetchone()
     db.close()
 
     if one is None or one[0] is None:
@@ -313,10 +318,6 @@ def get_user_by_email(email):
     user = json.loads(one[0])
     if user.get('email') is None:
         user['email'] = email
-
-    method_duration = time.time() - method_start_time
-    #logging.debug(f'get_user_by_email - in {update_duration:.4f}s ; user id {email} in {method_duration:.4f}s')
-    
     return user
 
 
@@ -475,6 +476,188 @@ def upsert_user(user):
     
         return existing_user
 
+
+
+
+def get_dependents(guardian_id):
+    """Get all supervised dependents for a guardian user."""
+    if guardian_id is None:
+        return []
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    rows = cursor.execute(
+        '''SELECT jsondata FROM ''' + USERS_TABLE +
+        ''' WHERE json_extract(jsondata, '$.guardian_id') = ? 
+            AND json_extract(jsondata, '$.account_type') = 'supervised' ;''',
+        [guardian_id])
+    dependents = []
+    if rows is not None:
+        for row in rows.fetchall():
+            dependent = json.loads(row[0])
+            # Dependents are supervised records and should not expose/store email in json payload.
+            if dependent.get('email') is not None:
+                logging.warning(f"Dependent {dependent.get('id')} has an email field, which should not be stored for supervised accounts. Removing it.")
+                dependent.pop('email', None)
+            dependents.append(dependent)
+    db.close()
+    return dependents
+
+
+def create_dependent(guardian_id, firstname, lastname, dob, sex, gymid=None, club=None):
+    """Create a supervised dependent account linked to a guardian."""
+    if guardian_id is None:
+        raise ValueError('Guardian ID cannot be None')
+    if firstname is None or firstname.strip() == '':
+        raise ValueError('First name is required')
+    if lastname is None or lastname.strip() == '':
+        raise ValueError('Last name is required')
+    if dob is None:
+        raise ValueError('Date of birth is required')
+    if sex not in ('M', 'F'):
+        raise ValueError('Sex must be M or F')
+
+    # Verify guardian exists and is a standard account
+    guardian = get_user(guardian_id)
+    if guardian is None:
+        raise ValueError('Guardian user not found')
+    if guardian.get('account_type') == 'supervised':
+        raise ValueError('A supervised account cannot be a guardian')
+
+    # Check max dependents limit
+    existing = get_dependents(guardian_id)
+    if len(existing) >= MAX_DEPENDENTS_PER_GUARDIAN:
+        raise ValueError(f'Maximum of {MAX_DEPENDENTS_PER_GUARDIAN} dependents reached')
+
+    dependent_id = str(uuid.uuid4().hex)
+    name = firstname.strip() + ' ' + lastname.strip()
+    dependent = {
+        'id': dependent_id,
+        'firstname': firstname.strip(),
+        'lastname': lastname.strip(),
+        'name': name,
+        'fullname': name,
+        'dob': dob,
+        'sex': sex,
+        'gymid': gymid or '',
+        'club': club or '',
+        'account_type': 'supervised',
+        'guardian_id': guardian_id,
+        'permissions': User.generate_permissions(),
+        'created_on': datetime.now(timezone.utc).isoformat()
+    }
+
+    try:
+        sql_lock.acquire()
+        _add_user(dependent_id, '', dependent)
+        logging.info(f'Created supervised dependent {dependent_id} for guardian {guardian_id}')
+    finally:
+        sql_lock.release()
+
+    return dependent
+
+
+def update_dependent(dependent_id, guardian_id, **kwargs):
+    """Update a supervised dependent. Only the owning guardian can update."""
+    if dependent_id is None or guardian_id is None:
+        raise ValueError('Dependent ID and Guardian ID are required')
+
+    dependent = get_user(dependent_id)
+    if dependent is None:
+        raise ValueError('Dependent not found')
+    if dependent.get('account_type') != 'supervised':
+        raise ValueError('User is not a supervised account')
+    if dependent.get('guardian_id') != guardian_id:
+        raise ValueError('Not authorized to modify this dependent')
+
+    allowed_fields = ('firstname', 'lastname', 'dob', 'sex', 'gymid', 'club')
+    for key, value in kwargs.items():
+        if key in allowed_fields and value is not None:
+            dependent[key] = value
+
+    # Update derived fields
+    dependent['name'] = dependent['firstname'] + ' ' + dependent['lastname']
+    dependent['fullname'] = dependent['name']
+    dependent['account_type'] = 'supervised'
+    dependent['guardian_id'] = guardian_id
+    dependent.pop('email', None)
+
+    if 'sex' in kwargs and kwargs['sex'] not in ('M', 'F'):
+        raise ValueError('Sex must be M or F')
+
+    try:
+        sql_lock.acquire()
+        _update_user(dependent_id, '', dependent)
+        logging.info(f'Updated supervised dependent {dependent_id}')
+    finally:
+        sql_lock.release()
+
+    return dependent
+
+
+def delete_dependent(dependent_id, guardian_id):
+    """Delete a supervised dependent. Only the owning guardian can delete."""
+    if dependent_id is None or guardian_id is None:
+        raise ValueError('Dependent ID and Guardian ID are required')
+
+    dependent = get_user(dependent_id)
+    if dependent is None:
+        raise ValueError('Dependent not found')
+    if dependent.get('account_type') != 'supervised':
+        raise ValueError('User is not a supervised account')
+    if dependent.get('guardian_id') != guardian_id:
+        raise ValueError('Not authorized to delete this dependent')
+
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM " + USERS_TABLE + " WHERE id = ?", [dependent_id])
+        db.commit()
+        db.close()
+        logging.info(f'Deleted supervised dependent {dependent_id}')
+    finally:
+        sql_lock.release()
+
+
+def promote_dependent_to_user(dependent_id, guardian_id, email):
+    """Promote a supervised dependent to a standard account by adding email."""
+    if dependent_id is None or guardian_id is None or email is None:
+        raise ValueError('Dependent ID, Guardian ID and email are required')
+
+    email = email.lower().strip()
+    if not email:
+        raise ValueError('Email cannot be empty')
+
+    # Check email not already in use
+    existing = get_user_by_email(email)
+    if existing is not None:
+        raise ValueError('Email already in use by another account')
+
+    dependent = get_user(dependent_id)
+    if dependent is None:
+        raise ValueError('Dependent not found')
+    if dependent.get('account_type') != 'supervised':
+        raise ValueError('User is not a supervised account')
+    if dependent.get('guardian_id') != guardian_id:
+        raise ValueError('Not authorized to promote this dependent')
+
+    dependent['account_type'] = 'standard'
+    dependent['guardian_id'] = None
+    dependent['email'] = email
+
+    try:
+        sql_lock.acquire()
+        db = lite.connect(COMPETITIONS_DB)
+        cursor = db.cursor()
+        cursor.execute("UPDATE " + USERS_TABLE + " SET email = ?, jsondata = ? WHERE id = ?",
+                       [email, json.dumps(dependent), dependent_id])
+        db.commit()
+        db.close()
+        logging.info(f'Promoted supervised dependent {dependent_id} to standard account with email {email}')
+    finally:
+        sql_lock.release()
+
+    return dependent
 
 
 def user_authenticated_fb(fid, name, email, picture):
@@ -700,8 +883,13 @@ def _update_user(climberId, email, climber):
             logging.warning(f"climberId is None and climber['id'] is None for email {email}")
     else:
         climberId = climber['id']
-        cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where lower(email) =? ",
-                   [ json.dumps(climber), str(email)])
+        # For supervised accounts (empty email), update by ID to avoid matching multiple rows
+        if not email:
+            cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where id =? ",
+                       [ json.dumps(climber), str(climberId)])
+        else:
+            cursor.execute("UPDATE " + USERS_TABLE + " set jsondata=? where lower(email) =? ",
+                       [ json.dumps(climber), str(email)])
     
     # End timing for the update query
     update_end_time = time.time()

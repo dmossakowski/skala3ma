@@ -35,9 +35,54 @@
                     
 					{% if enable_registration %}
 
+                        <!-- Person selector: chiclets for self + dependents -->
+                        <div class="mb-3">
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <!-- Self chiclet (selected by default) -->
+                                <button type="button" class="btn btn-success person-chiclet active" 
+                                        id="chiclet-self"
+                                        data-person="self"
+                                        onclick="selectPerson(this)">
+                                    <i class="bi bi-person-fill"></i> {{ user['firstname'] }} {{ user['lastname'] }}
+                                </button>
+
+                                {% if dependents is defined and dependents|length > 0 %}
+                                    {% for dep in dependents %}
+                                    <button type="button" class="btn btn-outline-secondary person-chiclet"
+                                            id="chiclet-{{ dep.id }}"
+                                            data-person="dependent"
+                                            data-dep-id="{{ dep.id }}"
+                                            data-firstname="{{ dep.firstname }}"
+                                            data-lastname="{{ dep.lastname }}"
+                                            data-dob="{{ dep.dob }}"
+                                            data-sex="{{ dep.sex }}"
+                                            data-gymid="{{ dep.gymid }}"
+                                            onclick="selectPerson(this)">
+                                        <i class="bi bi-person"></i> {{ dep.firstname }} {{ dep.lastname }}
+                                    </button>
+                                    {% endfor %}
+                                {% endif %}
+
+                                <!-- Add/modify dependent button -->
+                                 
+                                
+                            </div>
+                        </div>
+                        <style>
+                            .person-chiclet {
+                                border-radius: 2rem;
+                                padding: .375rem 1rem;
+                                font-weight: 500;
+                                transition: all .15s;
+                            }
+                            .person-chiclet.active {
+                                box-shadow: 0 0 0 2px var(--bs-success);
+                            }
+                        </style>
+
 						<form action="/competitionDashboard/{{competitionId}}/register" method="post">
+                            <input type="hidden" name="dependent_id" id="dependent_id" value="">
                             <div class="form-floating">
-							<!--label for="name">Name:</--label><br> <input id="name" name="name" size="40" value="{{logged_name}}"/><br><br-->
 							<input class="form-control mb-2" id="firstname" name="firstname" size="40" value="{{user['firstname']}}" required/><br>
                             <label for="firstname"><span data-translate-key="firstname"></span></label>
                             </div>
@@ -49,16 +94,7 @@
                      
                         
                             <div class="form-floating">
-                             
-							{% if user['email'] is none or logged_email is none %}
-                            <input  class="form-control mb-2" name="email" id="email" size="40">
-                        
-                           
-							{% else %}
                             <input  class="form-control mb-2" id="email" name="email" size="40" value="{{logged_email}}" readonly />
-							{% endif %}
-
-                            
                                   <label for="email">Email</label>
                             </div><br>
 
@@ -143,6 +179,63 @@
 
 
                         </form>
+
+                        <script>
+                        function selectPerson(btn) {
+                            // Toggle active state on chiclets
+                            document.querySelectorAll('.person-chiclet').forEach(c => {
+                                c.classList.remove('active', 'btn-success');
+                                c.classList.add('btn-outline-secondary');
+                            });
+                            btn.classList.remove('btn-outline-secondary');
+                            btn.classList.add('active', 'btn-success');
+
+                            const depIdField = document.getElementById('dependent_id');
+                            const firstname = document.getElementById('firstname');
+                            const lastname = document.getElementById('lastname');
+                            const dob = document.getElementById('dob');
+                            const sexF = document.getElementById('F');
+                            const sexM = document.getElementById('M');
+                            const gymSelect = document.getElementById('gymid');
+
+                            if (btn.dataset.person === 'self') {
+                                // Restore user's own data
+                                depIdField.value = '';
+                                firstname.value = "{{ user['firstname'] or '' }}";
+                                firstname.readOnly = false;
+                                lastname.value = "{{ user['lastname'] or '' }}";
+                                lastname.readOnly = false;
+                                dob.value = "{{ user['dob'] or '' }}";
+                                dob.readOnly = false;
+                                sexF.disabled = false;
+                                sexM.disabled = false;
+                                sexF.checked = {{ 'true' if user['sex'] == 'F' else 'false' }};
+                                sexM.checked = {{ 'true' if user['sex'] == 'M' else 'false' }};
+                                if (gymSelect) {
+                                    gymSelect.value = "{{ user['gymid'] if user['gymid'] is not none else '' }}";
+                                    gymSelect.disabled = false;
+                                }
+                            } else {
+                                // Pre-fill form with dependent's data (readonly)
+                                depIdField.value = btn.dataset.depId;
+                                firstname.value = btn.dataset.firstname || '';
+                                firstname.readOnly = true;
+                                lastname.value = btn.dataset.lastname || '';
+                                lastname.readOnly = true;
+                                dob.value = btn.dataset.dob || '';
+                                dob.readOnly = true;
+                                const depSex = btn.dataset.sex;
+                                sexF.checked = (depSex === 'F');
+                                sexM.checked = (depSex === 'M');
+                                sexF.disabled = true;
+                                sexM.disabled = true;
+                                if (gymSelect && btn.dataset.gymid) {
+                                    gymSelect.value = btn.dataset.gymid;
+                                    gymSelect.disabled = true;
+                                }
+                            }
+                        }
+                        </script>
 
 
 					{% else %}

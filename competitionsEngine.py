@@ -321,25 +321,17 @@ def get_routeset_differences(competition):
     }
 
 
-# not used
-def update_competition_climbers_categoryNOTUSED(competition, competition_type):
-    for climberId in competition['climbers']:
-        dob = competition['climbers'][climberId].get('dob', None)
-        new_category = get_category_from_dob(dob, competition.get('date'), competition_type)
-        competition['climbers'][climberId]['category'] = new_category
-        competition['climbers'][climberId]['age_category_type'] = get_age_category_type_from_dob(dob, competition.get('date'), competition_type)
-    skala_db._update_competition(competition['id'], competition)
-    return competition
 
 
 # add or register climber to a competition
+# no more anonymous climbers so climberid is required
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, gymid, sex, category):
     logging.info("adding climber to competition "+str(climberId))
     if email is None:
         raise ValueError('Email cannot be None')
     email = email.lower()
     if climberId is None:
-        climberId = str(uuid.uuid4().hex)
+        raise ValueError('Climber ID cannot be None')
 
     try:
         category = int(category)
@@ -361,10 +353,23 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club_
         climbers = competition['climbers']
         #logging.info(climbers)
 
+        # Check if this specific climber ID is already registered
+        if climberId in climbers:
+            raise ValueError('User with id '+climberId+' already registered')
+
+        # Check email duplicates only for non-supervised accounts
+        # (supervised dependents share the guardian's email)
+        # not sure if this is needed since we check that climber id is not already registered 
         for cid in climbers:
-            if climbers.get(cid).get('email').lower()==email.lower():
-                #return climbers[cid]
-                raise ValueError('User with email '+email+' already registered')
+            existing = climbers.get(cid)
+            if existing.get('email', '').lower() == email.lower() and cid != climberId:
+                # Allow same email if one is a supervised dependent (different climberId)
+                # Only block if both are the same person (same email, not a dependent scenario)
+                existing_is_supervised = skala_db.get_user(cid)
+                if existing_is_supervised is None or existing_is_supervised.get('account_type') != 'supervised':
+                    new_is_supervised = skala_db.get_user(climberId)
+                    if new_is_supervised is None or new_is_supervised.get('account_type') != 'supervised':
+                        raise ValueError('User with email '+email+' already registered')
 
         climbers[climberId] = {
             "id":climberId, "email":email, "name":name, "firstname":firstname, "lastname":lastname,
@@ -427,6 +432,13 @@ def get_category_from_dob(dob, competition_date, competition_type, age_category_
     if age_category_type is None:
         age_category_type = _guess_competition_age_category_type(competition_date, competition_type)
     
+    if competition_type == competition_type_ado:
+        if age >= 17:
+            return -1
+    else:
+        if age <= 17:
+            return -1
+
     if age_category_type == age_category_type2026:
         # fsgt1 age categories
         if 18 <= age <= 39:
@@ -1554,7 +1566,7 @@ def can_register(user, competition):
     if user is not None:
         climbers = competition['climbers']
         for cid in climbers:
-            if climbers[cid]['email']==user['email']:
+            if climbers[cid]['id']==user['id']:
                 return 'error5321'
 
     if len(competition['climbers']) >= 200:
@@ -1599,7 +1611,7 @@ def can_unregister(user, competition):
     if user is not None:
         climbers = competition['climbers']
         for cid in climbers :
-            if climbers.get(cid).get('email').lower()==user['email'].lower():
+            if climbers.get(cid).get('id').lower()==user['id'].lower():
                 return True
 
     return False

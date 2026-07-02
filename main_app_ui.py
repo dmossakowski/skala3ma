@@ -966,7 +966,7 @@ def new_competition_post():
 
 
 @app_ui.route('/competitionDashboard/<competitionId>/register', methods=['GET'])
-#@login_required
+@login_required
 def registerCompetitionClimber(competitionId):
     useremail = session.get('email')
 
@@ -993,6 +993,11 @@ def registerCompetitionClimber(competitionId):
     if competition_accepts_registrations and not is_registered and not error_code:
         enable_registration = True
 
+    # Fetch dependents for the logged-in user
+    dependents = []
+    if user is not None:
+        dependents = skala_db.get_dependents(user['id'])
+
     return render_template('competitionClimber.html',
                            error_code=error_code,
                            competition=comp,
@@ -1004,15 +1009,14 @@ def registerCompetitionClimber(competitionId):
                            can_unregister=can_unregister,
                            is_registered=is_registered,
                            enable_registration=enable_registration,
+                           dependents=dependents,
                             **session)
 
 
 
 
-
-
 @app_ui.route('/competitionDashboard/<competitionId>/register', methods=['POST'])
-#@login_required
+@login_required
 def addCompetitionClimber(competitionId):
     useremail = session.get('email')
     firstname = request.form.get('firstname')
@@ -1024,6 +1028,7 @@ def addCompetitionClimber(competitionId):
     otherclub = request.form.get('otherclub')
     category = request.form.get('category')
     dob = request.form.get('dob')
+    dependent_id = request.form.get('dependent_id')
     
     # TODO this happens in logs but not sure why
     comp = competitionsEngine.getCompetition(competitionId)
@@ -1032,76 +1037,120 @@ def addCompetitionClimber(competitionId):
         
     
     user = competitionsEngine.get_user_by_email(useremail)
-    climber_id = str(uuid.uuid4().hex)
-    if user is not None:
-        climber_id = user['id']
-    form_user = competitionsEngine.get_user_by_email(email)
 
     competition_accepts_registrations = competitionsEngine.competition_accepts_registrations(comp)
     error_code = ''
     if not competition_accepts_registrations:
         error_code = "error5322"
-    
-    is_registered = competitionsEngine.is_registered(user, comp)
+
+    # Login is now required
+    if user is None:
+        error_code = "error5326"
+
     climber = None
 
-    # TODO this differs with how admin works - need to standardize
-    # in adming the club is a json gymname/gymid pair gymname=other gymid=-1
-    user_club_name = 'Unknown'
-    if gymid == 'other':
-        user_club_name = otherclub
-    elif gymid == '--':
-        error_code = "error5324"
-    else:
-        user_club = competitionsEngine.get_gym(gymid)
-        if user_club is not None:
-            user_club_name = user_club.get('name')
+    # Handle dependent registration
+    if not error_code and dependent_id:
+        dependent = skala_db.get_user(dependent_id)
+        if dependent is None or dependent.get('account_type') != 'supervised' or dependent.get('guardian_id') != user['id']:
+            error_code = "error5327"
         else:
-            logging.error(f'During registration club with id {gymid} not found')
-            user_club_name = 'Unknown'
+            # Use dependent's stored data
+            climber_id = dependent['id']
+            firstname = dependent.get('firstname', '')
+            lastname = dependent.get('lastname', '')
+            email = useremail  # Use guardian's email for the dependent's competition entry
+            sex = dependent.get('sex', '')
+            dob = dependent.get('dob', '')
+            gymid = dependent.get('gymid', '')
 
-    # check if user with this email is known and should login themselves to register
-    if user is None and form_user is not None and form_user.get('is_confirmed') == 1:
-        error_code = "error5316" 
+            # Check if dependent is already registered (by their ID)
+            is_dep_registered = False
+            if comp and comp.get('climbers'):
+                is_dep_registered = climber_id in comp['climbers']
+            if is_dep_registered:
+                error_code = "error5328"
 
-    # the user found by email on form is already registered
-    is_form_user_registered = competitionsEngine.is_registered(form_user, comp)
-    if is_form_user_registered:
-        error_code = "error5321"
+            if not error_code:
+                # Resolve club name
+                user_club_name = 'Unknown'
+                if gymid:
+                    user_club = competitionsEngine.get_gym(gymid)
+                    if user_club is not None:
+                        user_club_name = user_club.get('name')
+                
+                if dob is not None:
+                    category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('age_category_type'))
+                    if category == -1:
+                        error_code = "error5325"
 
-    if dob is not None:
-        category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('age_category_type'))   
-        if category == -1:
-            error_code = "error5325"
+                if not error_code:
+                    name = firstname + " " + lastname
+                    try:
+                        climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, gymid, sex, category)
+                        comp = competitionsEngine.getCompetition(competitionId)
+                        return render_template("competitionClimberRegistered.html",
+                                competitionId=competitionId,
+                                competition=comp,
+                                reference_data=competitionsEngine.reference_data,
+                                library=None,
+                                **session)
+                    except ValueError as e:
+                        logging.error(f'Error adding dependent climber {str(e)}')
+                        error_code = "error5328"
 
-    if not error_code and not is_registered and firstname is not None and sex is not None and gymid is not None and email is not None:
-        #climber = competitionsEngine.get_climber_by_email(email)
-        name = firstname + " " + lastname
+    # Handle self-registration (existing flow, now requires login)
+    if not error_code and not dependent_id and user is not None:
+        climber_id = user['id']
+        form_user = competitionsEngine.get_user_by_email(email)
 
-        try:
+        is_registered = competitionsEngine.is_registered(user, comp)
 
-            climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, gymid, sex, category)
-            if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
-                competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
-                                                               user_club_name, gymid, dob)
-            comp = competitionsEngine.getCompetition(competitionId)
-            competitionName = comp['name']
-            #subheader_message = 'You have been registered! Thanks!'
-            #return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
-            return render_template("competitionClimberRegistered.html", 
-                    competitionId=competitionId,
-                    competition=comp,
-                    reference_data=competitionsEngine.reference_data,
-                    library=None,
-                    **session)
-        except ValueError as e:
-            logging.error(f'Error adding climber {str(e)}')
-            # this user is alrady registered
+        # TODO this differs with how admin works - need to standardize
+        # in admin the club is a json gymname/gymid pair gymname=other gymid=-1
+        user_club_name = 'Unknown'
+        if gymid == 'other':
+            user_club_name = otherclub
+        elif gymid == '--':
+            error_code = "error5324"
+        else:
+            user_club = competitionsEngine.get_gym(gymid)
+            if user_club is not None:
+                user_club_name = user_club.get('name')
+            else:
+                logging.error(f'During registration club with id {gymid} not found')
+                user_club_name = 'Unknown'
+
+        # the user found by email on form is already registered
+        is_form_user_registered = competitionsEngine.is_registered(form_user, comp)
+        if is_form_user_registered:
             error_code = "error5321"
-            
-    ##   comp=None # this is to not show the list of climbers before registration
 
-    #competitions = competitionsEngine.getCompetitions()
+        if dob is not None:
+            category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('age_category_type'))   
+            if category == -1:
+                error_code = "error5325"
+
+        if not error_code and not is_registered and firstname is not None and sex is not None and gymid is not None and email is not None:
+            name = firstname + " " + lastname
+
+            try:
+                climber = competitionsEngine.addClimber(climber_id, competitionId, email, name, firstname, lastname, user_club_name, gymid, sex, category)
+                if useremail is not None and useremail == email and user.get('is_confirmed') == 1:
+                    competitionsEngine.user_registered_for_competition(climber['id'], name, firstname, lastname, email, climber['sex'],
+                                                                   user_club_name, gymid, dob)
+                comp = competitionsEngine.getCompetition(competitionId)
+                return render_template("competitionClimberRegistered.html", 
+                        competitionId=competitionId,
+                        competition=comp,
+                        reference_data=competitionsEngine.reference_data,
+                        library=None,
+                        **session)
+            except ValueError as e:
+                logging.error(f'Error adding climber {str(e)}')
+                error_code = "error5321"
+
+    is_registered = competitionsEngine.is_registered(user, comp)
     name = session.get('name')
 
     if name is None:
@@ -1112,7 +1161,10 @@ def addCompetitionClimber(competitionId):
     if competition_accepts_registrations and not is_registered and not error_code:
         enable_registration = True
 
-    
+    dependents = []
+    if user is not None:
+        dependents = skala_db.get_dependents(user['id'])
+
     return render_template('competitionClimber.html',
                            error_code=error_code,
                            competition=comp,
@@ -1125,6 +1177,7 @@ def addCompetitionClimber(competitionId):
                            can_unregister=can_unregister,
                            is_registered=is_registered,
                            enable_registration=enable_registration,
+                           dependents=dependents,
                             **session)
 
 
@@ -1188,6 +1241,14 @@ def get_user_home():
     return render_template('user-home.html',
                            reference_data=competitionsEngine.reference_data,
                             **session)
+
+
+@app_ui.route('/user/dependents')
+@login_required
+def get_user_dependents():
+    return render_template('user-dependents.html',
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
 
 
 # function to save user details 
