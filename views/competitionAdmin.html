@@ -210,70 +210,63 @@
 <!-- display editable fields for unclosed competitions only -->
 {% if competition['status'] < 4 %} 
 
-<table class="table thead-dark table-hover" >
-         <thead><tr>
-			<th></th>
-         <th data-width="250" data-field="Time Added" data-filter-control="input">{{ reference_data['current_language'].name }}</th>
-         <th data-field="artist" data-filter-control="input">{{ reference_data['current_language'].malefemale }}</th>
-         <th data-field="track" data-filter-control="input">{{ reference_data['current_language'].club }}</th>
-<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].category }}</th>
-<th data-field="category">{{ reference_data['current_language'].email }}</th>
-<th data-field="category" data-filter-control="input">{{ reference_data['current_language'].status }}</th>
-			 <th>{{reference_data['current_language'].action}}</th>
-         </tr>
-         </thead>
-		 <tbody>
-			{% for climberId in competition['climbers'] %}
-				<tr>
-					<td>{{ loop.index }}</td>
-					<td><input type="text" name="name_{{ climberId }}" value="{{ competition['climbers'][climberId]['name'] }}"></td>
-					<td>
-						<select name="sex_{{ climberId }}">
-							<option value="M" {% if competition['climbers'][climberId]['sex'] == 'M' %}selected{% endif %}>M</option>
-							<option value="F" {% if competition['climbers'][climberId]['sex'] == 'F' %}selected{% endif %}>F</option>
-						</select>
-					</td>
-					<td><select name="club_{{ climberId }}" >
-                        <option value='{"gymid": "other", "gymname": "Other"}' size="20" >{{ reference_data['current_language'].other}}</option>
-								{% for gym in all_clubs %}
-                                
-
-								{% if gym  == competition['climbers'][climberId]['club'] %}selected{% endif %}
-								<option value="{{ gym | tojson | forceescape }}"
-									{% if gym['gymid'] == competition['climbers'][climberId]['gymid'] %}selected{% endif %}
-									size="20" >{{gym['gymname']}}</option>
-							{% endfor %}
-						</select></td>
-					<td><select name="category_{{ climberId }}" >
-						<!-- option value="{{category}}" size="20" >{{ reference_data['categories'][competition['climbers'][climberId]['category']] }}</option-->
-						{% for category in reference_data['categories'] %}
-						{% if reference_data['categories'][category] == competition['climbers'][climberId]['category'] %}selected{% endif %}
-						<option value="{{category}}" 
-							{% if category == competition['climbers'][climberId]['category'] %}selected{%endif %}
-							size="10" >{{reference_data['categories'][category]}}</option>
-						{% endfor %}
-					</select></td>
-					<td><input type="text" name="email_{{ climberId }}" value="{{ competition['climbers'][climberId]['email'] }}"></td>
-					{% if (loop.index <= competition['max_participants']|int) %}
-						<td><i>{{ reference_data['current_language'].registered }}</i></td>
-					{% else %}
-						<td><i>{{ reference_data['current_language'].waitlist }}</i></td>
-					{% endif %}
-					<td>
-						<button type="submit" name="update_climber" value="{{ climberId }}" class="btn btn-primary btn-sm">
-							{{ reference_data['current_language'].save }}
-						</button>
-					</td>
-					<td>
-						<button type="submit" name="remove_climber" value="{{ climberId }}" class="btn btn-danger btn-sm">
-							{{ reference_data['current_language'].remove }}
-						</button>
-					</td>
-				</tr>
-			{% endfor %}
-		</tbody>
-		
-			 </table>
+{% for climberId in competition['climbers'] %}
+<div class="card mb-2 border-secondary">
+    <div class="card-header d-flex justify-content-between align-items-center py-1">
+        <span><strong>{{ loop.index }}.</strong> {{ competition['climbers'][climberId]['firstname'] }} {{ competition['climbers'][climberId]['lastname'] }}</span>
+        {% if (loop.index <= competition['max_participants']|int) %}
+            <span class="badge bg-success">{{ reference_data['current_language'].registered }}</span>
+        {% else %}
+            <span class="badge bg-warning text-dark">{{ reference_data['current_language'].waitlist }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body py-2">
+        <div class="row g-2">
+            <div class="col-6 col-md-3">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].firstname }}</label>
+                <input type="text" class="form-control form-control-sm" name="firstname_{{ climberId }}" value="{{ competition['climbers'][climberId]['firstname'] }}">
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].lastname }}</label>
+                <input type="text" class="form-control form-control-sm" name="lastname_{{ climberId }}" value="{{ competition['climbers'][climberId]['lastname'] }}">
+            </div>
+            <div class="col-4 col-md-1">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].malefemale }}</label>
+                <select class="form-select form-select-sm" name="sex_{{ climberId }}">
+                    <option value="M" {% if competition['climbers'][climberId]['sex'] == 'M' %}selected{% endif %}>M</option>
+                    <option value="F" {% if competition['climbers'][climberId]['sex'] == 'F' %}selected{% endif %}>F</option>
+                </select>
+            </div>
+            <div class="col-8 col-md-3">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].club }}</label>
+                <select class="form-select form-select-sm" name="club_{{ climberId }}">
+                    <option value='{"gymid": "other", "gymname": "Other"}'>{{ reference_data['current_language'].other }}</option>
+                    {% for gym in all_clubs %}
+                    <option value="{{ gym | tojson | forceescape }}"
+                        {% if gym['gymid'] == competition['climbers'][climberId]['gymid'] %}selected{% endif %}>{{gym['gymname']}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].category }}</label>
+                <select class="form-select form-select-sm" name="category_{{ climberId }}">
+                    {% for category in reference_data['categories'] %}
+                    <option value="{{category}}" {% if category == competition['climbers'][climberId]['category'] %}selected{% endif %}>{{reference_data['categories'][category]}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label form-label-sm mb-0">{{ reference_data['current_language'].email }}</label>
+                <input type="text" class="form-control form-control-sm" name="email_{{ climberId }}" value="{{ competition['climbers'][climberId]['email'] }}">
+            </div>
+        </div>
+    </div>
+    <div class="card-footer py-1 d-flex gap-2">
+        <button type="submit" name="update_climber" value="{{ climberId }}" class="btn btn-primary btn-sm">{{ reference_data['current_language'].save }}</button>
+        <button type="submit" name="remove_climber" value="{{ climberId }}" class="btn btn-danger btn-sm">{{ reference_data['current_language'].remove }}</button>
+    </div>
+</div>
+{% endfor %}
 
 {% endif %}
 
@@ -285,14 +278,16 @@
 
 
 
-<table class="table thead-dark table-hover"  id="entrytable">
+<div class="table-responsive">
+<table class="table thead-dark table-hover" id="entrytable">
          <thead><tr>
-         <th data-width="250"  data-filter-control="input">{{ reference_data['current_language'].name }}</th>
-         <th data-field="artist" data-sortable="True">{{ reference_data['current_language'].malefemale }}</th>
-         <th data-field="track" data-sortable="True">{{ reference_data['current_language'].club }}</th>
-         <th data-field="category" data-sortable="True">{{ reference_data['current_language'].category }}</th>
-         <th data-field="routes" data-filter-control="input">{{ reference_data['current_language'].routes_climbed }}</th>
-		 <th data-field="points" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].points }}</th>
+         <th data-width="150" data-filter-control="input">{{ reference_data['current_language'].firstname }}</th>
+         <th data-width="150" data-filter-control="input">{{ reference_data['current_language'].lastname }}</th>
+         <th data-field="artist" data-sortable="True" class="d-none d-md-table-cell">{{ reference_data['current_language'].malefemale }}</th>
+         <th data-field="track" data-sortable="True" class="d-none d-md-table-cell">{{ reference_data['current_language'].club }}</th>
+         <th data-field="category" data-sortable="True" class="d-none d-md-table-cell">{{ reference_data['current_language'].category }}</th>
+         <th data-field="routes" data-filter-control="input" class="d-none d-md-table-cell">{{ reference_data['current_language'].routes_climbed }}</th>
+		 <th data-field="points" data-filter-control="input" data-sortable="True" class="d-none d-md-table-cell">{{ reference_data['current_language'].points }}</th>
 		 <th data-field="rank" data-filter-control="input" data-sortable="True">{{ reference_data['current_language'].rank }}</th>
 
          </tr>
@@ -311,15 +306,15 @@
 			 style="background: #EEE">
 		{% endif  %}
 
-			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['name'] }}</b></a></td>
-					<td> {{ competition['climbers'][climberId]['sex'] }}</td>
-			 <td><i>{{competition['climbers'][climberId]['club'] }}</i></td>
-			 <td><i>  {{ competition['climbers'][climberId]['category'] }}  </i></td>
-			 <td><i>
+			 <td><a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}"><b>{{ competition['climbers'][climberId]['firstname'] }} {{ competition['climbers'][climberId]['lastname'] }}</b></a></td>
+					<td class="d-none d-md-table-cell"> {{ competition['climbers'][climberId]['sex'] }}</td>
+			 <td class="d-none d-md-table-cell"><i>{{competition['climbers'][climberId]['club'] }}</i></td>
+			 <td class="d-none d-md-table-cell"><i>  {{ competition['climbers'][climberId]['category'] }}  </i></td>
+			 <td class="d-none d-md-table-cell"><i>
 				 <a href="/competitionRoutesEntry/{{ competitionId }}/climber/{{ climberId}}" alt="Click to edit">
 				 {{ competition['climbers'][climberId]['routesClimbed']}}  --
 				 {{ competition['climbers'][climberId]['routesClimbed']|length }}  </a></td>
-			 <td>{{ competition['climbers'][climberId]['score'] }}  </td>
+			 <td class="d-none d-md-table-cell">{{ competition['climbers'][climberId]['score'] }}  </td>
 			 <td>
 				 <!--font size="+{{ 5-competition['climbers'][climberId]['rank'] }}"-->
 				 <b>{{ competition['climbers'][climberId]['rank'] }}</b>
@@ -332,6 +327,7 @@
 
          </tbody>
      </table>
+</div>
 
 
 	{%endif %}

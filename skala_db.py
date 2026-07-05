@@ -266,8 +266,20 @@ def get_all_competitions():
 
     return comps
 
+
 def get_all_gyms():
     return _get_gyms()
+
+
+def update_user_fields(climber_id, fields_dict):
+    """Patch specific fields on an existing user record without touching auth credentials."""
+    user = get_user(climber_id)
+    if user is None:
+        logging.warning(f"update_user_fields: user {climber_id} not found, skipping")
+        return
+    user.update(fields_dict)
+    _update_user(climber_id, user.get('email', ''), user)
+
 
 def get_user(id):
     db = lite.connect(COMPETITIONS_DB)
@@ -818,7 +830,7 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
 
     newclimber = {}
     newclimber['id'] = climberId
-    newclimber['name'] = name
+    #newclimber['name'] = name
     newclimber['firstname'] = firstname
     newclimber['lastname'] = lastname
     newclimber['sex'] = sex

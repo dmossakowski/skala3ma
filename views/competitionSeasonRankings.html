@@ -14,18 +14,9 @@
     
     /* Filter Controls */
     .rankings-filters { background:#f1f3f4; padding:1rem 1.2rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; }
-    .filter-row { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; }
-    .filter-group { flex:1 1 200px; }
-    .filter-label { font-size:0.85rem; font-weight:600; margin-bottom:0.35rem; color:#555; }
-    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
+    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; max-width:420px; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
     .filter-select:hover { background:#e8f5e9; }
     .filter-select:focus { outline:none; border-color:#53be6b; background:#fff; }
-    
-    /* Type Toggle Buttons */
-    .type-toggle-group { display:flex; gap:0.5rem; }
-    .type-toggle-btn { font-size:0.9rem; padding:0.6rem 1.2rem; border:2px solid #53be6b; border-radius:8px; font-weight:600; cursor:pointer; background:#fff; color:#53be6b; transition:all 0.2s ease; }
-    .type-toggle-btn:hover { background:#e8f5e9; }
-    .type-toggle-btn.active { background:#53be6b; color:#fff; }
     
     /* Rankings Summary */
     .rankings-summary { background:#fff; border-radius:12px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,.1); margin-bottom:2rem; }
@@ -62,12 +53,7 @@
     @media (max-width: 768px) {
         .rankings-container { padding:0.5rem; }
         .rankings-filters { padding:0.75rem 0.85rem; margin-bottom:1rem; }
-        .filter-row { flex-direction:column; gap:0.6rem; }
-        .filter-group { flex:1 1 auto; min-width:100%; }
-        .filter-label { font-size:0.8rem; margin-bottom:0.25rem; }
-        .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; }
-        .type-toggle-group { width:100%; display:flex; gap:0.4rem; }
-        .type-toggle-btn { flex:1 1 0; min-width:0; text-align:center; padding:0.5rem 0.3rem; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; max-width:100%; }
         
         .rankings-summary, .rankings-section { padding:1rem 0.75rem; margin-bottom:1rem; }
         .section-header { font-size:1.1rem; flex-direction:column; align-items:flex-start; gap:0.5rem; }
@@ -86,22 +72,9 @@
     
     <!-- Filter Controls -->
     <div class="rankings-filters">
-        <div class="filter-row">
-            <div class="filter-group">
-                <div class="filter-label" data-translate-key="Season">Season</div>
-                <select id="seasonFilter" class="filter-select">
-                    <option value="">Select Season</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <div class="filter-label" data-translate-key="competition_type">Competition Type</div>
-                <div class="type-toggle-group">
-                    <button class="type-toggle-btn active" data-type="" data-translate-key="all">All</button>
-                    <button class="type-toggle-btn" data-type="adult" data-translate-key="competition_type_adult">Adult</button>
-                    <button class="type-toggle-btn" data-type="ado" data-translate-key="competition_type_ado">Ado</button>
-                </div>
-            </div>
-        </div>
+        <select id="competitionFilter" class="filter-select">
+            <option value="">Select Competition</option>
+        </select>
     </div>
     
     <!-- Rankings Summary -->
@@ -168,7 +141,7 @@
         currentType: '',
         rankingsData: null,
         activeCategory: null,
-        seasons: []
+        seasonTypes: []
     };
     
     // Compute season label from date (Sept = start of new season)
@@ -186,14 +159,26 @@
         }
     }
     
-    // Get unique seasons from competitions
-    function extractSeasons(competitions) {
-        const seasonSet = new Set();
+    // Get unique season+type pairs from competitions
+    function extractSeasonTypes(competitions) {
+        const seen = new Set();
+        const pairs = [];
         competitions.forEach(comp => {
             const season = computeSeason(comp.date);
-            if (season) seasonSet.add(season);
+            const type = comp.competition_type;
+            if (season && type) {
+                const key = `${season}:${type}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    pairs.push({ season, type });
+                }
+            }
         });
-        return Array.from(seasonSet).sort().reverse(); // Most recent first
+        pairs.sort((a, b) => {
+            if (b.season !== a.season) return b.season.localeCompare(a.season);
+            return a.type.localeCompare(b.type); // adult before ado
+        });
+        return pairs;
     }
     
     // Show loading state in all sections
@@ -222,7 +207,8 @@
         document.getElementById('rankingsSummary').style.display = 'block';
         document.getElementById('clubRankingsSection').style.display = 'block';
         document.getElementById('individualRankingsSection').style.display = 'block';
-        document.getElementById('summarySeasonName').textContent = state.currentSeason;
+        const sel = document.getElementById('competitionFilter');
+        document.getElementById('summarySeasonName').textContent = sel.options[sel.selectedIndex]?.text || state.currentSeason;
         showLoading();
         
         try {
@@ -322,9 +308,12 @@
                 const isActive = state.activeCategory === tabKey || (tabKey === firstTab && !state.activeCategory);
                 if (isActive && !state.activeCategory) state.activeCategory = tabKey;
                 
-                const categoryLabel = getCategoryLabel(category);
+                const climbers = individual[gender][category];
+                const ageType = climbers && climbers.length > 0 ? climbers[0].age_category_type : null;
+                const compType = state.currentType || (state.rankingsData && state.rankingsData.competition_type) || 'adult';
+                const categoryLabel = getCategoryLabel(category, ageType, compType);
                 const genderLabel = gender === 'F' ? getTranslation('women') : getTranslation('men');
-                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}"> ${categoryLabel}</button>`;
+                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}">${genderLabel} ${categoryLabel}</button>`;
             });
         });
         tabsContainer.innerHTML = tabsHTML;
@@ -395,7 +384,14 @@
     }
     
     // Get category label
-    function getCategoryLabel(category) {
+    function getCategoryLabel(category, ageType, compType) {
+        if (ageType && compType) {
+            const levelNum = category[0]; // '0', '1', or '2'
+            const key = `competition_category_${ageType}_${compType}_${levelNum}`;
+            const label = getTranslation(key);
+            if (label && label !== key) return label;
+        }
+        // Fallback to old gender-based keys
         const categoryMap = {
             '0F': getTranslation('competition_category_women_senior'),
             '1F': getTranslation('competition_category_women_titan'),
@@ -409,38 +405,33 @@
     
     // Initialize filters
     function initializeFilters() {
-        // Populate season dropdown
-        const seasonSelect = document.getElementById('seasonFilter');
-        seasonSelect.innerHTML = '<option value="">Select Season</option>';
-        state.seasons.forEach(season => {
+        const select = document.getElementById('competitionFilter');
+        select.innerHTML = '<option value="">Select Competition</option>';
+        state.seasonTypes.forEach(({ season, type }) => {
             const option = document.createElement('option');
-            option.value = season;
-            option.textContent = season;
-            seasonSelect.appendChild(option);
+            option.value = `${season}:${type}`;
+            const typeLabel = getTranslation(`competition_type_${type}`);
+            option.textContent = `FSGT IDF ${typeLabel} ${season}`;
+            select.appendChild(option);
         });
-        
-        // Set default to current season
+
+        // Default to current season, prefer adult type
         const today = new Date();
         const currentSeason = computeSeason(today.toISOString().split('T')[0]);
-        if (state.seasons.includes(currentSeason)) {
-            seasonSelect.value = currentSeason;
-            state.currentSeason = currentSeason;
+        const defaultPair = state.seasonTypes.find(p => p.season === currentSeason && p.type === 'adult')
+            || state.seasonTypes.find(p => p.season === currentSeason)
+            || state.seasonTypes[0];
+        if (defaultPair) {
+            select.value = `${defaultPair.season}:${defaultPair.type}`;
+            state.currentSeason = defaultPair.season;
+            state.currentType = defaultPair.type;
         }
-        
-        // Season change handler
-        seasonSelect.addEventListener('change', (e) => {
-            state.currentSeason = e.target.value;
+
+        select.addEventListener('change', (e) => {
+            const [season, type] = e.target.value ? e.target.value.split(':') : [null, ''];
+            state.currentSeason = season || null;
+            state.currentType = type || '';
             loadRankings();
-        });
-        
-        // Type toggle handlers
-        document.querySelectorAll('.type-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                state.currentType = e.target.dataset.type;
-                loadRankings();
-            });
         });
     }
     
@@ -457,7 +448,7 @@
         try {
             // Get all competitions to extract seasons
             const competitions = await apiFetchJson('/api1/competition/list');
-            state.seasons = extractSeasons(competitions);
+            state.seasonTypes = extractSeasonTypes(competitions);
             
             initializeFilters();
             

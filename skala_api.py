@@ -1526,6 +1526,7 @@ def getSeasonRankings(season):
                     if name_key not in participant_results:
                         participant_results[name_key] = {
                             'category': category_key,
+                            'age_category_type': competition.get('age_category_type', ''),
                             'club': climber.get('club', ''),
                             'gymid': climber.get('gymid', ''),
                             'sex': climber.get('sex', ''),
@@ -1581,10 +1582,12 @@ def getSeasonRankings(season):
                     'gymid': data.get('gymid', ''),
                     'sex': data['sex'],
                     'category': category,
+                    'age_category_type': competition.get('age_category_type', ''),
                     'total_points': total_points,
                     'participations': participations,
                     'results_counted': results_to_count,
                     'best_results': best_results
+
                 })
             else:
                 # Log when category/sex doesn't match
@@ -2235,7 +2238,7 @@ def routes_climbed(competitionId, climberId):
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     #routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    subheader_message = climber['firstname']+" - "+climber['club']
 
     return render_template("competitionRoutesEntry.html", climberId=climberId,
                            climber=climber,
@@ -2296,7 +2299,7 @@ def update_routes_climbed(competitionId, climberId):
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    subheader_message = climber['firstname']+" "+climber['lastname']+" - "+climber['club']
 
     return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
                            routes=routes,

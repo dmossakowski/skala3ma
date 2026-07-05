@@ -507,7 +507,8 @@ def competition_admin_post(competition_id):
             except Exception as e:
                 logging.error("Error parsing climber club in competition admin "+str(e))
                
-            competition['climbers'][climber_id]['name'] = request.form.get('name_'+ climber_id)
+            competition['climbers'][climber_id]['firstname'] = request.form.get('firstname_'+ climber_id)
+            competition['climbers'][climber_id]['lastname'] = request.form.get('lastname_'+ climber_id)
             competition['climbers'][climber_id]['sex'] = request.form.get('sex_'+ climber_id)
             competition['climbers'][climber_id]['club'] = climber_club_name
             competition['climbers'][climber_id]['gymid'] = climber_gymid
@@ -518,13 +519,24 @@ def competition_admin_post(competition_id):
                 competition['climbers'][climber_id]['category'] = int(request.form.get('category_' + str(climber_id)))
             except (ValueError, TypeError):
                 # Handle the exception if the conversion fails
-                print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id]['name'])
+                print("The provided category is not a valid integer for climber " + competition['climbers'][climber_id].get('firstname', '') + ' ' + competition['climbers'][climber_id].get('lastname', ''))
                 # Set to a default value or handle the error as appropriate
                 competition['climbers'][climber_id]['category'] = 0  # Replace default_value with whatever default you wish to use
             # TODO check but this is probably not necessary so commenting it out
             # competitionsEngine.update_competition_climbers_category(competition, competition.get('competition_type'))
 
             competitionsEngine.update_competition(competition['id'], competition)
+
+            # Also propagate the changes back to the user's own record
+            skala_db.update_user_fields(climber_id, {
+                'firstname': competition['climbers'][climber_id]['firstname'],
+                'lastname': competition['climbers'][climber_id]['lastname'],
+                'sex': competition['climbers'][climber_id]['sex'],
+                'club': competition['climbers'][climber_id]['club'],
+                'gymid': competition['climbers'][climber_id]['gymid'],
+                'email': competition['climbers'][climber_id]['email'],
+                'category': competition['climbers'][climber_id]['category'],
+            })
 
     if competition_update_button is not None:
         competition_name = request.form.get('competition_name')
@@ -1617,7 +1629,7 @@ def getCompetitionClimber(competitionId, climberId):
                                    **session)
 
     competition = competitionsEngine.getCompetition(competitionId)
-    subheader_message = climber['name']+"   from "+climber['club']
+    subheader_message = climber['firstname']+"   from "+climber['club']
 
     # library= {}
     # library['tracks'] = tracks
@@ -1888,7 +1900,7 @@ def update_routes_climbed(competitionId, climberId):
                                     reference_data=competitionsEngine.reference_data,
                                    **session)
 
-        climber = competitionsEngine.getClimber(competitionId,climberId)
+    climber = competitionsEngine.getClimber(competitionId,climberId)
 
     if climber is None:
         error_message = "No climber found"
@@ -1906,7 +1918,7 @@ def update_routes_climbed(competitionId, climberId):
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
-    info_message = "Success for "+climber['name']+"   from "+climber['club']
+    info_message = "Success for "+climber['firstname']+" "+climber['lastname']+"   from "+climber['club']
 
 
     return render_template("competitionClimberList.html", climberId=climberId, climber=climber,
