@@ -271,8 +271,19 @@ function initializeApp() {
                    
                     <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
                     <a href="/controversial_routes" class="nav-link fs-4 fw-medium"><span data-translate-key="controversial_routes">Controversial Routes</span></a>
-                    <a class="nav-link fs-4 fw-medium" href="/competitionCalendar">{{ reference_data['current_language'].competitions }}</a>
-                    <a href="/competitionSeasonRankings"  class="nav-link fs-4 fw-medium"><i class="bi bi-trophy-fill" ></i>  {{ reference_data['current_language'].Rankings }}</a>
+                    <a class="nav-link fs-4 fw-medium" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+
+
+                    <a href="/competitionCalendar?view=multiMonthFourMonth"  class="nav-link sf-menu2"><i class="bi bi-calendar-week-fill" ></i>
+            {{ reference_data['current_language'].Calendar }}</a>
+
+                    <a href="/competitionCalendar?view=timeGridFourDay"  class="nav-link sf-menu2"><i class="bi bi-border-width" ></i>
+                {{ reference_data['current_language'].list }}</a>
+
+                                
+
+
+                    <a href="/competitionSeasonRankings"  class="nav-link sf-menu2"><i class="bi bi-trophy-fill" ></i>  {{ reference_data['current_language'].Rankings }}</a>
 
                      
                     <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
@@ -403,7 +414,20 @@ function initializeApp() {
                     {{ reference_data['current_language'].competitions }}
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">
-                    <li><a class="dropdown-item fs-7" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a></li>
+
+ <li> <a href="/competitionDashboard"  class="dropdown-item fs-7"><i class="bi bi-grid-fill" ></i>
+            {{ reference_data['current_language'].Gallery }}</a></li>
+        <li> <a href="/competitionCalendar?view=multiMonthFourMonth"  class="dropdown-item fs-7"><i class="bi bi-calendar-week-fill" ></i>
+            {{ reference_data['current_language'].Calendar }}</a></li>
+
+            <li>     <a href="/competitionCalendar?view=timeGridFourDay"  class="dropdown-item fs-7"><i class="bi bi-border-width" ></i>
+                {{ reference_data['current_language'].list }}</a></li>
+
+                                
+
+
+							
+                  
                      <li>     <a href="/competitionSeasonRankings"  class="dropdown-item fs-7"><i class="bi bi-trophy-fill" ></i>
                 {{ reference_data['current_language'].Rankings }}</a></li>
 					

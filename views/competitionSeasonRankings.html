@@ -13,8 +13,11 @@
     .rankings-container { max-width: 1600px; margin: 0 auto; padding: 1rem; }
     
     /* Filter Controls */
-    .rankings-filters { background:#f1f3f4; padding:1rem 1.2rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; }
-    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; max-width:420px; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
+    .rankings-filters { background:linear-gradient(135deg, #e8f5e9 0%, #f1f3f4 100%); padding:1rem 1.4rem; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:1.5rem; border-left:4px solid #53be6b; }
+    .filter-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+    .filter-title { font-size:1.4rem; font-weight:700; color:#53be6b; display:flex; align-items:center; gap:0.5rem; white-space:nowrap; }
+    .filter-title i { font-size:1.2rem; }
+    .filter-select { font-size:0.9rem; padding:0.5rem 0.75rem; width:100%; max-width:380px; border:2px solid #53be6b; border-radius:8px; background:#fff; color:#53be6b; font-weight:600; cursor:pointer; transition:all 0.2s ease; }
     .filter-select:hover { background:#e8f5e9; }
     .filter-select:focus { outline:none; border-color:#53be6b; background:#fff; }
     
@@ -36,8 +39,8 @@
     
     /* Rankings Table */
     .rankings-table { width:100%; border-collapse:collapse; }
-    .rankings-table thead th { background:#53be6b; color:#fff; padding:0.75rem 0.5rem; text-align:left; font-weight:600; font-size:0.9rem; position:sticky; top:0; z-index:10; }
-    .rankings-table tbody td { padding:0.75rem 0.5rem; border-bottom:1px solid #eee; }
+    .rankings-table thead th { background:#53be6b; color:#fff; padding:0.55rem 0.3rem; text-align:left; font-weight:600; font-size:0.9rem; position:sticky; top:0; z-index:10; }
+    .rankings-table tbody td { padding:0.1rem 0rem; border-bottom:1px solid #eee; }
     .rankings-table tbody tr:hover { background:#f8f9fa; }
     .rank-cell { font-weight:700; color:#53be6b; min-width:50px; }
     .rank-cell.rank-1 { color:#ffe448; font-size:1.1rem; }
@@ -49,10 +52,33 @@
     /* Loading State */
     .loading-spinner { text-align:center; padding:3rem; color:#999; }
     
+    /* Category Section Titles */
+    .category-section-title { font-size:1.1rem; font-weight:700; color:#333; margin:1.5rem 0 0.5rem; padding-bottom:0.4rem; border-bottom:2px solid #53be6b; }
+    .category-section-title:first-child { margin-top:0; }
+
+    @media print {
+        .rankings-filters, nav, header, .competitions-menu-wrapper { display:none !important; }
+        .rankings-container { padding:0 !important; max-width:100% !important; }
+        .rankings-summary { padding:0.4rem 0.3rem !important; margin-bottom:0.3rem !important; box-shadow:none !important; border:1px solid #ccc !important; }
+        .rankings-section { padding:0.4rem 0.3rem !important; margin-bottom:0.3rem !important; box-shadow:none !important; border:1px solid #ccc !important; page-break-inside:avoid; }
+        .section-header { font-size:1rem !important; margin-bottom:0.3rem !important; }
+        .summary-stats { gap:0.1rem !important; }
+        .stat-label { font-size:0.75rem !important; }
+        .stat-value { font-size:1rem !important; }
+        .category-section-title { font-size:0.95rem !important; margin:1.5rem 0 0.5rem !important; padding-bottom:0.2rem !important; page-break-after:avoid; }
+        .rankings-table { font-size:0.78rem !important; }
+        .rankings-table thead th, .rankings-table tbody td { padding:0.1rem 0.2rem !important; }
+        .rankings-table thead th { background:#53be6b !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; position:static !important; top:auto !important; z-index:auto !important; }
+        .rankings-table thead { display:table-row-group !important; }
+        .rank-cell.rank-1, .rank-cell.rank-2, .rank-cell.rank-3 { font-size:0.85rem !important; }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .rankings-container { padding:0.5rem; }
         .rankings-filters { padding:0.75rem 0.85rem; margin-bottom:1rem; }
+        .filter-bar { flex-direction:column; align-items:flex-start; gap:0.5rem; }
+        .filter-title { font-size:1.1rem; }
         .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; max-width:100%; }
         
         .rankings-summary, .rankings-section { padding:1rem 0.75rem; margin-bottom:1rem; }
@@ -72,9 +98,15 @@
     
     <!-- Filter Controls -->
     <div class="rankings-filters">
-        <select id="competitionFilter" class="filter-select">
-            <option value="">Select Competition</option>
-        </select>
+        <div class="filter-bar">
+            <div class="filter-title">
+                <i class="bi bi-trophy-fill"></i>
+                <span data-translate-key="Rankings">Rankings</span>
+            </div>
+            <select id="competitionFilter" class="filter-select">
+                <option value="">Select Competition</option>
+            </select>
+        </div>
     </div>
     
     <!-- Rankings Summary -->
@@ -140,7 +172,6 @@
         currentSeason: null,
         currentType: '',
         rankingsData: null,
-        activeCategory: null,
         seasonTypes: []
     };
     
@@ -281,74 +312,41 @@
         content.innerHTML = tableHTML;
     }
     
-    // Render individual rankings - now with gender separation
+    // Render individual rankings - all categories stacked
     function renderIndividualRankings(individual) {
         const tabsContainer = document.getElementById('categoryTabs');
         const content = document.getElementById('individualRankingsContent');
-        
-        // individual is now structured as {gender: {category: [climbers]}}
-        const genders = Object.keys(individual).sort().reverse(); // F, M order
-        
+        tabsContainer.innerHTML = '';
+
+        const genders = Object.keys(individual).sort().reverse(); // M, F order (men first)
+
         if (genders.length === 0) {
-            tabsContainer.innerHTML = '';
             content.innerHTML = '<div class="empty-state"><p data-translate-key="no_individual_rankings">No individual rankings available</p></div>';
             return;
         }
-        
-        // Create gender+category tabs
-        let tabsHTML = '';
-        let firstTab = null;
-        
+
+        const compType = state.currentType || (state.rankingsData && state.rankingsData.competition_type) || 'adult';
+        let html = '';
+
         genders.forEach(gender => {
-            const categories = Object.keys(individual[gender]).sort();
-            categories.forEach((category, index) => {
-                const tabKey = `${gender}:${category}`;  // Use : separator to avoid conflicts
-                if (!firstTab) firstTab = tabKey;
-                
-                const isActive = state.activeCategory === tabKey || (tabKey === firstTab && !state.activeCategory);
-                if (isActive && !state.activeCategory) state.activeCategory = tabKey;
-                
+            const genderLabel = gender === 'F' ? getTranslation('women') : getTranslation('men');
+            const categories = Object.keys(individual[gender]).sort().reverse(); // oldest first (2=Diamond, 1=Titan, 0=Senior)
+            categories.forEach(category => {
                 const climbers = individual[gender][category];
                 const ageType = climbers && climbers.length > 0 ? climbers[0].age_category_type : null;
-                const compType = state.currentType || (state.rankingsData && state.rankingsData.competition_type) || 'adult';
                 const categoryLabel = getCategoryLabel(category, ageType, compType);
-                const genderLabel = gender === 'F' ? getTranslation('women') : getTranslation('men');
-                tabsHTML += `<button class="category-tab ${isActive ? 'active' : ''}" data-category="${tabKey}" data-gender="${gender}" data-cat="${category}">${genderLabel} ${categoryLabel}</button>`;
+                html += `<h4 class="category-section-title">${genderLabel} – ${categoryLabel}</h4>`;
+                html += buildCategoryTable(climbers);
             });
         });
-        tabsContainer.innerHTML = tabsHTML;
-        
-        // Add click handlers
-        document.querySelectorAll('.category-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                state.activeCategory = e.target.dataset.category;
-                const gender = e.target.dataset.gender;
-                const cat = e.target.dataset.cat;
-                renderCategoryRankings(individual[gender][cat]);
-            });
-        });
-        
-        // Render first/active category
-        if (state.activeCategory && state.activeCategory.includes(':')) {
-            const [gender, cat] = state.activeCategory.split(':');
-            if (individual[gender] && individual[gender][cat]) {
-                renderCategoryRankings(individual[gender][cat]);
-            }
-        } else if (firstTab) {
-            const [gender, cat] = firstTab.split(':');
-            renderCategoryRankings(individual[gender][cat]);
-        }
+
+        content.innerHTML = html;
     }
     
-    // Render a specific category ranking
-    function renderCategoryRankings(climbers) {
-        const content = document.getElementById('individualRankingsContent');
-        
+    // Build HTML table for a category ranking
+    function buildCategoryTable(climbers) {
         if (!climbers || climbers.length === 0) {
-            content.innerHTML = '<div class="empty-state"><p data-translate-key="no_rankings_category">No rankings for this category</p></div>';
-            return;
+            return '<div class="empty-state"><p data-translate-key="no_rankings_category">No rankings for this category</p></div>';
         }
         
         let tableHTML = `
@@ -380,7 +378,7 @@
         });
         
         tableHTML += '</tbody></table>';
-        content.innerHTML = tableHTML;
+        return tableHTML;
     }
     
     // Get category label
