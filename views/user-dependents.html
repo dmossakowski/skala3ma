@@ -1,0 +1,308 @@
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+{% block secondarycontent %}
+
+{% include "user-menu.html" %}
+
+<div id="alertPlaceholder"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h3><span data-translate-key="my_dependents">My dependents</span></h3>
+            <p class="text-muted"><span data-translate-key="dependents_description">Manage supervised accounts for adolescents (12-17 years old) that you are responsible for. You can register them for competitions.</span></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-success" id="btn-add-dependent" onclick="showAddForm()">
+                <i class="bi bi-plus-circle"></i> <span data-translate-key="add_dependent">Add dependent</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add/Edit form (hidden by default) -->
+    <div id="dependent-form-container" style="display:none;" class="mt-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 id="form-title"><span data-translate-key="add_dependent">Add dependent</span></h5>
+                <form id="dependent-form" onsubmit="return saveDependent(event)">
+                    <input type="hidden" id="dep-id" value="">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="dep-firstname" required>
+                                <label for="dep-firstname"><span data-translate-key="firstname">{{ reference_data['current_language'].firstname }}</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="dep-lastname" required>
+                                <label for="dep-lastname"><span data-translate-key="lastname">{{ reference_data['current_language'].lastname }}</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" class="form-control" id="dep-dob" required>
+                                <label for="dep-dob">{{ reference_data['current_language'].dob }}</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 pt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" id="dep-sex-F" value="F" name="dep-sex" required>
+                                    <label class="form-check-label" for="dep-sex-F">{{ reference_data['current_language'].woman }}</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" id="dep-sex-M" value="M" name="dep-sex" required>
+                                    <label class="form-check-label" for="dep-sex-M">{{ reference_data['current_language'].man }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="dep-gymid">
+                                    <option value="">{{ reference_data['current_language'].choose }}</option>
+                                </select>
+                                <label for="dep-gymid">{{ reference_data['current_language'].club }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success"><span data-translate-key="submit">{{ reference_data['current_language'].submit }}</span></button>
+                        <button type="button" class="btn btn-secondary" onclick="hideForm()"><span data-translate-key="cancel">Cancel</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependents list -->
+    <div id="dependents-list" class="mt-4">
+        <div id="dependents-loading" class="text-center text-muted">
+            <div class="spinner-border spinner-border-sm" role="status"></div> Loading...
+        </div>
+        <div id="dependents-empty" style="display:none;" class="text-muted">
+            <span data-translate-key="no_dependents">No dependents added yet.</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    let gymsCache = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadGyms();
+        loadDependents();
+    });
+
+    function loadGyms() {
+        window.apiFetchJson('/api1/gyms')
+            .then(gyms => {
+                gymsCache = gyms;
+                const select = document.getElementById('dep-gymid');
+                gyms.forEach(gym => {
+                    const option = document.createElement('option');
+                    option.value = gym.id;
+                    option.textContent = gym.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => console.error('Failed to fetch gyms:', err));
+    }
+
+    function loadDependents() {
+        window.apiFetchJson('/api1/user/dependents')
+            .then(dependents => {
+                const listEl = document.getElementById('dependents-list');
+                const loadingEl = document.getElementById('dependents-loading');
+                const emptyEl = document.getElementById('dependents-empty');
+                loadingEl.style.display = 'none';
+
+                // Remove existing cards
+                listEl.querySelectorAll('.dependent-card').forEach(c => c.remove());
+
+                if (!dependents || dependents.length === 0) {
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+                emptyEl.style.display = 'none';
+
+                dependents.forEach(dep => {
+                    const gymName = getGymName(dep.gymid);
+                    const age = calculateAge(dep.dob);
+                    const card = document.createElement('div');
+                    card.className = 'dependent-card card mb-2';
+                    card.innerHTML = `
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${escapeHtml(dep.firstname)} ${escapeHtml(dep.lastname)}</strong>
+                                <span class="badge bg-secondary ms-2">${dep.sex === 'F' ? '{{ reference_data["current_language"].woman }}' : '{{ reference_data["current_language"].man }}'}</span>
+                                <span class="badge bg-info ms-1">${age} {{ reference_data['current_language'].years_old or 'years old' }}</span>
+                                <br>
+                                <small class="text-muted">
+                                    {{ reference_data['current_language'].dob }}: ${dep.dob ? dep.dob : '-'}
+                                    ${gymName ? ' · {{ reference_data["current_language"].club }}: ' + escapeHtml(gymName) : ''}
+                                </small>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editDependent('${dep.id}')" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteDependent('${dep.id}', '${escapeHtml(dep.firstname)}')" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    card.dataset.dependent = JSON.stringify(dep);
+                    listEl.appendChild(card);
+                });
+            })
+            .catch(err => {
+                console.error('Failed to fetch dependents:', err);
+                document.getElementById('dependents-loading').textContent = 'Error loading dependents';
+            });
+    }
+
+    function showAddForm() {
+        document.getElementById('dep-id').value = '';
+        document.getElementById('dep-firstname').value = '';
+        document.getElementById('dep-lastname').value = '';
+        document.getElementById('dep-dob').value = '';
+        document.getElementById('dep-gymid').value = '';
+        document.querySelectorAll('input[name="dep-sex"]').forEach(r => r.checked = false);
+        document.getElementById('form-title').textContent = '{{ reference_data["current_language"].add_dependent or "Add dependent" }}';
+        document.getElementById('dependent-form-container').style.display = 'block';
+        document.getElementById('dep-firstname').focus();
+    }
+
+    function hideForm() {
+        document.getElementById('dependent-form-container').style.display = 'none';
+    }
+
+    function editDependent(depId) {
+        const cards = document.querySelectorAll('.dependent-card');
+        for (const card of cards) {
+            const dep = JSON.parse(card.dataset.dependent);
+            if (dep.id === depId) {
+                document.getElementById('dep-id').value = dep.id;
+                document.getElementById('dep-firstname').value = dep.firstname || '';
+                document.getElementById('dep-lastname').value = dep.lastname || '';
+                document.getElementById('dep-dob').value = dep.dob || '';
+                document.getElementById('dep-gymid').value = dep.gymid || '';
+                const sexRadio = document.getElementById('dep-sex-' + dep.sex);
+                if (sexRadio) sexRadio.checked = true;
+                document.getElementById('form-title').textContent = '{{ reference_data["current_language"].edit_dependent or "Edit dependent" }}';
+                document.getElementById('dependent-form-container').style.display = 'block';
+                document.getElementById('dep-firstname').focus();
+                break;
+            }
+        }
+    }
+
+    function saveDependent(event) {
+        event.preventDefault();
+        const depId = document.getElementById('dep-id').value;
+        const data = {
+            firstname: document.getElementById('dep-firstname').value.trim(),
+            lastname: document.getElementById('dep-lastname').value.trim(),
+            dob: document.getElementById('dep-dob').value,
+            sex: document.querySelector('input[name="dep-sex"]:checked')?.value,
+            gymid: document.getElementById('dep-gymid').value
+        };
+
+        // Client-side age validation (12-17)
+        const age = calculateAge(data.dob);
+        if (age < 12 || age > 17) {
+            showAlert('{{ reference_data["current_language"].dependent_age_error or "Dependent must be between 12 and 17 years old" }}', 'danger');
+            return false;
+        }
+
+        // Find club name from gym
+        const gym = gymsCache.find(g => g.id === data.gymid);
+        if (gym) {
+            data.club = gym.name;
+        }
+
+        let url, method;
+        if (depId) {
+            url = '/api1/user/dependents/' + depId;
+            method = 'PUT';
+        } else {
+            url = '/api1/user/dependents';
+            method = 'POST';
+        }
+
+        window.apiFetchJson(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(result => {
+            if (result.error) {
+                showAlert(result.error, 'danger');
+                return;
+            }
+            hideForm();
+            loadDependents();
+            showAlert(depId ? '{{ reference_data["current_language"].dependent_updated or "Dependent updated" }}' : '{{ reference_data["current_language"].dependent_added or "Dependent added" }}', 'success');
+        })
+        .catch(err => {
+            console.error('Error saving dependent:', err);
+            showAlert('Error saving dependent', 'danger');
+        });
+
+        return false;
+    }
+
+    function deleteDependent(depId, name) {
+        if (!confirm('{{ reference_data["current_language"].confirm_delete_dependent or "Are you sure you want to remove this dependent?" }}\n' + name)) {
+            return;
+        }
+        window.apiFetchJson('/api1/user/dependents/' + depId, { method: 'DELETE' })
+            .then(result => {
+                if (result.error) {
+                    showAlert(result.error, 'danger');
+                    return;
+                }
+                loadDependents();
+                showAlert('{{ reference_data["current_language"].dependent_deleted or "Dependent removed" }}', 'success');
+            })
+            .catch(err => {
+                console.error('Error deleting dependent:', err);
+                showAlert('Error deleting dependent', 'danger');
+            });
+    }
+
+    function getGymName(gymid) {
+        if (!gymid) return '';
+        const gym = gymsCache.find(g => g.id === gymid);
+        return gym ? gym.name : '';
+    }
+
+    function calculateAge(dob) {
+        if (!dob) return 0;
+        const today = new Date();
+        const birth = new Date(dob);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+
+{% endblock %}
