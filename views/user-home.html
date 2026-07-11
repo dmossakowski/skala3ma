@@ -90,6 +90,20 @@
                         <div id="managed-competitions-empty" class="card-subtext">-</div>
                     </div>
                 </div>
+
+                <!-- Dependents -->
+                <div class="col-sm-6">
+                    <div class="summary-card" id="dependents-card">
+                        <h5 data-translate-key="my_dependents">My dependents</h5>
+                        <div id="dependents-summary-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
+                        <div id="dependents-summary-empty" class="card-subtext">-</div>
+                        <div style="margin-top:.5rem;">
+                            <a href="/user/dependents" class="btn btn-sm btn-success">
+                                <span data-translate-key="manage_dependents">Manage dependents</span> <i class="bi bi-people-fill"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             
         </div>
 
@@ -370,6 +384,26 @@
                         });
                     }
                     if (typeof replaceTranslations === 'function') { try { replaceTranslations(); } catch (e) {} }
+
+                    // Load dependents summary
+                    try {
+                        const dependents = await apiFetchJson('/api1/user/dependents');
+                        const depList = document.getElementById('dependents-summary-list');
+                        const depEmpty = document.getElementById('dependents-summary-empty');
+                        const depCard = document.getElementById('dependents-card');
+                        if (dependents && dependents.length > 0) {
+                            if (depEmpty) depEmpty.style.display = 'none';
+                            dependents.forEach(dep => {
+                                const item = document.createElement('div');
+                                item.textContent = (dep.firstname || '') + ' ' + (dep.lastname || '');
+                                if (depList) depList.appendChild(item);
+                            });
+                        } else {
+                            if (depEmpty) depEmpty.style.display = 'block';
+                        }
+                    } catch (e) {
+                        dbg('Failed to load dependents', e);
+                    }
                 } catch (e) {
                     console.warn('Failed to initialize gyms home', e);
                 }

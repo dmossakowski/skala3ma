@@ -1526,6 +1526,7 @@ def getSeasonRankings(season):
                     if name_key not in participant_results:
                         participant_results[name_key] = {
                             'category': category_key,
+                            'age_category_type': competition.get('age_category_type', ''),
                             'club': climber.get('club', ''),
                             'gymid': climber.get('gymid', ''),
                             'sex': climber.get('sex', ''),
@@ -1581,10 +1582,12 @@ def getSeasonRankings(season):
                     'gymid': data.get('gymid', ''),
                     'sex': data['sex'],
                     'category': category,
+                    'age_category_type': competition.get('age_category_type', ''),
                     'total_points': total_points,
                     'participations': participations,
                     'results_counted': results_to_count,
                     'best_results': best_results
+
                 })
             else:
                 # Log when category/sex doesn't match
@@ -1840,6 +1843,101 @@ def get_user():
     if competitionsEngine.can_create_gym(user):
         user['permissions']['general'].append("create_gym")
     return user
+
+
+### USER DEPENDENTS (supervised ado accounts)
+@skala_api_app.route('/user/dependents')
+@session_or_jwt_required
+def get_user_dependents():
+    """Return list of supervised dependents for the logged-in user."""
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'unauthorized'}), 401
+    user = competitionsEngine.get_user_by_email(email)
+    if not user:
+        return jsonify({'error': 'not_found'}), 404
+    dependents = skala_db.get_dependents(user['id'])
+    return jsonify(dependents)
+
+
+@skala_api_app.route('/user/dependents', methods=['POST'])
+@session_or_jwt_required
+def create_user_dependent():
+    """Create a new supervised dependent for the logged-in user."""
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'unauthorized'}), 401
+    user = competitionsEngine.get_user_by_email(email)
+    if not user:
+        return jsonify({'error': 'not_found'}), 404
+
+    data = request.get_json(silent=True) or {}
+    firstname = data.get('firstname', '').strip()
+    lastname = data.get('lastname', '').strip()
+    dob = data.get('dob')
+    sex = data.get('sex')
+    gymid = data.get('gymid', '')
+    club = data.get('club', '')
+
+    try:
+        dependent = skala_db.create_dependent(
+            guardian_id=user['id'],
+            firstname=firstname,
+            lastname=lastname,
+            dob=dob,
+            sex=sex,
+            gymid=gymid,
+            club=club
+        )
+        return jsonify(dependent), 201
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@skala_api_app.route('/user/dependents/<dependent_id>', methods=['PUT'])
+@session_or_jwt_required
+def update_user_dependent(dependent_id):
+    """Update a supervised dependent. Only the owning guardian can update."""
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'unauthorized'}), 401
+    user = competitionsEngine.get_user_by_email(email)
+    if not user:
+        return jsonify({'error': 'not_found'}), 404
+
+    data = request.get_json(silent=True) or {}
+    try:
+        dependent = skala_db.update_dependent(
+            dependent_id=dependent_id,
+            guardian_id=user['id'],
+            firstname=data.get('firstname'),
+            lastname=data.get('lastname'),
+            dob=data.get('dob'),
+            sex=data.get('sex'),
+            gymid=data.get('gymid'),
+            club=data.get('club')
+        )
+        return jsonify(dependent)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@skala_api_app.route('/user/dependents/<dependent_id>', methods=['DELETE'])
+@session_or_jwt_required
+def delete_user_dependent(dependent_id):
+    """Delete a supervised dependent. Only the owning guardian can delete."""
+    email = session.get('email')
+    if not email:
+        return jsonify({'error': 'unauthorized'}), 401
+    user = competitionsEngine.get_user_by_email(email)
+    if not user:
+        return jsonify({'error': 'not_found'}), 404
+
+    try:
+        skala_db.delete_dependent(dependent_id=dependent_id, guardian_id=user['id'])
+        return jsonify({'status': 'deleted'}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @skala_api_app.route('/user/email')  
@@ -2140,7 +2238,7 @@ def routes_climbed(competitionId, climberId):
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     #routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    subheader_message = climber['firstname']+" - "+climber['club']
 
     return render_template("competitionRoutesEntry.html", climberId=climberId,
                            climber=climber,
@@ -2201,7 +2299,7 @@ def update_routes_climbed(competitionId, climberId):
     routesid = competition.get('routesid')
     routes = competitionsEngine.get_routes(routesid)
     routes = routes['routes']
-    subheader_message = climber['name']+" - "+climber['club']
+    subheader_message = climber['firstname']+" "+climber['lastname']+" - "+climber['club']
 
     return render_template("competitionRoutesEntry.html", climberId=climberId, climber=climber,
                            routes=routes,

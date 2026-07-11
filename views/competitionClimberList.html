@@ -91,7 +91,7 @@
     var html = '<ul class="list-unstyled">';
     Object.entries(comp.climbers).forEach(function(pair){
       var c = pair[1] || {};
-      var name = c.name || '';
+      var name = ((c.firstname || '') + ' ' + (c.lastname || '')).trim();
       var club = c.club || '';
       var routes = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
       html += '<li class="climber-row"><div class="climber-name">'+name+
@@ -138,9 +138,9 @@ document.addEventListener('DOMContentLoaded', function()
       layout: "fitDataStretch",
       responsiveLayout: "collapse",
       responsiveLayoutCollapseStartOpen: true,
-      initialSort: [{column: "name", dir: "asc"}],
+      initialSort: [{column: "fullname", dir: "asc"}],
       columns: [
-        {title: "{{ reference_data['current_language'].name }}", field: "name", responsive: 0, headerSort: true,
+        {title: "{{ reference_data['current_language'].name }} ", field: "fullname", responsive: 0, headerSort: true,
           formatter: function(cell){
             var d = cell.getRow().getData();
             var url = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function()
             //var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
             rows.push({
               id: climberId,
-              name: c.name || '',
+              fullname: ((c.firstname || '') + ' ' + (c.lastname || '')).trim(),
               sex: c.sex || '',
               club: c.club || '',
               category: catKey,
