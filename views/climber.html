@@ -85,7 +85,7 @@
 
 							<div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="otherclub" name="otherclub" size="40">
-                                <label for="otherclub">Si autre club non répertorié ecrivez ici et contactez-nous pour l'ajouter:</label>
+                                <label for="otherclub">{{reference_data['current_language'].other_club_not_listed}}</label>
                             </div>
 
                             <button type="submit" class="btn btn-primary">
@@ -229,9 +229,9 @@
                                 }
                             });
                         });
-                       
-                        populateGymsSelect(data.gymid);
                     }
+
+                    populateGymsSelect(data.gymid);
                 });
 
             // Fetch gyms and populate the club select element

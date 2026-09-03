@@ -227,6 +227,7 @@ class EmailLoginService:
             'template': 'change_password.html',
             'context': {
                 'reference_data': self.ce.reference_data,
+                'info': self._get_translation('You_must_set_your_password'),
                 'error': None
             }
         }
@@ -255,25 +256,25 @@ class EmailLoginService:
                 'error_key': 'User_does_not_exist_or_wrong_password',
                 'error': self._get_translation('User_does_not_exist_or_wrong_password')
             }
-        if user.get('password') is None:
+        if user.password is None:
             return {
                 'success': False,
                 'error_key': 'You_must_set_your_password',
                 'error': self._get_translation('You_must_set_your_password')
             }
-        if user.get('is_confirmed') is not None and user.get('is_confirmed') is False:
+        if user.is_confirmed is False:
             return {
                 'success': False,
                 'error_key': 'User_not_confirmed_Please_check_your_email_for_confirmation_link',
                 'error': self._get_translation('User_not_confirmed_Please_check_your_email_for_confirmation_link')
             }
-        if user.get('fpictureurl') is not None or user.get('gpictureurl') is not None:
+        if user.fpictureurl or user.gpictureurl:
             return {
                 'success': False,
                 'error_key': 'User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login',
                 'error': self._get_translation('User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login')
             }
-        if not self.bcrypt.check_password_hash(user.get('password'), password):
+        if not self.bcrypt.check_password_hash(user.password, password):
             return {
                 'success': False,
                 'error_key': 'User_does_not_exist_or_wrong_password',

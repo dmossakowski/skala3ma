@@ -1334,7 +1334,7 @@ def update_user():
                                **session)
 
     else:
-        climber = competitionsEngine.user_self_update(climber, name, firstname, lastname, nick, sex, club, clubid, dob)
+        climber = competitionsEngine.user_self_update(climber, fullname, firstname, lastname, nick, sex, club, clubid, dob)
         subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
         level = 'success'
 
@@ -1789,8 +1789,16 @@ def competitionRoutes(competitionId):
     gymid = competition['gym_id']
     gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')
-    routes = competitionsEngine.get_routes(routesid)
-    routesName = routes.get('name')
+
+    competition_routes = competition.get('routes')
+    db_routes = competitionsEngine.get_routes(routesid)
+
+    if competition_routes is None:
+        routes = db_routes
+    else:
+        routes = competition_routes
+
+    routesName = db_routes.get('name')
 
 
     # library= {}
@@ -2588,14 +2596,28 @@ def downloadRoutesCsv(gym_id, routesid):
 
 
 
-# competition tiles
+# competition tiles based on actual routes saved in competition object
+@app_ui.route('/competition/<competition_id>/download_tiles')
+def downloadCompetitionTiles(competition_id):
+    competition = competitionsEngine.getCompetition(competition_id)
+    competition_routes = competition.get('routes')  
+    routes = {}
+    routes['routes'] = competition_routes
+    return get_tiles_from_routes(routes)
+
+
+# competition tiles based on routes saved in gym
 @app_ui.route('/gyms/<gym_id>/<routesid>/download')
 def downloadRoutes(gym_id, routesid):
 
     gym = competitionsEngine.get_gym(gym_id)
     all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
     routes = all_routes.get(routesid)
+    return get_tiles_from_routes(routes)
 
+
+# takes routes dictionary with 'routes' list
+def get_tiles_from_routes(routes):
     out = {}
 
     def flatten(x, name=''):
@@ -2651,6 +2673,8 @@ def downloadRoutes(gym_id, routesid):
 
     #rethtml+="</table>"
     data_file.close()
+    gym_id= 0
+    gym = {}
 
     return render_template('gym-print.html',
                            gymid=gym_id,
