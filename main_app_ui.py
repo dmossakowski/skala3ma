@@ -2646,6 +2646,7 @@ def gyms_add_form():
                            **session)
     else:
         return render_template('competitionNoPermission.html',
+                               error_code='gym_creation_limit_reached',
                                competitionId=None,
                                gyms=gyms,
                                reference_data=competitionsEngine.reference_data,

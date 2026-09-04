@@ -337,7 +337,7 @@
                     }
 
                     const genPerms = Array.isArray(permissions.general) ? permissions.general : [];
-                    const hasAnyPerm = (genPerms.length > 0);
+                    const hasAnyPerm = true //(genPerms.length > 0);
                     if (!hasAnyPerm && els.actionsCard) {
                         els.actionsCard.style.display = 'none';
                     } else {

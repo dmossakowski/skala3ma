@@ -1651,6 +1651,8 @@ def can_edit_gym(user, gym):
     return False
 
 
+# TODO break out the count test here and do how it's done for competition count
+# the problem is that there is a call from skala_api to check if user has 
 def can_create_gym(user):
     permissions = user.get('permissions')
     if 'create_gym' in permissions['general'] or User.is_admin(user):
