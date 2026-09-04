@@ -23,9 +23,13 @@
     <img src="/public/images/botek-ai-up.jpeg" width="200">
     <br><br>
 
-        <h3>{{ reference_data['current_language'][error_code] }}</h3>
+		{% if error_code %}
+		<h3>{{ reference_data['current_language'][error_code] }}</h3>
+		{% else %}
+		<h3>You don't have permission to do that</h3>
+		{% endif %}
 
-		You don't have a permission to do that
+		<a href="/contact">{{ reference_data['current_language']['Contact_us'] }}</a>
 <br><br>
 <br><br>
 

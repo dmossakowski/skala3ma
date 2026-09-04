@@ -1850,9 +1850,8 @@ def setClimberAsPresent(competitionId,climberId,present):
 
 
 ### USER
-# @TODO there are manually added permissions here if a user is an admin
-# this is not great as it is something that can be easily forgotten how to do
-# as it's not something that happens often
+# @TODO this incorrectly adds persisted permissions (to db) when the check was meant to be for the current session only
+
 @skala_api_app.route('/user')
 @session_or_jwt_required
 def get_user():
@@ -1867,13 +1866,6 @@ def get_user():
     # User is now a User object, serialize to dict
     user_dict = user.to_dict()
     user_dict['picture'] = user.get_picture_url()
-    
-    if competitionsEngine.can_create_gym(user):
-        competitionsEngine.add_user_permission_create_gym(user)
-
-    if competitionsEngine.can_create_competition(user):
-            competitionsEngine.add_user_permission_create_competition(user)
-
     
     return jsonify(user_dict)
 
