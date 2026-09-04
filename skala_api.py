@@ -1280,8 +1280,13 @@ def new_competition_post():
     competitionId = None
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
+    if user is None:
+        return {'error', 'User does not exist'}
+
+    
     if user is None or not competitionsEngine.can_create_competition(user):
         return "{ 'error'; 'Not authorized'}"
+
 
     if name is not None and date is not None and routesid is not None:
         # Basic defaults for API-based creation
@@ -1301,6 +1306,8 @@ def new_competition_post():
             instructions=instructions,
             calc_type=calc_type
         )
+
+        competitionsEngine.add_user_permission_edit_competition(user)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = competitionsEngine.getCompetition(competitionId)
         return comp
@@ -1849,6 +1856,9 @@ def setClimberAsPresent(competitionId,climberId,present):
 
 
 ### USER
+# @TODO there are manually added permissions here if a user is an admin
+# this is not great as it is something that can be easily forgotten how to do
+# as it's not something that happens often
 @skala_api_app.route('/user')
 @session_or_jwt_required
 def get_user():
@@ -1865,7 +1875,11 @@ def get_user():
     user_dict['picture'] = user.get_picture_url()
     
     if competitionsEngine.can_create_gym(user):
-        user_dict['permissions']['general'].append("create_gym")
+        competitionsEngine.add_user_permission_create_gym(user)
+
+    if competitionsEngine.can_create_competition(user):
+            competitionsEngine.add_user_permission_create_competition(user)
+
     
     return jsonify(user_dict)
 

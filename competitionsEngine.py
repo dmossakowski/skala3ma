@@ -1237,6 +1237,9 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid,
     if climber is None:
         raise ValueError("Climber cannot be None")
 
+    if isinstance(climber, User):
+        raise ValueError("Expected a dictionary for climber, got User instance")
+    
     try:
         sql_lock.acquire()
         fullname = name or " ".join(part for part in (firstname, lastname) if part)
@@ -1397,6 +1400,7 @@ def user_authenticated(email, password):
 # this function is used to confirm a user and write them to the db
 # the only way that this can be called if a user clicked on a confirmation link
 # which means that the user has a valid email
+# there is additional step required after this to set the password
 def confirm_user(email):
     try:
         sql_lock.acquire()
@@ -1567,7 +1571,7 @@ def can_update_routes(user, competition):
         if 'update_routes' in permissions.get('general', []):
             return True
 
-    if 'update_routes' in permissions['general'] \
+    if ('update_routes' in permissions['general'] or 'edit_competition' in permissions['general']) \
             and competition['status'] in [competition_status_scoring, competition_status_inprogress]\
             and competition['id'] in permissions['competitions']:
         return True

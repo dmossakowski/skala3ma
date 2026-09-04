@@ -609,7 +609,7 @@ def googleauth():
 
 
 
-
+#main callback method for google
 @app.route('/google/auth/')
 def googleauth_reply():
     error = request.args.get('error')

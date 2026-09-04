@@ -959,6 +959,7 @@ def new_competition_post():
                 imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
                 file1.save(imgpath)
 
+        competitionsEngine.add_user_permission_edit_competition(user)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = getCompetition(competitionId)
         return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))

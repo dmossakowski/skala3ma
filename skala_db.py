@@ -820,7 +820,7 @@ def promote_dependent_to_user(dependent_id, guardian_id, email):
 
     return dependent
 
-
+# TODO check if user is an object here.. i think it is get_user_by_email returns what?????
 def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
@@ -848,7 +848,7 @@ def user_authenticated_fb(fid, name, email, picture):
         sql_lock.release()
         logging.info("done with user:"+str(email))
 
-
+# TODO check user object to _update_user call
 def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
@@ -1057,7 +1057,11 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
         #return climber
 
 
+
 def _add_user(climberId, email, climber):
+    if isinstance(climber, User):
+        raise ValueError("Expected a dictionary for climber, got User instance")
+    
     email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -1065,6 +1069,7 @@ def _add_user(climberId, email, climber):
         climberId = str(uuid.uuid4().hex)
         climber['id'] = climberId
         climber['created_on'] = datetime.now(timezone.utc).isoformat()
+
     cursor.execute("INSERT  INTO " + USERS_TABLE +
                    "(id, email, jsondata, added_at) " +
                    " values (?, ?, ?, datetime('now')) ",
@@ -1079,6 +1084,8 @@ def _update_user(climberId, email, climber):
     # Start timing for the entire method
     method_start_time = time.time()
 
+    if isinstance(climber, User):
+        climber = climber.to_storage_dict()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     email = email.lower()
