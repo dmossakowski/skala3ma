@@ -320,7 +320,7 @@ def session_or_jwt_required(fn):
     """Allow either JWT (Authorization: Bearer) or existing session email."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        recreate_session_from_jwt
+        recreate_session_from_jwt()
         if not session.get('email'):
             return jsonify({'error': 'unauthorized'}), 401
         return fn(*args, **kwargs)
@@ -1265,53 +1265,47 @@ def competitions_by_year(year):
 @skala_api_app.route('/competition/create', methods=['POST'])
 @session_or_jwt_required
 def new_competition_post():
-    username = session.get('username')
-
-    routedata = request.get_json()
-    routedata = json.loads(routedata)
-
-
-    #username = request.args.get('username')
     name = request.form.get('name')
     date = request.form.get('date')
-    #gym = request.form.get('gym')
     routesid = request.form.get('routes')
-    comp = {}
-    competitionId = None
+    max_participants = request.form.get('max_participants')
+    competition_type = request.form.get('competition_type') or 'adult'
+    instructions = request.form.get('instructions') or ''
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is None:
-        return {'error', 'User does not exist'}
+        return jsonify({'error': 'User does not exist'}), 401
 
-    
-    if user is None or not competitionsEngine.can_create_competition(user):
-        return "{ 'error'; 'Not authorized'}"
+    if not (competitionsEngine.can_create_competition(user) or \
+        skala_db.count_competitions_by_added_by(user.id) < competitionsEngine.MAX_COMPETITIONS_PER_CREATOR):
+        return jsonify({'error': 'Not authorized'}), 403
 
+    if not name or not date or not routesid or not max_participants:
+        return jsonify({'error': 'Name, date, routes, and max participants are required'}), 400
 
-    if name is not None and date is not None and routesid is not None:
-        # Basic defaults for API-based creation
-        max_participants = request.form.get('max_participants') or 80
-        competition_type = request.form.get('competition_type') or 0
-        instructions = request.form.get('instructions') or ""
-        calc_type = request.form.get('calc_type')
-
-        competitionId = competitionsEngine.addCompetition(
+    try:
+        competitionId = competitionsEngine.create_competition(
             None,
-            user.get('id') if user else None,
+            user.get('id'),
             name,
             date,
             routesid,
             max_participants,
             competition_type=competition_type,
-            instructions=instructions,
-            calc_type=calc_type
+            instructions=instructions
         )
+
+        file1 = request.files.get('file1')
+        if file1 is not None and file1.filename:
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            file1.save(os.path.join(UPLOAD_FOLDER, competitionId))
 
         competitionsEngine.add_user_permission_edit_competition(user)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = competitionsEngine.getCompetition(competitionId)
-        return comp
-    return "{ 'error'; 'Not created. Something missing'}"
+        return jsonify({'id': competitionId, 'competition': comp})
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
 
 
 @skala_api_app.route('/competition/<competitionId>/register')

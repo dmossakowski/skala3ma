@@ -250,6 +250,18 @@ def get_competitions_for_email(email):
     return competition_ids
 
 
+def count_competitions_by_added_by(added_by):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    row = cursor.execute(
+        '''SELECT COUNT(*) FROM ''' + COMPETITIONS_TABLE + '''
+           WHERE lower(trim(json_extract(jsondata, '$.added_by'))) = lower(trim(?));''',
+        [added_by],
+    ).fetchone()
+    db.close()
+    return row[0]
+
+
 def get_all_competitions():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()

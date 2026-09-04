@@ -285,7 +285,7 @@
 
             const setupActions = (genPerms) => {
                 const canCreateGym = genPerms.includes('create_gym');
-                const canCreateCompetition = genPerms.includes('create_competition');
+                const canCreateCompetition = true //genPerms.includes('create_competition');
                 if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? 'inline-block' : 'none';
                 if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? 'inline-block' : 'none';
             };

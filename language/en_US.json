@@ -173,6 +173,7 @@
     "ado_contest_rules": "Ado contest rules",
     "ligue": "FSGT IDF League",
     "contact_email": "Contact us",
+    "competition_limit_warning": "You have reached the maximum number of competitions you can create. Please contact the administrator using the contact form",
     "privacy_notice": "Privacy notice",
     "competition_category_fsgt2021_adult_0": "Seniors 16-49 years",
     "competition_category_fsgt2021_adult_1": "Titan 50-64 years",

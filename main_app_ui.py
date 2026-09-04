@@ -883,16 +883,16 @@ def getCompetitionSeasonRankings():
 def new_competition():
 
     username = session.get('username')
-    #if username:
-    #    return 'logged in '+str(username)
-    #print(username)
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    competitions_created = skala_db.count_competitions_by_added_by(user['id']) if user is not None else 0
+    competition_limit_reached = competitions_created >= competitionsEngine.MAX_COMPETITIONS_PER_CREATOR
+    if competitionsEngine.can_create_competition(user):
+        competition_limit_reached = False
 
     #username = request.args.get('username')
     name = request.args.get('name')
     date = request.args.get('date')
     gym = request.args.get('gym')
-    comp = {}
-    competitionId=None
 
     all_gyms = competitionsEngine.get_gyms()
 
@@ -904,77 +904,16 @@ def new_competition():
         for routeid in routes:
             clubs.append ({'gymname':gymname, 'gymid':gymid, 'routesid':routeid, 'routesname':routes[routeid]['name']})
 
-
     # Strategy options for selection
     calc_types  = competitionsEngine.CalculationStrategy.list_calc_types()
 
     return render_template('newCompetition.html',
-                           competitionName=None,
                            session=session,
-                           gyms=gyms,
                            clubs=clubs,
                            calc_types=calc_types,
-                           reference_data=competitionsEngine.reference_data,
-
-                            **session)
-
-
-# method to add a new competition
-@app_ui.route('/newCompetition', methods=['POST'])
-@login_required
-def new_competition_post():
-    username = session.get('username')
-    #if username:
-    #    return 'logged in '+str(username)
-    #print(username)
-
-    #username = request.args.get('username')
-    name = request.form.get('name')
-    date = request.form.get('date')
-    #gym = request.form.get('gym')
-    routesid = request.form.get('routes')
-    competition_type = request.form.get('competition_type')
-    max_participants = request.form.get('max_participants')
-    instructions = request.form.get('instructions')
-    calc_type = request.form.get('calc_type')
-    calc_type = CalculationStrategyFsgt1.name
-    comp = {}
-    competitionId = None
-
-    user = competitionsEngine.get_user_by_email(session.get('email'))
-    if user is None or not competitionsEngine.can_create_competition(user):
-        return redirect(url_for('app_ui.fsgtlogin', competitionId=competitionId))
-
-    added_by = user['id']
-    if name is not None and date is not None and routesid is not None and max_participants is not None:
-        competitionId = competitionsEngine.addCompetition(None, added_by, name, date, routesid, max_participants,
-                                  competition_type=competition_type, instructions=instructions,
-                                  calc_type=calc_type)
-        # now if an image was provided, save it under the competition id
-        # there is only one main image allowed per competition for now
-        # any new image will overwrite the previous one
-        if 'file1' in request.files:
-            file1 = request.files['file1']
-            if file1.filename is not None and len(file1.filename) > 0:
-                imgpath = os.path.join(UPLOAD_FOLDER, competitionId)
-                file1.save(imgpath)
-
-        competitionsEngine.add_user_permission_edit_competition(user)
-        competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
-        comp = getCompetition(competitionId)
-        return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
-
-    subheader_message='Welcome '
-    competitions= competitionsEngine.getCompetitions()
-
-    return render_template('competitionDashboard.html',
-                           subheader_message=subheader_message,
-                           competitions=competitions,
-                           competitionName=None,
-                           session=session,
+                           competition_limit_reached=competition_limit_reached,
                            reference_data=competitionsEngine.reference_data,
                             **session)
-
 
 
 
