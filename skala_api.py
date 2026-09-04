@@ -320,7 +320,7 @@ def session_or_jwt_required(fn):
     """Allow either JWT (Authorization: Bearer) or existing session email."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        recreate_session_from_jwt
+        recreate_session_from_jwt()
         if not session.get('email'):
             return jsonify({'error': 'unauthorized'}), 401
         return fn(*args, **kwargs)
@@ -406,10 +406,16 @@ def api_email_login():
         email_login_service_api.bcrypt = Bcrypt()
     result = email_login_service_api.login_with_password(email, password, apply_session=True)
     if result.get('success'):
-        user = result.get('user') or {}
-        user_obj = competitionsEngine.get_user_by_email(user.get('email')) if user else None
-        token = create_jwt(user.get('email'), user_obj.get('id') if user_obj else None)
-        result['token'] = token
+        user_email = result.get('user', {}).get('email') if result.get('user') else None
+        user_obj = competitionsEngine.get_user_by_email(user_email) if user_email else None
+        if user_obj:
+            # User object from DB, serialize to dict with picture
+            token = create_jwt(user_obj.email, user_obj.id)
+            result['user'] = user_obj.to_dict()
+            result['user']['picture'] = user_obj.get_picture_url()
+            result['token'] = token
+        else:
+            logging.warning(f"User object not found for email {user_email}")
     status = 200 if result.get('success') else 401
     return jsonify(result), status
 
@@ -440,60 +446,73 @@ def api_google_login():
 
     email = info['email'].lower()
     sub = info.get('sub')
-    firstname = info.get('given_name')
-    lastname = info.get('family_name')
-    picture = info.get('picture')
+    firstname = info.get('given_name', '')
+    lastname = info.get('family_name', '')
+    picture = info.get('picture', '')
 
-    user = competitionsEngine.get_user_by_email(email)
+    user_obj = competitionsEngine.get_user_by_email(email)
     created = False
-    if not user:
-        # Minimal user record; adapt fields based on competitionsEngine expectations
-        user = {
-            'email': email,
-            'firstname': firstname,
-            'lastname': lastname,
-            'is_confirmed': True,
-            'auth_provider': 'google',
-            'google_sub': sub,
-            'gpictureurl': picture,
-            'permissions': {'general': []}
-        }
+    
+    if not user_obj:
+        # Create minimal User object for new Google user
         try:
-            competitionsEngine.upsert_user(user)
+            user_obj = User(
+                email=email,
+                firstname=firstname,
+                lastname=lastname,
+                fullname=f"{firstname} {lastname}".strip(),
+                name=f"{firstname} {lastname}".strip(),
+                sex='',
+                club='',
+                category='',
+                nick='',
+                role='',
+                isgod=False,
+                id='',  # Will be generated
+                permissions=User.generate_permissions(),
+                gpictureurl=picture,
+                is_confirmed=True,
+                auth_provider='google',
+                google_sub=sub,
+                added_at=datetime.utcnow().isoformat(),
+                updated_at=datetime.utcnow().isoformat()
+            )
+            user_obj = competitionsEngine.upsert_user(user_obj)
             created = True
+            logging.info(f"Created google user {email}")
         except Exception as e:
             logging.error(f"Failed to create google user {email}: {e}")
             return jsonify({'success': False, 'error': 'user_creation_failed'}), 500
     else:
         # Update picture / names if changed
         updated = False
-        if picture and picture != user.get('gpictureurl'):
-            user['gpictureurl'] = picture; updated = True
-        if firstname and firstname != user.get('firstname'):
-            user['firstname'] = firstname; updated = True
-        if lastname and lastname != user.get('lastname'):
-            user['lastname'] = lastname; updated = True
-        if not user.get('is_confirmed'):
-            user['is_confirmed'] = True; updated = True
+        if picture and picture != user_obj.gpictureurl:
+            user_obj.gpictureurl = picture
+            updated = True
+        if firstname and firstname != user_obj.firstname:
+            user_obj.firstname = firstname
+            updated = True
+        if lastname and lastname != user_obj.lastname:
+            user_obj.lastname = lastname
+            updated = True
+        if not user_obj.is_confirmed:
+            user_obj.is_confirmed = True
+            updated = True
+        
         if updated:
             try:
-                competitionsEngine.upsert_user(user)
+                user_obj = competitionsEngine.upsert_user(user_obj)
+                logging.info(f"Updated google user {email}")
             except Exception as e:
                 logging.warning(f"Failed to update google user {email}: {e}")
 
-    # Issue JWT
-    db_user = competitionsEngine.get_user_by_email(email) or user
-    token = create_jwt(email, db_user.get('id'))
+    # Issue JWT using the User object
+    token = create_jwt(user_obj.email, user_obj.id)
     return jsonify({
         'success': True,
         'token': token,
         'created': created,
-        'user': {
-            'email': db_user.get('email'),
-            'firstname': db_user.get('firstname'),
-            'lastname': db_user.get('lastname'),
-            'picture': db_user.get('gpictureurl') or db_user.get('fpictureurl') or picture
-        }
+        'user': user_obj.to_minimal_dict()
     })
 
 @skala_api_app.post('/auth/logout')
@@ -564,7 +583,7 @@ def api_request_password_reset():
     # Always respond success (prevent enumeration) but trigger appropriate email
     if user is None:
         pass  # pretend to send
-    elif user.get('is_confirmed') is False:
+    elif user.is_confirmed is False:
         # resend confirmation
         email_login_service_api._send_registration_email(email)
     else:
@@ -647,15 +666,17 @@ def api_auth_status():
         status_source = 'session'
     if not user_email:
         return jsonify({'authenticated': False}), 200
-    user = competitionsEngine.get_user_by_email(user_email) or {}
+    user = competitionsEngine.get_user_by_email(user_email)
+    if user is None:
+        return jsonify({'authenticated': False}), 200
     return jsonify({
         'authenticated': True,
         'source': status_source,
         'user': {
-            'email': user.get('email'),
-            'firstname': user.get('firstname'),
-            'lastname': user.get('lastname'),
-            'club': user.get('club'),
+            'email': user.email,
+            'firstname': user.firstname,
+            'lastname': user.lastname,
+            'club': user.club,
             'is_admin': User.is_admin(user),
         }
     })
@@ -692,7 +713,7 @@ def get_activities():
 @session_or_jwt_required
 def get_useractivities():
     user = competitionsEngine.get_user_by_email(session['email'])
-    activitiesA = activities_db.get_activities(user.get('id'))
+    activitiesA = activities_db.get_activities(user.id)
 
     allActivities = activities_db.get_activities_all_anonymous()
 
@@ -897,10 +918,10 @@ def add_activity_route_attempt(activity_id):
 def get_activities_by_user(user_id):
     user = competitionsEngine.get_user_by_email(session['email'])
     # Fetch activities for provided user_id (authorization: allow only self unless admin)
-    if str(user.get('id')) != str(user_id):
+    if str(user.id) != str(user_id):
         # basic permission check: only allow self for now
         return jsonify({'error': 'forbidden'}), 403
-    activities = activities_db.get_activities(user.get('id'))
+    activities = activities_db.get_activities(user.id)
     if activities is None:
         activities = []
     return json.dumps(activities)
@@ -1244,46 +1265,47 @@ def competitions_by_year(year):
 @skala_api_app.route('/competition/create', methods=['POST'])
 @session_or_jwt_required
 def new_competition_post():
-    username = session.get('username')
-
-    routedata = request.get_json()
-    routedata = json.loads(routedata)
-
-
-    #username = request.args.get('username')
     name = request.form.get('name')
     date = request.form.get('date')
-    #gym = request.form.get('gym')
     routesid = request.form.get('routes')
-    comp = {}
-    competitionId = None
+    max_participants = request.form.get('max_participants')
+    competition_type = request.form.get('competition_type') or 'adult'
+    instructions = request.form.get('instructions') or ''
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
-    if user is None or not competitionsEngine.can_create_competition(user):
-        return "{ 'error'; 'Not authorized'}"
+    if user is None:
+        return jsonify({'error': 'User does not exist'}), 401
 
-    if name is not None and date is not None and routesid is not None:
-        # Basic defaults for API-based creation
-        max_participants = request.form.get('max_participants') or 80
-        competition_type = request.form.get('competition_type') or 0
-        instructions = request.form.get('instructions') or ""
-        calc_type = request.form.get('calc_type')
+    if not (competitionsEngine.can_create_competition(user) or \
+        skala_db.count_competitions_by_added_by(user.id) < competitionsEngine.MAX_COMPETITIONS_PER_CREATOR):
+        return jsonify({'error': 'Not authorized'}), 403
 
-        competitionId = competitionsEngine.addCompetition(
+    if not name or not date or not routesid or not max_participants:
+        return jsonify({'error': 'Name, date, routes, and max participants are required'}), 400
+
+    try:
+        competitionId = competitionsEngine.create_competition(
             None,
-            user.get('id') if user else None,
+            user.get('id'),
             name,
             date,
             routesid,
             max_participants,
             competition_type=competition_type,
-            instructions=instructions,
-            calc_type=calc_type
+            instructions=instructions
         )
+
+        file1 = request.files.get('file1')
+        if file1 is not None and file1.filename:
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            file1.save(os.path.join(UPLOAD_FOLDER, competitionId))
+
+        competitionsEngine.add_user_permission_edit_competition(user)
         competitionsEngine.modify_user_permissions_to_competition(user, competitionId, "ADD")
         comp = competitionsEngine.getCompetition(competitionId)
-        return comp
-    return "{ 'error'; 'Not created. Something missing'}"
+        return jsonify({'id': competitionId, 'competition': comp})
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
 
 
 @skala_api_app.route('/competition/<competitionId>/register')
@@ -1828,6 +1850,9 @@ def setClimberAsPresent(competitionId,climberId,present):
 
 
 ### USER
+# @TODO there are manually added permissions here if a user is an admin
+# this is not great as it is something that can be easily forgotten how to do
+# as it's not something that happens often
 @skala_api_app.route('/user')
 @session_or_jwt_required
 def get_user():
@@ -1838,11 +1863,19 @@ def get_user():
     user = competitionsEngine.get_user_by_email(email)
     if not user:
         return jsonify({'error': 'not_found'}), 404
-    picture = user.get('gpictureurl') or user.get('fpictureurl') or user.get('picture')
-    user['picture'] = picture
+    
+    # User is now a User object, serialize to dict
+    user_dict = user.to_dict()
+    user_dict['picture'] = user.get_picture_url()
+    
     if competitionsEngine.can_create_gym(user):
-        user['permissions']['general'].append("create_gym")
-    return user
+        competitionsEngine.add_user_permission_create_gym(user)
+
+    if competitionsEngine.can_create_competition(user):
+            competitionsEngine.add_user_permission_create_competition(user)
+
+    
+    return jsonify(user_dict)
 
 
 ### USER DEPENDENTS (supervised ado accounts)
@@ -1856,8 +1889,13 @@ def get_user_dependents():
     user = competitionsEngine.get_user_by_email(email)
     if not user:
         return jsonify({'error': 'not_found'}), 404
-    dependents = skala_db.get_dependents(user['id'])
-    return jsonify(dependents)
+    
+    # user is now a User object, use user.id
+    dependents = skala_db.get_dependents(user.id)
+    
+    # Convert User objects to dicts for JSON response
+    dependents_dicts = [dep.to_minimal_dict() for dep in dependents]
+    return jsonify(dependents_dicts)
 
 
 @skala_api_app.route('/user/dependents', methods=['POST'])
@@ -1881,7 +1919,7 @@ def create_user_dependent():
 
     try:
         dependent = skala_db.create_dependent(
-            guardian_id=user['id'],
+            guardian_id=user.id,  # user is now a User object
             firstname=firstname,
             lastname=lastname,
             dob=dob,
@@ -1889,7 +1927,8 @@ def create_user_dependent():
             gymid=gymid,
             club=club
         )
-        return jsonify(dependent), 201
+        # dependent is now a User object, serialize to dict
+        return jsonify(dependent.to_minimal_dict()), 201
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
@@ -1909,7 +1948,7 @@ def update_user_dependent(dependent_id):
     try:
         dependent = skala_db.update_dependent(
             dependent_id=dependent_id,
-            guardian_id=user['id'],
+            guardian_id=user.id,  # user is now a User object
             firstname=data.get('firstname'),
             lastname=data.get('lastname'),
             dob=data.get('dob'),
@@ -1917,7 +1956,8 @@ def update_user_dependent(dependent_id):
             gymid=data.get('gymid'),
             club=data.get('club')
         )
-        return jsonify(dependent)
+        # dependent is now a User object, serialize to dict
+        return jsonify(dependent.to_minimal_dict())
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
@@ -1934,7 +1974,7 @@ def delete_user_dependent(dependent_id):
         return jsonify({'error': 'not_found'}), 404
 
     try:
-        skala_db.delete_dependent(dependent_id=dependent_id, guardian_id=user['id'])
+        skala_db.delete_dependent(dependent_id=dependent_id, guardian_id=user.id)  # user is now a User object
         return jsonify({'status': 'deleted'}), 200
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
@@ -1955,7 +1995,7 @@ def get_users():
         users = skala_db.get_all_user_emails()
         return json.dumps(users)
     
-    return json.dumps(user)
+    return jsonify(user.to_dict())
 
 
 @skala_api_app.route('/user/email/<email>')
@@ -1966,30 +2006,32 @@ def get_user_by_email(email):
     if climber is None:
         #return "{'error_code':'No such user'}", 400
         return {}
-    return climber
+    return jsonify(climber.to_dict())
 
 
 
 @skala_api_app.route('/gym/<gym_id>/users')
 def get_users_by_gym(gym_id):
-    users=  skala_db.get_users_by_gym_id(gym_id)
+    users = skala_db.get_users_by_gym_id(gym_id)
+    response_users = []
     # remove email and permissions from the response
     for user in users:
-        user.pop('email', None)
-        #user.pop('permissions', None)
-        user.pop('isgod',None)
-        user.pop('godmode',None)
+        response_user = user.to_dict() if isinstance(user, User) else dict(user)
+        response_user.pop('email', None)
+        #response_user.pop('permissions', None)
+        response_user.pop('isgod', None)
+        response_user.pop('godmode', None)
         
-        if user.get('fpictureurl') is not None:
-            user['pictureurl'] = user.get('fpictureurl')
-        if user.get('gpictureurl') is not None:
-            user['pictureurl'] = user.get('gpictureurl')
-        if user.get('fpictureurl') is None and user.get('gpictureurl') is None:
-            #user['pictureurl'] = '/public/images/sentiment_satisfied_FILL0_wght600_GRAD200_opsz48.png'
-            user['pictureurl'] = '/public/images/favicon.png'
-        if user.get('firstname') is None:
-            user['firstname'] = user.get('name') 
-    return users
+        if response_user.get('fpictureurl') is not None:
+            response_user['pictureurl'] = response_user.get('fpictureurl')
+        if response_user.get('gpictureurl') is not None:
+            response_user['pictureurl'] = response_user.get('gpictureurl')
+        if response_user.get('fpictureurl') is None and response_user.get('gpictureurl') is None:
+            response_user['pictureurl'] = '/public/images/favicon.png'
+        if response_user.get('firstname') is None:
+            response_user['firstname'] = response_user.get('name')
+        response_users.append(response_user)
+    return jsonify(response_users)
 
 
 
@@ -1999,25 +2041,26 @@ def get_all_users():
     if search_string is None or len(search_string) < 2 or not search_string.isalnum():
         return []
 
-    users=  skala_db.search_all_users(search_string=search_string)
+    users = skala_db.search_all_users(search_string=search_string)
+    response_users = []
     # remove email and permissions from the response
     for user in users:
-        user.pop('email', None)
-        #user.pop('permissions', None)
-        user.pop('isgod',None)
-        user.pop('godmode',None)
+        response_user = user.to_dict() if isinstance(user, User) else dict(user)
+        response_user.pop('email', None)
+        #response_user.pop('permissions', None)
+        response_user.pop('isgod', None)
+        response_user.pop('godmode', None)
         
-        if user.get('fpictureurl') is not None:
-            user['pictureurl'] = user.get('fpictureurl')
-        if user.get('gpictureurl') is not None:
-            user['pictureurl'] = user.get('gpictureurl')
-        if user.get('fpictureurl') is None and user.get('gpictureurl') is None:
-            #user['pictureurl'] = '/public/images/sentiment_satisfied_FILL0_wght600_GRAD200_opsz48.png'
-            user['pictureurl'] = '/public/images/favicon.png'
-        if user.get('firstname') is None:
-            user['firstname'] = user.get('name') 
-    #json.dumps(users)
-    return json.dumps(users)
+        if response_user.get('fpictureurl') is not None:
+            response_user['pictureurl'] = response_user.get('fpictureurl')
+        if response_user.get('gpictureurl') is not None:
+            response_user['pictureurl'] = response_user.get('gpictureurl')
+        if response_user.get('fpictureurl') is None and response_user.get('gpictureurl') is None:
+            response_user['pictureurl'] = '/public/images/favicon.png'
+        if response_user.get('firstname') is None:
+            response_user['firstname'] = response_user.get('name')
+        response_users.append(response_user)
+    return jsonify(response_users)
 
 
 
@@ -2328,7 +2371,11 @@ def migrategyms():
 @skala_api_app.route('/competition_results/<competitionId>/stats_points_per_difficulty')
 def get_competition_stats(competitionId):
     comp = competitionsEngine.get_competition(competitionId)
-    routes = competitionsEngine.get_routes(comp['routesid'])
+    if comp.get('routes') is not None:
+        routes = {}
+        routes['routes'] = comp.get('routes')
+    else:
+        routes = competitionsEngine.get_routes(comp['routesid'])
 
     if comp is None:
         return {}
@@ -2359,8 +2406,13 @@ def stats_repeats_per_route(competitionId):
     
     if comp is None:
         return {}
-    
-    routes_dict = competitionsEngine.get_routes(comp['routesid'])
+
+    if comp.get('routes') is not None:
+        routes_dict = {}
+        routes_dict['routes'] = comp.get('routes')
+    else:
+        routes_dict = competitionsEngine.get_routes(comp['routesid'])
+       
     if not routes_dict or 'routes' not in routes_dict:
         return {}
     
@@ -2433,6 +2485,8 @@ def get_myskala():
         #competition = skala_db.get_competition(id)
         routesid = competition.get('routesid')
         routes = competitionsEngine.get_routes(routesid)
+        if competition.get('routes') is not None:
+            routes = {'routes': competition.get('routes')}
         if routes is None:
             continue
         routes = routes.get('routes')
@@ -2442,7 +2496,7 @@ def get_myskala():
     competition_ids = skala_db.get_competitions_for_email(username)
 
     user = competitionsEngine.get_user_by_email(session['email'])
-    
+    user = user.to_dict()
     all_competitions = []
     stats['personalstats']={}
     stats['personalstats']['all_grades'] = []
@@ -2454,6 +2508,8 @@ def get_myskala():
         competition = competitionsEngine.recalculate(id)
         routesid = competition.get('routesid')
         routes = competitionsEngine.get_routes(routesid)
+        if competition.get('routes') is not None:
+            routes = {'routes': competition.get('routes')}
         if routes is None:
             continue
         routes = routes.get('routes')
@@ -2498,7 +2554,7 @@ def get_myskala():
     stats['competitions'] = all_competitions
     stats['thursday'] = datetime.today().weekday() == 3
     # return well formatted json
-    return json.dumps(stats, indent=4)
+    return stats
 
 
 
@@ -3070,7 +3126,7 @@ def route_rating(gymid, routesid):
             route = route
             break
 
-    activities = activities_db.get_activities_by_date_by_user(today, user['id'])
+    activities = activities_db.get_activities_by_date_by_user(today, user.id)
     
     rating_activity_name = competitionsEngine.reference_data['current_language']['rating_activity_name']
 

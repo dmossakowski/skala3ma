@@ -229,7 +229,8 @@ def add_activity(user, gym, routesid, name, date):
             "routes": []
                }
     # write this competition to db
-    _add_activity(activity_id, user.get('id'), gym_id, routesid, date, activity)
+    user_id = user.id if hasattr(user, 'id') else user.get('id')
+    _add_activity(activity_id, user_id, gym_id, routesid, date, activity)
     return activity_id
 
 

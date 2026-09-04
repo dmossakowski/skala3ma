@@ -763,9 +763,10 @@
                 gymid: "{{gymid}}",
                 routeListId: "{{routesid}}",
                 groupBy: "grade",
-        initialSort: [{ column: "grade", dir: "desc" }],
-        // new flag replacing former Jinja template conditional user_can_edit_gym
-        user_can_edit_gym: false
+            initialSort: [{ column: "grade", dir: "desc" }],
+            // new flag replacing former Jinja template conditional user_can_edit_gym
+            user_can_edit_gym: false,
+            routes: null
             };
 
             // Merge default settings with user-provided settings
@@ -796,19 +797,24 @@
           .catch(error => console.error(error));
       
           
-          apiFetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}`)
-          .then(response => response.json())
-          .then(data => {
-              // use the retrieved data here
-              // console.log(data);p
-              routes=data.routes
+            if (Array.isArray(routesTableConfig.routes)) {
+              routes = routesTableConfig.routes;
               renderTabulatorTable(routes);
-              //console.log('creating qr code');
-              //new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
-              
-              //renderCarousel(routes);
-          })
-          .catch(error => console.error(error));
+            } else {
+              apiFetch(`/api1/gym/${routesTableConfig.gymid}/${routesTableConfig.routeListId}`)
+              .then(response => response.json())
+              .then(data => {
+                // use the retrieved data here
+                // console.log(data);p
+                routes=data.routes
+                renderTabulatorTable(routes);
+                //console.log('creating qr code');
+                //new QRCode(document.getElementById("qrcode"), "http://jindo.dev.naver.com/collie");
+                  
+                //renderCarousel(routes);
+              })
+              .catch(error => console.error(error));
+            }
       
 
           apiFetch(`/api1/user`)

@@ -609,7 +609,7 @@ def googleauth():
 
 
 
-
+#main callback method for google
 @app.route('/google/auth/')
 def googleauth_reply():
     error = request.args.get('error')
@@ -665,7 +665,7 @@ def googleauth_reply():
 # first service to be called
 # if email found and password matches then log the user in
 @app.route('/email_login', methods=['POST'])
-@limiter.limit("3 per minute")
+@limiter.limit("10 per minute")
 def email_login():
     email = request.form.get('email')
     password = request.form.get('password')
@@ -679,19 +679,19 @@ def email_login():
     if user is None:
         return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=get_translation('User_does_not_exist_or_wrong_password'))
 
-    if user.get('password') is None:
+    if user.password is None:
         error = get_translation('You_must_set_your_password')
         return render_template('change_password.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
 
-    if user.get('is_confirmed') is not None and user.get('is_confirmed') is False:
+    if user.is_confirmed is False:
         error = get_translation('User_not_confirmed_Please_check_your_email_for_confirmation_link')
         return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
 
-    if user.get('fpictureurl') is not None or user.get('gpictureurl') is not None:
+    if user.fpictureurl or user.gpictureurl:
         error = get_translation('User_is_registered_with_Google_or_Facebook_Please_click_the_appropriate_button_to_login')
         return render_template('competitionLogin.html', reference_data=competitionsEngine.reference_data, email=email, error=error)
 
-    if bcrypt.check_password_hash(user.get('password'), password):
+    if bcrypt.check_password_hash(user.password, password):
         log_request_details('user logged in with password: '+email)
         session['username'] = user.get('email')
         session['email'] = user.get('email')
@@ -755,7 +755,7 @@ def change_password():
     
 
 @app.route('/confirm/<type>/<token>', methods=['GET'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def confirm_email(type, token):
     result = email_login_service.confirm_email(type, token)
     return render_template(result['template'], **result['context'])

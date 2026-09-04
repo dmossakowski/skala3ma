@@ -29,17 +29,14 @@
 						<br>
 						<h3>{{ reference_data['current_language'].create_new }} </h3>
                         <font color="red">{{ reference_data['current_language'][error_code] }}   {{ error_code }}</font>
-					
-						{% if competitionName is not none  %}
-				<a href="/competitionDashboard">  <span class="glyphicon glyphicon-circle-arrow-left" aria-hidden="true"></span> back</a><br>
-
-				<a href="/competitionDashboard/{{ competitionId}}/register">Registration link</a>
-
-						{% else %}
-
-                        
+                        {% if competition_limit_reached %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ reference_data['current_language'].competition_limit_warning }}
+                            <a href="/contact">{{ reference_data['current_language'].contact_email }}</a>.
+                        </div>
+                        {% else %}
                         <div class="container">
-                            <form action="/newCompetition" method="post" enctype="multipart/form-data">
+                            <form id="new-competition-form" action="/api1/competition/create" method="post" enctype="multipart/form-data">
                                 <div class="row">
                                     <!-- Left Column -->
                                     <div class="col-md-6">
@@ -92,72 +89,22 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div id="new-competition-error" class="alert alert-danger d-none" role="alert"></div>
                                 <!-- Submit Button Row -->
                                 <div class="row">
                                     <div class="col-12">
-                                        <button type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
+                                        <button id="new-competition-submit" type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
                                     </div>
                                 </div>
                             </form>
                         </div>
+                        {% endif %}
                         
                         
 
-
-						{% endif %}
 					</div>
 		<div class="container">
 			<div class="row row-bottom-padded-md">
-
-
-
-
-
-
-{% if climber is not none and climber is not undefined  %}
-<div class="container">
-	<div class="row">
-				Name {{ climber['firstname'] }} {{ climber['lastname'] }}
-	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
-
-
-
-				{{ climber['routesClimbed'] }}
-
-</div>
-		<div class="row">
-			<form targt="/competitionDashboard/{{competitionId}}/updateRoutes">
-<table style="width:100%"><tr>
-
-					{% for i in range(100) %}
-<td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %}
-
-								></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button>Submit</button>
-				</form>
-
-</div>
-	</div>
-				{% endif %}
-
-
-
 
 
 
@@ -169,5 +116,36 @@
 		<!-- fh5co-blog-section -->
 
 	</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('new-competition-form');
+        if (!form) {
+            return;
+        }
+        const submitButton = document.getElementById('new-competition-submit');
+        const errorLabel = document.getElementById('new-competition-error');
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            errorLabel.classList.add('d-none');
+            submitButton.disabled = true;
+
+            try {
+                const result = await apiFetchJson(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+                window.location.assign('/competitionDetails/' + result.id);
+            } catch (error) {
+                errorLabel.textContent = error.data && error.data.error
+                    ? error.data.error
+                    : 'Unable to create the competition.';
+                errorLabel.classList.remove('d-none');
+                submitButton.disabled = false;
+            }
+        });
+    })();
+</script>
 
 {% endblock %}

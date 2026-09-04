@@ -7,7 +7,7 @@ import time
 from io import BytesIO
 from src.Gym import Gym
 from src.RouteSet import RouteSet
-from src.User import User
+from src.User import User, CompetitionClimber, dict_to_user, users_from_db_row, dependent_from_db_row
 
 #    Copyright (C) 2023 David Mossakowski
 #
@@ -250,6 +250,18 @@ def get_competitions_for_email(email):
     return competition_ids
 
 
+def count_competitions_by_added_by(added_by):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    row = cursor.execute(
+        '''SELECT COUNT(*) FROM ''' + COMPETITIONS_TABLE + '''
+           WHERE lower(trim(json_extract(jsondata, '$.added_by'))) = lower(trim(?));''',
+        [added_by],
+    ).fetchone()
+    db.close()
+    return row[0]
+
+
 def get_all_competitions():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -278,29 +290,51 @@ def update_user_fields(climber_id, fields_dict):
         logging.warning(f"update_user_fields: user {climber_id} not found, skipping")
         return
     user.update(fields_dict)
-    _update_user(climber_id, user.get('email', ''), user)
+    _update_user(
+        climber_id,
+        user.get('email', ''),
+        user.to_dict() if isinstance(user, User) else user,
+    )
 
 
 def get_user(id):
+    """
+    Retrieve a user by ID.
+    
+    Args:
+        id: User ID (UUID)
+        
+    Returns:
+        User object or None if not found
+    """
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
-    count = 0
     one = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
-    one = one.fetchone()
+        '''SELECT id, email, jsondata, added_at FROM ''' + USERS_TABLE + ''' where id=? LIMIT 1;''',[id])
+    row = one.fetchone()
+    db.close()
 
-
-    if one is None or one[0] is None:
+    if row is None:
         return None
 
-    if one[0] is not None:
-        return json.loads(one[0])
-    else:
+    try:
+        return users_from_db_row(row[0], row[1], row[2], row[3])
+    except ValueError as e:
+        logging.error(f"Error creating User object for id {id}: {e}")
         return None
 
 
 
 def get_user_by_email(email):
+    """
+    Retrieve a user by email. Excludes supervised accounts.
+    
+    Args:
+        email: Email address
+        
+    Returns:
+        User object or None if not found
+    """
     method_start_time = time.time()
     if email is None:
         return None
@@ -314,7 +348,7 @@ def get_user_by_email(email):
 
     one = cursor.execute(
         '''
-        SELECT jsondata
+        SELECT id, email, jsondata, added_at
         FROM ''' + USERS_TABLE + '''
         WHERE lower(email) = ?
           AND coalesce(json_extract(jsondata, '$.account_type'), 'standard') != 'supervised'
@@ -324,28 +358,41 @@ def get_user_by_email(email):
     ).fetchone()
     db.close()
 
-    if one is None or one[0] is None:
+    if one is None:
         return None
 
-    user = json.loads(one[0])
-    if user.get('email') is None:
-        user['email'] = email
-    return user
+    try:
+        return users_from_db_row(one[0], one[1], one[2], one[3])
+    except ValueError as e:
+        logging.error(f"Error creating User object for email {email}: {e}")
+        return None
 
 
 def get_users_by_gym_id(gym_id):
+    """
+    Get all users associated with a specific gym.
+    
+    Args:
+        gym_id: Gym ID
+        
+    Returns:
+        List of User objects
+    """
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
-    count = 0
     rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE + ''' where json_extract(jsondata, '$.gymid')=? ;''', [gym_id])
+        '''SELECT id, email, jsondata, added_at FROM ''' + USERS_TABLE + ''' where json_extract(jsondata, '$.gymid')=? ;''', [gym_id])
 
     users = []
     if rows is not None and rows.arraysize > 0:
         for row in rows.fetchall():
-            user = json.loads(row[0])
-            users.append(user)
-
+            try:
+                user = users_from_db_row(row[0], row[1], row[2], row[3])
+                users.append(user)
+            except ValueError as e:
+                logging.error(f"Error creating User object for gym {gym_id}: {e}")
+                continue
+    db.close()
     return users
 
 
@@ -364,27 +411,45 @@ def get_all_user_emails():
 
 
 def get_all_users():
+    """
+    Retrieve all users in the database.
+    
+    Returns:
+        List of User objects
+    """
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
-    count = 0
     rows = cursor.execute(
-        '''SELECT id, jsondata FROM ''' + USERS_TABLE )
+        '''SELECT id, email, jsondata, added_at FROM ''' + USERS_TABLE )
 
     users = []
     if rows is not None and rows.arraysize > 0:
         for row in rows.fetchall():
-            user = json.loads(row[1])
-            users.append(user)
-
+            try:
+                user = users_from_db_row(row[0], row[1], row[2], row[3])
+                users.append(user)
+            except ValueError as e:
+                logging.error(f"Error creating User object for id {row[0]}: {e}")
+                continue
+    db.close()
     return users
 
 
 def search_all_users(search_string):
+    """
+    Search users by name, firstname, lastname, nick, or email.
+    
+    Args:
+        search_string: Search term
+        
+    Returns:
+        List of User objects (max 10 results)
+    """
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
 
     query = '''
-    SELECT jsondata FROM ''' + USERS_TABLE + '''
+    SELECT id, email, jsondata, added_at FROM ''' + USERS_TABLE + '''
     WHERE (lower(trim(json_extract(jsondata, '$.fullname'))) LIKE lower(trim(?))
     OR lower(trim(json_extract(jsondata, '$.firstname'))) LIKE lower(trim(?))
     OR lower(trim(json_extract(jsondata, '$.lastname'))) LIKE lower(trim(?))
@@ -400,9 +465,13 @@ def search_all_users(search_string):
     users = []
     if rows is not None:
         for row in rows.fetchall():
-            user = json.loads(row[0])
-            users.append(user)
-    
+            try:
+                user = users_from_db_row(row[0], row[1], row[2], row[3])
+                users.append(user)
+            except ValueError as e:
+                logging.error(f"Error creating User object during search: {e}")
+                continue
+    db.close()
     return users
 
 
@@ -456,67 +525,112 @@ def get_all_competition_ids():
 # need to check so that anonymous user registering for a competition
 #  is not able to overwrite an actual user
 def upsert_user(user):
+    """
+    Upsert a user (insert if new, update if exists by email).
+    
+    Args:
+        user: User object or dict with at least 'email' field
+        
+    Returns:
+        User object representing the stored user (or None on error)
+    """
     method_start_time = time.time() 
     
     try:
         sql_lock.acquire()
-        existing_user = None
-        email = user.get('email')
-        #db = lite.connect(COMPETITIONS_DB)
-        #cursor = db.cursor()
+        
+        # Convert User object to dict if needed
+        if isinstance(user, User):
+            user_dict = user.to_storage_dict()
+            email = user.email
+        else:
+            user_dict = user
+            email = user.get('email')
 
-        if email is not None:
-            email = email.lower()
-            update_duration = 1
-            existing_user = get_user_by_email(email)
-            if existing_user is None:
-                _add_user(None, email, user)
-                logging.info(' added user id ' + str(email))
-            else:
-                existing_user.update(user)
-                _update_user(user['id'], email, existing_user)
-                logging.info(' updated user id ' + str(email))
+        if email is None or email.strip() == '':
+            logging.warning("upsert_user called with empty/None email, skipping")
+            return None
+            
+        email = email.lower()
+        existing_user = get_user_by_email(email)
+        
+        if existing_user is None:
+            _add_user(None, email, user_dict)
+            logging.info(f'Added user with email {email}')
+            # Return the newly added user
+            return get_user_by_email(email)
+        else:
+            # Merge new data into existing user
+            existing_dict = existing_user.to_storage_dict()
+            existing_dict.update(user_dict)
+            _update_user(existing_user.id, email, existing_dict)
+            logging.info(f'Updated user with email {email}')
+            # Return the updated user
+            return get_user_by_email(email)
+            
     except Exception as e:
         logging.error(f"Error in upsert_user for email {email}: {e}")
-   
+        return None
     finally:
-        #db.commit()
-        #db.close()
         sql_lock.release()
         method_duration = time.time() - method_start_time
-        logging.info(f'upsert_user - in {update_duration:.4f}s ; user id {email} in {method_duration:.4f}s')
-    
-        return existing_user
+        logging.info(f'upsert_user completed for email {email} in {method_duration:.4f}s')
 
 
 
 
 def get_dependents(guardian_id):
-    """Get all supervised dependents for a guardian user."""
+    """
+    Get all supervised dependents for a guardian user.
+    
+    Args:
+        guardian_id: Guardian user ID
+        
+    Returns:
+        List of User objects (supervised accounts)
+    """
     if guardian_id is None:
         return []
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     rows = cursor.execute(
-        '''SELECT jsondata FROM ''' + USERS_TABLE +
+        '''SELECT id, jsondata, added_at FROM ''' + USERS_TABLE +
         ''' WHERE json_extract(jsondata, '$.guardian_id') = ? 
             AND json_extract(jsondata, '$.account_type') = 'supervised' ;''',
         [guardian_id])
     dependents = []
     if rows is not None:
         for row in rows.fetchall():
-            dependent = json.loads(row[0])
-            # Dependents are supervised records and should not expose/store email in json payload.
-            if dependent.get('email') is not None:
-                logging.warning(f"Dependent {dependent.get('id')} has an email field, which should not be stored for supervised accounts. Removing it.")
-                dependent.pop('email', None)
-            dependents.append(dependent)
+            try:
+                # Use dependent_from_db_row which expects no email in the result
+                dependent = dependent_from_db_row(row[0], row[1], row[2])
+                dependents.append(dependent)
+            except ValueError as e:
+                logging.error(f"Error creating dependent User object for id {row[0]}: {e}")
+                continue
     db.close()
     return dependents
 
 
 def create_dependent(guardian_id, firstname, lastname, dob, sex, gymid=None, club=None):
-    """Create a supervised dependent account linked to a guardian."""
+    """
+    Create a supervised dependent account linked to a guardian.
+    
+    Args:
+        guardian_id: Guardian user ID
+        firstname: Dependent's first name
+        lastname: Dependent's last name
+        dob: Date of birth
+        sex: Sex ('M' or 'F')
+        gymid: Home gym ID (optional)
+        club: Club name (optional)
+        
+    Returns:
+        User object (supervised account)
+        
+    Raises:
+        ValueError: If validation fails
+    """
     if guardian_id is None:
         raise ValueError('Guardian ID cannot be None')
     if firstname is None or firstname.strip() == '':
@@ -532,7 +646,7 @@ def create_dependent(guardian_id, firstname, lastname, dob, sex, gymid=None, clu
     guardian = get_user(guardian_id)
     if guardian is None:
         raise ValueError('Guardian user not found')
-    if guardian.get('account_type') == 'supervised':
+    if guardian.is_dependent():
         raise ValueError('A supervised account cannot be a guardian')
 
     # Check max dependents limit
@@ -542,25 +656,34 @@ def create_dependent(guardian_id, firstname, lastname, dob, sex, gymid=None, clu
 
     dependent_id = str(uuid.uuid4().hex)
     name = firstname.strip() + ' ' + lastname.strip()
-    dependent = {
-        'id': dependent_id,
-        'firstname': firstname.strip(),
-        'lastname': lastname.strip(),
-        #'name': name,
-        #'fullname': name,
-        'dob': dob,
-        'sex': sex,
-        'gymid': gymid or '',
-        'club': club or '',
-        'account_type': 'supervised',
-        'guardian_id': guardian_id,
-        'permissions': User.generate_permissions(),
-        'created_on': datetime.now(timezone.utc).isoformat()
-    }
+    
+    # Create User object directly (easier than dict and then converting)
+    dependent = User(
+        id=dependent_id,
+        email='',  # Supervised accounts have no email
+        firstname=firstname.strip(),
+        lastname=lastname.strip(),
+        fullname=name,
+        name=name,
+        dob=dob,
+        sex=sex,
+        gymid=gymid or '',
+        club=club or '',
+        category='',
+        nick='',
+        role='',
+        isgod=False,
+        permissions=User.generate_permissions(),
+        account_type='supervised',
+        guardian_id=guardian_id,
+        added_at=datetime.now(timezone.utc).isoformat(),
+        updated_at=datetime.now(timezone.utc).isoformat()
+    )
 
     try:
         sql_lock.acquire()
-        _add_user(dependent_id, '', dependent)
+        # _add_user now accepts User or dict, converts to dict for storage
+        _add_user(dependent_id, '', dependent.to_storage_dict())
         logging.info(f'Created supervised dependent {dependent_id} for guardian {guardian_id}')
     finally:
         sql_lock.release()
@@ -569,36 +692,51 @@ def create_dependent(guardian_id, firstname, lastname, dob, sex, gymid=None, clu
 
 
 def update_dependent(dependent_id, guardian_id, **kwargs):
-    """Update a supervised dependent. Only the owning guardian can update."""
+    """
+    Update a supervised dependent. Only the owning guardian can update.
+    
+    Args:
+        dependent_id: Dependent user ID
+        guardian_id: Guardian user ID (authorization check)
+        **kwargs: Fields to update (firstname, lastname, dob, sex, gymid, club)
+        
+    Returns:
+        User object (updated dependent)
+        
+    Raises:
+        ValueError: If validation fails or not authorized
+    """
     if dependent_id is None or guardian_id is None:
         raise ValueError('Dependent ID and Guardian ID are required')
 
     dependent = get_user(dependent_id)
     if dependent is None:
         raise ValueError('Dependent not found')
-    if dependent.get('account_type') != 'supervised':
+    if not dependent.is_dependent():
         raise ValueError('User is not a supervised account')
-    if dependent.get('guardian_id') != guardian_id:
+    if dependent.guardian_id != guardian_id:
         raise ValueError('Not authorized to modify this dependent')
 
     allowed_fields = ('firstname', 'lastname', 'dob', 'sex', 'gymid', 'club')
     for key, value in kwargs.items():
         if key in allowed_fields and value is not None:
-            dependent[key] = value
+            setattr(dependent, key, value)
 
     # Update derived fields
-    dependent['name'] = dependent['firstname'] + ' ' + dependent['lastname']
-    dependent['fullname'] = dependent['name']
-    dependent['account_type'] = 'supervised'
-    dependent['guardian_id'] = guardian_id
-    dependent.pop('email', None)
+    dependent.name = dependent.firstname + ' ' + dependent.lastname
+    dependent.fullname = dependent.name
+    
+    # Ensure account_type and guardian_id are correct
+    dependent.account_type = 'supervised'
+    dependent.guardian_id = guardian_id
+    dependent.email = ''
 
     if 'sex' in kwargs and kwargs['sex'] not in ('M', 'F'):
         raise ValueError('Sex must be M or F')
 
     try:
         sql_lock.acquire()
-        _update_user(dependent_id, '', dependent)
+        _update_user(dependent_id, '', dependent.to_storage_dict())
         logging.info(f'Updated supervised dependent {dependent_id}')
     finally:
         sql_lock.release()
@@ -607,16 +745,25 @@ def update_dependent(dependent_id, guardian_id, **kwargs):
 
 
 def delete_dependent(dependent_id, guardian_id):
-    """Delete a supervised dependent. Only the owning guardian can delete."""
+    """
+    Delete a supervised dependent. Only the owning guardian can delete.
+    
+    Args:
+        dependent_id: Dependent user ID
+        guardian_id: Guardian user ID (authorization check)
+        
+    Raises:
+        ValueError: If validation fails or not authorized
+    """
     if dependent_id is None or guardian_id is None:
         raise ValueError('Dependent ID and Guardian ID are required')
 
     dependent = get_user(dependent_id)
     if dependent is None:
         raise ValueError('Dependent not found')
-    if dependent.get('account_type') != 'supervised':
+    if not dependent.is_dependent():
         raise ValueError('User is not a supervised account')
-    if dependent.get('guardian_id') != guardian_id:
+    if dependent.guardian_id != guardian_id:
         raise ValueError('Not authorized to delete this dependent')
 
     try:
@@ -632,7 +779,20 @@ def delete_dependent(dependent_id, guardian_id):
 
 
 def promote_dependent_to_user(dependent_id, guardian_id, email):
-    """Promote a supervised dependent to a standard account by adding email."""
+    """
+    Promote a supervised dependent to a standard account by adding email.
+    
+    Args:
+        dependent_id: Dependent user ID
+        guardian_id: Guardian user ID (authorization check)
+        email: New email for the promoted account
+        
+    Returns:
+        User object (promoted account, now standard)
+        
+    Raises:
+        ValueError: If validation fails or email already in use
+    """
     if dependent_id is None or guardian_id is None or email is None:
         raise ValueError('Dependent ID, Guardian ID and email are required')
 
@@ -648,21 +808,22 @@ def promote_dependent_to_user(dependent_id, guardian_id, email):
     dependent = get_user(dependent_id)
     if dependent is None:
         raise ValueError('Dependent not found')
-    if dependent.get('account_type') != 'supervised':
+    if not dependent.is_dependent():
         raise ValueError('User is not a supervised account')
-    if dependent.get('guardian_id') != guardian_id:
+    if dependent.guardian_id != guardian_id:
         raise ValueError('Not authorized to promote this dependent')
 
-    dependent['account_type'] = 'standard'
-    dependent['guardian_id'] = None
-    dependent['email'] = email
+    # Convert to standard account
+    dependent.account_type = 'standard'
+    dependent.guardian_id = None
+    dependent.email = email
 
     try:
         sql_lock.acquire()
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
         cursor.execute("UPDATE " + USERS_TABLE + " SET email = ?, jsondata = ? WHERE id = ?",
-                       [email, json.dumps(dependent), dependent_id])
+                       [email, json.dumps(dependent.to_storage_dict()), dependent_id])
         db.commit()
         db.close()
         logging.info(f'Promoted supervised dependent {dependent_id} to standard account with email {email}')
@@ -671,7 +832,7 @@ def promote_dependent_to_user(dependent_id, guardian_id, email):
 
     return dependent
 
-
+# TODO check if user is an object here.. i think it is get_user_by_email returns what?????
 def user_authenticated_fb(fid, name, email, picture):
     try:
         sql_lock.acquire()
@@ -699,7 +860,7 @@ def user_authenticated_fb(fid, name, email, picture):
         sql_lock.release()
         logging.info("done with user:"+str(email))
 
-
+# TODO check user object to _update_user call
 def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
@@ -744,28 +905,51 @@ def _common_user_validation(user):
 # user is a user dictionary
 # permission is a string
 def add_user_permission(user, permission):
+    """
+    Add a general permission to a user.
+    
+    Args:
+        user: User object or dict
+        permission: Permission name to add
+        
+    Returns:
+        User object (updated)
+    """
     try:
         sql_lock.acquire()
-        #db = lite.connect(COMPETITIONS_DB)
-        #cursor = db.cursor()
-        permissions = user.get('permissions')
+        
+        # Convert User to dict if needed
+        if isinstance(user, User):
+            user_id = user.id
+            user_email = user.email
+            user_dict = user.to_storage_dict()
+        else:
+            user_id = user.get('id')
+            user_email = user.get('email')
+            user_dict = user
+
+        permissions = user_dict.get('permissions')
         if permissions is None:
             permissions = User.generate_permissions()
-            user['permissions'] = permissions
+            user_dict['permissions'] = permissions
 
         if permission not in permissions['general']:
             permissions['general'].append(permission)
-        _update_user(user['id'], user['email'], user)
-        logging.info('updated user id ' + str(user['email']))
+        
+        _update_user(user_id, user_email, user_dict)
+        logging.info(f'Added permission "{permission}" to user {user_email}')
+        
+        # Return updated user from DB
+        if user_email:
+            return get_user_by_email(user_email)
+        else:
+            return get_user(user_id)
+        
     except Exception as e:
-        logging.error(f"Error in add_user_permission for email {user.get('email')}: {e}")
- 
+        logging.error(f"Error in add_user_permission for email {user_email}: {e}")
+        return None
     finally:
-        #db.commit()
-        #db.close()
         sql_lock.release()
-        logging.info(str(permission)+" done with user:"+str(user['email']))
-        return user
 
 
 # modify permission to edit specific competition to a user
@@ -779,40 +963,67 @@ def modify_user_permissions_to_gym(user, gym_id, action="ADD"):
 
 # modify permission to edit specific competition to a user
 def _modify_user_permissions(user, item_id, permission_type, action="ADD"):
+    """
+    Modify user permissions for a specific item (competition, gym, etc.).
+    
+    Args:
+        user: User object or dict
+        item_id: ID of the item (competition_id, gym_id, etc.)
+        permission_type: Type of permission ('competitions', 'gyms', 'general', 'users')
+        action: "ADD" to add permission, "REMOVE" to remove
+        
+    Returns:
+        User object (updated)
+        
+    Raises:
+        ValueError: If validation fails
+    """
     if user is None:
         raise ValueError("User cannot be None")
+    
+    if action not in ("ADD", "REMOVE"):
+        raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
+    
     try:
         sql_lock.acquire()
-        #db = lite.connect(COMPETITIONS_DB)
-        #cursor = db.cursor()
-        permissions = user.get('permissions')
+        
+        # Convert User to dict if needed
+        if isinstance(user, User):
+            user_id = user.id
+            user_email = user.email
+            user_dict = user.to_storage_dict()
+        else:
+            user_id = user.get('id')
+            user_email = user.get('email')
+            user_dict = user
+
+        permissions = user_dict.get('permissions')
         if permissions is None:
             permissions = User.generate_permissions()
-            user['permissions'] = permissions
+            user_dict['permissions'] = permissions
 
         if action == "ADD":
             if item_id not in permissions[permission_type]:
                 permissions[permission_type].append(item_id)
-                _update_user(user['id'], user['email'], user)
-                logging.info('added user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
-                     ' action='+str(action))
+                _update_user(user_id, user_email, user_dict)
+                logging.info(f'Added permission: user={user_email} type={permission_type} item={item_id}')
         elif action == "REMOVE":
-            permissions[permission_type].remove(item_id)
-            _update_user(user['id'], user['email'], user)
-            logging.info('removed user permissions id ' + str(user['email'])+ ' type='+str(permission_type)+
-                     ' action='+str(action))
+            if item_id in permissions[permission_type]:
+                permissions[permission_type].remove(item_id)
+                _update_user(user_id, user_email, user_dict)
+                logging.info(f'Removed permission: user={user_email} type={permission_type} item={item_id}')
+
+        # Return updated user from DB
+        if user_email:
+            return get_user_by_email(user_email)
         else:
-            raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
+            return get_user(user_id)
+            
     except Exception as e:
-        logging.error(f"Error in _modify_user_permissions for email {user.get('email')}: {e}")
-        raise ValueError("Unknown action parameter. Only valid values are ADD or REMOVE")
-        
+        logging.error(f"Error in _modify_user_permissions for user {user_email}: {e}")
+        raise
     finally:
-        #db.commit()
-        #db.close()
         sql_lock.release()
-        logging.info("done with user:"+str(user['email']))
-        return user
 
 
 # this overwrites details from competition registration to the main user entry
@@ -858,7 +1069,11 @@ def user_registered_for_competition(climberId, name, firstname, lastname, email,
         #return climber
 
 
+
 def _add_user(climberId, email, climber):
+    if isinstance(climber, User):
+        raise ValueError("Expected a dictionary for climber, got User instance")
+    
     email = email.lower()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
@@ -866,6 +1081,7 @@ def _add_user(climberId, email, climber):
         climberId = str(uuid.uuid4().hex)
         climber['id'] = climberId
         climber['created_on'] = datetime.now(timezone.utc).isoformat()
+
     cursor.execute("INSERT  INTO " + USERS_TABLE +
                    "(id, email, jsondata, added_at) " +
                    " values (?, ?, ?, datetime('now')) ",
@@ -880,6 +1096,8 @@ def _update_user(climberId, email, climber):
     # Start timing for the entire method
     method_start_time = time.time()
 
+    if isinstance(climber, User):
+        climber = climber.to_storage_dict()
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     email = email.lower()

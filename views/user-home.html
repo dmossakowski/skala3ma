@@ -283,9 +283,10 @@
                 }
             };
 
+            // we added limits to create 1 gym and 3 competitions for everyone so we bypass the permission checks here
             const setupActions = (genPerms) => {
-                const canCreateGym = genPerms.includes('create_gym');
-                const canCreateCompetition = genPerms.includes('create_competition');
+                const canCreateGym = true // genPerms.includes('create_gym');
+                const canCreateCompetition = true //genPerms.includes('create_competition');
                 if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? 'inline-block' : 'none';
                 if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? 'inline-block' : 'none';
             };

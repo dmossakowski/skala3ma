@@ -154,6 +154,7 @@ competition_status_scoring = 3
 competition_status_closed = 4
 competition_status_archived = 5
 competition_status_future = 5
+MAX_COMPETITIONS_PER_CREATOR = 3
 
 competition_status = {"created":competition_status_created, "open":1, "inprogress":2, "scoring":3, "closed":4, "archived":5}
 
@@ -194,8 +195,9 @@ email_sender = EmailSender(
 )
 
 
-# called from main_app_ui
-def addCompetition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategy.calc_type_fsgt1):
+# called from main_app_ui and skala_api
+# no permissions or other checks are performed here
+def create_competition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategy.calc_type_fsgt1):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -212,7 +214,6 @@ def addCompetition(compId, added_by, name, date, routesid, max_participants, com
         max_participants=80
 
     #sanitized_instruction = re.sub(r'[^\w\s]', '', instruction)
-
    
     competition = {
         "id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
@@ -228,8 +229,9 @@ def addCompetition(compId, added_by, name, date, routesid, max_participants, com
         "routes": routes.get('routes'),
         "climbers": {}}
     
-    # write this competition to db
-    skala_db._add_competition(compId, competition);
+    with sql_lock:
+        # write this competition to db
+        skala_db._add_competition(compId, competition);
 
     return compId
 
@@ -1237,37 +1239,45 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid,
     if climber is None:
         raise ValueError("Climber cannot be None")
 
+    if isinstance(climber, User):
+        raise ValueError("Expected a dictionary for climber, got User instance")
+    
     try:
         sql_lock.acquire()
-        fullname = ""
-        if firstname is not None and lastname is not None:
-            fullname = firstname+" "+lastname
-
-        newclimber = {'fullname': name, 'nick': nick, 'firstname':firstname, 'lastname':lastname,
-                      'sex': sex, 'club': club, 'gymid': gymid, 'dob': dob}
+        fullname = name or " ".join(part for part in (firstname, lastname) if part)
+        newclimber = {
+            'fullname': fullname,
+            'name': fullname,
+            'nick': nick,
+            'firstname': firstname,
+            'lastname': lastname,
+            'sex': sex,
+            'club': club,
+            'gymid': gymid,
+            'dob': dob,
+        }
         
         if club is not None:
             gym = skala_db._get_gym(gymid)
             if gym is not None:
                 newclimber['gymid'] = gym.get('id')
             else:
-                climber.pop('gymid', None)
+                newclimber['gymid'] = ''
 
         email = climber.get('email')
+        if not email:
+            raise ValueError("Climber email is required")
         email = email.lower()
-        db = lite.connect(COMPETITIONS_DB)
-        cursor = db.cursor()
-        if climber is None:
-            skala_db._add_user(None, email, newclimber)
-            logging.info('added user id ' + str(email))
+
+        if isinstance(climber, User):
+            climber.update(newclimber)
+            skala_db._update_user(climber.id, email, climber.to_storage_dict())
         else:
             climber.update(newclimber)
             skala_db._update_user(climber['id'], email, climber)
-            logging.info('updated user id ' + str(climber))
+        logging.info('updated user id ' + str(email))
         
     finally:
-        db.commit()
-        db.close()
         sql_lock.release()
         logging.info("done with user:"+str(email))
         return climber
@@ -1285,11 +1295,13 @@ def upsert_user(user):
         if email is not None:
             existing_user = get_user_by_email(email)
             if existing_user is None:
-                skala_db._add_user(None, email, user)
+                persisted_user = user.to_storage_dict() if isinstance(user, User) else user
+                skala_db._add_user(None, email, persisted_user)
                 logging.info('added user id ' + str(email))
             else:
                 existing_user.update(user)
-                skala_db._update_user(user['id'], email, existing_user)
+                persisted_user = existing_user.to_storage_dict() if isinstance(existing_user, User) else existing_user
+                skala_db._update_user(user['id'], email, persisted_user)
     finally:
         db.commit()
         db.close()
@@ -1314,7 +1326,9 @@ def user_authenticated_fb(fid, name, email, picture):
         else:
             u = {'fid': fid, 'fname': name, 'email': email, 'fpictureurl': picture}
             user.update(u)
-            user = skala_db._update_user(user['id'], email, user)
+            persisted_user = user.to_storage_dict() if isinstance(user, User) else user
+            persisted_user.update(u)
+            user = skala_db._update_user(user['id'], email, persisted_user)
             logging.info('updated user id ' + str(email))
         return user
     finally:
@@ -1323,7 +1337,7 @@ def user_authenticated_fb(fid, name, email, picture):
         sql_lock.release()
         logging.info("done with user:"+str(email))
 
-
+# entrance on google authentication
 def user_authenticated_google(name, email, picture):
     try:
         sql_lock.acquire()
@@ -1340,7 +1354,13 @@ def user_authenticated_google(name, email, picture):
         else:
             u = {'gname': name, 'email': email, 'gpictureurl': picture}
             user.update(u)
-            user = skala_db._update_user(user['id'], email, user)
+            persisted_user = user.to_storage_dict() if isinstance(user, User) else user
+            persisted_user.update(u)
+            user = skala_db._update_user(
+                user['id'],
+                email,
+                persisted_user,
+            )
             logging.info('updated google user id ' + str(email))
         return user
     finally:
@@ -1370,7 +1390,8 @@ def user_authenticated(email, password):
         else:
             u = {'email': email, 'password': password}
             user.update(u)
-            user = skala_db._update_user(user['id'], email, user)
+            persisted_user = user.to_storage_dict() if isinstance(user, User) else user
+            user = skala_db._update_user(user['id'], email, persisted_user)
             logging.info('update normal user ' + str(email))
         return user
     finally:
@@ -1381,6 +1402,7 @@ def user_authenticated(email, password):
 # this function is used to confirm a user and write them to the db
 # the only way that this can be called if a user clicked on a confirmation link
 # which means that the user has a valid email
+# there is additional step required after this to set the password
 def confirm_user(email):
     try:
         sql_lock.acquire()
@@ -1398,12 +1420,14 @@ def confirm_user(email):
             logging.info('added confirmed user email' + str(email))
         else:
             user['is_confirmed'] = True
-            user = skala_db._update_user(user['id'], email, user)
+            persisted_user = user.to_storage_dict() if isinstance(user, User) else user
+            user = skala_db._update_user(user['id'], email, persisted_user)
         
             #logging.info('normal user is confirmed ' + str(email))
         return user
     finally:
         sql_lock.release()
+
 
 
 
@@ -1550,7 +1574,7 @@ def can_update_routes(user, competition):
         if 'update_routes' in permissions.get('general', []):
             return True
 
-    if 'update_routes' in permissions['general'] \
+    if ('update_routes' in permissions['general'] or 'edit_competition' in permissions['general']) \
             and competition['status'] in [competition_status_scoring, competition_status_inprogress]\
             and competition['id'] in permissions['competitions']:
         return True
@@ -1932,9 +1956,9 @@ def send_email_to_participants(competition, sent_by, email_content):
 
 
 def add_testing_data():
-    addCompetition("abc", "FSGT 2021/2022", "20220101", "ESC 15")
-    addCompetition("def", "FSGT 2021/2022", "20220207", "Tremblay")
-    addCompetition("ghi", "FSGT 2021/2022", "20220312", "Roc 14")
+    create_competition("abc", "FSGT 2021/2022", "20220101", "ESC 15")
+    create_competition("def", "FSGT 2021/2022", "20220207", "Tremblay")
+    create_competition("ghi", "FSGT 2021/2022", "20220312", "Roc 14")
 
     addClimber("c1", "abc", "c1@a.com", "Bob Mob", "Nanterre", "M")
     addClimber("c2", "abc", "c2@a.com", "Mary J", "Ville", "F")
