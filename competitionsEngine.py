@@ -195,7 +195,8 @@ email_sender = EmailSender(
 )
 
 
-# called from main_app_ui
+# called from main_app_ui and skala_api
+# no permissions or other checks are performed here
 def create_competition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategy.calc_type_fsgt1):
     if compId is None:
         compId = str(uuid.uuid4().hex)
@@ -213,7 +214,6 @@ def create_competition(compId, added_by, name, date, routesid, max_participants,
         max_participants=80
 
     #sanitized_instruction = re.sub(r'[^\w\s]', '', instruction)
-
    
     competition = {
         "id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
@@ -230,10 +230,6 @@ def create_competition(compId, added_by, name, date, routesid, max_participants,
         "climbers": {}}
     
     with sql_lock:
-        competitions_created = skala_db.count_competitions_by_added_by(added_by)
-        if competitions_created >= MAX_COMPETITIONS_PER_CREATOR:
-            raise ValueError('Maximum number of competitions per creator reached')
-
         # write this competition to db
         skala_db._add_competition(compId, competition);
 
