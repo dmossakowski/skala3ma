@@ -267,26 +267,26 @@ function initializeApp() {
                 
                 <ul class="navbar-nav ml-left">
                     
-                    <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities">{{ reference_data['current_language'].activities }}</a> 
+                    <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities"><span data-translate-key="activities">Activities</span></a> 
                    
-                    <a class="nav-link fs-4 fw-medium" href="/gyms">{{ reference_data['current_language'].gyms }}</a>
+                    <a class="nav-link fs-4 fw-medium" href="/gyms"><span data-translate-key="gyms">Gyms</span></a>
 
                     <a href="/controversial_routes" class="nav-link fs-4 fw-medium"><span data-translate-key="controversial_routes">Controversial Routes</span></a>
-                    <a class="nav-link fs-4 fw-medium" href="/competitionDashboard">{{ reference_data['current_language'].competitions }}</a>
+                    <a class="nav-link fs-4 fw-medium" href="/competitionDashboard"><span data-translate-key="competitions">Competitions</span></a>
 
                     <a href="/competitionCalendar?view=multiMonthFourMonth"  class="nav-link fs-5"><i class="bi bi-calendar-week-fill" ></i>
-                        {{ reference_data['current_language'].Calendar }}</a>
+                        <span data-translate-key="Calendar">Calendar</span></a>
 
                     <a href="/competitionCalendar?view=timeGridFourDay"  class="nav-link fs-5"><i class="bi bi-border-width" ></i>
-                        {{ reference_data['current_language'].list }}</a>
+                        <span data-translate-key="list">List</span></a>
 
-                    <a href="/competitionSeasonRankings"  class="nav-link fs-5"><i class="bi bi-trophy-fill" ></i>  {{ reference_data['current_language'].Rankings }}</a>
+                    <a href="/competitionSeasonRankings"  class="nav-link fs-5"><i class="bi bi-trophy-fill" ></i>  <span data-translate-key="Rankings">Rankings</span></a>
 
 
 
                  
                      
-                    <a href="/contact" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].Contact }}</a>
+                    <a href="/contact" class="nav-link fs-4 fw-medium"><span data-translate-key="Contact">Contact</span></a>
 
                     {% if session is defined and session['expires_at'] is defined %}
                                <hr>
@@ -294,10 +294,10 @@ function initializeApp() {
                         <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
                         </a>
                 
-                    <a href="/profile" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
-                    <a href="/myactivities" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].my_activities }}</a>
-                    <a href="/myresultats" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].my_resultats }}</a>
-                    <a href="/logout" class="nav-link fs-4 fw-medium">{{ reference_data['current_language'].logout }}</a>
+                    <a href="/profile" class="nav-link fs-4 fw-medium"><span data-translate-key="myprofile">My profile</span></a>
+                    <a href="/myactivities" class="nav-link fs-4 fw-medium"><span data-translate-key="my_activities">My activities</span></a>
+                    <a href="/myresultats" class="nav-link fs-4 fw-medium"><span data-translate-key="my_resultats">My results</span></a>
+                    <a href="/logout" class="nav-link fs-4 fw-medium"><span data-translate-key="logout">Logout</span></a>
 
                     {% if session['is_admin']  %}
                     <a href="/app_admin1" class="nav-link fs-4">Admin</a></li>
@@ -307,7 +307,7 @@ function initializeApp() {
                 
                 {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-3  fw-bold">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-3  fw-bold"><span data-translate-key="login">Login</span>
                     </a>
                 </li>
                 {% endif %}
@@ -329,11 +329,11 @@ function initializeApp() {
                 <br>
                 <hr>
 
-                        <li><a href="https://idf.fsgt.org/competition-autrement/" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  {{ reference_data['current_language'].ligue }}</a></li>                        
-                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADULTE-2026.pdf" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  {{ reference_data['current_language'].adult_contest_rules }}</a></li>
-                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADO-2026.pdf" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  {{ reference_data['current_language'].ado_contest_rules }}</a></li>
-                        <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  {{ reference_data['current_language'].participant_guide }} </a></li>
-                        <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i> {{ reference_data['current_language'].admin_guide }}</a></li>
+                        <li><a href="https://idf.fsgt.org/competition-autrement/" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  <span data-translate-key="ligue">FSGT IDF League</span></a></li>                        
+                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADULTE-2026.pdf" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  <span data-translate-key="adult_contest_rules">Adult contest rules</span></a></li>
+                        <li><a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADO-2026.pdf" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  <span data-translate-key="ado_contest_rules">Ado contest rules</span></a></li>
+                        <li><a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i>  <span data-translate-key="participant_guide">Particpant Guide</span> </a></li>
+                        <li><a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-4 fw-medium" target="_blank"><i class="bi bi-question-circle-fill" ></i> <span data-translate-key="admin_guide">Admin Guide</span></a></li>
                       
                 <br>
                 <hr>
@@ -396,7 +396,7 @@ function initializeApp() {
 
                 <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/activities" id="activitiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    {{ reference_data['current_language'].activities }}
+                    <span data-translate-key="activities">Activities</span>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="activitiesDropdown">
                     <li><a class="dropdown-item fs-7" href="/activities" data-translate-key="overview">Overview</a></li>
@@ -412,17 +412,17 @@ function initializeApp() {
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    {{ reference_data['current_language'].competitions }}
+                    <span data-translate-key="competitions">Competitions</span>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">
 
  <li> <a href="/competitionDashboard"  class="dropdown-item fs-7"><i class="bi bi-grid-fill" ></i>
-            {{ reference_data['current_language'].Gallery }}</a></li>
+            <span data-translate-key="Gallery">Gallery</span></a></li>
         <li> <a href="/competitionCalendar?view=multiMonthFourMonth"  class="dropdown-item fs-7"><i class="bi bi-calendar-week-fill" ></i>
-            {{ reference_data['current_language'].Calendar }}</a></li>
+            <span data-translate-key="Calendar">Calendar</span></a></li>
 
             <li>     <a href="/competitionCalendar?view=timeGridFourDay"  class="dropdown-item fs-7"><i class="bi bi-border-width" ></i>
-                {{ reference_data['current_language'].list }}</a></li>
+                <span data-translate-key="list">List</span></a></li>
 
                                 
 
@@ -430,28 +430,28 @@ function initializeApp() {
 							
                   
                      <li>     <a href="/competitionSeasonRankings"  class="dropdown-item fs-7"><i class="bi bi-trophy-fill" ></i>
-                {{ reference_data['current_language'].Rankings }}</a></li>
+                <span data-translate-key="Rankings">Rankings</span></a></li>
 					
            
-                    <li><a class="dropdown-item fs-7" href="/myresultats">{{ reference_data['current_language'].my_resultats }}</a></li>
+                    <li><a class="dropdown-item fs-7" href="/myresultats"><span data-translate-key="my_resultats">My results</span></a></li>
                 </ul>
                 </li>
                 &nbsp;&nbsp;&nbsp;
-                <a href="/competitionSeasonRankings"  class="nav-link fs-9 fw-bold"></i>  {{ reference_data['current_language'].Rankings }}</a>
+                <a href="/competitionSeasonRankings"  class="nav-link fs-9 fw-bold"></i>  <span data-translate-key="Rankings">Rankings</span></a>
 
                 &nbsp;&nbsp;&nbsp;
-                <a class="nav-link fs-9 fw-bold " href="/contact"> {{ reference_data['current_language'].Contact }} </a>
+                <a class="nav-link fs-9 fw-bold " href="/contact"> <span data-translate-key="Contact">Contact</span> </a>
                 &nbsp;&nbsp;&nbsp;
 
                 <li  class="nav-item">
                 <a href="" class="nav-link dropdown-toggle fs-7 fw-medium fw-medium" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-question-circle-fill" ></i> </a>
                 <div class="dropdown-menu dropdown-menu-end">
-                <a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADULTE-2026.pdf" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].adult_contest_rules }}</a>
-                <a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADO-2026.pdf" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].ado_contest_rules }}</a>
-                <a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].participant_guide }} </a>
-                <a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].admin_guide }}</a>
-                <a href="https://github.com/dmossakowski/skala3ma" class="dropdown-item fs-7 fw-medium" target="_blank">{{ reference_data['current_language'].app_development }}</a>
+                <a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADULTE-2026.pdf" class="dropdown-item fs-7 fw-medium" target="_blank"><span data-translate-key="adult_contest_rules">Adult contest rules</span></a>
+                <a href="https://idf.fsgt.org/wp-content/uploads/2026/01/reglement-Contest-et-challenge-IdF-ADO-2026.pdf" class="dropdown-item fs-7 fw-medium" target="_blank"><span data-translate-key="ado_contest_rules">Ado contest rules</span></a>
+                <a href="https://docs.google.com/document/d/1QNui5JaGIROgsGfv1puN-t5mF-KOKY2YXoUQWNPZYO8/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank"><span data-translate-key="participant_guide">Particpant Guide</span> </a>
+                <a href="https://docs.google.com/document/d/1p9PIb6xgHeEL3d-QwylQjmrLQ2vR1CaJrsaC3dEtQjw/edit?usp=drivesdk" class="dropdown-item fs-7 fw-medium" target="_blank"><span data-translate-key="admin_guide">Admin Guide</span></a>
+                <a href="https://github.com/dmossakowski/skala3ma" class="dropdown-item fs-7 fw-medium" target="_blank"><span data-translate-key="app_development">App development</span></a>
                        
             </div>
                 </li>
@@ -479,14 +479,14 @@ function initializeApp() {
                 
                 </a> 
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a href="/profile" class="dropdown-item fs-7 fw-medium">{{ reference_data['current_language'].myprofile }}</a>
+                    <a href="/profile" class="dropdown-item fs-7 fw-medium"><span data-translate-key="myprofile">My profile</span></a>
 
-                    <a href="/myactivities" class="dropdown-item fs-7">{{ reference_data['current_language'].my_activities }}</a>
+                    <a href="/myactivities" class="dropdown-item fs-7"><span data-translate-key="my_activities">My activities</span></a>
 
-                    <a href="/myresultats" class="dropdown-item fs-7">{{ reference_data['current_language'].my_resultats }}</a>
+                    <a href="/myresultats" class="dropdown-item fs-7"><span data-translate-key="my_resultats">My results</span></a>
                         
                 
-                    <a href="/logout" class="dropdown-item fs-7">{{ reference_data['current_language'].logout }}</a>
+                    <a href="/logout" class="dropdown-item fs-7"><span data-translate-key="logout">Logout</span></a>
 
                     {% if session['is_admin']  %}
                     <a href="/app_admin1" class="dropdown-item fs-7">Admin</a></li>
@@ -496,7 +496,7 @@ function initializeApp() {
                 </li>
             {% else %}
 
-                <li><a href="/loginchoice" class="nav-link fs-7 fw-semibold">{{ reference_data['current_language'].login }}
+                <li><a href="/loginchoice" class="nav-link fs-7 fw-semibold"><span data-translate-key="login">Login</span>
                 </a>
                 </li>
             {% endif %}
@@ -540,24 +540,32 @@ function initializeApp() {
 				<div class="container">
 					<div class="row row-bottom-padded-md">
 						<div class="col-md-5">
-							<h3 class="section-title"> <img src="/public/images/favicon.png" height="30">  {{ reference_data['current_language'].about }} skala3ma</h3>
-							<p>{{ reference_data['current_language'].app_welcome }} <br>{{ reference_data['current_language'].short_app_description }}</p>
-							<p><a href="/contact"><i class="icon-email"></i> {{ reference_data['current_language'].contact_email }}</a>
-							
+                            <h3 class="section-title"> <img src="/public/images/favicon.png" height="30">  <span data-translate-key="about">About</span> skala3ma</h3>
+                            <p><span data-translate-key="app_welcome">FSGT Mountain and Climbing section official app</span> <br><span data-translate-key="short_app_description">Manage competitions and gym routes.</span></p>
+                           
                                
                             </p>
+
+                                <p>Mapping data by <a href="https://www.openstreetmap.org/" target="_blank">https://www.openstreetmap.org/</a>. 
+                                
+                                    
+                                    <br>Made with <i class="icon-heart3"></i> by davidski
 						</div>
 
 
 						<div class="col-md-5">
-							<h3 class="section-title">Links</h3>
+							<h3 class="section-title"></h3>
 							<ul>
-
+                                <li><a href="/contact"><i class="icon-email"></i> <span data-translate-key="contact_email">Contact us</span></a></li>
+                                
+		                    <li><a href="/privacy"><span data-translate-key="privacy_notice">Privacy notice</span></a></li>
+                         
 							{% if username is defined %}
-								<li><a href="/privacy">{{ reference_data['current_language'].privacy_notice }}</a></li>
-                                <li><a href="/logout">{{ reference_data['current_language'].logout }}</a></li>
+						       <li><a href="/logout"><span data-translate-key="logout">Logout</span></a></li>
 							{% endif %}
                                 <br>
+                                <li><a href="https://www.instagram.com/skala3ma/"><i class="icon-instagram"></i> Instagram </a></li>
+
 								<li><a href="https://www.facebook.com/skala3ma"><i class="icon-facebook2"></i> Facebook</a></li>
                                 <li><a href="https://github.com/dmossakowski/skala3ma"><i class="icon-github"></i> GitHub</a></li>
 							</ul>
@@ -565,22 +573,17 @@ function initializeApp() {
 						</div>
 						<div  class="col-md-2">
 							<!-- http://usrz.github.io/bootstrap-languages/ -->
-							<h3 class="section-title">Languages</h3>
+							<h3 class="section-title"></h3>
 							<a href="#" style="color: white" onclick="loadTranslations('fr_FR');"> <span class="lang-lg lang-lbl" lang="fr"></span></a> <br>
 							<a href="#" style="color: white" onclick="loadTranslations('en_US');"> <span class="lang-lg lang-lbl" lang="en"></span></a> <br>
 							<a href="#" style="color: white" onclick="loadTranslations('pl_PL');"> <span class="lang-lg lang-lbl" lang="pl"></span></a><br>
 
-                            <br><br>
+                            <br>
 						</div>
 
 						<div class="row">
 							<div class="col-md-12">
 								
-                                <p>Mapping data by <a href="https://www.openstreetmap.org/" target="_blank">https://www.openstreetmap.org/</a>. 
-                                    <br>    
-								Initial template by <a href="http://freehtml5.co/" target="_blank">Freehtml5.co</a>. 
-                                    
-                                    <br>Made with <i class="icon-heart3"></i> by davidski
 							</div>
 						</div>
 					</div>

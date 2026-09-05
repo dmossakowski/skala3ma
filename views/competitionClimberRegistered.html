@@ -19,10 +19,10 @@
 
 						{%if competition['climbers']|length <= competition['max_participants']|int %}
 		
-						<h3>{{ reference_data['current_language'].youareregistered }}</h3>
+						<h3><span data-translate-key="youareregistered">Thank you. You have been registered for the competition.</span></h3>
 
 						{% else %}
-						<h3>{{ reference_data['current_language'].youareonwaitinglist }}</h3>
+						<h3><span data-translate-key="youareonwaitinglist">Thank you. Maximum participants have already registered and you have been put on the waiting list</span></h3>
 						{% endif %} 
 
 				{{competition['name'] }} - {{ competition['date']| strftime(format='short')}}<br>	
