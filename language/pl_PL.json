@@ -346,7 +346,6 @@
     "overview": "Przegląd",
     "competition_type": "Typ zawodów",
     "topo": "Topo",
-    "last": "Ostatni",
     "general_permissions": "Uprawnienia ogólne",
     "actions": "Akcje",
     "edit_profile": "Edytuj profil <i class=\"bi bi-pencil-square\"></i>",
@@ -363,5 +362,8 @@
     "routeset_out_of_sync_hint": "To może być normalne, jeśli ostatnio wprowadzono zmiany. Zwykle ten sam zestaw dróg nie powinien być używany w wielu zawodach. Jeśli to starsze zawody, które już się odbyły, warto zachować stary zestaw dróg dla dokładności historycznej. Aby zaktualizować zestaw dróg do najnowszej wersji, kliknij przycisk poniżej.",
     "added": "dodane",
     "removed": "usunięte",
-    "modified": "zmodyfikowane"
+    "modified": "zmodyfikowane",
+    "my_dependents": "Moi podopieczni",
+    "dependents_description": "Zarządzaj kontami nadzorowanymi dla nastolatków (12-17 lat), za które jesteś odpowiedzialny. Możesz zapisywać ich na zawody.",
+    "no_dependents": "Nie dodano jeszcze żadnych podopiecznych."
 }
