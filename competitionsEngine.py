@@ -1238,10 +1238,7 @@ def get_user_emails_with_competition_id(competition_id):
 def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid, dob):
     if climber is None:
         raise ValueError("Climber cannot be None")
-
-    if isinstance(climber, User):
-        raise ValueError("Expected a dictionary for climber, got User instance")
-    
+ 
     try:
         sql_lock.acquire()
         fullname = name or " ".join(part for part in (firstname, lastname) if part)
@@ -1280,7 +1277,8 @@ def user_self_update(climber, name, firstname, lastname, nick, sex, club, gymid,
     finally:
         sql_lock.release()
         logging.info("done with user:"+str(email))
-        return climber
+
+    return climber
 
 
 def upsert_user(user):

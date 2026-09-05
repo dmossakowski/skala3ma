@@ -29,8 +29,8 @@
         </div>
     </div>
     <div class="container">
-                <div class="row">
-                    <div class="col-6">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-6">
             
                     
 					{% if enable_registration %}
@@ -252,9 +252,9 @@
 					{% endif %}
 		
                 </div>
-                <div class="col">
+                <div class="col-12 col-md-6 text-center">
                     
-                    <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
+                    <img class="img-fluid" src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}"
 									width="200"><br><br>
                 </div>
                 </div>
