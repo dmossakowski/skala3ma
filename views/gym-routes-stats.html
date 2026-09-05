@@ -105,13 +105,21 @@
                     }
                     const seriesData = categories.map(g => (gradeCounts[g] ?? 0));
 
-                    // Map grades to difficulty bands and colors
+                    // Use a smooth five-stop scale so adjacent grades remain distinct.
+                    const gradientStops = ['#35b779', '#f6c445', '#e63946', '#5e2a84', '#000000'];
+                    function interpolateColor(start, end, amount){
+                        const startRgb = start.match(/[\da-f]{2}/gi).map(value => parseInt(value, 16));
+                        const endRgb = end.match(/[\da-f]{2}/gi).map(value => parseInt(value, 16));
+                        const channels = startRgb.map((value, index) => Math.round(value + (endRgb[index] - value) * amount));
+                        return `#${channels.map(value => value.toString(16).padStart(2, '0')).join('')}`;
+                    }
                     function gradeColor(grade){
-                        if(["?","4a","4b","4c"].includes(grade)) return getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#29c05c'; // very easy - green
-                        if(["5a","5a+","5b","5b+","5c"].includes(grade)) return '#ff9800'; // easy - orange
-                        if(["5c+","6a","6a+","6b"].includes(grade)) return '#2196f3'; // medium - blue
-                        if(["6b+","6c","6c+","7a"].includes(grade)) return '#e53935'; // pretty hard - red
-                        return '#000000'; // hard
+                        const gradeIndex = Math.max(0, orderedGrades.indexOf(grade));
+                        const position = gradeIndex / Math.max(1, orderedGrades.length - 1);
+                        const stopPosition = position * (gradientStops.length - 1);
+                        const lowerStop = Math.floor(stopPosition);
+                        const upperStop = Math.min(gradientStops.length - 1, lowerStop + 1);
+                        return interpolateColor(gradientStops[lowerStop], gradientStops[upperStop], stopPosition - lowerStop);
                     }
                     const barColors = categories.map(gradeColor);
 
@@ -128,6 +136,7 @@
                         },
                         tooltip: { y: { formatter: v => `${v} route${v===1?'':'s'}` } },
                         theme: { mode: 'light' },
+                        legend: { show: false },
                         colors: barColors,
                         noData: { text: 'No routes available' }
                     };
@@ -137,14 +146,14 @@
 
                     // Difficulty band summary counts
                     const bands = {
-                        very_easy: { grades: ['?','4a','4b','4c'], color: getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#29c05c' },
-                        easy: { grades: ['5a','5a+','5b','5b+','5c'], color: '#ff9800' },
-                        medium: { grades: ['5c+','6a','6a+','6b'], color: '#2196f3' },
-                        pretty_hard: { grades: ['6b+','6c','6c+','7a'], color: '#e53935' },
-                        hard: { grades: ['7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a','9a+','9b','9b+','9c'], color: '#000000' }
+                        very_easy: { grades: ['?','4a','4b','4c'] },
+                        easy: { grades: ['5a','5a+','5b','5b+','5c'] },
+                        medium: { grades: ['5c+','6a','6a+','6b'] },
+                        pretty_hard: { grades: ['6b+','6c','6c+','7a'] },
+                        hard: { grades: ['7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a','9a+','9b','9b+','9c'] }
                     };
                     const sumGrades = list => list.reduce((acc,g)=> acc + (gradeCounts[g]||0),0);
-                    const summaryData = Object.values(bands).map(b => ({ label: b.grades.join(', '), count: sumGrades(b.grades), color: b.color }));
+                    const summaryData = Object.values(bands).map(b => ({ label: b.grades.join(', '), count: sumGrades(b.grades), color: gradeColor(b.grades[Math.floor(b.grades.length / 2)]) }));
                     const totalRoutes = summaryData.reduce((a,b)=> a + b.count, 0);
                     const summaryEl = document.getElementById('grade-band-summary');
                     if(summaryEl){
