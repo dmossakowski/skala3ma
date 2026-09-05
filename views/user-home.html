@@ -58,13 +58,6 @@
                 </div>
            
                 
-                <div class="col-sm-6">
-                    <div class="summary-card" id="managed-gyms-card">
-                    <h5 data-translate-key="gyms_you_manage">Gyms you manage</h5>
-                    <div id="managed-gyms-card-list" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;"></div>
-                    <div id="managed-gyms-empty" class="card-subtext">-</div>
-                        </div>
-                </div>
            
                 <div class="col-sm-6">
                     <div class="summary-card" id="user-actions-card">
@@ -82,26 +75,37 @@
                         </div>
                 </div>
                 
-                <!-- Competitions you manage -->
-                <div class="col-sm-6">
-                    <div class="summary-card" id="managed-competitions-card">
-                        <h5 data-translate-key="competitions_you_manage">Competitions you manage</h5>
-                        <div id="managed-competitions-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
-                        <div id="managed-competitions-empty" class="card-subtext">-</div>
-                    </div>
-                </div>
 
                 <!-- Dependents -->
                 <div class="col-sm-6">
                     <div class="summary-card" id="dependents-card">
                         <h5 data-translate-key="my_dependents">My dependents</h5>
                         <div id="dependents-summary-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
-                        <div id="dependents-summary-empty" class="card-subtext">-</div>
+                        <div id="dependents-summary-empty" class="card-subtext">&nbsp;</div>
                         <div style="margin-top:.5rem;">
                             <a href="/user/dependents" class="btn btn-sm btn-success">
                                 <span data-translate-key="manage_dependents">Manage dependents</span> <i class="bi bi-people-fill"></i>
                             </a>
                         </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <div class="summary-card" id="managed-gyms-card">
+                    <h5 data-translate-key="gyms_you_manage">Gyms you manage</h5>
+                    <div id="managed-gyms-card-list" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;"></div>
+                    <div id="managed-gyms-empty" class="card-subtext">&nbsp;</div>
+                        </div>
+                </div>
+
+
+
+                <!-- Competitions you manage -->
+                <div class="col-sm-6">
+                    <div class="summary-card" id="managed-competitions-card">
+                        <h5 data-translate-key="competitions_you_manage">Competitions you manage</h5>
+                        <div id="managed-competitions-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
+                        <div id="managed-competitions-empty" class="card-subtext">-</div>
                     </div>
                 </div>
             
@@ -212,9 +216,9 @@
                         link.href = `/gyms/${gym.id}`;
                         link.title = gym.name;
 
-                        if (gym.logo_img_id) {
+                        if (gym.id) {
                             const img = document.createElement('img');
-                            img.src = `/image/${gym.logo_img_id}`;
+                            img.src = `/image/${gym.id}`;
                             img.alt = `${gym.name} logo`;
                             img.className = 'gym-logo-inline';
                             img.loading = 'lazy';
@@ -254,8 +258,29 @@
 
                     filtered.forEach(c => {
                         const item = document.createElement('div');
-                        item.className = 'd-flex flex-column';
-                        item.style.gap = '.125rem';
+                        item.className = 'd-flex align-items-center';
+                        item.style.gap = '.5rem';
+
+                        if (c.id) {
+                            const logoLink = document.createElement('a');
+                            logoLink.href = c.url || `/competitionDetails/${c.id}`;
+                            logoLink.title = c.title || `Competition ${c.id}`;
+
+                            const logo = document.createElement('img');
+                            logo.src = `/image/${c.id}`;
+                            logo.alt = `${c.title || 'Competition'} logo`;
+                            logo.loading = 'lazy';
+                            logo.style.width = '48px';
+                            logo.style.height = '48px';
+                            logo.style.borderRadius = '6px';
+                            logo.style.objectFit = 'cover';
+                            logoLink.appendChild(logo);
+                            item.appendChild(logoLink);
+                        }
+
+                        const details = document.createElement('div');
+                        details.className = 'd-flex flex-column';
+                        details.style.gap = '.125rem';
 
                         const titleLink = document.createElement('a');
                         titleLink.href = c.url || `/competitionDetails/${c.id}`;
@@ -269,8 +294,9 @@
                         if (c.gym) parts.push(String(c.gym));
                         subtitle.textContent = parts.join(' • ');
 
-                        item.appendChild(titleLink);
-                        item.appendChild(subtitle);
+                        details.appendChild(titleLink);
+                        details.appendChild(subtitle);
+                        item.appendChild(details);
 
                         if (els.managedCompetitionsList) {
                             els.managedCompetitionsList.appendChild(item);

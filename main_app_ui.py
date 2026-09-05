@@ -1250,13 +1250,13 @@ def update_user():
     email = session.get('email')
     name = session.get('name')
 
-    climber['firstname'] = firstname
-    climber['lastname'] = lastname
-    climber['fullname'] = fullname
-    climber['nick'] = nick
-    climber['email'] = email
-    climber['sex'] = sex    
-    climber['dob'] = dob
+    climber.firstname = firstname
+    climber.lastname = lastname
+    climber.fullname = fullname
+    climber.nick = nick
+    climber.email = email
+    climber.sex = sex    
+    climber.dob = dob
 
     if firstname is None or nick is None or sex is None or club is None or email is None:
         error_message= 'all_fields_required'
@@ -1274,7 +1274,7 @@ def update_user():
                                **session)
 
     else:
-        climber = competitionsEngine.user_self_update(climber, fullname, firstname, lastname, nick, sex, club, clubid, dob)
+        climber = competitionsEngine.user_self_update(climber.to_dict(), fullname, firstname, lastname, nick, sex, club, clubid, dob)
         subheader_message = competitionsEngine.reference_data['current_language']['details_saved']
         level = 'success'
 
