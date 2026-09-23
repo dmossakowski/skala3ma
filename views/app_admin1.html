@@ -25,6 +25,11 @@
 
 	{% block secondarycontent %}
 
+	<style>
+		.lookup-inactive { opacity: 0.4; }
+		.lookup-inactive .list-group { pointer-events: none; }
+	</style>
+
 	<div  style="background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.9)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;">
 	{% include "app_admin_menu.html" %}
 
@@ -48,9 +53,17 @@
 
 
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+							<!-- Single look-ahead search slot; content adapts per Category so it doesn't grow as more data types get search support -->
+							<div class="form-group" id="lookup-container">
+								<label for="lookup-search" id="lookup-label">Search</label>
+								<input type="text" class="form-control" id="lookup-search" placeholder="Select a category above to search">
+								<div id="lookup-suggestions" class="list-group mt-2"></div>
+							</div>
+
 							<label for="id">Id:</label>
 							<input id="id" name="id" size="40" value="{{ id }}"/>
-							<button name="action" value="find">Find</button>
+							<button name="action" value="find" id="findBtn">Find</button>
 							<button name="action" value="findall">Find all</button>
 							<button name="action" value="delete">Delete</button>
 
@@ -70,6 +83,7 @@
 					</div>
 
 
+
 		<div class="container">
 			<div class="row row-bottom-padded-md">
 
@@ -84,5 +98,79 @@
 		<!-- fh5co-blog-section -->
 
 	</div>
+
+	<script>
+		const edittypeSelect = document.getElementById('edittype');
+		const lookupContainer = document.getElementById('lookup-container');
+		const lookupLabel = document.getElementById('lookup-label');
+		const lookupSearchInput = document.getElementById('lookup-search');
+		const lookupSuggestions = document.getElementById('lookup-suggestions');
+
+		// Add an entry here to support look-ahead search for another Category; the slot above is reused as-is
+		const lookupConfig = {
+			user: {
+				label: "{{ reference_data['current_language'].authorized_user }}",
+				placeholder: 'Search for users...',
+				endpoint: '/api1/users/search?q=',
+				getId: item => item.id,
+				getText: item => `${item.firstname} ${item.lastname}${item.nick ? ` (${item.nick})` : ''}`,
+			},
+			gym: {
+				label: 'Search for gym',
+				placeholder: 'Search gyms...',
+				endpoint: '/api1/gyms/search?q=',
+				getId: item => item.id,
+				getText: item => `${item.name}${item.address ? ` - ${item.address}` : ''}`,
+			},
+		};
+
+		function updateLookupWidget() {
+			const config = lookupConfig[edittypeSelect.value];
+			lookupSearchInput.value = '';
+			lookupSuggestions.innerHTML = '';
+			lookupContainer.classList.toggle('lookup-inactive', !config);
+			lookupSearchInput.disabled = !config;
+			lookupLabel.textContent = config ? config.label : 'Search';
+			lookupSearchInput.placeholder = config ? config.placeholder : 'Select a category above to search';
+		}
+		edittypeSelect.addEventListener('change', updateLookupWidget);
+		updateLookupWidget();
+
+		let lookupTimer;
+		lookupSearchInput.addEventListener('input', () => {
+			const config = lookupConfig[edittypeSelect.value];
+			if (!config) return;
+
+			const query = lookupSearchInput.value;
+			clearTimeout(lookupTimer);
+			if (query.length < 1) {
+				lookupSuggestions.innerHTML = '';
+				return;
+			}
+
+			lookupTimer = setTimeout(() => {
+				apiFetch(config.endpoint + encodeURIComponent(query))
+					.then(response => response.json())
+					.then(items => {
+						lookupSuggestions.innerHTML = '';
+						items.forEach(item => {
+							const suggestionItem = document.createElement('a');
+							suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+							suggestionItem.href = '#';
+							suggestionItem.textContent = config.getText(item);
+							suggestionItem.addEventListener('click', event => {
+								event.preventDefault();
+								lookupSearchInput.value = config.getText(item);
+								document.getElementById('id').value = config.getId(item);
+								lookupSuggestions.innerHTML = '';
+								document.getElementById('findBtn').click();
+							});
+							lookupSuggestions.appendChild(suggestionItem);
+						});
+					})
+					.catch(error => console.error('Lookup search failed:', error));
+			}, 300);
+		});
+	</script>
 
 {% endblock %}

@@ -326,6 +326,7 @@ def get_routeset_differences(competition):
 
 
 # add or register climber to a competition
+# this finds the competition by its ID and adds the climber to it and saves it back to db
 # no more anonymous climbers so climberid is required
 def addClimber(climberId, competitionId, email, name, firstname, lastname, club_name, gymid, sex, category):
     logging.info("adding climber to competition "+str(climberId))

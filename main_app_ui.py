@@ -249,7 +249,9 @@ def fsgtadmin():
             competitionsEngine.upsert_user(jsonobject)
 
         if id is not None and action == 'find':
-            jsonobject = competitionsEngine.get_user_by_email(id)
+            # id is the user's UUID (from the lookup widget); fall back to email for manual entry
+            user = competitionsEngine.get_user(id) or competitionsEngine.get_user_by_email(id)
+            jsonobject = user.to_storage_dict() if user is not None else {"error": "user not found"}
 
         if id is not None and action == 'findall':
             jsonobject = competitionsEngine.get_all_user_emails()
@@ -301,7 +303,6 @@ def fsgtadmin():
         if id is not None and action == 'delete':
             competitionsEngine.delete_route(id)
         
-
 
     elif edittype == 'activities':
         if jsonobject is not None  and action == 'update':

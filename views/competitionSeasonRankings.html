@@ -175,15 +175,17 @@
         seasonTypes: []
     };
     
-    // Compute season label from date (Sept = start of new season)
+    // Compute season label from date (Mar = start of new season)
+    // We only show rankings for current season towards the end of it (March)
+    // Before march the current season is still the previous one
     function computeSeason(dateStr) {
         if (!dateStr) return null;
         const date = new Date(dateStr);
-        const year = date.getFullYear();
+        const year = date.getFullYear() - 1;
         const month = date.getMonth() + 1; // 1-12
         
         // Season runs Sept-June: if month >= 9, season is year/year+1, else (year-1)/year
-        if (month >= 9) {
+        if (month >= 3) {
             return `${year}-${year + 1}`;
         } else {
             return `${year - 1}-${year}`;
