@@ -11,22 +11,37 @@
 
 	{% block secondarycontent %}
 
-    {% include "gyms-menu.html" %}
+<!-- gyms-search.html -->
 
-
-<!-- gyms.html -->
-
+    <style>
+        #gymSearch { margin: 1rem 0; }
+        #gym-search:focus { box-shadow: none; border-color: var(--bs-border-color, #dee2e6); outline: none; }
+        #gyms-grid { margin-bottom: 2rem; }
+        /* Desktop only; mobile keeps the shared default styles */
+        @media (min-width: 768px) {
+            #gyms-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                gap: 1rem;
+            }
+            #gyms-grid .route-dis-card { margin: 0; height: 100%; }
+            #gyms-grid .route-gym-logo {
+                width: 160px;
+                height: 120px;
+                padding: 6px;
+                border-radius: 8px;
+            }
+            #gyms-grid .summary-metric { font-size: 1.25rem; }
+            #gyms-grid .empty-state { grid-column: 1 / -1; }
+        }
+    </style>
 
     <div>
-        <!-- Search bar styled like activities page -->
-        <div id="gymSearch" class="card-search">
-            <div class="filter-grid">
-                <div class="filter-group" style="width:100%">
-                  
-                    <input id="gym-search" type="search" class="form-control" placeholder="Search gyms" />
-                   
-                </div>
-            </div> 
+        <div class="container-fluid">
+            <div id="gymSearch" class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input id="gym-search" type="search" class="form-control" aria-label="Search gyms" />
+            </div>
         </div>
        
         <!-- Cards grid consistent with activities page -->
@@ -39,6 +54,23 @@
 	document.addEventListener('DOMContentLoaded', () => {
 		const grid = document.getElementById('gyms-grid');
 		const searchInput = document.getElementById('gym-search');
+		// Resolves to [] when not logged in (/api1/user returns 401); home gym first, then permissioned gyms
+		const priorityGymIdsPromise = apiFetch('/api1/user')
+			.then((resp) => (resp.ok ? resp.json() : null))
+			.then((user) => {
+				if (!user) return [];
+				const permitted = (user.permissions && Array.isArray(user.permissions.gyms)) ? user.permissions.gyms : [];
+				return [...new Set([user.gymid, ...permitted].filter(Boolean))];
+			})
+			.catch(() => []);
+
+		const prioritizeGyms = (gyms, priorityGymIds) => {
+			if (!Array.isArray(gyms) || priorityGymIds.length === 0) return gyms;
+			const byId = new Map(gyms.map((g) => [g.id, g]));
+			const first = priorityGymIds.map((id) => byId.get(id)).filter(Boolean);
+			const firstIds = new Set(first.map((g) => g.id));
+			return [...first, ...gyms.filter((g) => !firstIds.has(g.id))];
+		};
 
 		const renderGyms = (gyms) => {
 			try {
@@ -64,7 +96,7 @@
 				return `
 					<div class="route-dis-card">
 						<div class="row g-3 align-items-center">
-							<div class="col-auto">${logoHTML}</div>
+							<div class="col-auto"><a href="/gyms/${id}" class="unstyled-link">${logoHTML}</a></div>
 							<div class="col">
 								<a href="/gyms/${id}" class="unstyled-link">
 									<div class="summary-metric lh-1">${name}</div>
@@ -85,7 +117,7 @@
 				const resp = await apiFetch('/api1/gyms');
 				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 				const gyms = await resp.json();
-				renderGyms(gyms);
+				renderGyms(prioritizeGyms(gyms, await priorityGymIdsPromise));
 			} catch (e) {
 				console.error('Failed to load gyms', e);
 				renderGyms([]);
