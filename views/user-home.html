@@ -195,12 +195,9 @@
                     els.greetGymTile.title = gym.name || '';
                 }
                 if (els.greetLogo) {
-                    if (gym.logo_img_id) {
-                        els.greetLogo.src = `/image/${gym.logo_img_id}`;
-                        els.greetLogo.style.display = 'inline-block';
-                    } else {
-                        els.greetLogo.style.display = 'none';
-                    }
+                    // /image/<gymid> falls back to the default FSGT logo on the server
+                    els.greetLogo.src = `/image/${gym.logo_img_id || gid}`;
+                    els.greetLogo.style.display = 'inline-block';
                 }
                 if (els.homeNote) els.homeNote.style.display = 'none';
             };
