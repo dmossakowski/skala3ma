@@ -19,9 +19,11 @@
             <div class="text-center heading-section">
 
 
-                <br>
-                <h3>
-                        {{competition['name'] }} </h3>{{ competition['date'] | strftime(format='short') }}
+                <div class="competition-header">
+                    <div id="competition-name" class="competition-title"></div>
+                    <div id="competition-gym" class="competition-gym"></div>
+                    <div id="competition-date" class="competition-date"></div>
+                </div>
              </div>
 
             <div class="row align-items-md-stretch">	
@@ -31,15 +33,13 @@
                         <div class="row">
                             <!-- competiton poster -->
                             <div class="col-md-6 text-center">
-                                <a href="#" onclick="showFullscreen('{{ url_for('app_ui.image_route', img_id=competition['id']) }}', '{{ competition['name'] }} - {{ competition['date']| strftime(format='short') }}')">
-                                    <img src="{{ url_for('app_ui.image_route', img_id=competition['id']) }}" width="65%" class=""><br><br>
+                                <a href="#" id="competition-poster-link">
+                                    <img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" width="65%" class=""><br><br>
                                 </a>
                             </div>
                             <!-- qr code -->
                             <div class="col-md-6 text-center">
-                                <img src="/competition/{{ competition['id'] }}/qrcode" width="400"><br><br>
-
-                                <!--a href="https://calendar.google.com/calendar/r/eventedit?text='{{competition['name'] }}'&dates='{{ competition['date'] }}'&details='{{competition['name'] }}'&location={event location}" target="_blank" class="btn btn-primary">Add to Google Calendar</a-->
+                                <img src="/competition/{{ competitionId }}/qrcode" width="400"><br><br>
 
                             </div>
                         </div>
@@ -47,8 +47,7 @@
                             <div class="col-2">   </div>
                             <div class="col">
                                     
-                                <pre style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">{{ competition['instructions'] }}
-                                </pre>
+                                <pre id="competition-instructions" style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;"></pre>
                             </div>
                             <div class="col-2">   </div>
                         </div>
@@ -65,6 +64,42 @@
 		</div>
         </div>
 		<!-- fh5co-blog-section -->
+
+<script>
+(function() {
+    const competitionId = {{ competitionId | tojson }};
+    const posterUrl = {{ url_for('app_ui.image_route', img_id=competitionId) | tojson }};
+
+    // Mirrors the server-side strftime filter: YYYY-MM-DD -> DD-MM-YYYY
+    function formatDate(dateStr) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '');
+        return m ? `${m[3]}-${m[2]}-${m[1]}` : (dateStr || '');
+    }
+
+    window.getCompetitionData(competitionId)
+        .then(competition => {
+            const date = formatDate(competition.date);
+            document.getElementById('competition-name').textContent = competition.name || '';
+            const gymEl = document.getElementById('competition-gym');
+            if (competition.gym && competition.gym_id) {
+                const gymLink = document.createElement('a');
+                gymLink.href = `/gyms/${encodeURIComponent(competition.gym_id)}`;
+                gymLink.className = 'gym-name';
+                gymLink.textContent = competition.gym;
+                gymEl.replaceChildren(gymLink);
+            } else {
+                gymEl.textContent = competition.gym || '';
+            }
+            document.getElementById('competition-date').textContent = date;
+            document.getElementById('competition-instructions').textContent = competition.instructions || '';
+            document.getElementById('competition-poster-link').addEventListener('click', e => {
+                e.preventDefault();
+                showFullscreen(posterUrl, `${competition.name || ''} - ${date}`);
+            });
+        })
+        .catch(err => console.error('Failed to load competition', err));
+})();
+</script>
 
 
 {% endblock %}

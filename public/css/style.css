@@ -642,6 +642,29 @@ div.cs-select span {
   
 }
 
+/* Competition page header: title, gym, date */
+.competition-header {
+  margin: 1.5em 0 0.5em; }
+.competition-title {
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #53be6b; }
+.competition-gym {
+  font-size: 22px;
+  font-weight: 400;
+  color: #5a5a5a;
+  margin-top: 0.25em; }
+.competition-date {
+  font-size: 16px;
+  color: #333333;
+  margin-top: 0.25em; }
+
+@media (max-width: 576px) {
+  .competition-title { font-size: 28px; }
+  .competition-gym { font-size: 18px; }
+}
+
 .fh5co-property {
   background-repeat: no-repeat;
   background-size: cover;
@@ -1398,6 +1421,39 @@ div.cs-select span {
 .summary-card.highlight { border:2px solid #2ecc71; }
 .summary-card h5 { font-size:1rem; margin:0 0 .35rem; font-weight:600; }
 .summary-metric { font-size:1.6rem; font-weight:700; letter-spacing:.5px; }
+
+/* Branded icon tiles (icons from /public/images/icons/skala-icons.svg) */
+:root { --skala-primary:#53be6b; --skala-primary-dark:#3e9e55; --skala-accent:#f39c12; --skala-tile-bg:#fff; }
+.skala-tile-grid { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.5rem; }
+.skala-tile { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.35rem;
+  width:92px; min-height:92px; padding:.6rem .35rem; border-radius:14px; background:var(--skala-tile-bg);
+  color:var(--skala-primary); text-decoration:none; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.12);
+  border:2px solid transparent; transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+.skala-tile svg { width:44px; height:44px; flex:0 0 auto; }
+.skala-tile .skala-tile-label { font-size:.75rem; font-weight:600; line-height:1.15; color:#333; }
+.skala-tile:hover { transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.15); border-color:var(--skala-primary); color:var(--skala-primary-dark); text-decoration:none; }
+.skala-tile:focus-visible { outline:3px solid var(--skala-primary); outline-offset:2px; }
+.skala-tile:active { transform:translateY(0); box-shadow:0 1px 2px rgba(0,0,0,.12); }
+.skala-gym-tile { display:flex; align-items:center; gap:.75rem; min-height:92px; min-width:0; max-width:100%; padding:.5rem .9rem .5rem .5rem;
+  border-radius:14px; background:var(--skala-tile-bg); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.skala-gym-tile img { flex:0 0 auto; height:76px; max-width:120px; object-fit:contain; border-radius:8px; }
+.skala-gym-tile > div { min-width:0; }
+.skala-gym-tile-name, .skala-gym-tile-sub { overflow-wrap:anywhere; }
+/* Percentage height overflows when content is tall; fill the column minus card margins instead */
+#user-home-cards .summary-card { height:calc(100% - .4rem); }
+#managed-competitions-list .skala-gym-tile { flex:1 1 100%; }
+.skala-gym-tile-name { font-weight:600; font-size:1rem; line-height:1.2; color:#333; text-decoration:none; }
+.skala-gym-tile-sub { font-size:.8rem; color:#6c757d; }
+a.skala-gym-tile { text-decoration:none; border:2px solid transparent; transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+a.skala-gym-tile[href]:hover { transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.15); border-color:var(--skala-primary); }
+a.skala-gym-tile[href]:hover .skala-gym-tile-name { color:var(--skala-primary-dark); }
+a.skala-gym-tile:focus-visible { outline:3px solid var(--skala-primary); outline-offset:2px; }
+
+/* Gym name link (gyms search, competition header); hover green comes from global a:hover */
+.gym-name { font-size:1.6rem; font-weight:700; letter-spacing:.5px; line-height:1; }
+@media (min-width: 768px) {
+  .gym-name { font-size:1.25rem; }
+}
 
 /* Interactive card behavior */
 .summary-card.cursor-pointer { cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }

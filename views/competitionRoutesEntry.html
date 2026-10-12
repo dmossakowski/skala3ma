@@ -56,6 +56,22 @@
 						  </div>
 						</div>
 
+						<!-- Presence error modal -->
+						<div class="modal fade" id="presenceErrorModal" tabindex="-1" aria-labelledby="presenceErrorTitle" aria-hidden="true">
+						  <div class="modal-dialog">
+						    <div class="modal-content">
+						      <div class="modal-header">
+						        <h5 class="modal-title" id="presenceErrorTitle"></h5>
+						        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						      </div>
+						      <div class="modal-body" id="presenceErrorBody"></div>
+						      <div class="modal-footer">
+						        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-translate-key="close">Close</button>
+						      </div>
+						    </div>
+						  </div>
+						</div>
+
 						<script>
 						// Presence switch logic with confirmation dialog; uses global apiFetch and Bootstrap modal
 						(function(){
@@ -93,6 +109,22 @@
 							if(titleEl) titleEl.textContent = confirmTitleLang;
 							if(cancelBtn) cancelBtn.textContent = cancelLang;
 							if(saveBtn) saveBtn.textContent = saveLang;
+							var presenceFailedLang = (typeof getTranslation === 'function' ? getTranslation('presence_update_failed') : null) || 'Presence could not be saved.';
+							var presenceNotAuthorizedLang = (typeof getTranslation === 'function' ? getTranslation('presence_update_not_authorized') : null) || 'You are not authorized to change presence.';
+							const errorModalEl = document.getElementById('presenceErrorModal');
+							const errorModal = (hasBootstrap && errorModalEl) ? new bootstrap.Modal(errorModalEl) : null;
+							const errorBodyEl = document.getElementById('presenceErrorBody');
+
+							function showPresenceError(message){
+								if(!errorModal){ window.alert(message); return; }
+								if(errorBodyEl){ errorBodyEl.textContent = message; }
+								// Wait for confirm modal to finish hiding to avoid overlapping backdrops
+								if(modalEl && modalEl.classList.contains('show')){
+									modalEl.addEventListener('hidden.bs.modal', function(){ errorModal.show(); }, { once: true });
+								} else {
+									errorModal.show();
+								}
+							}
 
 							const canUpdateRoutes = (typeof can_update_routes === 'string') ? (can_update_routes === 'true') : !!can_update_routes;
 							if(!canUpdateRoutes){
@@ -142,7 +174,7 @@
 							}
 
 							// Initial fetch to sync presence
-							apiFetch(`/api1/competition/${competitionId}/climber/${climberId}`)
+							apiFetchJson(`/api1/competition/${competitionId}/climber/${climberId}`)
 								.then(data => {
 									if (data && typeof data.present !== 'undefined') {
 										sw.checked = !!data.present;
@@ -177,7 +209,7 @@
 							function confirmSave(){
 								if(pendingChecked === null){ if(modal){ modal.hide(); } return; }
 								const endpoint = pendingChecked ? `/api1/competition/${competitionId}/climber/${climberId}/present/True` : `/api1/competition/${competitionId}/climber/${climberId}/present/False`;
-								apiFetch(endpoint, { method: 'POST' })
+								apiFetchJson(endpoint, { method: 'POST' })
 									.then(() => {
 										currentChecked = pendingChecked;
 										renderBadge(currentChecked);
@@ -190,6 +222,7 @@
 										// revert UI on failure
 										sw.checked = currentChecked;
 										pendingChecked = null;
+										showPresenceError(err && err.status === 403 ? presenceNotAuthorizedLang : presenceFailedLang);
 										shiftFocusOutOfModal();
 										if(modal){ modal.hide(); }
 									});
