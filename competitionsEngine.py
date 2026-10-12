@@ -1564,7 +1564,7 @@ def has_permission_update_routes(user):
 # competition is in scoring or inprogress status
 # user has permission for the given competition
 def can_update_routes(user, competition):
-    if user is None: 
+    if user is None or competition is None: 
         return False
     
     permissions = user.get('permissions')
@@ -1572,6 +1572,8 @@ def can_update_routes(user, competition):
     if competition is None:
         if 'update_routes' in permissions.get('general', []):
             return True
+        else:
+            return False
 
     if ('update_routes' in permissions['general'] or 'edit_competition' in permissions['general']) \
             and competition['status'] in [competition_status_scoring, competition_status_inprogress]\

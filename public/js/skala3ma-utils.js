@@ -100,6 +100,17 @@ window.apiFetch = apiFetch;
 window.apiFetchJson = apiFetchJson;
 window.decodeJwtPayload = decodeJwtPayload;
 
+// One request per competition per page, shared by the menu and page scripts
+const _competitionCache = {};
+function getCompetitionData(competitionId) {
+    if (!_competitionCache[competitionId]) {
+        _competitionCache[competitionId] = apiFetchJson(`/api1/competition/${encodeURIComponent(competitionId)}?remove=routesClimbed2`)
+            .catch(err => { delete _competitionCache[competitionId]; throw err; });
+    }
+    return _competitionCache[competitionId];
+}
+window.getCompetitionData = getCompetitionData;
+
 
 
 
@@ -369,7 +380,7 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
 
                             suggestionItem.innerHTML = `
                                 <div class="media">
-                                    <img class="mr-3" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
+                                    <img class="mr-3" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src='/public/images/favicon.png'" src="${user.gpictureurl || user.fpictureurl || '/public/images/favicon.png'}" alt="${user.name}" width="40" height="40">
                                     <div class="media-body">
                                         <h5 class="mt-0">${user.firstname} ${user.lastname} ${nick} - ${user.club}</h5>
                                     </div>

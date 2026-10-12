@@ -1826,18 +1826,16 @@ def setClimberAsPresent(competitionId,climberId,present):
     user = competitionsEngine.get_user_by_email(session['email'])
     competition = competitionsEngine.getCompetition(competitionId)
 
-    if not competitionsEngine.can_update_routes(user,None):
-        return {"error": "not authorized"}
+    if not competitionsEngine.can_update_routes(user, None):
+        return jsonify({"error": "not authorized"}), 403
 
-    if climberId is not None:
-        climber = competitionsEngine.getClimber(competitionId,climberId)
-
+    climber = competitionsEngine.getClimber(competitionId, climberId)
     if climber is None:
-        return {"error": "climber not found"}
+        return jsonify({"error": "climber not found"}), 404
 
     competition = competitionsEngine.getCompetition(competitionId)
     if competition is None:
-        return {"error": "competition not found"}
+        return jsonify({"error": "competition not found"}), 404
 
     # parse the present variable to resolve to boolean
     if present.lower() == 'true' or present == '1':

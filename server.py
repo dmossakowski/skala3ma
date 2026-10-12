@@ -1005,9 +1005,16 @@ if __name__ == '__main__':
     print('Executing server main')
     init()
 
+    from werkzeug.serving import WSGIRequestHandler
+
+    # Disable keep-alive: Chrome reuses sockets the dev TLS server already closed -> ERR_TOO_MANY_RETRIES
+    class NoKeepAliveHandler(WSGIRequestHandler):
+        protocol_version = "HTTP/1.0"
+
     # setting debug=True is not needed with vscode
     # after initial start the app server starts again with line:
     #     Restarting with stat 
-    app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'))
+    app.run(host='0.0.0.0', port=3000, threaded=True, debug=True, ssl_context=('cert.pem', 'key.pem'),
+            request_handler=NoKeepAliveHandler)
 
  

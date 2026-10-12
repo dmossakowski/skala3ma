@@ -1,13 +1,21 @@
 					<!-- START #fh5co-menu-wrap -->
 
-{% if competition is defined %}
+{% if competitionId is defined %}
+{% set competition_loaded = competition is defined and competition is not none %}
+{% if competition_loaded %}
+    {% set comp_name = competition['name'] %}
+    {% set comp_status = reference_data['current_language']['competition_status_'~competition['status']] %}
+{% else %}
+    {% set comp_name = '' %}
+    {% set comp_status = '' %}
+{% endif %}
 <div class="navbar navbar-expand-md" >
 
 <!-- Mobile Menu Bar (visible only on mobile/tablet) -->
 <div class="d-md-none d-flex align-items-center justify-content-between w-100 px-3 py-2 border-bottom">
     <div class="flex-grow-1 me-3">
-        <strong>{{ competition['name'] }}</strong><br>
-        <small class="text-muted">({{ reference_data['current_language']['competition_status_'~competition['status']] }})</small>
+        <strong class="js-comp-menu-name">{{ comp_name }}</strong><br>
+        <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
     </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#competitionMenuOffcanvas" aria-controls="competitionMenuOffcanvas" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon" style="background-image: none; display: flex; align-items: center; justify-content: center;">
@@ -20,7 +28,7 @@
 <ul class="nav justify-content-center d-none d-md-flex">
     <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
         <i class="bi bi-trophy-fill me-1"></i>
-        <b>{{ competition['name'] }} ({{ reference_data['current_language']['competition_status_'~competition['status']] }})</b>
+        <b><span class="js-comp-menu-name">{{ comp_name }}</span> (<span class="js-comp-menu-status">{{ comp_status }}</span>)</b>
     </a>
 
     <a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link competition-menu-link">
@@ -51,11 +59,9 @@
         <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
     </a>
 
-    {% if competition is defined and competition is not none %}
     <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link">
         <i class="bi bi-gear me-1"></i>Admin
     </a>
-    {% endif %}
 </ul>
 
 </div>
@@ -64,8 +70,8 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="competitionMenuOffcanvasLabel">
-            {{ competition['name'] }}<br>
-            <small class="text-muted">({{ reference_data['current_language']['competition_status_'~competition['status']] }})</small>
+            <span class="js-comp-menu-name">{{ comp_name }}</span><br>
+            <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
@@ -103,11 +109,9 @@
                 <i class="bi bi-envelope me-2"></i>{{ reference_data['current_language'].Contact }}
             </a>
 
-            {% if competition is defined and competition is not none %}
             <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link-mobile py-3">
                 <i class="bi bi-gear me-2"></i>Admin
             </a>
-            {% endif %}
         </nav>
     </div>
 </div>
@@ -159,6 +163,22 @@
             }
         });
     });
+
+    {% if not competition_loaded %}
+    (function() {
+        const statusLabels = {
+            {% for key, label in reference_data['current_language'].items() if key.startswith('competition_status_') %}
+            {{ key[19:] | tojson }}: {{ label | tojson }},
+            {% endfor %}
+        };
+        window.getCompetitionData({{ competitionId | tojson }})
+            .then(competition => {
+                document.querySelectorAll('.js-comp-menu-name').forEach(el => el.textContent = competition.name || '');
+                document.querySelectorAll('.js-comp-menu-status').forEach(el => el.textContent = statusLabels[String(competition.status)] || '');
+            })
+            .catch(err => console.error('Failed to load competition for menu', err));
+    })();
+    {% endif %}
 </script>
 
 {% endif %}

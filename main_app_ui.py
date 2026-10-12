@@ -1329,7 +1329,6 @@ def my_activities():
 
 
 @app_ui.route('/competitionDetails/<competitionId>')
-#@login_required
 def getCompetition(competitionId):
     #competitionId = request.args.get('competitionId')
 
@@ -1358,20 +1357,8 @@ def getCompetition(competitionId):
 
 
 
-    # library= {}
-    # library['tracks'] = tracks
-    # playlist = json.dumps(playlist)
-    # u = url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message)
-    # return redirect(url_for('getRandomPlaylist', playlistName=playlistName, playlist=playlist,
-    #                       subheader_message=subheader_message,
-    #                       library=None,
-    #                       **session))
-
-
 
     return render_template("competitionDetails.html", competitionId=competitionId,
-                           competition=competition,
                            reference_data=competitionsEngine.reference_data,
                            library=None,
                            **session)
@@ -1726,12 +1713,14 @@ def competitionRoutes(competitionId):
 
     # TODO this error is found in logs.. it shouldn't happen
     if competition is None:
-        logging.error('competitionRoutes: competition not found '+str(competitionId))
+        return render_template('competitionNoPermission.html',
+                                               error_code='no_competition_found',
+                                               competitionId=None,
+                                               gyms=gyms,
+                                               reference_data=competitionsEngine.reference_data,
+                                               **session)
 
     error_code = ""
-    if not competitionsEngine.can_update_routes(user,competition):
-        error_code = "error5314"
-
     gymid = competition['gym_id']
     gym = competitionsEngine.get_gym(gymid)
     routesid = competition.get('routesid')

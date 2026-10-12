@@ -354,6 +354,9 @@
 			item.className = 'list-group-item d-flex align-items-center';
 
 			const img = document.createElement('img');
+			img.referrerPolicy = 'no-referrer';
+			img.loading = 'lazy';
+			img.onerror = function() { this.onerror = null; this.src = '/public/images/favicon.png'; };
 			img.src = user.pictureurl || '/public/images/favicon.png';
 			img.alt = 'avatar';
 			img.width = 40;

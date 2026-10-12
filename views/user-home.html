@@ -29,30 +29,44 @@
                         <div id="ud-profile-update-note" class="card-subtext" style="display:none;">
                             <span data-translate-key="profile_missing_details">Your profile is missing some details (first and/or last name). Please update your info.</span>
                         </div>
-                        <div><a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
-                        <a href="/myactivities" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="my_activities">My activities <i class="bi bi-pencil-square"></i></a>
-                        <a href="/myresultats" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="my_resultats">My results <i class="bi bi-pencil-square"></i></a>
+                        <div class="skala-tile-grid">
+                            <a href="/user" class="skala-tile" title="Edit profile">
+                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-edit-profile"/></svg>
+                                <span class="skala-tile-label" data-translate-key="edit_profile">Edit profile</span>
+                            </a>
+                            <a href="/myactivities" class="skala-tile" title="My activities">
+                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-my-activities"/></svg>
+                                <span class="skala-tile-label" data-translate-key="my_activities">My activities</span>
+                            </a>
+                            <a href="/myresultats" class="skala-tile" title="My results">
+                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-my-results"/></svg>
+                                <span class="skala-tile-label" data-translate-key="my_resultats">My results</span>
+                            </a>
                         </div>
                     </div>
                 </div>
                 <!-- Right: Home gym -->
                 <div class="col-sm-6 ">
                     <div class="summary-card" id="user-homegym-card">
-                        <div class="d-flex align-items-center" style="gap:.75rem;">
-                            <a id="ud-greeting-gym-link" href="#" style="display:none;">
-                                <img id="ud-greeting-logo" class="route-gym-logo" alt="Gym logo" style="display:none;">
-                            </a>
-                               <h3 class="mb-0"><span data-translate-key="home_gym">Home gym</span>: <a id="ud-greeting-gym-text" href="#"></a>
-                                 
-                       </h3>
-                        </div>
+                        <h5 data-translate-key="home_gym">Home gym</h5>
                         <div id="ud-homegym-update-note" class="card-subtext" style="display:none;">
-                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span><br>
-                            <a href="/user" class="btn btn-sm btn-success" title="Edit profile"  data-translate-key="edit_profile">Edit profile <i class="bi bi-pencil-square"></i></a>
+                            <span data-translate-key="home_gym_not_set">Your home gym isn’t set.</span>
+                            <div class="skala-tile-grid">
+                                <a href="/user" class="skala-tile" title="Edit profile">
+                                    <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-edit-profile"/></svg>
+                                    <span class="skala-tile-label" data-translate-key="edit_profile">Edit profile</span>
+                                </a>
+                            </div>
                         </div>
-                         <div style="margin: 10px 0px 0 0">
-                            <a id="action-add-activity" href="#" title="Add activity" class="btn btn-sm btn-success" style="margin-left:.5rem;" data-translate-key="add_activity">Add activity <i class="bi bi-plus-circle"></i></a>
-                             
+                        <div class="skala-tile-grid">
+                            <a id="ud-greeting-gym-tile" class="skala-gym-tile" href="#">
+                                <img id="ud-greeting-logo" alt="Gym logo" style="display:none;">
+                                <span id="ud-greeting-gym-text" class="skala-gym-tile-name"></span>
+                            </a>
+                            <a id="action-add-activity" href="#" class="skala-tile" title="Add activity">
+                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-add-activity"/></svg>
+                                <span class="skala-tile-label" data-translate-key="add_activity">Add activity</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -62,12 +76,14 @@
                 <div class="col-sm-6">
                     <div class="summary-card" id="user-actions-card">
                     <h5 data-translate-key="actions">General permissions</h5>
-                    <div class="card-row" style="gap:.75rem; align-items:center;">
-                        <a id="action-create-gym" href="/gyms/add" class="btn btn-sm btn-success" style="display:none;">
-                            <span data-translate-key="create_gym">Create gym</span>
+                    <div class="skala-tile-grid">
+                        <a id="action-create-gym" href="/gyms/add" class="skala-tile" title="Create gym" style="display:none;">
+                            <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-create-gym"/></svg>
+                            <span class="skala-tile-label" data-translate-key="create_gym">Create gym</span>
                         </a>
-                        <a id="action-create-competition" href="/newCompetition" class="btn btn-sm btn-success" style="display:none;">
-                            <span data-translate-key="create_competition">Create competition</span>
+                        <a id="action-create-competition" href="/newCompetition" class="skala-tile" title="Create competition" style="display:none;">
+                            <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-create-competition"/></svg>
+                            <span class="skala-tile-label" data-translate-key="create_competition">Create competition</span>
                         </a>
                     </div>
                    
@@ -82,9 +98,10 @@
                         <h5> <span data-translate-key="my_dependents">My dependents</span></h5>
                         <div id="dependents-summary-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
                         <div id="dependents-summary-empty" class="card-subtext"></div>
-                        <div style="margin-top:.5rem;">
-                            <a href="/user/dependents" class="btn btn-sm btn-success">
-                                <span data-translate-key="manage_dependents">Manage dependents</span> <i class="bi bi-people-fill"></i>
+                        <div class="skala-tile-grid">
+                            <a href="/user/dependents" class="skala-tile" title="Manage dependents">
+                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-dependents"/></svg>
+                                <span class="skala-tile-label" data-translate-key="manage_dependents">Manage dependents</span>
                             </a>
                         </div>
                     </div>
@@ -93,7 +110,7 @@
                 <div class="col-sm-6">
                     <div class="summary-card" id="managed-gyms-card">
                     <h5 data-translate-key="gyms_you_manage">Gyms you manage</h5>
-                    <div id="managed-gyms-card-list" style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;"></div>
+                    <div id="managed-gyms-card-list" class="skala-tile-grid"></div>
                     <div id="managed-gyms-empty" class="card-subtext">&nbsp;</div>
                         </div>
                 </div>
@@ -104,7 +121,7 @@
                 <div class="col-sm-6">
                     <div class="summary-card" id="managed-competitions-card">
                         <h5 data-translate-key="competitions_you_manage">Competitions you manage</h5>
-                        <div id="managed-competitions-list" style="display:flex; flex-direction:column; gap:.25rem;"></div>
+                        <div id="managed-competitions-list" class="skala-tile-grid"></div>
                         <div id="managed-competitions-empty" class="card-subtext">-</div>
                     </div>
                 </div>
@@ -135,7 +152,7 @@
 
             const els = {
                 greetName: document.getElementById('ud-greeting-name'),
-                greetGymLink: document.getElementById('ud-greeting-gym-link'),
+                greetGymTile: document.getElementById('ud-greeting-gym-tile'),
                 greetGymText: document.getElementById('ud-greeting-gym-text'),
                 greetLogo: document.getElementById('ud-greeting-logo'),
                 // home gym inline editing removed; go to /user
@@ -172,21 +189,15 @@
 
             const setGreetingGym = (gym, gid) => {
                 if (!gym) return;
-                if (els.greetGymText) {
-                    els.greetGymText.textContent = gym.name || '';
-                    els.greetGymText.href = `/gyms/${gid}`;
-                }
-                if (els.greetGymLink) {
-                    els.greetGymLink.href = `/gyms/${gid}`;
-                    els.greetGymLink.style.display = 'inline-block';
+                if (els.greetGymText) els.greetGymText.textContent = gym.name || '';
+                if (els.greetGymTile) {
+                    els.greetGymTile.href = `/gyms/${gid}`;
+                    els.greetGymTile.title = gym.name || '';
                 }
                 if (els.greetLogo) {
                     if (gym.logo_img_id) {
                         els.greetLogo.src = `/image/${gym.logo_img_id}`;
                         els.greetLogo.style.display = 'inline-block';
-                        els.greetLogo.style.height = '64px';
-                        els.greetLogo.style.borderRadius = '6px';
-                        els.greetLogo.style.objectFit = 'scale-down';
                     } else {
                         els.greetLogo.style.display = 'none';
                     }
@@ -205,39 +216,21 @@
                     .forEach(gym => {
                         if (!els.managedGymsList) return;
 
-                        // Create a small tile with logo (if any) and the gym name below
-                        const tile = document.createElement('div');
-                        tile.style.display = 'flex';
-                        tile.style.flexDirection = 'column';
-                        tile.style.alignItems = 'center';
-                        tile.style.gap = '.25rem';
+                        const tile = document.createElement('a');
+                        tile.className = 'skala-gym-tile';
+                        tile.href = `/gyms/${gym.id}`;
+                        tile.title = gym.name;
 
-                        const link = document.createElement('a');
-                        link.href = `/gyms/${gym.id}`;
-                        link.title = gym.name;
+                        const img = document.createElement('img');
+                        img.src = `/image/${gym.id}`;
+                        img.alt = `${gym.name} logo`;
+                        img.loading = 'lazy';
+                        tile.appendChild(img);
 
-                        if (gym.id) {
-                            const img = document.createElement('img');
-                            img.src = `/image/${gym.id}`;
-                            img.alt = `${gym.name} logo`;
-                            img.className = 'gym-logo-inline';
-                            img.loading = 'lazy';
-                            img.style.height = '64px';
-                            img.style.borderRadius = '6px';
-                            img.style.objectFit = 'cover';
-                            link.appendChild(img);
-                        }
-
-                        tile.appendChild(link);
-
-                        const nameAnchor = document.createElement('a');
-                        nameAnchor.href = `/gyms/${gym.id}`;
-                        nameAnchor.className = 'text-decoration-none';
-                        const nameDiv = document.createElement('div');
-                        nameDiv.className = 'small text-muted text-center';
-                        nameDiv.textContent = gym.name;
-                        nameAnchor.appendChild(nameDiv);
-                        tile.appendChild(nameAnchor);
+                        const name = document.createElement('span');
+                        name.className = 'skala-gym-tile-name';
+                        name.textContent = gym.name;
+                        tile.appendChild(name);
 
                         els.managedGymsList.appendChild(tile);
                         if (els.managedGymsEmpty) els.managedGymsEmpty.style.display = 'none';
@@ -257,44 +250,33 @@
                     }
 
                     filtered.forEach(c => {
-                        const item = document.createElement('div');
-                        item.className = 'd-flex align-items-center';
-                        item.style.gap = '.5rem';
+                        const title = c.title || `Competition ${c.id}`;
+                        const item = document.createElement('a');
+                        item.className = 'skala-gym-tile';
+                        item.href = c.url || `/competitionDetails/${c.id}`;
+                        item.title = title;
 
-                        if (c.id) {
-                            const logoLink = document.createElement('a');
-                            logoLink.href = c.url || `/competitionDetails/${c.id}`;
-                            logoLink.title = c.title || `Competition ${c.id}`;
-
-                            const logo = document.createElement('img');
-                            logo.src = `/image/${c.id}`;
-                            logo.alt = `${c.title || 'Competition'} logo`;
-                            logo.loading = 'lazy';
-                            logo.style.width = '48px';
-                            logo.style.height = '48px';
-                            logo.style.borderRadius = '6px';
-                            logo.style.objectFit = 'cover';
-                            logoLink.appendChild(logo);
-                            item.appendChild(logoLink);
-                        }
+                        const logo = document.createElement('img');
+                        logo.src = `/image/${c.id}`;
+                        logo.alt = `${title} logo`;
+                        logo.loading = 'lazy';
+                        item.appendChild(logo);
 
                         const details = document.createElement('div');
                         details.className = 'd-flex flex-column';
-                        details.style.gap = '.125rem';
 
-                        const titleLink = document.createElement('a');
-                        titleLink.href = c.url || `/competitionDetails/${c.id}`;
-                        titleLink.textContent = c.title || `Competition ${c.id}`;
-                        titleLink.className = 'fw-semibold';
+                        const name = document.createElement('span');
+                        name.className = 'skala-gym-tile-name';
+                        name.textContent = title;
 
-                        const subtitle = document.createElement('div');
-                        subtitle.className = 'small text-muted';
+                        const subtitle = document.createElement('span');
+                        subtitle.className = 'skala-gym-tile-sub';
                         const parts = [];
                         if (c.date) parts.push(String(c.date));
                         if (c.gym) parts.push(String(c.gym));
                         subtitle.textContent = parts.join(' • ');
 
-                        details.appendChild(titleLink);
+                        details.appendChild(name);
                         details.appendChild(subtitle);
                         item.appendChild(details);
 
@@ -313,8 +295,8 @@
             const setupActions = (genPerms) => {
                 const canCreateGym = true // genPerms.includes('create_gym');
                 const canCreateCompetition = true //genPerms.includes('create_competition');
-                if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? 'inline-block' : 'none';
-                if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? 'inline-block' : 'none';
+                if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? '' : 'none';
+                if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? '' : 'none';
             };
 
             const renderGeneralPermissions = (perms) => {
@@ -345,12 +327,12 @@
                         }
                     } else {
                         // No home gym set: show placeholder and contextual note
-                        if (els.greetGymLink) els.greetGymLink.style.display = 'none';
                         if (els.greetLogo) els.greetLogo.style.display = 'none';
                         if (els.greetGymText) {
                             const clubName = (user.club || '').trim();
                             els.greetGymText.textContent = clubName || '';
-                            els.greetGymText.removeAttribute('href');
+                            els.greetGymTile.removeAttribute('href');
+                            if (!clubName) els.greetGymTile.style.display = 'none';
                         }
                         // Hide Add Activity when no gymid
                         const addActBtn = document.getElementById('action-add-activity');

@@ -327,6 +327,9 @@
                         userDiv.innerHTML = userName+'  &nbsp;';
                         // add pictureurl from user to div as an image
                         var img = document.createElement('img');
+                        img.referrerPolicy = 'no-referrer';
+                        img.loading = 'lazy';
+                        img.onerror = function() { this.onerror = null; this.src = '/public/images/favicon.png'; };
                         img.src = user['pictureurl'];
                         img.width = 30;
                         

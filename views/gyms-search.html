@@ -31,7 +31,6 @@
                 padding: 6px;
                 border-radius: 8px;
             }
-            #gyms-grid .summary-metric { font-size: 1.25rem; }
             #gyms-grid .empty-state { grid-column: 1 / -1; }
         }
     </style>
@@ -99,7 +98,7 @@
 							<div class="col-auto"><a href="/gyms/${id}" class="unstyled-link">${logoHTML}</a></div>
 							<div class="col">
 								<a href="/gyms/${id}" class="unstyled-link">
-									<div class="summary-metric lh-1">${name}</div>
+									<div class="gym-name">${name}</div>
 									${address ? `<div class="card-meta">${address}</div>` : ''}
 									${date ? `<div class="card-subtext">${date}</div>` : ''}
 								</a>
