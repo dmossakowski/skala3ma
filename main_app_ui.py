@@ -20,7 +20,7 @@ import glob
 import random
 import uuid
 from datetime import datetime, date, time, timedelta
-from CalculationStrategyFsgt import CalculationStrategyFsgt1
+from CalculationStrategyFsgt import CalculationStrategyFsgt1, CalculationStrategyFsgt2
 from src.RouteSet import RouteSet
 from src.User import User
 import competitionsEngine
@@ -1033,7 +1033,7 @@ def addCompetitionClimber(competitionId):
                         user_club_name = user_club.get('name')
                 
                 if dob is not None:
-                    category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('age_category_type'))
+                    category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('calc_type'))
                     if category == -1:
                         error_code = "error5325"
 
@@ -1080,7 +1080,7 @@ def addCompetitionClimber(competitionId):
             error_code = "error5321"
 
         if dob is not None:
-            category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('age_category_type'))   
+            category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('calc_type'))   
             if category == -1:
                 error_code = "error5325"
 
@@ -1243,7 +1243,7 @@ def update_user():
 
     # the following is only done to validate the dob; category is not used later
     category = competitionsEngine.get_category_from_dob(dob, datetime.now().strftime('%Y-%m-%d'), competitionsEngine.competition_type_adult, 
-                                                        competitionsEngine.age_category_type2026)
+                                                        CalculationStrategyFsgt2.name)
     if category == -1:
         #error_message.append(competitionsEngine.reference_data['current_language']['error5325'])
         error_message='error5325'

@@ -1548,7 +1548,7 @@ def getSeasonRankings(season):
                     if name_key not in participant_results:
                         participant_results[name_key] = {
                             'category': category_key,
-                            'age_category_type': competition.get('age_category_type', ''),
+                            'calc_type': competition.get('calc_type', ''),
                             'club': climber.get('club', ''),
                             'gymid': climber.get('gymid', ''),
                             'sex': climber.get('sex', ''),
@@ -1604,7 +1604,7 @@ def getSeasonRankings(season):
                     'gymid': data.get('gymid', ''),
                     'sex': data['sex'],
                     'category': category,
-                    'age_category_type': competition.get('age_category_type', ''),
+                    'calc_type': data['calc_type'],
                     'total_points': total_points,
                     'participations': participations,
                     'results_counted': results_to_count,

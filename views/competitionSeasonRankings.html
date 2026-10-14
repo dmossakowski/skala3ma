@@ -335,7 +335,7 @@
             const categories = Object.keys(individual[gender]).sort().reverse(); // oldest first (2=Diamond, 1=Titan, 0=Senior)
             categories.forEach(category => {
                 const climbers = individual[gender][category];
-                const ageType = climbers && climbers.length > 0 ? climbers[0].age_category_type : null;
+                const ageType = climbers && climbers.length > 0 ? climbers[0].calc_type : null;
                 const categoryLabel = getCategoryLabel(category, ageType, compType);
                 html += `<h4 class="category-section-title">${genderLabel} – ${categoryLabel}</h4>`;
                 html += buildCategoryTable(climbers);

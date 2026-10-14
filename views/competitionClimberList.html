@@ -116,8 +116,8 @@
   }
 
 
-    function getCatKey(calc_type, competition_type, age_category_type, category){
-      var key = age_category_type+'_' + competition_type+'_' + category;
+    function getCatKey(calc_type, competition_type, category){
+      var key = calc_type+'_' + competition_type+'_' + category;
       return 'competition_category_' + key;
     }
     
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function()
             var c = pair[1] || {};
             var routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
             var rs = (c.registration_status || '').toLowerCase();
-            var catKey = getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
+            var catKey = getCatKey(comp.calc_type, comp.competition_type, c.category);
             //var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
             rows.push({
               id: climberId,

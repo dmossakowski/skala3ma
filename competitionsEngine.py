@@ -32,7 +32,7 @@ import csv
 import requests
 
 from CalculationStrategy import CalculationStrategy
-from CalculationStrategyFsgt import CalculationStrategyFsgt0, CalculationStrategyFsgt1
+from CalculationStrategyFsgt import CalculationStrategyFsgt0, CalculationStrategyFsgt1, CalculationStrategyFsgt2
 import skala_db
 import activities_db
 
@@ -164,11 +164,6 @@ user_roles = ["none", "judge", "competitor", "admin"]
 supported_languages = {"en_US":"English","fr_FR":"Francais","pl_PL":"Polski"}
 first_default_language = "fr_FR"
 
-age_category_type2021 = "fsgt2021"  # old age categories
-age_category_type2026 = "fsgt2026"  # new age categories
-
-age_category_types = {"fsgt2021": age_category_type2021, "fsgt2026": age_category_type2026}
-
 competition_type_adult = "adult" 
 competition_type_ado = "ado" 
 
@@ -220,9 +215,8 @@ def create_competition(compId, added_by, name, date, routesid, max_participants,
         "routesid": routesid, "status": "preopen", 
         "max_participants": max_participants,
         "results": copy.deepcopy(CalculationStrategy.emptyResults),
-        "calc_type": CalculationStrategy.normalize_strategy_key(1),  # default to fsgt1
+        "calc_type": CalculationStrategyFsgt2.name,
         "competition_type":competition_type,
-        "age_category_type" : age_category_type2026, # fsgt0 for old age categories (16-49, 50+), fsgt1 for new age categories (16-39, 40-49, 50+)
         "instructions": instructions,
         "added_by": added_by,
         "status" : competition_status_created,
@@ -241,7 +235,6 @@ def update_competition_details(competition, name, date, instructions):
     competition['name']=name
     competition['date'] = date
     competition['instructions'] = instructions
-    # update age_category_type slugs for climbers because date of competition may have changed
 
     _update_competition(competition['id'], competition)
     return competition
@@ -379,7 +372,6 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club_
             "club" :club_name, 
             "gymid": gymid, 
             "sex":sex, "category":category, 
-            "age_category_type": age_category_type2026, # default to fsgt1 age categories
             "score":0, "rank":0,
             "registration_timestamp": datetime.now().isoformat(),
             "routesClimbed":[], 
@@ -399,21 +391,7 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club_
 
 
 
-def _guess_competition_age_category_type(competition_date, competition_type):
-    competition_date_dt = datetime.strptime(competition_date, "%Y-%m-%d")
-    age_category_type = None
-
-    if competition_type is competition_type_ado:
-        age_category_type = age_category_type2026
-    else:
-        if competition_date_dt < datetime.strptime('2025-08-31', "%Y-%m-%d"):
-            age_category_type = age_category_type2021 
-        else:
-            age_category_type = age_category_type2026
-    return age_category_type
-
-
-def get_category_from_dob(dob, competition_date, competition_type, age_category_type=None):
+def get_category_from_dob(dob, competition_date, competition_type, calc_type):
     if dob is None:
         return -1
     dob_dt = datetime.strptime(dob, "%Y-%m-%d")
@@ -430,50 +408,16 @@ def get_category_from_dob(dob, competition_date, competition_type, age_category_
     age = august_31st.year - dob_dt.year - ((august_31st.month, august_31st.day) < (dob_dt.month, dob_dt.day))
 
     if age < 12:
-        return -1  # Return -1 for under 12
-    
-    if age_category_type is None:
-        age_category_type = _guess_competition_age_category_type(competition_date, competition_type)
-    
-    if competition_type == competition_type_ado:
-        if age >= 17:
-            return -1
-    else:
-        if age <= 17:
-            return -1
+        return -1
 
-    if age_category_type == age_category_type2026:
-        # fsgt1 age categories
-        if 18 <= age <= 39:
-            return 0
-        elif 40 <= age <= 49:
-            return 1
-        elif age >= 50:
-            return 2
-        elif 12 <= age <= 13:
-            return 0
-        elif 14 <= age <= 15:
-            return 1
-        elif 16 <= age <= 17:
-            return 2
-        else:
-            return -1  # Return -1 if age does not fit any category
-    else:
-        if 18 <= age <= 49:
-            return 0
-        elif 50 <= age <= 64:
-            return 1
-        elif age >= 65:
-            return 2
-        elif 12 <= age <= 13:
-            return 0
-        elif 14 <= age <= 15:
-            return 1
-        elif 16 <= age <= 17:
-            return 2
-        else:
-            return -1  # Return -1 if age does not fit any category
-            
+    if competition_type == competition_type_ado:
+        if age > 17:
+            return -1
+    elif age < 18:
+        return -1
+
+    return CalculationStrategy.create_strategy(calc_type).get_age_category(age, competition_type)
+
 
 
 # remove or unregister climber from a competition
@@ -1086,9 +1030,16 @@ def _migrate_competition(competition):
         competition['calc_type'] = calc_type
         needs_updating = True
 
-    if competition.get('age_category_type') is None:
-        age_category_type = _guess_competition_age_category_type(competition.get('date'), competition.get('competition_type'))
-        competition['age_category_type'] = age_category_type
+    # age_category_type was replaced by calc_type fsgt2 (2026 age categories)
+    if 'age_category_type' in competition:
+        if competition.get('competition_type') == competition_type_adult and competition['age_category_type'] == 'fsgt2026':
+            if competition.get('calc_type') == CalculationStrategyFsgt1.name:
+                competition['calc_type'] = CalculationStrategyFsgt2.name
+            elif competition.get('calc_type') != CalculationStrategyFsgt2.name:
+                logging.warning('competition '+str(competition.get('id'))+' has 2026 age categories but calc_type '+str(competition.get('calc_type'))+'; leaving calc_type unchanged')
+        competition.pop('age_category_type')
+        for climber in competition['climbers'].values():
+            climber.pop('age_category_type', None)
         needs_updating = True
 
 
