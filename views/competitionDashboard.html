@@ -21,11 +21,13 @@
     .filter-select:hover { background:#e8f5e9; }
     .filter-select:focus { outline:none; border-color:#53be6b; background:#fff; }
     
-    /* Type Toggle Buttons */
-    .type-toggle-group { display:flex; gap:0.5rem; }
-    .type-toggle-btn { font-size:0.9rem; padding:0.6rem 1.2rem; border:2px solid #53be6b; border-radius:8px; font-weight:600; cursor:pointer; background:#fff; color:#53be6b; transition:all 0.2s ease; }
-    .type-toggle-btn:hover { background:#e8f5e9; }
-    .type-toggle-btn.active { background:#53be6b; color:#fff; }
+    /* Compétition Autrement adult/ado checkboxes */
+    .type-check-group { display:flex; gap:1.5rem; font-size:0.9rem; padding:0.5rem 0; }
+    .type-check { display:flex; align-items:center; gap:0.4rem; margin:0; font-weight:600; color:#53be6b; cursor:pointer; }
+    .type-check-input { appearance:none; -webkit-appearance:none; width:1.3em; height:1.3em; margin:0; border:2px solid #53be6b; border-radius:6px; background:#fff center/80% no-repeat; cursor:pointer; transition:all 0.2s ease; }
+    .type-check-input:hover { background-color:#e8f5e9; }
+    .type-check-input:checked { background-color:#53be6b; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M3 8.5l3.5 3.5L13 5'/%3E%3C/svg%3E"); }
+    .type-check-input:focus-visible { outline:2px solid #53be6b; outline-offset:2px; }
     
     /* Carousel Styles */
     .dashboard-carousel { margin-bottom:2rem; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.1); }
@@ -74,8 +76,7 @@
         .filter-group { flex:1 1 auto; min-width:100%; }
         .filter-label { font-size:0.8rem; margin-bottom:0.25rem; }
         .filter-select { font-size:0.85rem; padding:0.45rem 0.6rem; width:100%; }
-        .type-toggle-group { width:100%; display:flex; gap:0.4rem; }
-        .type-toggle-btn { flex:1 1 0; min-width:0; text-align:center; padding:0.5rem 0.3rem; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .type-check-group { font-size:0.85rem; padding:0.45rem 0; }
         
         .dashboard-carousel { margin-bottom:1rem; }
         .carousel-item-content { min-height:370px; }
@@ -109,11 +110,11 @@
                 </select>
             </div>
             <div class="filter-group">
-                <div class="filter-label" data-translate-key="competition_type">Competition Type</div>
-                <div class="type-toggle-group">
-                    <button class="type-toggle-btn active" data-type="all" data-translate-key="all">All</button>
-                    <button class="type-toggle-btn" data-type="adult" data-translate-key="competition_type_adult">Adult</button>
-                    <button class="type-toggle-btn" data-type="ado" data-translate-key="competition_type_ado">Ado</button>
+                <div class="filter-label">{{ reference_data['current_language'].show_only_competition_autrement_idf }}</div>
+                <div class="type-check-group">
+                    {% for comp_type in ['adult', 'ado'] %}
+                    <label class="type-check"><input type="checkbox" class="type-check-input" value="{{ comp_type }}"> {{ reference_data['current_language']['competition_type_'~comp_type] }}</label>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -165,9 +166,22 @@
         allCompetitions: [],
         filteredCompetitions: [],
         currentSeason: 'all',
-        currentType: 'all',
+        currentTypes: [],
         seasons: []
     };
+
+    const COMPETITION_AUTREMENT_IDF = 'fsgt_competition_autrement_idf';
+
+    // pills shown on a card: kind of event, then age group only for scored competitions
+    function eventPills(comp) {
+        let html = '';
+        if (comp.text.series) html += `<span class="competition-badge">${escapeHtml(comp.text.series)}</span> `;
+        if (comp.scored) {
+            const badgeClass = comp.competition_type === 'adult' ? 'adult' : 'ado';
+            html += `<span class="competition-badge ${badgeClass}">${escapeHtml(comp.text.competition_type || '')}</span> `;
+        }
+        return html;
+    }
     
     // Compute season label from date (Sept = start of new season)
     function computeSeason(dateStr) {
@@ -203,9 +217,9 @@
             filtered = filtered.filter(comp => computeSeason(comp.date) === state.currentSeason);
         }
         
-        // Filter by type
-        if (state.currentType !== 'all') {
-            filtered = filtered.filter(comp => comp.competition_type === state.currentType);
+        // Filter by Compétition Autrement IDF adult/ado
+        if (state.currentTypes.length > 0) {
+            filtered = filtered.filter(comp => comp.series_key === COMPETITION_AUTREMENT_IDF && state.currentTypes.includes(comp.competition_type));
         }
         
         state.filteredCompetitions = filtered;
@@ -256,14 +270,15 @@
             const isNextUpcoming = (index === defaultActiveIndex && compDate >= today);
             
             // Get status info
-            const statusMap = {
-                0: { key: 'competition_status_0', class: 'status-created' },
-                1: { key: 'competition_status_1', class: 'status-open' },
-                2: { key: 'competition_status_2', class: 'status-inprogress' },
-                3: { key: 'competition_status_3', class: 'status-scoring' },
-                4: { key: 'competition_status_4', class: 'status-closed' },
-                5: { key: 'competition_status_archived', class: 'status-archived' },
-                6: { key: 'competition_status_future', class: 'status-future' }
+            const statusClasses = {
+                draft: 'status-created',
+                published: 'status-future',
+                open: 'status-open',
+                in_progress: 'status-inprogress',
+                scoring: 'status-scoring',
+                closed: 'status-closed',
+                archived: 'status-archived',
+                cancelled: 'status-archived'
             };
             
             // Use "upcoming" for the next upcoming competition, otherwise show status
@@ -272,10 +287,9 @@
                 statusLabel = getTranslation('upcoming');
                 statusClass = 'status-future';
             } else {
-                const status = comp.status !== undefined ? comp.status : 0;
-                const statusInfo = statusMap[status] || statusMap[0];
-                statusLabel = getTranslation(statusInfo.key);
-                statusClass = statusInfo.class;
+                const status = statusClasses[comp.status] ? comp.status : 'draft';
+                statusLabel = getTranslation('competition_status_' + status);
+                statusClass = statusClasses[status];
             }
             
             item.innerHTML = `
@@ -287,7 +301,7 @@
                         <div class="carousel-details">
                             <div><i class="bi bi-calendar-event"></i> ${formatDate(comp.date)}</div>
                             <div><i class="bi bi-geo-alt"></i> ${escapeHtml(comp.gym)}</div>
-                            <div><i class="bi bi-trophy"></i> ${comp.text.competition_type}</div>
+                            <div><i class="bi bi-trophy"></i> ${eventPills(comp)}</div>
                         </div>
                     </div>
                 </div>
@@ -353,8 +367,8 @@
     // Render competition grid
     function updateCompetitionGrid() {
         const grid = document.getElementById('competitionsGrid');
-        const competitions = state.filteredCompetitions
-            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+        const competitions = [...state.filteredCompetitions]
+            .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
         
         if (competitions.length === 0) {
             grid.innerHTML = '<div class="empty-state"><h4 data-translate-key="no_competitions_found">No competitions found</h4><p data-translate-key="try_adjusting_filters">Try adjusting your filters</p></div>';
@@ -367,7 +381,6 @@
             card.className = 'competition-card';
             card.onclick = () => window.location.href = comp.url;
             
-            const badgeClass = comp.competition_type === 'adult' ? 'adult' : 'ado';
             const statusText = comp.text.status || '';
             
             card.innerHTML = `
@@ -376,7 +389,7 @@
                     <div class="competition-title">${escapeHtml(comp.title)}</div>
                     <div class="competition-meta"><i class="bi bi-calendar-event"></i> ${formatDate(comp.date)}</div>
                     <div class="competition-meta"><i class="bi bi-geo-alt"></i> ${escapeHtml(comp.gym)}</div>
-                    <span class="competition-badge ${badgeClass}">${comp.text.competition_type}</span>
+                    ${eventPills(comp)}
                     ${statusText ? `<span class="competition-badge">${escapeHtml(statusText)}</span>` : ''}
                 </div>
             `;
@@ -403,9 +416,7 @@
             seasonSelect.appendChild(option);
         });
         
-        // Set default to current season
-        const today = new Date();
-        const currentSeason = computeSeason(today.toISOString().split('T')[0]);
+        const currentSeason = computeSeason(new Date().toISOString().split('T')[0]);
         if (state.seasons.includes(currentSeason)) {
             seasonSelect.value = currentSeason;
             state.currentSeason = currentSeason;
@@ -417,12 +428,10 @@
             updateDashboard();
         });
         
-        // Type toggle handlers
-        document.querySelectorAll('.type-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                state.currentType = e.target.dataset.type;
+        // no box checked shows all events
+        document.querySelectorAll('.type-check-input').forEach(box => {
+            box.addEventListener('change', () => {
+                state.currentTypes = Array.from(document.querySelectorAll('.type-check-input:checked')).map(b => b.value);
                 updateDashboard();
             });
         });

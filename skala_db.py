@@ -85,10 +85,23 @@ USERS_TABLE = "climbers"
 ROUTES_TABLE = "routes"
 ROUTES_CLIMBED_TABLE = "routes_climbed"
 GYM_TABLE = "gyms"
-CHALLENGE_TABLE = "challenges"
 IMG_TABLE = "images"
 
 MAX_DEPENDENTS_PER_GUARDIAN = 10
+
+# columns copied from competition jsondata so competitions can be queried; jsondata stays complete
+# column name -> jsondata key
+COMPETITION_COLUMNS = {
+    'event_date': 'date',
+    'status': 'status',
+    'gym_id': 'gym_id',
+    'organizer': 'organizer',
+    'region': 'region',
+    'competition_type': 'competition_type',
+    'calc_type': 'calc_type',
+    'series_key': 'series_key',
+    'registration_mode': 'registration_mode',
+}
 
 def init():
     logging.info('initializing skala_db...')
@@ -108,6 +121,12 @@ def init():
                        id text NOT NULL UNIQUE, 
                        added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null, 
                        jsondata json)''')
+
+        existing_columns = {row[1] for row in cursor.execute('PRAGMA table_info(' + COMPETITIONS_TABLE + ')')}
+        for column in COMPETITION_COLUMNS:
+            if column not in existing_columns:
+                cursor.execute('ALTER TABLE ' + COMPETITIONS_TABLE + ' ADD COLUMN ' + column + ' TEXT')
+                logging.info('added column ' + column + ' to ' + COMPETITIONS_TABLE)
 
         cursor.execute('''CREATE TABLE if not exists ''' + USERS_TABLE + '''(
                        id text NOT NULL UNIQUE, 
@@ -139,14 +158,6 @@ def init():
                         picture BLOB not null, 
                         source TEXT not null)''')
 
-
-        #cursor.execute('''CREATE TABLE if not exists ''' + CHALLENGE_TABLE + '''(
-         #                      id text NOT NULL UNIQUE,
-          #                     type text not null,
-           #                    climberId text not null,
-            #                   jsondata json not null,
-             #                  added_at DATETIME DEFAULT CURRENT_TIMESTAMP not null)''')
-
         db.commit()
         #add_testing_data()
 
@@ -168,18 +179,27 @@ def init():
     
 
 
+def _competition_column_values(competition):
+    values = []
+    for key in COMPETITION_COLUMNS.values():
+        value = competition.get(key)
+        values.append(None if value is None else str(value))
+    return values
+
+
 def _add_competition(compId, competition):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
+    columns = list(COMPETITION_COLUMNS)
     with DatabaseLock(sql_lock):
         db = lite.connect(COMPETITIONS_DB)
         cursor = db.cursor()
 
         cursor.execute("INSERT INTO " + COMPETITIONS_TABLE +
-                       "(id, jsondata, added_at) VALUES"+
-                        " (?, ?, datetime('now')) ",
-                       [compId, json.dumps(competition)])
+                       "(id, jsondata, added_at, " + ", ".join(columns) + ") VALUES" +
+                       " (?, ?, datetime('now'), " + ", ".join("?" for _ in columns) + ") ",
+                       [compId, json.dumps(competition)] + _competition_column_values(competition))
         db.commit()
         db.close()
         logging.info('competition added: '+str(compId))
@@ -196,8 +216,9 @@ def _update_competition(compId, competition):
 
     cursor = db.cursor()
 
-    cursor.execute("update  " + COMPETITIONS_TABLE + " set jsondata=? where id=?  ",
-                   [json.dumps(competition), compId])
+    assignments = ", ".join(column + "=?" for column in COMPETITION_COLUMNS)
+    cursor.execute("update  " + COMPETITIONS_TABLE + " set jsondata=?, " + assignments + " where id=?  ",
+                   [json.dumps(competition)] + _competition_column_values(competition) + [compId])
 
     #logging.info('updated competition: '+str(compId))
     db.commit()
@@ -277,6 +298,130 @@ def get_all_competitions():
             comps[comp['id']] = comp
 
     return comps
+
+
+# filters: column name -> value (only COMPETITION_COLUMNS); dates are inclusive ISO strings
+def get_competitions_filtered(date_from=None, date_to=None, **filters):
+    conditions = []
+    params = []
+    for column, value in filters.items():
+        if column not in COMPETITION_COLUMNS:
+            raise ValueError('cannot filter competitions by ' + str(column))
+        if value is None:
+            continue
+        conditions.append(column + '=?')
+        params.append(value)
+    if date_from is not None:
+        conditions.append('event_date>=?')
+        params.append(date_from)
+    if date_to is not None:
+        conditions.append('event_date<=?')
+        params.append(date_to)
+
+    where = (' WHERE ' + ' AND '.join(conditions)) if conditions else ''
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    rows = cursor.execute('SELECT jsondata FROM ' + COMPETITIONS_TABLE + where + ' ORDER BY event_date', params).fetchall()
+    db.close()
+
+    comps = {}
+    for row in rows:
+        comp = json.loads(row[0])
+        comps[comp['id']] = comp
+    return comps
+
+
+def get_series_keys():
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    rows = cursor.execute('SELECT DISTINCT series_key FROM ' + COMPETITIONS_TABLE +
+                          ' WHERE series_key IS NOT NULL ORDER BY series_key').fetchall()
+    db.close()
+    return [row[0] for row in rows]
+
+
+def _competition_table_columns(cursor):
+    return [row[1] for row in cursor.execute('PRAGMA table_info(' + COMPETITIONS_TABLE + ')')]
+
+
+# raw table access for the app admin competitions page
+def admin_list_competition_rows(json_search=None):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    columns = [c for c in _competition_table_columns(cursor) if c != 'jsondata']
+    sql = 'SELECT ' + ', '.join(columns) + ', jsondata FROM ' + COMPETITIONS_TABLE
+    params = []
+    if json_search:
+        sql += ' WHERE jsondata LIKE ? OR id LIKE ?'
+        params = ['%' + json_search + '%'] * 2
+    rows = cursor.execute(sql + ' ORDER BY added_at DESC', params).fetchall()
+    db.close()
+
+    result = []
+    for row in rows:
+        item = dict(zip(columns, row[:-1]))
+        raw = row[-1]
+        item['json_size'] = len(raw) if raw is not None else 0
+        try:
+            comp = json.loads(raw) if raw is not None else {}
+        except (TypeError, ValueError):
+            comp = None
+        if isinstance(comp, dict):
+            item['name'] = comp.get('name')
+            item['gym'] = comp.get('gym')
+            climbers = comp.get('climbers')
+            item['climbers_count'] = len(climbers) if isinstance(climbers, (dict, list)) else 0
+            item['out_of_sync'] = [column for column, key in COMPETITION_COLUMNS.items()
+                                   if item.get(column) != (None if comp.get(key) is None else str(comp.get(key)))]
+            item['json_id_mismatch'] = comp.get('id') != item['id']
+            item['json_invalid'] = False
+        else:
+            item.update(name=None, gym=None, climbers_count=0, out_of_sync=[], json_id_mismatch=False, json_invalid=True)
+        result.append(item)
+    return result
+
+
+def admin_get_competition_row(comp_id):
+    db = lite.connect(COMPETITIONS_DB)
+    cursor = db.cursor()
+    columns = _competition_table_columns(cursor)
+    row = cursor.execute('SELECT ' + ', '.join(columns) + ' FROM ' + COMPETITIONS_TABLE + ' WHERE id=?',
+                         [comp_id]).fetchone()
+    db.close()
+    return dict(zip(columns, row)) if row is not None else None
+
+
+# columns: column name -> value (None = NULL); jsondata: raw JSON string or None to leave unchanged
+def admin_update_competition_row(comp_id, columns, jsondata=None):
+    if jsondata is not None:
+        parsed = json.loads(jsondata)
+        if not isinstance(parsed, dict):
+            raise ValueError('jsondata must be a JSON object')
+        if parsed.get('id') != comp_id:
+            raise ValueError('jsondata.id must equal the row id ' + comp_id)
+
+    with DatabaseLock(sql_lock):
+        db = lite.connect(COMPETITIONS_DB)
+        try:
+            cursor = db.cursor()
+            allowed = set(_competition_table_columns(cursor)) - {'id', 'jsondata'}
+            unknown = [c for c in columns if c not in allowed]
+            if unknown:
+                raise ValueError('unknown or read-only columns: ' + ', '.join(unknown))
+
+            assignments = [column + '=?' for column in columns]
+            params = list(columns.values())
+            if jsondata is not None:
+                assignments.append('jsondata=?')
+                params.append(jsondata)
+            if not assignments:
+                return 0
+            cursor.execute('UPDATE ' + COMPETITIONS_TABLE + ' SET ' + ', '.join(assignments) + ' WHERE id=?',
+                           params + [comp_id])
+            db.commit()
+            return cursor.rowcount
+        finally:
+            db.close()
 
 
 def get_all_gyms():
@@ -1666,18 +1811,19 @@ def _parse_date(date_str):
 
 
 # competitions migration function
+# re-syncs the query columns from jsondata for every competition
 def update_competitions_data():
     db = lite.connect(COMPETITIONS_DB)
     cursor = db.cursor()
     
-    # Fetch all competitions
     cursor.execute(f'SELECT id, jsondata FROM {COMPETITIONS_TABLE}')
     competitions = cursor.fetchall()
+    assignments = ", ".join(column + "=?" for column in COMPETITION_COLUMNS)
     for competition_id, jsondata in competitions:
         competition = json.loads(jsondata)
-        
-    
-        
+        cursor.execute(f'UPDATE {COMPETITIONS_TABLE} SET {assignments} WHERE id=?',
+                       _competition_column_values(competition) + [competition_id])
+
     db.commit()
     db.close()
 

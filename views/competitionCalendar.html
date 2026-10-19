@@ -37,6 +37,7 @@
                         <h1 id="eventTitle"></h1>
                         <h3 id="eventGym"></h3>
                     </a>
+                    <p id="eventKind"></p>
                     <p id="eventStatus"></p>
                    
                 </div>
@@ -75,6 +76,11 @@
       const initialView = getQueryParam('view') || 'multiMonthFourMonth';
 
         var calendarEl = document.getElementById('calendar');
+
+        // multiMonth ignores dayMaxEvents and sizes rows as width / aspectRatio, so make cells taller on phones
+        function calendarAspectRatio() {
+            return window.innerWidth < 576 ? 0.55 : 1.35;
+        }
         
         var calendar = new FullCalendar.Calendar(calendarEl, {
             themeSystem: 'bootstrap',
@@ -85,8 +91,12 @@
             //initialView: 'multiMonthYear',
             //initialView: 'listYear',
             initialView: initialView,
-            initialDate: '2025-10-01',
+            initialDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
             firstDay: 1,
+            aspectRatio: calendarAspectRatio(),
+            windowResize: function() {
+                calendar.setOption('aspectRatio', calendarAspectRatio());
+            },
             
             headerToolbar: {
                 right: 'prev,next',
@@ -124,41 +134,57 @@
                 type: 'list',
                 duration: { month: 12 },
                 buttonText: 'List',
-                listDayFormat: { month: 'long', day: 'numeric', year: 'numeric' },
-                listDaySideFormat: { month: 'long',      year: 'numeric' },
+                listDayFormat: { weekday: 'long', day: 'numeric' },
+                listDaySideFormat: false,
+                displayEventTime: false,
                 eventContent: function(info) {
-                    return {html: `<div class="event-content">
-              
-              <img src="/image/${info.event.extendedProps.id}" alt="${info.event.title}" width="80">
-                        <br><br>
-              
-              <h2><a href="/competitionDetails/${info.event.extendedProps.id}" >${info.event.title}</a></h2>
-              <p>  ${info.event.extendedProps.gym}</p>
-              
-                </div>`};
+                    const p = info.event.extendedProps;
+                    const wrap = document.createElement('div');
+                    wrap.className = 'list-event';
 
-                    
+                    const img = document.createElement('img');
+                    img.className = 'list-event-img';
+                    img.src = `/image/${encodeURIComponent(p.id)}`;
+                    img.alt = '';
+                    img.loading = 'lazy';
+
+                    const body = document.createElement('div');
+                    const link = document.createElement('a');
+                    link.className = 'list-event-title';
+                    link.href = `/competitionDetails/${encodeURIComponent(p.id)}`;
+                    link.textContent = info.event.title;
+                    const meta = document.createElement('div');
+                    meta.className = 'list-event-meta';
+                    meta.textContent = [p.gym, p.text && p.text.series].filter(Boolean).join(' · ');
+                    body.append(link, meta);
+
+                    wrap.append(img, body);
+                    return { domNodes: [wrap] };
                 },
             },
             multiMonthFourMonth: {
                 type: 'multiMonth',
-                multiMonthMaxColumns: 2 ,
+                multiMonthMaxColumns: 1 ,
                 buttonText: '<i class="bi bi-calendar3"></i>',
                 duration: { months: 12 },
                 
                 dayHeaders: false,
                 eventContent: function(arg) {
-                    //console.log(arg);
-                    let italicEl = document.createElement('div')
-                    italicEl.classList.add('fc-event-title');
-                    italicEl.id = 'competitionEvent';
-
-                    if (arg.event.extendedProps.gym) {
-                        //italicEl.innerHTML = arg.event.extendedProps.name+'<br>'+arg.event.extendedProps.gym
-                        italicEl.innerHTML = arg.event.extendedProps.gym
-                    } else {
-                        italicEl.innerHTML = '???'
-                    }
+                    const props = arg.event.extendedProps;
+                    const italicEl = document.createElement('div');
+                    italicEl.className = 'comp-event';
+                    const lines = [
+                        ['comp-event-name', arg.event.title],
+                        ['comp-event-gym', props.gym || '???'],
+                        ['comp-event-kind', (props.text && props.text.series) || '']
+                    ];
+                    lines.forEach(([cls, text]) => {
+                        if (!text) return;
+                        const line = document.createElement('div');
+                        line.className = cls;
+                        line.textContent = text;
+                        italicEl.appendChild(line);
+                    });
                     var dotEl = document.getElementsByClassName('fc-daygrid-event-dot')[0];
                     
                     if (dotEl) {
@@ -221,6 +247,7 @@
             document.getElementById('eventLink').href = `/competitionDetails/${info.event.extendedProps.id}`;
             document.getElementById('eventTitle').textContent = info.event.title;
             document.getElementById('eventGym').textContent = info.event.extendedProps.gym;
+            document.getElementById('eventKind').textContent = info.event.extendedProps.text.series || '';
             document.getElementById('eventStatus').textContent = info.event.extendedProps.text.status;
             document.getElementById('eventButton').href = `/competitionDetails/${info.event.extendedProps.id}`;
           
@@ -242,7 +269,9 @@
             // Ensure each event object has an extendedProps object that is a shallow copy
             // of its own top-level properties (excluding any existing extendedProps to avoid recursion).
             // This lets FullCalendar access all original fields via event.extendedProps.*
-            const processed = Array.isArray(data) ? data.map(ev => {
+            const eventFilter = document.getElementById('eventFilter').value;
+            const matching = Array.isArray(data) ? data.filter(ev => eventFilter === 'all' || ev.series_key === eventFilter) : data;
+            const processed = Array.isArray(matching) ? matching.map(ev => {
                 if (ev && typeof ev === 'object') {
                     const { extendedProps, ...rest } = ev;
                     return {
@@ -270,6 +299,30 @@
 
 
         calendar.render();
+
+        // Label the first listed day of each month so CSS can render a month heading above it
+        function markMonthStarts() {
+            let prevMonth = null;
+            calendarEl.querySelectorAll('tr.fc-list-day').forEach(tr => {
+                const th = tr.querySelector('th');
+                const date = tr.dataset.date || '';
+                const month = date.slice(0, 7);
+                if (!th) return;
+                if (month && month !== prevMonth) {
+                    const label = new Date(date + 'T00:00:00').toLocaleDateString(language, { month: 'long', year: 'numeric' });
+                    if (th.dataset.month !== label) th.dataset.month = label;
+                } else if (th.hasAttribute('data-month')) {
+                    th.removeAttribute('data-month');
+                }
+                prevMonth = month;
+            });
+        }
+        markMonthStarts();
+        new MutationObserver(markMonthStarts).observe(calendarEl, { childList: true, subtree: true });
+
+        document.getElementById('eventFilter').addEventListener('change', function() {
+            calendar.refetchEvents();
+        });
     });
 
       /*events2:[
@@ -291,6 +344,45 @@
     </script>
 
     <style>
+        .fc-multimonth .fc-daygrid-event { white-space: normal; align-items: flex-start; }
+        .comp-event { min-width: 0; font-size: .75em; line-height: 1.15; overflow-wrap: anywhere; }
+        .comp-event-name { font-weight: 600; }
+        .comp-event-kind { font-style: italic; opacity: .8; }
+        /* Narrow day cells: show only the event name, details are in the tap modal */
+        @media (max-width: 576px) {
+            .fc-multimonth .fc-daygrid-event { padding: 0 1px; }
+            .fc-multimonth .fc-daygrid-event-dot { display: none; }
+            .comp-event { font-size: .65em; overflow-wrap: normal; word-break: break-word; }
+            .comp-event-gym, .comp-event-kind { display: none; }
+            .comp-event-name {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+        }
+
+        .fc-list-day th[data-month]::before {
+            content: attr(data-month);
+            box-sizing: border-box;
+            height: 3.25rem;
+            padding: 0 .75rem .4rem;
+            display: flex;
+            align-items: flex-end;
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1.2;
+            text-transform: capitalize;
+            background: var(--fc-page-bg-color, #fff);
+        }
+        /* Day headers stick just below the month heading, which stays pinned until the next month replaces it */
+        .fc .fc-list-sticky .fc-list-day > th:not([data-month]) { top: 3.25rem; }
+        .fc-list-day-text { text-transform: capitalize; }
+        .fc-list-event td { padding: 4px 10px; }
+        .list-event { display: flex; align-items: center; gap: .6rem; }
+        .list-event-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+        .list-event-title { font-weight: 600; }
+        .list-event-meta { font-size: .85em; color: #6c757d; }
         .wideCell {
             background-color: rgb(96, 193, 31);
             width: 100px;
@@ -304,6 +396,13 @@
 
 	<div class="container-fluid">
             <div class="row">
+
+                <div class="col-12 col-md-4 mb-2">
+                    <select id="eventFilter" class="form-select" aria-label="{{ reference_data['current_language'].series_key }}">
+                        <option value="all">{{ reference_data['current_language'].all }}</option>
+                        <option value="fsgt_competition_autrement_idf">{{ reference_data['current_language'].series_fsgt_competition_autrement_idf }}</option>
+                    </select>
+                </div>
 
                 <div id='calendar'></div>
             

@@ -28,6 +28,7 @@ import uuid
 import copy
 from threading import RLock
 import csv
+import unicodedata
 
 import requests
 
@@ -142,21 +143,140 @@ clubs = {
 
 
 
-# created - only visible to admin or someone who has the right to see it
-# open - visible and registration is possible
-# inprogress - visible, can still register and can enter routes climbed
-# scoring - cannot register, can enter routes, calculate and see results
-# closed - cannot change routes and no need to recalculate
-competition_status_created = 0
-competition_status_open = 1
-competition_status_inprogress = 2
-competition_status_scoring = 3
-competition_status_closed = 4
-competition_status_archived = 5
-competition_status_future = 5
+competition_status_draft = 'draft'
+competition_status_published = 'published'
+competition_status_open = 'open'
+competition_status_inprogress = 'in_progress'
+competition_status_scoring = 'scoring'
+competition_status_closed = 'closed'
+competition_status_archived = 'archived'
+competition_status_cancelled = 'cancelled'
 MAX_COMPETITIONS_PER_CREATOR = 3
 
-competition_status = {"created":competition_status_created, "open":1, "inprogress":2, "scoring":3, "closed":4, "archived":5}
+# statuses stored as integers before they became words
+legacy_competition_status = {0: competition_status_draft, 1: competition_status_open, 2: competition_status_inprogress,
+                             3: competition_status_scoring, 4: competition_status_closed, 5: competition_status_archived}
+
+
+def _is_scored(competition):
+    return competition.get('calc_type') not in (None, 'none')
+
+
+def _takes_registrations(competition):
+    return competition.get('registration_mode') != registration_mode_none
+
+
+# what each status allows; 'applies' decides whether the status is offered for a given event
+STATUS_RULES = {
+    competition_status_draft:       {'register': False, 'enter_routes': False, 'results': False, 'locked': False},
+    competition_status_published:   {'register': False, 'enter_routes': False, 'results': False, 'locked': False},
+    competition_status_open:        {'register': True,  'enter_routes': False, 'results': False, 'locked': False, 'applies': _takes_registrations},
+    competition_status_inprogress:  {'register': True,  'enter_routes': True,  'results': False, 'locked': False, 'applies': _is_scored},
+    competition_status_scoring:     {'register': True,  'enter_routes': True,  'results': True,  'locked': False, 'applies': _is_scored},
+    competition_status_closed:      {'register': False, 'enter_routes': False, 'results': True,  'locked': True},
+    competition_status_archived:    {'register': False, 'enter_routes': False, 'results': True,  'locked': True},
+    competition_status_cancelled:   {'register': False, 'enter_routes': False, 'results': False, 'locked': True},
+}
+
+# only site admins can move a competition out of these
+admin_only_statuses_to_leave = [competition_status_closed, competition_status_archived]
+
+competition_status = {status: status for status in STATUS_RULES}
+
+
+def status_allows(competition, capability):
+    if competition is None:
+        return False
+    return STATUS_RULES.get(competition.get('status'), {}).get(capability, False)
+
+
+def get_allowed_statuses(competition):
+    current = competition.get('status')
+    return [status for status, rule in STATUS_RULES.items()
+            if status == current or rule.get('applies', lambda c: True)(competition)]
+
+
+# returns an error message or '' if the status change is allowed
+def status_change_error(user, competition, new_status):
+    if new_status not in get_allowed_statuses(competition):
+        return 'Status ' + str(new_status) + ' is not allowed for this competition'
+    current = competition.get('status')
+    if current in admin_only_statuses_to_leave and new_status != current and not User.is_admin(user):
+        return 'Only an administrator can change the status of a ' + current + ' competition'
+    return ''
+
+
+organizers = ['fsgt', 'ffme', 'club', 'other']
+FSGT_COMPETITION_AUTREMENT_IDF = 'fsgt_competition_autrement_idf'
+
+registration_mode_none = 'none'
+registration_mode_open = 'open'
+registration_mode_club = 'club'
+registration_mode_fsgt = 'fsgt'
+
+
+# each registration mode returns an error code or '' when the registrant may register
+def _registration_check_none(competition, registrant, gymid):
+    return 'error5329'
+
+
+def _registration_check_open(competition, registrant, gymid):
+    return ''
+
+
+def _registration_check_club(competition, registrant, gymid):
+    if gymid is None or gymid != competition.get('gym_id'):
+        return 'error5330'
+    return ''
+
+
+def _registration_check_fsgt(competition, registrant, gymid):
+    # all users are assumed to be FSGT members for now
+    return ''
+
+
+registration_modes = {
+    registration_mode_none: _registration_check_none,
+    registration_mode_open: _registration_check_open,
+    registration_mode_club: _registration_check_club,
+    registration_mode_fsgt: _registration_check_fsgt,
+}
+
+
+def registration_mode_error(competition, registrant, gymid):
+    check = registration_modes.get(competition.get('registration_mode'), _registration_check_open)
+    return check(competition, registrant, gymid)
+
+
+def get_strategy(competition):
+    return CalculationStrategy.create_strategy(competition.get('calc_type'))
+
+
+# menu pages of a competition; only calc_type and registration_mode decide them
+def get_competition_pages(competition):
+    pages = ['details']
+    if _takes_registrations(competition):
+        pages += ['register', 'climbers']
+    pages += get_strategy(competition).scoring_pages
+    return pages + ['contact', 'admin']
+
+
+def has_page(competition, page):
+    return competition is not None and page in get_competition_pages(competition)
+
+
+# returns an error message or '' if calc_type and registration_mode can be combined
+def settings_error(calc_type, registration_mode):
+    if calc_type != 'none' and registration_mode == registration_mode_none:
+        return 'A scored competition needs registration'
+    return ''
+
+
+# strategies offered when creating or editing a competition; older ones only stay on old competitions
+creatable_calc_types = [CalculationStrategyFsgt2.name, 'none']
+
+# calc_type can only be changed before registration opens
+calc_type_editable_statuses = [competition_status_draft, competition_status_published]
 
 
 user_roles = ["none", "judge", "competitor", "admin"]
@@ -179,7 +299,10 @@ categories = {0:"Category 0",
 reference_data = { "categories":categories,# "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
-                  "competition_types":competition_types, "gym_status":gym_status}
+                  "competition_types":competition_types, "gym_status":gym_status,
+                  "organizers": organizers,
+                  "registration_modes": list(registration_modes),
+                  "calc_types": creatable_calc_types}
 
 
 from src.email_sender import EmailSender
@@ -192,7 +315,9 @@ email_sender = EmailSender(
 
 # called from main_app_ui and skala_api
 # no permissions or other checks are performed here
-def create_competition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategy.calc_type_fsgt1):
+def create_competition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategyFsgt2.name,
+                       organizer='fsgt', region='idf', series_key=FSGT_COMPETITION_AUTREMENT_IDF,
+                       registration_mode=registration_mode_fsgt):
     if compId is None:
         compId = str(uuid.uuid4().hex)
 
@@ -212,14 +337,18 @@ def create_competition(compId, added_by, name, date, routesid, max_participants,
    
     competition = {
         "id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
-        "routesid": routesid, "status": "preopen", 
+        "routesid": routesid,
         "max_participants": max_participants,
         "results": copy.deepcopy(CalculationStrategy.emptyResults),
-        "calc_type": CalculationStrategyFsgt2.name,
+        "calc_type": calc_type,
         "competition_type":competition_type,
         "instructions": instructions,
         "added_by": added_by,
-        "status" : competition_status_created,
+        "status" : competition_status_draft,
+        "organizer": organizer,
+        "region": region or None,
+        "series_key": series_key or None,
+        "registration_mode": registration_mode,
         "routes": routes.get('routes'),
         "climbers": {}}
     
@@ -255,9 +384,9 @@ def update_competition_routes(competition, routesid, force=False):
         logging.error('Routes not found '+str(competition.get('id')))
         raise ValueError('Routes not found')
     
-    if competition.get('status') in [competition_status_closed]:
+    if status_allows(competition, 'locked'):
         if not force:
-            logging.error('Cannot update routes when competition is closed '+str(competition.get('id')))
+            logging.error('Cannot update routes when competition is locked '+str(competition.get('id')))
             raise ValueError('Cannot update routes when competition is closed')
 
     competition['routes'] = routes.get('routes')
@@ -329,10 +458,11 @@ def addClimber(climberId, competitionId, email, name, firstname, lastname, club_
     if climberId is None:
         raise ValueError('Climber ID cannot be None')
 
-    try:
-        category = int(category)
-    except:
-        raise ValueError('category must be an integer')
+    if category is not None:
+        try:
+            category = int(category)
+        except:
+            raise ValueError('category must be an integer')
 
     if sex == 'm' or sex == 'M':
         sex = 'M'
@@ -609,6 +739,169 @@ def recalculate(competitionId, comp=None):
         sql_lock.release()
 
     return comp
+
+
+# seasons run from September 1st to August 31st and are named 'YYYY-YYYY'
+def season_of(date_str):
+    d = datetime.strptime(date_str, '%Y-%m-%d')
+    start_year = d.year if d.month >= 9 else d.year - 1
+    return f'{start_year}-{start_year + 1}'
+
+
+def season_range(season):
+    parts = season.split('-') if isinstance(season, str) else []
+    if len(parts) != 2 or not all(p.isdigit() and len(p) == 4 for p in parts) or int(parts[1]) != int(parts[0]) + 1:
+        raise ValueError('Invalid season ' + str(season) + ', expected YYYY-YYYY')
+    return f'{parts[0]}-09-01', f'{parts[1]}-08-31'
+
+
+def _counts_for_rankings(competition):
+    return bool(competition.get('series_key')) and _is_scored(competition) and status_allows(competition, 'results')
+
+
+# rankings that can be computed: one per (series_key, season, competition_type, calc_type)
+def list_available_rankings():
+    groups = set()
+    for comp in skala_db.get_competitions_filtered().values():
+        if _counts_for_rankings(comp):
+            groups.add((comp['series_key'], season_of(comp['date']), comp.get('competition_type'), comp['calc_type']))
+
+    type_order = list(competition_types.values())
+    groups = sorted(groups, key=lambda g: (g[0], type_order.index(g[2]) if g[2] in type_order else len(type_order), g[3]))
+    groups = sorted(groups, key=lambda g: g[1], reverse=True)
+    return [dict(zip(('series_key', 'season', 'competition_type', 'calc_type'), g)) for g in groups]
+
+
+# normalized so that accents, case and swapped first/last names identify the same climber across competitions
+def make_name_key(firstname, lastname):
+    def normalize(s):
+        s = (s or '').strip().upper()
+        return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    parts = sorted([normalize(firstname), normalize(lastname)])
+    return f"{parts[0]}|{parts[1]}"
+
+
+# FSGT rules: top 30 of each category score 30..1 points, best 5 results count, ties broken by participations;
+# clubs get 1 point per participant plus 5..1 for top 5 places in each category
+def compute_series_rankings(series_key, season, competition_type, calc_type):
+    date_from, date_to = season_range(season)
+    comps = skala_db.get_competitions_filtered(date_from=date_from, date_to=date_to, series_key=series_key,
+                                               competition_type=competition_type, calc_type=calc_type)
+    season_competitions = [comp_id for comp_id, comp in comps.items() if _counts_for_rankings(comp)]
+
+    participant_results = {}
+    for comp_id in season_competitions:
+        competition = recalculate(comp_id, comps[comp_id])
+        if not competition:
+            continue
+
+        for category_key, climbers_list in get_sorted_rankings(competition).items():
+            # F, M and A are not age categories; club holds club totals
+            if category_key in ['F', 'M', 'A', 'club']:
+                continue
+
+            for idx, climber in enumerate(climbers_list):
+                rank = idx + 1
+                name_key = make_name_key(climber.get('firstname', ''), climber.get('lastname', ''))
+                points = max(0, 31 - rank)
+
+                if name_key not in participant_results:
+                    participant_results[name_key] = {
+                        'category': category_key,
+                        'club': climber.get('club', ''),
+                        'gymid': climber.get('gymid', ''),
+                        'sex': climber.get('sex', ''),
+                        'firstname': climber.get('firstname', ''),
+                        'lastname': climber.get('lastname', ''),
+                        'results': []
+                    }
+                participant_results[name_key]['results'].append({'comp_id': comp_id, 'rank': rank, 'points': points})
+
+    gender_category_rankings = {
+        'M': {'0M': [], '1M': [], '2M': []},
+        'F': {'0F': [], '1F': [], '2F': []}
+    }
+
+    for name_key, data in participant_results.items():
+        category = data['category']
+        sex = data['sex']
+        results_to_count = min(5, len(data['results']))
+        best_results = sorted(data['results'], key=lambda x: x['points'], reverse=True)[:results_to_count]
+
+        if sex in gender_category_rankings and category in gender_category_rankings[sex]:
+            gender_category_rankings[sex][category].append({
+                'name_key': name_key,
+                'firstname': data['firstname'],
+                'lastname': data['lastname'],
+                'club': data['club'],
+                'gymid': data['gymid'],
+                'sex': sex,
+                'category': category,
+                'calc_type': calc_type,
+                'total_points': sum(r['points'] for r in best_results),
+                'participations': len(data['results']),
+                'results_counted': results_to_count,
+                'best_results': best_results
+            })
+        else:
+            logging.warning(f"Skipping climber {name_key}: sex={sex}, category={category} - not in expected structure")
+
+    for gender in list(gender_category_rankings):
+        for category in list(gender_category_rankings[gender]):
+            climbers = gender_category_rankings[gender][category]
+            if not climbers:
+                del gender_category_rankings[gender][category]
+                continue
+            climbers.sort(key=lambda x: (x['total_points'], x['participations']), reverse=True)
+            for idx, climber in enumerate(climbers):
+                climber['rank'] = idx + 1
+        if not gender_category_rankings[gender]:
+            del gender_category_rankings[gender]
+
+    club_scores = {}
+    club_participants = {}
+    for gender in gender_category_rankings:
+        for climbers in gender_category_rankings[gender].values():
+            for climber in climbers:
+                club = climber['club']
+                if not club:
+                    continue
+                if club not in club_scores:
+                    club_scores[club] = {'club': club, 'gymid': climber.get('gymid', ''), 'points': 0,
+                                         'participants_m': 0, 'participants_f': 0, 'total_participants': 0}
+                    club_participants[club] = set()
+
+                if climber['name_key'] not in club_participants[club]:
+                    club_participants[club].add(climber['name_key'])
+                    club_scores[club]['points'] += 1
+                    club_scores[club]['total_participants'] += 1
+                    club_scores[club]['participants_f' if climber['sex'] == 'F' else 'participants_m'] += 1
+
+                if climber['rank'] <= 5:
+                    club_scores[club]['points'] += 6 - climber['rank']
+
+    club_rankings = sorted(club_scores.values(),
+                           key=lambda x: (x['points'], x['total_participants'], x['participants_f']),
+                           reverse=True)
+    for idx, club in enumerate(club_rankings):
+        club['rank'] = idx + 1
+
+    competitors_m = sum(len(c) for c in gender_category_rankings.get('M', {}).values())
+    competitors_f = sum(len(c) for c in gender_category_rankings.get('F', {}).values())
+
+    return {
+        'series_key': series_key,
+        'season': season,
+        'competition_type': competition_type,
+        'calc_type': calc_type,
+        'competitions_count': len(season_competitions),
+        'competitors_total': competitors_m + competitors_f,
+        'competitors_m': competitors_m,
+        'competitors_f': competitors_f,
+        'competitions': season_competitions,
+        'individual': gender_category_rankings,
+        'club': club_rankings
+    }
 
 
 # returns sorted arrays based on rank
@@ -933,16 +1226,7 @@ def _update_competition(compId, competition):
         raise ValueError("cannot update competition with None key");
 
     competition = _recalculate_waiting_list(competition)
-    db = lite.connect(COMPETITIONS_DB)
-
-    cursor = db.cursor()
-
-    cursor.execute("update  " + COMPETITIONS_TABLE + " set jsondata=? where id=?  ",
-                   [json.dumps(competition), compId])
-
-    #logging.info('updated competition: '+str(compId))
-    db.commit()
-    db.close()
+    skala_db._update_competition(compId, competition)
     return competition
 
 
@@ -980,9 +1264,22 @@ def get_competition(compId):
 def _migrate_competition(competition):
 
     needs_updating = False
-    if competition.get('status') is None or competition.get('status') not in competition_status.values():
+    status = competition.get('status')
+    if isinstance(status, str) and status.isdigit():
+        status = int(status)
+    if status in legacy_competition_status:
+        competition['status'] = legacy_competition_status[status]
         needs_updating = True
-        competition['status'] = competition_status['created']
+    elif status not in STATUS_RULES:
+        competition['status'] = competition_status_draft
+        needs_updating = True
+
+    # competitions created before events were generalized all belong to the FSGT IDF challenge
+    for key, default in (('organizer', 'fsgt'), ('region', 'idf'),
+                         ('series_key', FSGT_COMPETITION_AUTREMENT_IDF), ('registration_mode', registration_mode_fsgt)):
+        if key not in competition:
+            competition[key] = default
+            needs_updating = True
 
     #if competition.get('gym_id') is None:
      #   raise ValueError('gym_id is missing for competition '+str(competition['id']))
@@ -1112,7 +1409,7 @@ def get_all_gyms_using_routes(routesid):
 
 def get_competitions_by_year(year):
     """
-    This function returns the list of competitions for the current year (actually season, e.g. 2023-2024).
+    This function returns the list of events for a season (e.g. 2023-2024).
 
     Args:
         year (int): The first year of the season (e.g. 2023)
@@ -1121,32 +1418,11 @@ def get_competitions_by_year(year):
     Returns:
         The list of competitions
     """
-    competitions = get_all_competitions()
-    competitions2 = {}
-    if not year.isdigit():
+    if not str(year).isdigit():
         year = datetime.now().year
 
     # The sport season starts in September and ends in August.
-    date_strt, date_end = datetime(int(year), 9, 1), datetime(int(year)+1, 8, 31)
-    input_format = "%Y-%m-%d"
-    
-    for competition_id in competitions:
-        competition = competitions.get(competition_id)
-        competition_date = competition.get('date')
-        try:
-            if competition_date is None or len(competition_date)<2:
-                parsered_date=date_end
-            else:
-                parsered_date = datetime.strptime(competition_date, input_format)
-            if parsered_date >= date_strt and parsered_date <= date_end:
-                competitions2[competition['id']] = competition
-
-        except ValueError:
-            print("This is the incorrect date string format.")
-
-    return dict(sorted(competitions2.items(),
-                         key=lambda x: x[1]['date'],
-                         reverse=False))
+    return skala_db.get_competitions_filtered(date_from=f'{int(year)}-09-01', date_to=f'{int(year)+1}-08-31')
 
 
 def get_active_competitions():
@@ -1421,6 +1697,13 @@ def has_permission_for_competition(competitionId, user):
     return competitionId in permissions['competitions'] or User.is_admin(user)
 
 
+# competition admins and scorers of this competition
+def can_update_presence(user, competition):
+    if user is None or competition is None:
+        return False
+    return has_permission_for_competition(competition['id'], user)
+
+
 def add_user_permission_create_competition(user):
     skala_db.add_user_permission(user,'create_competition')
 
@@ -1488,7 +1771,7 @@ def competition_can_be_deleted(competition):
     
     if climbers is not None and len(climbers)>0:
         return False
-    if competition['status'] != competition_status_created:
+    if competition['status'] != competition_status_draft:
         return False
 
     return True
@@ -1527,7 +1810,7 @@ def can_update_routes(user, competition):
             return False
 
     if ('update_routes' in permissions['general'] or 'edit_competition' in permissions['general']) \
-            and competition['status'] in [competition_status_scoring, competition_status_inprogress]\
+            and status_allows(competition, 'enter_routes')\
             and competition['id'] in permissions['competitions']:
         return True
 
@@ -1549,17 +1832,14 @@ def can_register(user, competition):
         return 'error5323'
 
     # competition is in the correct state then allow
-    if competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
+    if competition_accepts_registrations(competition):
         return ""
     else:
         return 'error5322'
 
 
 def competition_accepts_registrations(competition):
-        # competition is in the correct state then allow
-    if competition is None:
-        return False
-    return competition['status'] in [competition_status_open, competition_status_scoring, competition_status_inprogress]
+    return status_allows(competition, 'register') and _takes_registrations(competition)
 
 
 # checks if user can register for a competition
@@ -1581,7 +1861,7 @@ def can_unregister(user, competition):
     if competition is None:
         raise ValueError('competition cannot be None')
 
-    if competition['status'] not in [competition_status_open, competition_status_scoring, competition_status_inprogress]:
+    if not status_allows(competition, 'register'):
         return False
     
     if user is not None:

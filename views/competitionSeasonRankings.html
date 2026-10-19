@@ -169,50 +169,10 @@
     
     // State management
     const state = {
-        currentSeason: null,
-        currentType: '',
-        rankingsData: null,
-        seasonTypes: []
+        rankings: [],
+        selected: null,
+        rankingsData: null
     };
-    
-    // Compute season label from date (Mar = start of new season)
-    // We only show rankings for current season towards the end of it (March)
-    // Before march the current season is still the previous one
-    function computeSeason(dateStr) {
-        if (!dateStr) return null;
-        const date = new Date(dateStr);
-        const year = date.getFullYear() - 1;
-        const month = date.getMonth() + 1; // 1-12
-        
-        // Season runs Sept-June: if month >= 9, season is year/year+1, else (year-1)/year
-        if (month >= 3) {
-            return `${year}-${year + 1}`;
-        } else {
-            return `${year - 1}-${year}`;
-        }
-    }
-    
-    // Get unique season+type pairs from competitions
-    function extractSeasonTypes(competitions) {
-        const seen = new Set();
-        const pairs = [];
-        competitions.forEach(comp => {
-            const season = computeSeason(comp.date);
-            const type = comp.competition_type;
-            if (season && type) {
-                const key = `${season}:${type}`;
-                if (!seen.has(key)) {
-                    seen.add(key);
-                    pairs.push({ season, type });
-                }
-            }
-        });
-        pairs.sort((a, b) => {
-            if (b.season !== a.season) return b.season.localeCompare(a.season);
-            return a.type.localeCompare(b.type); // adult before ado
-        });
-        return pairs;
-    }
     
     // Show loading state in all sections
     function showLoading() {
@@ -229,7 +189,8 @@
     
     // Load rankings data
     async function loadRankings() {
-        if (!state.currentSeason) {
+        const selected = state.selected;
+        if (!selected) {
             document.getElementById('rankingsSummary').style.display = 'none';
             document.getElementById('clubRankingsSection').style.display = 'none';
             document.getElementById('individualRankingsSection').style.display = 'none';
@@ -240,12 +201,12 @@
         document.getElementById('rankingsSummary').style.display = 'block';
         document.getElementById('clubRankingsSection').style.display = 'block';
         document.getElementById('individualRankingsSection').style.display = 'block';
-        const sel = document.getElementById('competitionFilter');
-        document.getElementById('summarySeasonName').textContent = sel.options[sel.selectedIndex]?.text || state.currentSeason;
+        document.getElementById('summarySeasonName').textContent = selected.label;
         showLoading();
         
         try {
-            const url = `/api1/season/${state.currentSeason}/rankings${state.currentType ? '?competition_type=' + state.currentType : ''}`;
+            const params = new URLSearchParams({ competition_type: selected.competition_type, calc_type: selected.calc_type });
+            const url = `/api1/rankings/${encodeURIComponent(selected.series_key)}/${encodeURIComponent(selected.season)}?${params}`;
             const data = await apiFetchJson(url);
             
             state.rankingsData = data;
@@ -327,7 +288,8 @@
             return;
         }
 
-        const compType = state.currentType || (state.rankingsData && state.rankingsData.competition_type) || 'adult';
+        const compType = state.selected.competition_type;
+        const ageType = state.selected.calc_type;
         let html = '';
 
         genders.forEach(gender => {
@@ -335,7 +297,6 @@
             const categories = Object.keys(individual[gender]).sort().reverse(); // oldest first (2=Diamond, 1=Titan, 0=Senior)
             categories.forEach(category => {
                 const climbers = individual[gender][category];
-                const ageType = climbers && climbers.length > 0 ? climbers[0].calc_type : null;
                 const categoryLabel = getCategoryLabel(category, ageType, compType);
                 html += `<h4 class="category-section-title">${genderLabel} – ${categoryLabel}</h4>`;
                 html += buildCategoryTable(climbers);
@@ -406,31 +367,17 @@
     // Initialize filters
     function initializeFilters() {
         const select = document.getElementById('competitionFilter');
-        select.innerHTML = '<option value="">Select Competition</option>';
-        state.seasonTypes.forEach(({ season, type }) => {
+        select.innerHTML = '';
+        state.rankings.forEach((ranking, index) => {
             const option = document.createElement('option');
-            option.value = `${season}:${type}`;
-            const typeLabel = getTranslation(`competition_type_${type}`);
-            option.textContent = `FSGT IDF ${typeLabel} ${season}`;
+            option.value = index;
+            option.textContent = ranking.label;
             select.appendChild(option);
         });
-
-        // Default to current season, prefer adult type
-        const today = new Date();
-        const currentSeason = computeSeason(today.toISOString().split('T')[0]);
-        const defaultPair = state.seasonTypes.find(p => p.season === currentSeason && p.type === 'adult')
-            || state.seasonTypes.find(p => p.season === currentSeason)
-            || state.seasonTypes[0];
-        if (defaultPair) {
-            select.value = `${defaultPair.season}:${defaultPair.type}`;
-            state.currentSeason = defaultPair.season;
-            state.currentType = defaultPair.type;
-        }
+        state.selected = state.rankings[0] || null;
 
         select.addEventListener('change', (e) => {
-            const [season, type] = e.target.value ? e.target.value.split(':') : [null, ''];
-            state.currentSeason = season || null;
-            state.currentType = type || '';
+            state.selected = state.rankings[e.target.value] || null;
             loadRankings();
         });
     }
@@ -446,15 +393,16 @@
     // Load data and initialize
     async function initialize() {
         try {
-            // Get all competitions to extract seasons
-            const competitions = await apiFetchJson('/api1/competition/list');
-            state.seasonTypes = extractSeasonTypes(competitions);
+            state.rankings = await apiFetchJson('/api1/rankings/available');
             
             initializeFilters();
             
-            // Load rankings if season is selected
-            if (state.currentSeason) {
+            if (state.selected) {
                 await loadRankings();
+            } else {
+                document.getElementById('competitionFilter').style.display = 'none';
+                document.getElementById('rankingsSummary').insertAdjacentHTML('beforebegin',
+                    '<div class="empty-state"><p data-translate-key="no_individual_rankings">No individual rankings available</p></div>');
             }
             
         } catch (error) {

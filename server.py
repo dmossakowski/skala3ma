@@ -309,7 +309,7 @@ def init():
         skip_blueprints={'skala_api'},
         allowed_path_substrings=['/gyms', '/activities', '/myactivities', '/myresultats', '/contact', '/competitionDetails',
                                  '/competitionCalendar','/app_admin1','/competition_admin','/competitionResults',
-                                 '/competitionDashboard','/competitions','/newCompetition','/user','/updateuser','/climbers',
+                                 '/competitionDashboard','/events','/competitions','/newCompetition','/user','/updateuser','/climbers',
                                  '/competitionFullResults','/competitionStats','/competitionRoutesEntry','/competitionRoutes'])
 
     if not os.path.exists(DATA_DIRECTORY):
@@ -892,7 +892,7 @@ def competition_contact(competitionId):
         competition = competitionsEngine.get_competition(competitionId)
 
     if competition is None:
-        return redirect("/competitionDashboard")
+        return redirect("/events")
     
     elif competition is LookupError:
         return render_template('index.html', sortedA=None,
@@ -938,7 +938,7 @@ def competition_contact_post(competitionId):
         competition = competitionsEngine.get_competition(competitionId)
 
     if competition is None:
-        return redirect("/competitionDashboard")
+        return redirect("/events")
     
 
     if not email or not name or not message or not subject:

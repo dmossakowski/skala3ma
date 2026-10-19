@@ -1,0 +1,69 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% include "gym-menu.html" %}
+{% endblock %}
+
+{% block secondarycontent %}
+
+<div class="container my-3" style="max-width: 800px;">
+    <h4>{{ reference_data['current_language'].upcoming }}</h4>
+    <div id="gymEventsUpcoming" class="list-group mb-4"></div>
+
+    <h4>{{ reference_data['current_language'].past_events }}</h4>
+    <div id="gymEventsPast" class="list-group mb-4"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gymId = {{ gymid | tojson }};
+    const emptyText = {{ reference_data['current_language'].no_competition_found | tojson }};
+    const upcomingEl = document.getElementById('gymEventsUpcoming');
+    const pastEl = document.getElementById('gymEventsPast');
+
+    function renderEvent(ev) {
+        const a = document.createElement('a');
+        a.href = ev.url;
+        a.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+
+        const left = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'fw-semibold';
+        title.textContent = ev.title || '';
+        const date = document.createElement('small');
+        date.className = 'text-muted';
+        date.textContent = ev.date || '';
+        left.append(title, date);
+
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-secondary';
+        badge.textContent = (ev.text && ev.text.status) || ev.status || '';
+
+        a.append(left, badge);
+        return a;
+    }
+
+    function fill(container, events) {
+        if (events.length === 0) {
+            const p = document.createElement('div');
+            p.className = 'text-muted';
+            p.textContent = emptyText;
+            container.appendChild(p);
+            return;
+        }
+        events.forEach(ev => container.appendChild(renderEvent(ev)));
+    }
+
+    window.apiFetchJson('/api1/competition/list?gym_id=' + encodeURIComponent(gymId))
+        .then(events => {
+            const today = new Date().toISOString().slice(0, 10);
+            const upcoming = events.filter(ev => (ev.date || '') >= today);
+            const past = events.filter(ev => (ev.date || '') < today).reverse();
+            fill(upcomingEl, upcoming);
+            fill(pastEl, past);
+        })
+        .catch(err => console.error('Failed to load gym events', err));
+});
+</script>
+
+{% endblock %}

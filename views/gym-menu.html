@@ -7,15 +7,78 @@
     
     <a href="/gyms/{{ gymid}}/main"  class="nav-link"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
    
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link">{{ reference_data['current_language'].topo }}</a> 
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link">Stats</a>
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link d-none d-md-block">Stats</a>
                         <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
     <!--a href="/gyms/{{gymid}}/climbers" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a-->
     <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="nav-link">{{ reference_data['current_language'].routes }} (beta)</a--> 
 
-    <a href="/gyms/{{gymid}}/qrcode" class="nav-link">QR Code</a> 
+    <a href="/gyms/{{gymid}}/qrcode" class="nav-link d-none d-md-block">QR Code</a> 
 
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link">{{ reference_data['current_language'].Discs }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link d-none d-md-block">{{ reference_data['current_language'].Discs }}</a> 
+
+    <a href="/gyms/{{gymid}}/events" class="nav-link d-none d-md-block">{{ reference_data['current_language'].events }}</a> 
     
  </div>
 </ul>
+
+<!-- moved into the layout's left mobile menu by skala3ma-layout.html -->
+<div hidden data-context-menu>
+    <h5 class="mb-2">
+        <img src="/image/{{ gym.get('logo_img_id') }}" height="30" class="me-2"/>{{ gym['name'] }}
+    </h5>
+        <nav class="nav flex-column">
+            <a href="/gyms/{{ gymid }}/main" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-house me-2"></i>{{ gym['name'] }}
+            </a>
+            <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-pin-map me-2"></i>{{ reference_data['current_language'].topo }}
+            </a>
+            <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}/stats" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-graph-up me-2"></i>Stats
+            </a>
+            <a href="/gyms/{{ gymid }}/qrcode" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-qr-code me-2"></i>QR Code
+            </a>
+            <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}/discs" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-circle me-2"></i>{{ reference_data['current_language'].Discs }}
+            </a>
+            <a href="/gyms/{{ gymid }}/events" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-calendar-event me-2"></i>{{ reference_data['current_language'].events }}
+            </a>
+        </nav>
+</div>
+
+<style>
+    .gym-menu-link-mobile {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        color: rgba(51, 51, 51, 0.7);
+    }
+    .gym-menu-link-mobile:hover {
+        color: #29c05c;
+        background-color: rgba(41, 192, 92, 0.1);
+    }
+    .gym-menu-link-mobile i {
+        font-size: 1.3rem;
+        width: 30px;
+    }
+    .gym-menu-link-mobile.active {
+        font-weight: bold !important;
+        color: #29c05c !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // isActivePage only compares the first segment, which is "/gyms" for every link here
+        const path = window.location.pathname.replace(/\/$/, '');
+        document.querySelectorAll('.gym-menu-link-mobile').forEach(link => {
+            if (link.getAttribute('href') === path) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>

@@ -8,6 +8,8 @@ from CalculationStrategy import CalculationStrategy
 
 class CalculationStrategyFsgt0(CalculationStrategy):
     name = "fsgt0"
+    scoring_pages = ['routes', 'full_results', 'results', 'stats']
+    uses_routes = True
 
     # 2021 FSGT age categories; returns -1 if the age fits no category
     def get_age_category(self, age, competition_type):

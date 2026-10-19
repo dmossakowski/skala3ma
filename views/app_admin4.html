@@ -1,0 +1,362 @@
+
+<!-- Admin raw Competitions table editor -->
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+{% endblock %}
+
+
+{% block secondarycontent %}
+
+<style>
+	#compTable td, #compTable th { font-size: 12px; white-space: nowrap; padding: 3px 6px; }
+	#compTable th { cursor: pointer; user-select: none; }
+	#compTable tbody tr { cursor: pointer; }
+	#compTable tbody tr.selected { background: #d9edf7 !important; }
+	#compTable select { font-size: 11px; height: 22px; padding: 0 2px; max-width: 130px; }
+	#jsonEditor { font-family: Menlo, Consolas, monospace; font-size: 12px; width: 100%; height: 600px; white-space: pre; tab-size: 2; }
+	#jsonEditor.invalid { border: 2px solid #d9534f; }
+	.col-edit td { padding: 2px 6px; font-size: 12px; vertical-align: middle; }
+	.col-edit input[type=text] { font-family: Menlo, Consolas, monospace; font-size: 12px; width: 100%; }
+	.col-edit tr.changed { background: #fcf8e3; }
+	.col-edit tr.mismatch td:first-child { color: #d9534f; font-weight: bold; }
+	.mono { font-family: Menlo, Consolas, monospace; }
+</style>
+
+<div style="background-color: #fff;">
+	{% include "app_admin_menu.html" %}
+
+	<div class="container-fluid">
+		<h3>Competitions Table (raw)</h3>
+		<p class="text-muted">Direct edits of the <code>competitions</code> table. No validation besides JSON syntax and <code>jsondata.id == id</code>.
+			Query columns are normally copied from jsondata on every app save; edits here are written as-is.</p>
+
+		<div id="alertContainer"></div>
+
+		<div class="form-inline" style="margin-bottom: 8px;">
+			<input type="text" class="form-control input-sm" id="quickFilter" placeholder="Quick filter (id, name, gym, columns)" style="width: 320px;" oninput="render()">
+			<input type="text" class="form-control input-sm" id="jsonSearch" placeholder="Server-side: jsondata/id contains..." style="width: 280px;" onkeydown="if(event.key==='Enter') loadRows()">
+			<button class="btn btn-sm btn-primary" onclick="loadRows()">Load</button>
+			<label style="margin-left: 10px; font-weight: normal;"><input type="checkbox" id="onlyProblems" onchange="render()"> only rows with sync/id/JSON problems</label>
+			<button class="btn btn-sm btn-default" onclick="clearFilters()">Clear filters</button>
+			<span id="rowCount" class="text-muted" style="margin-left: 10px;"></span>
+		</div>
+
+		<div style="max-height: 420px; overflow: auto; border: 1px solid #ddd;">
+			<table class="table table-condensed table-striped table-hover" id="compTable" style="margin-bottom: 0;">
+				<thead><tr id="headRow"></tr><tr id="filterRow"></tr></thead>
+				<tbody id="tableBody"></tbody>
+			</table>
+		</div>
+
+		<div id="editorPanel" style="display: none; margin-top: 15px;">
+			<h4>Editing <span class="mono" id="editId"></span> <small id="editName"></small></h4>
+			<div style="margin-bottom: 8px;">
+				<button class="btn btn-sm btn-success" onclick="saveRow()">Save changes</button>
+				<button class="btn btn-sm btn-default" onclick="openRow(currentId)">Reload from DB</button>
+				<button class="btn btn-sm btn-info" onclick="columnsFromJson()">Fill columns from JSON</button>
+				<a class="btn btn-sm btn-default" id="linkDetails" target="_blank">Details page</a>
+				<a class="btn btn-sm btn-default" id="linkAdmin" target="_blank">Competition admin</a>
+				<button class="btn btn-sm btn-danger pull-right" onclick="deleteRow()">Delete row</button>
+			</div>
+			<div class="row">
+				<div class="col-md-4">
+					<table class="table table-condensed col-edit">
+						<thead><tr><th>column</th><th>value</th><th>NULL</th><th>json</th></tr></thead>
+						<tbody id="columnsBody"></tbody>
+					</table>
+				</div>
+				<div class="col-md-8">
+					<div style="margin-bottom: 4px;">
+						<b>jsondata</b>
+						<button class="btn btn-xs btn-default" onclick="formatJson(2)">Format</button>
+						<button class="btn btn-xs btn-default" onclick="formatJson(0)">Compact</button>
+						<span id="jsonStatus" class="text-muted" style="margin-left: 8px;"></span>
+					</div>
+					<textarea id="jsonEditor" spellcheck="false" oninput="onJsonInput()"></textarea>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+const API = '/api1/admin/competitions';
+const LIST_COLUMNS = ['id', 'added_at', 'name', 'event_date', 'status', 'series_key', 'organizer', 'region',
+	'competition_type', 'calc_type', 'registration_mode', 'gym', 'gym_id', 'climbers_count', 'json_size', 'problems'];
+const DROPDOWN_COLUMNS = ['status', 'series_key', 'organizer', 'region', 'competition_type', 'calc_type', 'registration_mode', 'gym'];
+
+let rows = [];
+let columnMap = {};
+let sortCol = 'added_at', sortDir = -1;
+let currentId = null, originalRow = null;
+
+function esc(v) {
+	return String(v ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+}
+
+function authHeaders(extra = {}) {
+	const m = document.cookie.match(/(?:^|;\s*)skala3ma_jwt=([^;]+)/);
+	return m ? Object.assign({'Authorization': 'Bearer ' + m[1]}, extra) : extra;
+}
+
+async function api(method, url, body) {
+	const opts = {method, credentials: 'include', headers: authHeaders(body ? {'Content-Type': 'application/json'} : {})};
+	if (body) opts.body = JSON.stringify(body);
+	const resp = await fetch(url, opts);
+	const ct = resp.headers.get('content-type') || '';
+	if (!ct.includes('application/json')) throw new Error('Not authenticated (HTTP ' + resp.status + ')');
+	const data = await resp.json();
+	if (!resp.ok || data.success === false) throw new Error(data.message || data.error || ('HTTP ' + resp.status));
+	return data;
+}
+
+function showAlert(message, type = 'info') {
+	document.getElementById('alertContainer').innerHTML =
+		`<div class="alert alert-${type}" style="padding: 6px 10px;">${esc(message)}</div>`;
+	if (type !== 'danger') setTimeout(() => { document.getElementById('alertContainer').innerHTML = ''; }, 4000);
+}
+
+function problems(r) {
+	const p = [];
+	if (r.json_invalid) p.push('invalid JSON');
+	if (r.json_id_mismatch) p.push('json.id != id');
+	if (r.out_of_sync && r.out_of_sync.length) p.push('sync: ' + r.out_of_sync.join(','));
+	return p.join('; ');
+}
+
+async function loadRows() {
+	const q = document.getElementById('jsonSearch').value.trim();
+	try {
+		const data = await api('GET', API + (q ? '?q=' + encodeURIComponent(q) : ''));
+		rows = data.rows.map(r => Object.assign(r, {problems: problems(r)}));
+		columnMap = data.column_map;
+		buildHeader();
+		render();
+	} catch (e) {
+		showAlert('Load failed: ' + e.message, 'danger');
+	}
+}
+
+function buildHeader() {
+	const prev = {};
+	document.querySelectorAll('#filterRow select, #filterRow input').forEach(el => prev[el.dataset.col] = el.value);
+	document.getElementById('headRow').innerHTML = LIST_COLUMNS.map(c =>
+		`<th onclick="sortBy('${c}')">${esc(c)}${c === sortCol ? (sortDir > 0 ? ' &#9650;' : ' &#9660;') : ''}</th>`).join('');
+	document.getElementById('filterRow').innerHTML = LIST_COLUMNS.map(c => {
+		if (c === 'event_date') {
+			const years = [...new Set(rows.map(r => (r.event_date || '').slice(0, 4)).filter(Boolean))].sort().reverse();
+			return `<th><select data-col="${c}" onchange="render()"><option value="">(year)</option>` +
+				years.map(y => `<option${prev[c] === y ? ' selected' : ''}>${esc(y)}</option>`).join('') + '</select></th>';
+		}
+		if (DROPDOWN_COLUMNS.includes(c)) {
+			const values = [...new Set(rows.map(r => r[c] == null ? '\u2205' : String(r[c])))].sort();
+			return `<th><select data-col="${c}" onchange="render()"><option value="">(all)</option>` +
+				values.map(v => `<option value="${esc(v)}"${prev[c] === v ? ' selected' : ''}>${esc(v)}</option>`).join('') + '</select></th>';
+		}
+		return '<th></th>';
+	}).join('');
+}
+
+function sortBy(c) {
+	if (sortCol === c) sortDir = -sortDir; else { sortCol = c; sortDir = 1; }
+	buildHeader();
+	render();
+}
+
+function clearFilters() {
+	document.getElementById('quickFilter').value = '';
+	document.getElementById('onlyProblems').checked = false;
+	document.querySelectorAll('#filterRow select').forEach(el => el.value = '');
+	render();
+}
+
+function render() {
+	const quick = document.getElementById('quickFilter').value.trim().toLowerCase();
+	const onlyProblems = document.getElementById('onlyProblems').checked;
+	const colFilters = [...document.querySelectorAll('#filterRow select')].filter(el => el.value);
+
+	let filtered = rows.filter(r => {
+		if (onlyProblems && !r.problems) return false;
+		for (const el of colFilters) {
+			const c = el.dataset.col;
+			if (c === 'event_date') { if ((r.event_date || '').slice(0, 4) !== el.value) return false; }
+			else if ((r[c] == null ? '\u2205' : String(r[c])) !== el.value) return false;
+		}
+		if (quick) {
+			const hay = LIST_COLUMNS.map(c => r[c] ?? '').join(' ').toLowerCase();
+			if (!quick.split(/\s+/).every(t => hay.includes(t))) return false;
+		}
+		return true;
+	});
+
+	filtered.sort((a, b) => {
+		const x = a[sortCol] ?? '', y = b[sortCol] ?? '';
+		return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * sortDir;
+	});
+
+	document.getElementById('rowCount').textContent = `${filtered.length} / ${rows.length} rows`;
+	document.getElementById('tableBody').innerHTML = filtered.map(r =>
+		`<tr data-id="${esc(r.id)}" class="${r.id === currentId ? 'selected' : ''}${r.problems ? ' warning' : ''}">` +
+		LIST_COLUMNS.map(c => {
+			let v = r[c];
+			if (c === 'id') return `<td class="mono" title="${esc(v)}">${esc(String(v).slice(0, 8))}</td>`;
+			if (c === 'name' || c === 'gym') return `<td title="${esc(v)}">${esc(String(v ?? '').slice(0, 40))}</td>`;
+			if (c === 'problems') return `<td class="text-danger">${esc(v)}</td>`;
+			return `<td>${v == null ? '<span class="text-muted">null</span>' : esc(v)}</td>`;
+		}).join('') + '</tr>').join('');
+}
+
+document.getElementById('tableBody').addEventListener('click', e => {
+	const tr = e.target.closest('tr[data-id]');
+	if (tr) openRow(tr.dataset.id);
+});
+
+async function openRow(id) {
+	try {
+		const data = await api('GET', API + '/' + encodeURIComponent(id));
+		originalRow = data.row;
+		currentId = id;
+		location.hash = id;
+		document.getElementById('editorPanel').style.display = '';
+		document.getElementById('editId').textContent = id;
+		document.getElementById('linkDetails').href = '/competitionDetails/' + encodeURIComponent(id);
+		document.getElementById('linkAdmin').href = '/competition_admin/' + encodeURIComponent(id);
+
+		let pretty = originalRow.jsondata ?? '';
+		try { pretty = JSON.stringify(JSON.parse(pretty), null, 2); } catch (e) { /* keep raw */ }
+		document.getElementById('jsonEditor').value = pretty;
+
+		document.getElementById('columnsBody').innerHTML = Object.keys(originalRow).filter(c => c !== 'jsondata').map(c => {
+			const v = originalRow[c];
+			const ro = c === 'id';
+			return `<tr data-col="${esc(c)}"><td class="mono">${esc(c)}</td>` +
+				`<td><input type="text" class="form-control input-sm" value="${esc(v ?? '')}" ${ro ? 'readonly' : ''} oninput="markChanges()"></td>` +
+				`<td>${ro ? '' : `<input type="checkbox" ${v == null ? 'checked' : ''} onchange="markChanges()">`}</td>` +
+				`<td class="mono text-muted json-val"></td></tr>`;
+		}).join('');
+		onJsonInput();
+		render();
+	} catch (e) {
+		showAlert('Open failed: ' + e.message, 'danger');
+	}
+}
+
+function parsedJson() {
+	try { return JSON.parse(document.getElementById('jsonEditor').value); } catch (e) { return undefined; }
+}
+
+function jsonColumnValue(obj, col) {
+	const key = columnMap[col];
+	if (!key || !obj || typeof obj !== 'object') return undefined;
+	const v = obj[key];
+	return v == null ? null : String(v);
+}
+
+function onJsonInput() {
+	const ed = document.getElementById('jsonEditor');
+	let obj, err = null;
+	try { obj = JSON.parse(ed.value); } catch (e) { err = e.message; }
+	ed.classList.toggle('invalid', !!err);
+	const status = document.getElementById('jsonStatus');
+	if (err) status.innerHTML = `<span class="text-danger">${esc(err)}</span>`;
+	else if (!obj || typeof obj !== 'object' || Array.isArray(obj)) status.innerHTML = '<span class="text-danger">must be an object</span>';
+	else if (obj.id !== currentId) status.innerHTML = '<span class="text-danger">json.id differs from row id</span>';
+	else status.textContent = `valid, ${ed.value.length} chars` + (jsonChanged() ? ' (modified)' : '');
+	document.getElementById('editName').textContent = obj && obj.name ? obj.name : '';
+	markChanges();
+}
+
+function columnInputs() {
+	return [...document.querySelectorAll('#columnsBody tr')].map(tr => {
+		const [text, nullBox] = tr.querySelectorAll('input');
+		return {tr, col: tr.dataset.col, text, nullBox, value: nullBox && nullBox.checked ? null : text.value};
+	});
+}
+
+function markChanges() {
+	const obj = parsedJson();
+	columnInputs().forEach(({tr, col, text, nullBox, value}) => {
+		if (nullBox) text.disabled = nullBox.checked;
+		tr.classList.toggle('changed', col !== 'id' && value !== (originalRow[col] == null ? null : String(originalRow[col])));
+		const jv = jsonColumnValue(obj, col);
+		const cell = tr.querySelector('.json-val');
+		cell.textContent = jv === undefined ? '' : (jv === null ? 'null' : jv);
+		tr.classList.toggle('mismatch', jv !== undefined && jv !== value);
+	});
+}
+
+function jsonChanged() {
+	const orig = originalRow ? originalRow.jsondata : null;
+	const cur = document.getElementById('jsonEditor').value;
+	try { return JSON.stringify(JSON.parse(cur)) !== JSON.stringify(JSON.parse(orig)); } catch (e) { return cur !== orig; }
+}
+
+function formatJson(indent) {
+	const obj = parsedJson();
+	if (obj === undefined) return showAlert('JSON is invalid', 'warning');
+	document.getElementById('jsonEditor').value = indent ? JSON.stringify(obj, null, indent) : JSON.stringify(obj);
+	onJsonInput();
+}
+
+function columnsFromJson() {
+	const obj = parsedJson();
+	if (obj === undefined) return showAlert('JSON is invalid', 'warning');
+	columnInputs().forEach(({col, text, nullBox}) => {
+		const jv = jsonColumnValue(obj, col);
+		if (jv === undefined || !nullBox) return;
+		nullBox.checked = jv === null;
+		text.value = jv ?? '';
+	});
+	markChanges();
+}
+
+async function saveRow() {
+	const columns = {};
+	columnInputs().forEach(({col, value}) => {
+		if (col !== 'id' && value !== (originalRow[col] == null ? null : String(originalRow[col]))) columns[col] = value;
+	});
+	const body = {columns, jsondata: null};
+	if (jsonChanged()) {
+		const obj = parsedJson();
+		if (obj === undefined) return showAlert('JSON is invalid, not saved', 'danger');
+		body.jsondata = JSON.stringify(obj);
+	}
+	if (!Object.keys(columns).length && body.jsondata === null) return showAlert('Nothing changed', 'info');
+	const summary = Object.keys(columns).join(', ') + (body.jsondata !== null ? (Object.keys(columns).length ? ', ' : '') + 'jsondata' : '');
+	if (!confirm(`Write ${summary} for ${currentId}?`)) return;
+	try {
+		await api('PUT', API + '/' + encodeURIComponent(currentId), body);
+		showAlert('Saved: ' + summary, 'success');
+		await loadRows();
+		await openRow(currentId);
+	} catch (e) {
+		showAlert('Save failed: ' + e.message, 'danger');
+	}
+}
+
+async function deleteRow() {
+	const typed = prompt(`Delete competition row permanently? Type the id to confirm:\n${currentId}`);
+	if (typed !== currentId) return;
+	try {
+		await api('DELETE', API + '/' + encodeURIComponent(currentId));
+		showAlert('Deleted ' + currentId, 'success');
+		currentId = null;
+		originalRow = null;
+		history.replaceState(null, '', location.pathname);
+		document.getElementById('editorPanel').style.display = 'none';
+		await loadRows();
+	} catch (e) {
+		showAlert('Delete failed: ' + e.message, 'danger');
+	}
+}
+
+loadRows().then(() => {
+	const id = decodeURIComponent(location.hash.slice(1));
+	if (id) openRow(id);
+});
+</script>
+
+{% endblock %}

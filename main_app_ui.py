@@ -102,6 +102,7 @@ GOOGLE_DISCOVERY_URL = (
 #tag = Tag(name="UI operations", description='UI operations which return HTML pages - competitionsApp.py')
 #app_ui = APIBlueprint('app_ui', __name__, abp_tags=[tag])
 app_ui = Blueprint('app_ui', __name__, static_folder='public')
+app_ui.add_app_template_global(competitionsEngine.get_competition_pages, 'competition_pages')
 
 app_ui.debug = True
 app_ui.secret_key = 'development'
@@ -384,6 +385,8 @@ def competition_admin_get(competition_id):
                            reference_data=competitionsEngine.reference_data,
                             all_clubs=all_clubs,
                            routeset_diff=diff,
+                           allowed_statuses=competitionsEngine.get_allowed_statuses(competition),
+                           series_keys=skala_db.get_series_keys(),
                            id=id)
 
 
@@ -478,9 +481,11 @@ def competition_admin_post(competition_id):
 
 
     if update_status is not None:
-        competition['status'] = int(competition_status)
-        competitionsEngine.update_competition(competition_id, competition)
-        resultMessage= "Status updated"
+        resultError = competitionsEngine.status_change_error(user, competition, competition_status)
+        if not resultError:
+            competition['status'] = competition_status
+            competitionsEngine.update_competition(competition_id, competition)
+            resultMessage= "Status updated"
 
     if remove_climber is not None:
         competition['climbers'].pop(remove_climber)
@@ -545,6 +550,19 @@ def competition_admin_post(competition_id):
         
         max_participants = request.form.get('max_participants')
         competition_type = request.form.get('competition_type')
+
+        registration_mode = request.form.get('registration_mode')
+        if registration_mode not in competitionsEngine.registration_modes:
+            registration_mode = competition.get('registration_mode')
+        calc_type = request.form.get('calc_type') or competition.get('calc_type')
+        if calc_type != competition.get('calc_type') and (
+                calc_type not in competitionsEngine.creatable_calc_types
+                or competition.get('status') not in competitionsEngine.calc_type_editable_statuses):
+            resultError = 'The calculation strategy cannot be changed now'
+        else:
+            resultError = competitionsEngine.settings_error(calc_type, registration_mode)
+
+    if competition_update_button is not None and not resultError:
         # update gym name in the competition if Gym Name is changed somewhere else
         gym = competitionsEngine.get_gym(competition['gym_id'])
         if gym is not None:
@@ -552,6 +570,14 @@ def competition_admin_post(competition_id):
                 competition['gym']=gym['name']
         competition['max_participants']=max_participants
         competition['competition_type'] = competition_type
+        competition['registration_mode'] = registration_mode
+        competition['calc_type'] = calc_type
+
+        organizer = request.form.get('organizer')
+        if organizer in competitionsEngine.organizers:
+            competition['organizer'] = organizer
+        competition['region'] = (request.form.get('region') or '').strip() or None
+        competition['series_key'] = (request.form.get('series_key') or '').strip() or None
 
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, instructions)
         resultMessage= "Competition details updated"
@@ -568,7 +594,7 @@ def competition_admin_post(competition_id):
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
             competitionsEngine.delete_competition(competition['id'])
-            return redirect(f'/competitionDashboard')
+            return redirect('/events')
 
     if change_poster_button is not None and imgfilename is not None:
         competitionsEngine.update_competition(competition['id'], competition)
@@ -599,7 +625,9 @@ def competition_admin_post(competition_id):
                            id=id,
                            resultMessage=resultMessage,
                            resultError=resultError,
-                            all_clubs=all_clubs
+                            all_clubs=all_clubs,
+                           allowed_statuses=competitionsEngine.get_allowed_statuses(competition),
+                           series_keys=skala_db.get_series_keys()
                            )
 
 
@@ -617,6 +645,15 @@ def app_admin2():
 @admin_required
 def app_admin3():
     return render_template('app_admin3.html',
+                           reference_data=competitionsEngine.reference_data
+                           )
+
+
+@app_ui.route('/app_admin4', methods=['GET'])
+@login_required
+@admin_required
+def app_admin4():
+    return render_template('app_admin4.html',
                            reference_data=competitionsEngine.reference_data
                            )
 
@@ -823,6 +860,11 @@ def getCompetitionCalendar():
 
 
 @app_ui.route('/competitionDashboard')
+def redirectCompetitionDashboard():
+    return redirect('/events', code=301)
+
+
+@app_ui.route('/events')
 def getCompetitionDashboard():
     # select season year depending on current month;
     # e.g. if 2023-10-01 then season is 2023-24 
@@ -1025,6 +1067,9 @@ def addCompetitionClimber(competitionId):
                 error_code = "error5328"
 
             if not error_code:
+                error_code = competitionsEngine.registration_mode_error(comp, dependent, gymid)
+
+            if not error_code:
                 # Resolve club name
                 user_club_name = 'Unknown'
                 if gymid:
@@ -1032,7 +1077,9 @@ def addCompetitionClimber(competitionId):
                     if user_club is not None:
                         user_club_name = user_club.get('name')
                 
-                if dob is not None:
+                if not competitionsEngine.get_strategy(comp).uses_age_categories:
+                    category = None
+                elif dob is not None:
                     category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('calc_type'))
                     if category == -1:
                         error_code = "error5325"
@@ -1079,7 +1126,12 @@ def addCompetitionClimber(competitionId):
         if is_form_user_registered:
             error_code = "error5321"
 
-        if dob is not None:
+        if not error_code:
+            error_code = competitionsEngine.registration_mode_error(comp, user, gymid)
+
+        if not competitionsEngine.get_strategy(comp).uses_age_categories:
+            category = None
+        elif dob is not None:
             category = competitionsEngine.get_category_from_dob(dob, comp.get('date'), comp.get('competition_type'), comp.get('calc_type'))   
             if category == -1:
                 error_code = "error5325"
@@ -1328,6 +1380,13 @@ def my_activities():
                            )
 
 
+def _redirect_if_no_page(competitionId, page):
+    competition = competitionsEngine.getCompetition(competitionId)
+    if competition is not None and not competitionsEngine.has_page(competition, page):
+        return redirect(url_for('app_ui.getCompetition', competitionId=competitionId))
+    return None
+
+
 @app_ui.route('/competitionDetails/<competitionId>')
 def getCompetition(competitionId):
     #competitionId = request.args.get('competitionId')
@@ -1341,7 +1400,7 @@ def getCompetition(competitionId):
         competition = competitionsEngine.recalculate(competitionId)
 
     if competition is None:
-        return redirect("/competitionDashboard")
+        return redirect("/events")
     
     elif competition is LookupError:
         return render_template('index.html', sortedA=None,
@@ -1368,6 +1427,9 @@ def getCompetition(competitionId):
 @app_ui.route('/competitionResults/<competitionId>')
 #@login_required
 def getCompetitionResults(competitionId):
+    page_redirect = _redirect_if_no_page(competitionId, 'results')
+    if page_redirect is not None:
+        return page_redirect
     competition = None
 
     if competitionId is not None:
@@ -1397,8 +1459,7 @@ def getCompetitionResults(competitionId):
         if competitionsEngine.has_permission_for_competition(competitionId, user):
             isAdminUser = True
 
-    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
-                                    competitionsEngine.competition_status_scoring]): 
+    if isAdminUser or competitionsEngine.status_allows(competition, 'results'):
         rankings = competitionsEngine.get_sorted_rankings(competition)
 
     return render_template("competitionResults.html", 
@@ -1412,6 +1473,9 @@ def getCompetitionResults(competitionId):
 @app_ui.route('/competitionFullResults/<competitionId>')
 #@login_required
 def getCompetitionFullResults(competitionId):
+    page_redirect = _redirect_if_no_page(competitionId, 'full_results')
+    if page_redirect is not None:
+        return page_redirect
     competition = None
 
     if competitionId is not None:
@@ -1441,8 +1505,7 @@ def getCompetitionFullResults(competitionId):
         if competitionsEngine.has_permission_for_competition(competitionId, user):
             isAdminUser = True
 
-    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
-                                    competitionsEngine.competition_status_scoring]): 
+    if isAdminUser or competitionsEngine.status_allows(competition, 'results'):
         rankings = competitionsEngine.get_sorted_rankings(competition)
 
     return render_template("competitionFullResults.html", 
@@ -1458,6 +1521,9 @@ def getCompetitionFullResults(competitionId):
 @app_ui.route('/competitionStats/<competitionId>')
 #@login_required
 def getCompetitionStats(competitionId):
+    page_redirect = _redirect_if_no_page(competitionId, 'stats')
+    if page_redirect is not None:
+        return page_redirect
     competition = None
 
     if competitionId is not None:
@@ -1487,8 +1553,7 @@ def getCompetitionStats(competitionId):
         if competitionsEngine.has_permission_for_competition(competitionId, user):
             isAdminUser = True
 
-    if isAdminUser or (competition['status']  in [competitionsEngine.competition_status_closed,
-                                    competitionsEngine.competition_status_scoring]): 
+    if isAdminUser or competitionsEngine.status_allows(competition, 'results'):
         rankings = competitionsEngine.get_sorted_rankings(competition)
 
 
@@ -1697,6 +1762,8 @@ def competitionRoutesList(competitionId):
                            user=user,
                            competition=competition,
                            competitionId=competitionId,
+                           uses_routes=competitionsEngine.get_strategy(competition).uses_routes,
+                           can_update_presence=competitionsEngine.can_update_presence(user, competition),
                            reference_data=competitionsEngine.reference_data,
                            **session)
 
@@ -1705,6 +1772,9 @@ def competitionRoutesList(competitionId):
 
 @app_ui.route('/competitionRoutes/<competitionId>')
 def competitionRoutes(competitionId):
+    page_redirect = _redirect_if_no_page(competitionId, 'routes')
+    if page_redirect is not None:
+        return page_redirect
     #competitionId = request.args.get('competitionId')
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
@@ -1764,6 +1834,9 @@ def competitionRoutes(competitionId):
 @app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['GET'])
 @login_required
 def routes_climbed(competitionId, climberId):
+    page_redirect = _redirect_if_no_page(competitionId, 'routes')
+    if page_redirect is not None:
+        return page_redirect
 
     if climberId is not None:
         climber = competitionsEngine.getClimber(competitionId,climberId)
@@ -1817,6 +1890,9 @@ def routes_climbed(competitionId, climberId):
 @app_ui.route('/competitionRoutesEntry/<competitionId>/climber/<climberId>', methods=['POST'])
 @login_required
 def update_routes_climbed(competitionId, climberId):
+    page_redirect = _redirect_if_no_page(competitionId, 'routes')
+    if page_redirect is not None:
+        return page_redirect
     # generate array of marked routes from HTTP request
     routesUpdated = []
     error_message = ""

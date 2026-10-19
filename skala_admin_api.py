@@ -737,6 +737,62 @@ def delete_image():
         }), 500
 
 
+# ============= Competitions Table (raw) =============
+
+@skala_admin_api.route('/competitions', methods=['GET'])
+@admin_required
+def admin_list_competitions():
+    """List competitions table rows; optional ?q= matches raw jsondata or id (LIKE)."""
+    rows = skala_db.admin_list_competition_rows((request.args.get('q') or '').strip() or None)
+    return jsonify({
+        'success': True,
+        'rows': rows,
+        'column_map': skala_db.COMPETITION_COLUMNS,
+    })
+
+
+@skala_admin_api.route('/competitions/<comp_id>', methods=['GET'])
+@admin_required
+def admin_get_competition_row(comp_id):
+    row = skala_db.admin_get_competition_row(comp_id)
+    if row is None:
+        return jsonify({'success': False, 'error': 'not_found'}), 404
+    return jsonify({'success': True, 'row': row})
+
+
+@skala_admin_api.route('/competitions/<comp_id>', methods=['PUT'])
+@admin_required
+def admin_update_competition_row(comp_id):
+    """Raw update. JSON body: {columns: {name: value|null}, jsondata: "<json string>"|null}."""
+    data = request.get_json()
+    if not isinstance(data, dict):
+        return jsonify({'success': False, 'error': 'invalid_body'}), 400
+    columns = data.get('columns') or {}
+    jsondata = data.get('jsondata')
+    if not isinstance(columns, dict) or (jsondata is not None and not isinstance(jsondata, str)):
+        return jsonify({'success': False, 'error': 'invalid_body'}), 400
+    try:
+        with competitionsEngine.sql_lock:
+            updated = skala_db.admin_update_competition_row(comp_id, columns, jsondata)
+    except ValueError as e:
+        return jsonify({'success': False, 'error': 'invalid_data', 'message': str(e)}), 400
+    if not updated:
+        return jsonify({'success': False, 'error': 'not_found'}), 404
+    logging.info(f"Admin {session.get('email')} raw-updated competition {comp_id} columns={list(columns)} jsondata={'yes' if jsondata is not None else 'no'}")
+    return jsonify({'success': True, 'row': skala_db.admin_get_competition_row(comp_id)})
+
+
+@skala_admin_api.route('/competitions/<comp_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_competition_row(comp_id):
+    if skala_db.admin_get_competition_row(comp_id) is None:
+        return jsonify({'success': False, 'error': 'not_found'}), 404
+    with competitionsEngine.sql_lock:
+        skala_db.delete_competition(comp_id)
+    logging.info(f"Admin {session.get('email')} deleted competition row {comp_id}")
+    return jsonify({'success': True})
+
+
 # ============= Health Check =============
 
 @skala_admin_api.route('/health', methods=['GET'])
