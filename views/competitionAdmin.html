@@ -59,13 +59,7 @@
 </select>
 
     <br>
-    <label for="organizer">{{ reference_data['current_language'].organizer }}:</label>
-    <select name="organizer" id="organizer">
-        {% for organizer in reference_data['organizers'] %}
-        <option value="{{ organizer }}" {% if competition['organizer'] == organizer %} selected {% endif %}>{{ reference_data['current_language']['organizer_'~organizer] }}</option>
-        {% endfor %}
-    </select>
-    &nbsp; &nbsp; <label for="region">{{ reference_data['current_language'].region }}:</label>
+    <label for="region">{{ reference_data['current_language'].region }}:</label>
     <input name="region" size="8" value="{{ competition['region'] or '' }}" id="region"/>
     <br>
     <label for="series_key">{{ reference_data['current_language'].series_key }}:</label>

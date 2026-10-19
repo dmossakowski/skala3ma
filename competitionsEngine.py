@@ -151,7 +151,7 @@ competition_status_scoring = 'scoring'
 competition_status_closed = 'closed'
 competition_status_archived = 'archived'
 competition_status_cancelled = 'cancelled'
-MAX_COMPETITIONS_PER_CREATOR = 3
+MAX_EVENTS = 5
 
 # statuses stored as integers before they became words
 legacy_competition_status = {0: competition_status_draft, 1: competition_status_open, 2: competition_status_inprogress,
@@ -206,7 +206,6 @@ def status_change_error(user, competition, new_status):
     return ''
 
 
-organizers = ['fsgt', 'ffme', 'club', 'other']
 FSGT_COMPETITION_AUTREMENT_IDF = 'fsgt_competition_autrement_idf'
 
 registration_mode_none = 'none'
@@ -265,10 +264,12 @@ def has_page(competition, page):
     return competition is not None and page in get_competition_pages(competition)
 
 
-# returns an error message or '' if calc_type and registration_mode can be combined
-def settings_error(calc_type, registration_mode):
+# returns an error message or '' if calc_type, registration_mode and gym can be combined
+def settings_error(calc_type, registration_mode, gym_id):
     if calc_type != 'none' and registration_mode == registration_mode_none:
         return 'A scored competition needs registration'
+    if registration_mode == registration_mode_club and not gym_id:
+        return 'Club registration needs a gym'
     return ''
 
 
@@ -300,7 +301,6 @@ reference_data = { "categories":categories,# "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
                   "competition_types":competition_types, "gym_status":gym_status,
-                  "organizers": organizers,
                   "registration_modes": list(registration_modes),
                   "calc_types": creatable_calc_types}
 
@@ -313,48 +313,59 @@ email_sender = EmailSender(
 )
 
 
-# called from main_app_ui and skala_api
-# no permissions or other checks are performed here
-def create_competition(compId, added_by, name, date, routesid, max_participants, competition_type, instructions, calc_type=CalculationStrategyFsgt2.name,
-                       organizer='fsgt', region='idf', series_key=FSGT_COMPETITION_AUTREMENT_IDF,
-                       registration_mode=registration_mode_fsgt):
-    if compId is None:
-        compId = str(uuid.uuid4().hex)
+# called from skala_api; no permission checks are performed here
+# gym_id is empty when the event is not organized by a club
+def create_event(added_by, name, date, calc_type, max_participants, competition_type, instructions,
+                 gym_id=None, routesid=None, region=None, series_key=None,
+                 registration_mode=registration_mode_open):
+    if calc_type not in creatable_calc_types:
+        raise ValueError('Unknown calculation strategy')
 
-    routes = skala_db.get_routes_by_id(routesid)
-    gym = skala_db.get_gym_by_routes_id(routesid)
+    error = settings_error(calc_type, registration_mode, gym_id)
+    if error:
+        raise ValueError(error)
 
-    if gym is None:
-        raise ValueError('Gym not found')
-    
-    if (routes is None or len(routes)==0):
-        raise ValueError('Routes not found')
-    
+    gym = None
+    if gym_id:
+        gym = get_gym(gym_id)
+        if gym is None:
+            raise ValueError('Gym not found')
+
+    routes = []
+    if get_strategy({'calc_type': calc_type}).uses_routes and not routesid:
+        raise ValueError('Routes are required for a scored competition')
+    if routesid:
+        if gym is None:
+            raise ValueError('Routes require a gym')
+        routes_gym = skala_db.get_gym_by_routes_id(routesid)
+        routeset = skala_db.get_routes_by_id(routesid)
+        if routes_gym is None or routes_gym.get('id') != gym_id or not routeset:
+            raise ValueError('Routes not found for this gym')
+        routes = routeset.get('routes')
+
     if max_participants is None:
-        max_participants=80
+        max_participants = 80
 
-    #sanitized_instruction = re.sub(r'[^\w\s]', '', instruction)
-   
+    compId = str(uuid.uuid4().hex)
     competition = {
-        "id": compId, "name": name, "date": date, "gym": gym['name'],"gym_id":gym['id'],
-        "routesid": routesid,
+        "id": compId, "name": name, "date": date,
+        "gym": gym['name'] if gym else '', "gym_id": gym_id or None,
+        "routesid": routesid or None,
         "max_participants": max_participants,
         "results": copy.deepcopy(CalculationStrategy.emptyResults),
         "calc_type": calc_type,
-        "competition_type":competition_type,
+        "competition_type": competition_type,
         "instructions": instructions,
         "added_by": added_by,
-        "status" : competition_status_draft,
-        "organizer": organizer,
+        "status": competition_status_draft,
         "region": region or None,
         "series_key": series_key or None,
         "registration_mode": registration_mode,
-        "routes": routes.get('routes'),
+        "routes": routes,
         "climbers": {}}
-    
+
     with sql_lock:
-        # write this competition to db
-        skala_db._add_competition(compId, competition);
+        skala_db._add_competition(compId, competition)
 
     return compId
 
@@ -1275,7 +1286,7 @@ def _migrate_competition(competition):
         needs_updating = True
 
     # competitions created before events were generalized all belong to the FSGT IDF challenge
-    for key, default in (('organizer', 'fsgt'), ('region', 'idf'),
+    for key, default in (('region', 'idf'),
                          ('series_key', FSGT_COMPETITION_AUTREMENT_IDF), ('registration_mode', registration_mode_fsgt)):
         if key not in competition:
             competition[key] = default
@@ -1340,7 +1351,7 @@ def _migrate_competition(competition):
         needs_updating = True
 
 
-    if competition.get('routesid') is None:
+    if competition.get('routesid') is None and competition.get('gym_id') and get_strategy(competition).uses_routes:
         gym = get_gym(competition['gym_id'])
         competition['routesid'] = gym['routesid']
 
@@ -2168,7 +2179,7 @@ def send_email_to_participants(competition, sent_by, email_content):
             competition_url = url_for('app_ui.getCompetition', competitionId=competition['id'], _external=True)
             email_sender.send_email_to_participant(competition['name'],competition_url, email_to, email_content)
             recipientCount += 1
-        users= skala_db.get_users_by_gym_id(competition['gym_id'])
+        users = skala_db.get_users_by_gym_id(competition['gym_id']) if competition.get('gym_id') else []
         for user in users:
             if user.get('permissions') is None or user.get('permissions').get('competitions') is None:
                 continue 

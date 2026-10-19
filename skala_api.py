@@ -1165,11 +1165,11 @@ def journey_session_remove(journey_id, route_id):
 
 
 # this is used by calendar so it has a specific format 
-# returns every event; optional filters: series_key, organizer, region, gym_id
+# returns every event; optional filters: series_key, region, gym_id
 @skala_api_app.route('/competition/list')
 def getCompetitionDashboard():
     filters = {}
-    for column in ('series_key', 'organizer', 'region', 'gym_id'):
+    for column in ('series_key', 'region', 'gym_id'):
         filters[column] = request.args.get(column)
     comps = skala_db.get_competitions_filtered(**filters)
     compsreturnd = []
@@ -1191,7 +1191,7 @@ def getCompetitionDashboard():
         c['gym'] = comps[compid].get('gym')
         c['gym_id'] = comps[compid].get('gym_id')
         c['calc_type'] = comps[compid].get('calc_type','standard')
-        for field in ('organizer', 'region', 'series_key', 'registration_mode'):
+        for field in ('region', 'series_key', 'registration_mode'):
             c[field] = comps[compid].get(field)
         c['scored'] = comps[compid].get('calc_type') != 'none'
         if c['series_key']:
@@ -1256,41 +1256,59 @@ def competitions_by_year(year):
                                               series_key=competitionsEngine.FSGT_COMPETITION_AUTREMENT_IDF)
 
 
+@skala_api_app.route('/event/create', methods=['POST'])
 @skala_api_app.route('/competition/create', methods=['POST'])
 @session_or_jwt_required
-def new_competition_post():
+def new_event_post():
     name = request.form.get('name')
     date = request.form.get('date')
-    routesid = request.form.get('routes')
+    gym_id = request.form.get('gym_id') or None
+    routesid = request.form.get('routes') or None
     max_participants = request.form.get('max_participants')
-    competition_type = request.form.get('competition_type') or 'adult'
+    competition_type = request.form.get('competition_type') or competitionsEngine.competition_type_adult
     instructions = request.form.get('instructions') or ''
-    calc_type = request.form.get('calc_type') or competitionsEngine.CalculationStrategyFsgt2.name
-    if calc_type not in competitionsEngine.creatable_calc_types:
-        return jsonify({'error': 'Unknown calculation strategy'}), 400
+    # legacy /competition/create clients send calc_type=fsgt2 instead of the checkbox
+    fsgt_autrement = request.form.get('fsgt_autrement') in ('on', 'true', '1') \
+        or request.form.get('calc_type') == competitionsEngine.CalculationStrategyFsgt2.name
+
+    if competition_type not in competitionsEngine.competition_types.values():
+        return jsonify({'error': 'Unknown competition type'}), 400
 
     user = competitionsEngine.get_user_by_email(session.get('email'))
     if user is None:
         return jsonify({'error': 'User does not exist'}), 401
 
     if not (competitionsEngine.can_create_competition(user) or \
-        skala_db.count_competitions_by_added_by(user.id) < competitionsEngine.MAX_COMPETITIONS_PER_CREATOR):
+        skala_db.count_competitions_by_added_by(user.id) < competitionsEngine.MAX_EVENTS):
         return jsonify({'error': 'Not authorized'}), 403
 
-    if not name or not date or not routesid or not max_participants:
-        return jsonify({'error': 'Name, date, routes, and max participants are required'}), 400
+    if not name or not date or not max_participants:
+        return jsonify({'error': 'Name, date and max participants are required'}), 400
+
+    if gym_id is None and routesid is not None:
+        routes_gym = skala_db.get_gym_by_routes_id(routesid)
+        gym_id = routes_gym.get('id') if routes_gym else None
+
+    if fsgt_autrement:
+        settings = dict(calc_type=competitionsEngine.CalculationStrategyFsgt2.name,
+                        region='idf',
+                        series_key=competitionsEngine.FSGT_COMPETITION_AUTREMENT_IDF,
+                        registration_mode=competitionsEngine.registration_mode_fsgt)
+    else:
+        settings = dict(calc_type='none', registration_mode=competitionsEngine.registration_mode_open)
+        competition_type = competitionsEngine.competition_type_adult
 
     try:
-        competitionId = competitionsEngine.create_competition(
-            None,
+        competitionId = competitionsEngine.create_event(
             user.get('id'),
             name,
             date,
-            routesid,
-            max_participants,
+            max_participants=max_participants,
             competition_type=competition_type,
             instructions=instructions,
-            calc_type=calc_type
+            gym_id=gym_id,
+            routesid=routesid,
+            **settings
         )
 
         file1 = request.files.get('file1')

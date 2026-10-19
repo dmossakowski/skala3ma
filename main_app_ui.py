@@ -361,7 +361,7 @@ def competition_admin_get(competition_id):
         session["wants_url"] = request.url
         return redirect(url_for('app_ui.getCompetition', competitionId=competition['id']))
 
-    all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
+    all_routes = competitionsEngine.get_routes_by_gym_id(competition.get('gym_id'))
 
     all_gyms = competitionsEngine.get_gyms()
 
@@ -560,11 +560,11 @@ def competition_admin_post(competition_id):
                 or competition.get('status') not in competitionsEngine.calc_type_editable_statuses):
             resultError = 'The calculation strategy cannot be changed now'
         else:
-            resultError = competitionsEngine.settings_error(calc_type, registration_mode)
+            resultError = competitionsEngine.settings_error(calc_type, registration_mode, competition.get('gym_id'))
 
     if competition_update_button is not None and not resultError:
         # update gym name in the competition if Gym Name is changed somewhere else
-        gym = competitionsEngine.get_gym(competition['gym_id'])
+        gym = competitionsEngine.get_gym(competition['gym_id']) if competition.get('gym_id') else None
         if gym is not None:
             if gym['name'] != competition['gym']:
                 competition['gym']=gym['name']
@@ -573,9 +573,6 @@ def competition_admin_post(competition_id):
         competition['registration_mode'] = registration_mode
         competition['calc_type'] = calc_type
 
-        organizer = request.form.get('organizer')
-        if organizer in competitionsEngine.organizers:
-            competition['organizer'] = organizer
         competition['region'] = (request.form.get('region') or '').strip() or None
         competition['series_key'] = (request.form.get('series_key') or '').strip() or None
 
@@ -612,7 +609,7 @@ def competition_admin_post(competition_id):
             resultError = "Email content is empty or too short"
             
     user_list = competitionsEngine.get_all_user_emails()
-    all_routes = competitionsEngine.get_routes_by_gym_id(competition['gym_id'])
+    all_routes = competitionsEngine.get_routes_by_gym_id(competition.get('gym_id'))
             
     return render_template('competitionAdmin.html',
                            jsondata=json.dumps(jsonobject),
@@ -922,39 +919,33 @@ def getCompetitionSeasonRankings():
 
 
 @app_ui.route('/newCompetition', methods=['GET'])
+def new_competition_redirect():
+    return redirect(url_for('app_ui.new_event'), code=301)
+
+
+@app_ui.route('/new_event', methods=['GET'])
 @login_required
-def new_competition():
-
-    username = session.get('username')
+def new_event():
     user = competitionsEngine.get_user_by_email(session.get('email'))
-    competitions_created = skala_db.count_competitions_by_added_by(user['id']) if user is not None else 0
-    competition_limit_reached = competitions_created >= competitionsEngine.MAX_COMPETITIONS_PER_CREATOR
+    events_created = skala_db.count_competitions_by_added_by(user['id']) if user is not None else 0
+    event_limit_reached = events_created >= competitionsEngine.MAX_EVENTS
     if competitionsEngine.can_create_competition(user):
-        competition_limit_reached = False
-
-    #username = request.args.get('username')
-    name = request.args.get('name')
-    date = request.args.get('date')
-    gym = request.args.get('gym')
+        event_limit_reached = False
 
     all_gyms = competitionsEngine.get_gyms()
 
-    clubs = []
-
+    gyms = []
     for gymid in all_gyms:
-        gymname = all_gyms[gymid]['name']
         routes = competitionsEngine.get_routes_by_gym_id(gymid)
-        for routeid in routes:
-            clubs.append ({'gymname':gymname, 'gymid':gymid, 'routesid':routeid, 'routesname':routes[routeid]['name']})
+        gyms.append({'id': gymid, 'name': all_gyms[gymid]['name'],
+                     'routesets': [{'id': routeid, 'name': routes[routeid]['name']} for routeid in routes]})
+    gyms = sorted(gyms, key=lambda g: (g['name'] or '').lower())
 
-    # Strategy options for selection
-    calc_types  = competitionsEngine.CalculationStrategy.list_calc_types()
-
-    return render_template('newCompetition.html',
+    return render_template('newEvent.html',
                            session=session,
-                           clubs=clubs,
-                           calc_types=calc_types,
-                           competition_limit_reached=competition_limit_reached,
+                           gyms=gyms,
+                           fsgt_autrement=request.args.get('fsgt') == '1',
+                           competition_limit_reached=event_limit_reached,
                            reference_data=competitionsEngine.reference_data,
                             **session)
 

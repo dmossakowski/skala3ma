@@ -95,7 +95,6 @@ COMPETITION_COLUMNS = {
     'event_date': 'date',
     'status': 'status',
     'gym_id': 'gym_id',
-    'organizer': 'organizer',
     'region': 'region',
     'competition_type': 'competition_type',
     'calc_type': 'calc_type',

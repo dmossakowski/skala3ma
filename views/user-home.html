@@ -81,9 +81,13 @@
                             <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-create-gym"/></svg>
                             <span class="skala-tile-label" data-translate-key="create_gym">Create gym</span>
                         </a>
-                        <a id="action-create-competition" href="/newCompetition" class="skala-tile" title="Create competition" style="display:none;">
+                        <a id="action-create-competition" href="/new_event?fsgt=1" class="skala-tile" title="Create competition" style="display:none;">
                             <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-create-competition"/></svg>
                             <span class="skala-tile-label" data-translate-key="create_competition">Create competition</span>
+                        </a>
+                        <a id="action-create-event" href="/new_event" class="skala-tile" title="New event" style="display:none;">
+                            <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-create-event"/></svg>
+                            <span class="skala-tile-label" data-translate-key="new_event">New event</span>
                         </a>
                     </div>
                    
@@ -163,6 +167,7 @@
                 actionsCard: document.getElementById('user-actions-card'),
                 actionsCreateGym: document.getElementById('action-create-gym'),
                 actionsCreateCompetition: document.getElementById('action-create-competition'),
+                actionsCreateEvent: document.getElementById('action-create-event'),
                 generalPermsList: document.getElementById('general-permissions-list-actions')
             };
 
@@ -294,6 +299,7 @@
                 const canCreateCompetition = true //genPerms.includes('create_competition');
                 if (els.actionsCreateGym) els.actionsCreateGym.style.display = canCreateGym ? '' : 'none';
                 if (els.actionsCreateCompetition) els.actionsCreateCompetition.style.display = canCreateCompetition ? '' : 'none';
+                if (els.actionsCreateEvent) els.actionsCreateEvent.style.display = canCreateCompetition ? '' : 'none';
             };
 
             const renderGeneralPermissions = (perms) => {
