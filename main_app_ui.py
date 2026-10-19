@@ -1301,6 +1301,9 @@ def update_user():
     climber.email = email
     climber.sex = sex    
     climber.dob = dob
+    if club is not None:
+        climber.club = club
+        climber.gymid = '' if clubid == -1 else clubid
 
     if firstname is None or nick is None or sex is None or club is None or email is None:
         error_message= 'all_fields_required'
