@@ -181,10 +181,19 @@ def upload_database():
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
                 tables = [row[0] for row in cursor.fetchall()]
                 conn.close()
-                
+
+                # uploaded db may predate current schema; run the same init/migrations as on startup
+                migration_error = None
+                try:
+                    competitionsEngine.init()
+                except Exception as init_error:
+                    logging.error(f"Database init after upload failed: {init_error}")
+                    migration_error = str(init_error)
+
                 return jsonify({
                     'success': True,
                     'message': 'Database uploaded successfully',
+                    'migration_error': migration_error,
                     'backup_created': backup_path is not None,
                     'backup_path': os.path.basename(backup_path) if backup_path else None,
                     'file_size': file_size,
