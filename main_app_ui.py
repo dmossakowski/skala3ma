@@ -2035,6 +2035,20 @@ def gym_by_id(gymid):
     
 
 
+@app_ui.route('/gyms/<gymid>/events')
+def gym_events(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    if gym is None or len(gym) == 0:
+        return redirect('/gyms')
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    return render_template('gym-events.html',
+                           gymid=gymid,
+                           gym=gym,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data,
+                           )
+
+
 @app_ui.route('/gyms/<gymid>/qrcode')
 def gym_qrcode_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
