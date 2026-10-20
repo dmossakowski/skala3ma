@@ -17,7 +17,7 @@ class Competition:
     gym: str = ""
     gym_id: Optional[str] = None
     routesid: Optional[str] = None
-    status: int = 0
+    status: str = "draft"
     max_participants: int = 80
     results: Dict[str, Any] = field(default_factory=dict)
     calc_type: Any = 1
@@ -39,7 +39,7 @@ class Competition:
             gym=data.get('gym', ''),
             gym_id=data.get('gym_id'),
             routesid=data.get('routesid'),
-            status=int(data.get('status', 0)),
+            status=data.get('status', 'draft'),
             max_participants=int(data.get('max_participants', 80)),
             results=data.get('results', {}) or {},
             calc_type=data.get('calc_type', 1),
@@ -75,7 +75,7 @@ class Competition:
         cid = climber.get('id') or uuid.uuid4().hex
         self.climbers[cid] = climber
 
-    def set_status(self, status: int) -> None:
+    def set_status(self, status: str) -> None:
         self.status = status
 
     def update_routes(self, routes: List[Dict[str, Any]]) -> None:

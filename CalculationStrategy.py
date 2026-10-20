@@ -20,6 +20,11 @@ class CalculationStrategy:
     registry = {}
     legacy_map = {0: 'fsgt0', 1: 'fsgt1'}
 
+    # competition pages provided by the strategy on top of the shared ones (details, registration, contact, ...)
+    scoring_pages = []
+    uses_routes = False
+    uses_age_categories = True
+
     @classmethod
     def register(cls, slug, strategy_class, label=None):
         if not isinstance(slug, str) or not slug:
@@ -78,4 +83,19 @@ class CalculationStrategy:
 
     def recalculate(self, competition):
         raise NotImplementedError("Subclasses should implement this!")
+
+
+# registration only: no routes, no scoring, no age categories
+class CalculationStrategyNone(CalculationStrategy):
+    name = "none"
+    uses_age_categories = False
+
+    def recalculate(self, competition):
+        return competition
+
+    def get_age_category(self, age, competition_type):
+        return None
+
+
+CalculationStrategy.register(CalculationStrategyNone.name, CalculationStrategyNone, label='No scoring (registration only)')
     

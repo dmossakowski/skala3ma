@@ -5,115 +5,132 @@
 {% if competition_loaded %}
     {% set comp_name = competition['name'] %}
     {% set comp_status = reference_data['current_language']['competition_status_'~competition['status']] %}
+    {% set pages = competition_pages(competition) %}
+    {% set comp_icon = 'bi-calendar-event-fill' if competition.get('calc_type') == 'none' else 'bi-trophy-fill' %}
 {% else %}
     {% set comp_name = '' %}
     {% set comp_status = '' %}
+    {% set comp_icon = 'bi-trophy-fill' %}
+    {# hidden later by JS once the competition is loaded #}
+    {% set pages = ['details', 'register', 'climbers', 'routes', 'full_results', 'results', 'stats', 'contact', 'admin'] %}
 {% endif %}
 <div class="navbar navbar-expand-md" >
 
 <!-- Mobile Menu Bar (visible only on mobile/tablet) -->
-<div class="d-md-none d-flex align-items-center justify-content-between w-100 px-3 py-2 border-bottom">
-    <div class="flex-grow-1 me-3">
-        <strong class="js-comp-menu-name">{{ comp_name }}</strong><br>
-        <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
-    </div>
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#competitionMenuOffcanvas" aria-controls="competitionMenuOffcanvas" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon" style="background-image: none; display: flex; align-items: center; justify-content: center;">
-            <i class="bi bi-list" style="font-size: 1.5rem; color: #29c05c;"></i>
-        </span>
-    </button>
+<div class="d-md-none w-100 px-3 py-2 border-bottom">
+    <strong class="js-comp-menu-name">{{ comp_name }}</strong><br>
+    <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
 </div>
 
 <!-- Desktop Navigation (hidden on mobile/tablet) -->
 <ul class="nav justify-content-center d-none d-md-flex">
-    <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
-        <i class="bi bi-trophy-fill me-1"></i>
+    <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link" data-page="details">
+        <i class="bi {{ comp_icon }} me-1 js-comp-menu-icon"></i>
         <b><span class="js-comp-menu-name">{{ comp_name }}</span> (<span class="js-comp-menu-status">{{ comp_status }}</span>)</b>
     </a>
 
-    <a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link competition-menu-link">
+    {% if 'register' in pages %}
+    <a href="/competitionDashboard/{{ competitionId}}/register" class="sf-menu2 nav-link competition-menu-link" data-page="register">
         <i class="bi bi-person-check me-1"></i>{{ reference_data['current_language'].registration }}
     </a>
+    {% endif %}
 
-    <a href="/climbers/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
+    {% if 'climbers' in pages %}
+    <a href="/climbers/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link" data-page="climbers">
         <i class="bi bi-people me-1"></i>{{ reference_data['current_language'].climbers }}
     </a>
+    {% endif %}
 
-    <a href="/competitionRoutes/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link">
+    {% if 'routes' in pages %}
+    <a href="/competitionRoutes/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link" data-page="routes">
         <i class="bi bi-pin-map me-1"></i>{{ reference_data['current_language'].routes }}
     </a>
+    {% endif %}
 
-    <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link">
+    {% if 'full_results' in pages %}
+    <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link" data-page="full_results">
         <i class="bi bi-list-check me-1"></i>{{ reference_data['current_language'].resultats }}
     </a>
+    {% endif %}
 
-    <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link">
+    {% if 'results' in pages %}
+    <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link" data-page="results">
         <i class="bi bi-trophy me-1"></i>{{ reference_data['current_language'].Rankings }}
     </a>
+    {% endif %}
 
-    <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link">
+    {% if 'stats' in pages %}
+    <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link" data-page="stats">
         <i class="bi bi-graph-up me-1"></i>{{ reference_data['current_language'].statistics }}
     </a>
+    {% endif %}
 
-    <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link">
+    <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link" data-page="contact">
         <i class="bi bi-envelope me-1"></i>{{ reference_data['current_language'].Contact }}
     </a>
 
-    <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link">
+    <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link" data-page="admin">
         <i class="bi bi-gear me-1"></i>Admin
     </a>
 </ul>
 
 </div>
 
-<!-- Mobile Offcanvas Menu (outside navbar so navbar-expand-md doesn't force it visible) -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="competitionMenuOffcanvas" aria-labelledby="competitionMenuOffcanvasLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="competitionMenuOffcanvasLabel">
-            <span class="js-comp-menu-name">{{ comp_name }}</span><br>
-            <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
+<!-- moved into the layout's left mobile menu by skala3ma-layout.html -->
+<div hidden data-context-menu>
+    <h5 class="mb-2">
+        <span class="js-comp-menu-name">{{ comp_name }}</span><br>
+        <small class="text-muted">(<span class="js-comp-menu-status">{{ comp_status }}</span>)</small>
+    </h5>
         <nav class="nav flex-column">
-            <a href="/competitionDetails/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
-                <i class="bi bi-trophy-fill me-2"></i>{{ reference_data['current_language'].competition_details|default('Competition Details') }}
+            <a href="/competitionDetails/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="details">
+                <i class="bi {{ comp_icon }} me-2 js-comp-menu-icon"></i>{{ reference_data['current_language'].competition_details|default('Competition Details') }}
             </a>
 
-            <a href="/competitionDashboard/{{ competitionId}}/register" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'register' in pages %}
+            <a href="/competitionDashboard/{{ competitionId}}/register" class="nav-link competition-menu-link-mobile py-3" data-page="register">
                 <i class="bi bi-person-check me-2"></i>{{ reference_data['current_language'].registration }}
             </a>
+            {% endif %}
 
-            <a href="/climbers/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'climbers' in pages %}
+            <a href="/climbers/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="climbers">
                 <i class="bi bi-people me-2"></i>{{ reference_data['current_language'].climbers }}
             </a>
+            {% endif %}
 
-            <a href="/competitionRoutes/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'routes' in pages %}
+            <a href="/competitionRoutes/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="routes">
                 <i class="bi bi-pin-map me-2"></i>{{ reference_data['current_language'].routes }}
             </a>
+            {% endif %}
 
-            <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'full_results' in pages %}
+            <a href="/competitionFullResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="full_results">
                 <i class="bi bi-list-check me-2"></i>{{ reference_data['current_language'].resultats }}
             </a>
+            {% endif %}
 
-            <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'results' in pages %}
+            <a href="/competitionResults/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="results">
                 <i class="bi bi-trophy me-2"></i>{{ reference_data['current_language'].Rankings }}
             </a>
+            {% endif %}
 
-            <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            {% if 'stats' in pages %}
+            <a href="/competitionStats/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="stats">
                 <i class="bi bi-graph-up me-2"></i>{{ reference_data['current_language'].statistics }}
             </a>
+            {% endif %}
 
-            <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            <a href="/competition_contact/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="contact">
                 <i class="bi bi-envelope me-2"></i>{{ reference_data['current_language'].Contact }}
             </a>
 
-            <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link-mobile py-3">
+            <a href="/competition_admin/{{competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="admin">
                 <i class="bi bi-gear me-2"></i>Admin
             </a>
         </nav>
-    </div>
 </div>
 
 <style>
@@ -175,6 +192,14 @@
             .then(competition => {
                 document.querySelectorAll('.js-comp-menu-name').forEach(el => el.textContent = competition.name || '');
                 document.querySelectorAll('.js-comp-menu-status').forEach(el => el.textContent = statusLabels[String(competition.status)] || '');
+                if (competition.calc_type === 'none') {
+                    document.querySelectorAll('.js-comp-menu-icon').forEach(el => el.classList.replace('bi-trophy-fill', 'bi-calendar-event-fill'));
+                }
+                if (Array.isArray(competition.pages)) {
+                    document.querySelectorAll('[data-page]').forEach(el => {
+                        if (!competition.pages.includes(el.dataset.page)) el.remove();
+                    });
+                }
             })
             .catch(err => console.error('Failed to load competition for menu', err));
     })();

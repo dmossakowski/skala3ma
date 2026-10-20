@@ -1,0 +1,164 @@
+<style>
+.form-check-input.presence-switch { cursor:pointer; }
+.form-check-input.presence-switch:checked { background-color:#53be6b; border-color:#53be6b; }
+.form-check-input.presence-switch:focus { border-color:#53be6b; box-shadow:0 0 0 .25rem rgba(83,190,107,.25); }
+.form-switch .form-check-input.presence-switch:focus:not(:checked) {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23a9dfb5'/%3e%3c/svg%3e");
+}
+</style>
+
+<!-- Presence confirmation modal -->
+<div class="modal fade" id="presenceConfirmModal" tabindex="-1" aria-labelledby="presenceConfirmTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="presenceConfirmTitle"></h5>
+        <button type="button" class="btn-close" id="presenceCloseBtn" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="presenceConfirmBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="presenceCancelBtn" data-translate-key="cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="presenceSaveBtn" data-translate-key="save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Presence error modal -->
+<div class="modal fade" id="presenceErrorModal" tabindex="-1" aria-labelledby="presenceErrorTitle" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="presenceErrorTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="presenceErrorBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-translate-key="close">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Shared presence change flow: confirm dialog -> API call -> success/revert callbacks.
+// Usage: PresenceConfirm.request({competitionId, climberId, desired, focusEl, onSuccess(present), onRevert()})
+window.PresenceConfirm = (function(){
+  var initialized = false;
+  var modalEl, modal, errorModal, bodyEl, saveBtn;
+  var pending = null;
+  var lastFocusEl = null;
+
+  function t(key, fallback){
+    var v = (typeof getTranslation === 'function') ? getTranslation(key) : null;
+    return v || fallback;
+  }
+
+  function shiftFocusOutOfModal(){
+    try {
+      if(modalEl && modalEl.contains(document.activeElement)){
+        if(lastFocusEl){ lastFocusEl.focus({ preventScroll: true }); }
+        if(modalEl.contains(document.activeElement) && typeof document.activeElement.blur === 'function'){
+          document.activeElement.blur();
+        }
+      }
+    } catch(e) { /* noop */ }
+  }
+
+  function hide(){
+    shiftFocusOutOfModal();
+    if(modal){ modal.hide(); }
+  }
+
+  function showError(message){
+    if(!errorModal){ window.alert(message); return; }
+    var errBody = document.getElementById('presenceErrorBody');
+    if(errBody){ errBody.textContent = message; }
+    // Wait for confirm modal to finish hiding to avoid overlapping backdrops
+    if(modalEl && modalEl.classList.contains('show')){
+      modalEl.addEventListener('hidden.bs.modal', function(){ errorModal.show(); }, { once: true });
+    } else {
+      errorModal.show();
+    }
+  }
+
+  function cancel(){
+    if(pending && pending.onRevert){ pending.onRevert(); }
+    pending = null;
+    hide();
+  }
+
+  function save(){
+    if(!pending){ hide(); return; }
+    var p = pending;
+    if(saveBtn){ saveBtn.disabled = true; }
+    var url = '/api1/competition/' + encodeURIComponent(p.competitionId) + '/climber/' + encodeURIComponent(p.climberId) + '/present/' + (p.desired ? 'True' : 'False');
+    apiFetchJson(url, { method: 'POST' })
+      .then(function(){
+        if(p.onSuccess){ p.onSuccess(p.desired); }
+        pending = null;
+        hide();
+      })
+      .catch(function(err){
+        console.error('Failed to update presence', err);
+        if(p.onRevert){ p.onRevert(); }
+        pending = null;
+        showError(err && err.status === 403
+          ? t('presence_update_not_authorized', 'You are not authorized to change presence.')
+          : t('presence_update_failed', 'Presence could not be saved.'));
+        hide();
+      })
+      .finally(function(){ if(saveBtn){ saveBtn.disabled = false; } });
+  }
+
+  function init(){
+    if(initialized) return;
+    initialized = true;
+    var hasBootstrap = typeof bootstrap !== 'undefined' && bootstrap.Modal;
+    modalEl = document.getElementById('presenceConfirmModal');
+    var errorModalEl = document.getElementById('presenceErrorModal');
+    modal = (hasBootstrap && modalEl) ? new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false }) : null;
+    errorModal = (hasBootstrap && errorModalEl) ? new bootstrap.Modal(errorModalEl) : null;
+    bodyEl = document.getElementById('presenceConfirmBody');
+    saveBtn = document.getElementById('presenceSaveBtn');
+    var cancelBtn = document.getElementById('presenceCancelBtn');
+    var closeBtn = document.getElementById('presenceCloseBtn');
+
+    var saveLang = t('save', null);
+    var cancelLang = t('cancel', null);
+    if(saveBtn && saveLang){ saveBtn.textContent = saveLang; }
+    if(cancelBtn && cancelLang){ cancelBtn.textContent = cancelLang; }
+
+    if(cancelBtn){ cancelBtn.addEventListener('click', cancel); }
+    if(closeBtn){ closeBtn.addEventListener('click', cancel); }
+    if(saveBtn){ saveBtn.addEventListener('click', save); }
+    if(modalEl && modal){
+      // Pre-emptively shift focus before Bootstrap applies aria-hidden on hide
+      modalEl.addEventListener('hide.bs.modal', shiftFocusOutOfModal);
+      modalEl.addEventListener('hidden.bs.modal', function(){
+        if(lastFocusEl){ lastFocusEl.focus({ preventScroll: true }); }
+      });
+    }
+  }
+
+  function request(opts){
+    if(typeof apiFetchJson !== 'function'){ console.error('apiFetchJson global helper missing'); return; }
+    init();
+    pending = opts;
+    lastFocusEl = opts.focusEl || null;
+    var message = opts.desired
+      ? t('confirm_set_to_present_question', 'Confirm set to Present?')
+      : t('confirm_set_to_absent_question', 'Confirm set to Absent?');
+    if(bodyEl){ bodyEl.textContent = message; }
+    if(modal){
+      modal.show();
+    } else if(window.confirm(message)){
+      save();
+    } else {
+      cancel();
+    }
+  }
+
+  return { request: request };
+})();
+</script>

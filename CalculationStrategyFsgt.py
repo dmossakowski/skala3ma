@@ -8,6 +8,26 @@ from CalculationStrategy import CalculationStrategy
 
 class CalculationStrategyFsgt0(CalculationStrategy):
     name = "fsgt0"
+    scoring_pages = ['routes', 'full_results', 'results', 'stats']
+    uses_routes = True
+
+    # 2021 FSGT age categories; returns -1 if the age fits no category
+    def get_age_category(self, age, competition_type):
+        if competition_type == 'ado':
+            if 12 <= age <= 13:
+                return 0
+            if 14 <= age <= 15:
+                return 1
+            if 16 <= age <= 17:
+                return 2
+            return -1
+        if 18 <= age <= 49:
+            return 0
+        if 50 <= age <= 64:
+            return 1
+        if age >= 65:
+            return 2
+        return -1
 
     def recalculate(self, comp):    
         comp['results'] = copy.deepcopy(CalculationStrategy.emptyResults)
@@ -138,8 +158,25 @@ class CalculationStrategyFsgt1(CalculationStrategyFsgt0):
     # End class CalculationStrategyFsgt1
 
 
+# same scoring as fsgt1 with the 2026 FSGT adult age categories
+class CalculationStrategyFsgt2(CalculationStrategyFsgt1):
+    name = "fsgt2"
+
+    def get_age_category(self, age, competition_type):
+        if competition_type == 'ado':
+            return super().get_age_category(age, competition_type)
+        if 18 <= age <= 39:
+            return 0
+        if 40 <= age <= 49:
+            return 1
+        if age >= 50:
+            return 2
+        return -1
+
+
 
 
 # Register strategies with human-readable labels
 CalculationStrategy.register(CalculationStrategyFsgt0.name, CalculationStrategyFsgt0, label='FSGT: sex-separated route repeats')
 CalculationStrategy.register(CalculationStrategyFsgt1.name, CalculationStrategyFsgt1, label='FSGT: all climbers combined route repeats')
+CalculationStrategy.register(CalculationStrategyFsgt2.name, CalculationStrategyFsgt2, label='FSGT 2026: all climbers combined route repeats, 2026 age categories')

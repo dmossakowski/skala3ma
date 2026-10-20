@@ -266,30 +266,8 @@ function initializeApp() {
                 <div class="navbar-nav ml-auto d-md-none">
                 
                 <ul class="navbar-nav ml-left">
-                    
-                    <a class="nav-link fs-4 fw-medium" aria-current="page" href="/activities"><span data-translate-key="activities">Activities</span></a> 
-                   
-                    <a class="nav-link fs-4 fw-medium" href="/gyms"><span data-translate-key="gyms">Gyms</span></a>
-
-                    <a href="/controversial_routes" class="nav-link fs-4 fw-medium"><span data-translate-key="controversial_routes">Controversial Routes</span></a>
-                    <a class="nav-link fs-4 fw-medium" href="/competitionDashboard"><span data-translate-key="competitions">Competitions</span></a>
-
-                    <a href="/competitionCalendar?view=multiMonthFourMonth"  class="nav-link fs-5"><i class="bi bi-calendar-week-fill" ></i>
-                        <span data-translate-key="Calendar">Calendar</span></a>
-
-                    <a href="/competitionCalendar?view=timeGridFourDay"  class="nav-link fs-5"><i class="bi bi-border-width" ></i>
-                        <span data-translate-key="list">List</span></a>
-
-                    <a href="/competitionSeasonRankings"  class="nav-link fs-5"><i class="bi bi-trophy-fill" ></i>  <span data-translate-key="Rankings">Rankings</span></a>
-
-
-
-                 
-                     
-                    <a href="/contact" class="nav-link fs-4 fw-medium"><span data-translate-key="Contact">Contact</span></a>
 
                     {% if session is defined and session['expires_at'] is defined %}
-                               <hr>
                     <a href="/profile" class="nav-link fs-4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="{{session['picture']}}" height=27 referrerPolicy="no-referrer" class="d-inline-block align-text-top">
                         </a>
@@ -354,10 +332,16 @@ function initializeApp() {
                 
             <div class=" container-fluid   text-center">
               <div class="row">
+                  <div class="col" id="contextMenuToggleCol">
+                    <button type="button" id="contextMenuToggle" class="btn p-0 border-0" aria-label="Menu"
+                        data-bs-toggle="offcanvas" data-bs-target="#mainMenuOffcanvas" aria-controls="mainMenuOffcanvas">
+                        <i style="font-size: 32px;color: #53be6b " class="bi bi-list"></i>
+                    </button>
+                  </div>
                   <div class="col">
                     <a href="/profile" >
                 
-                        <i  style="font-size: 32px;color: #53be6b " class="bi bi-activity"></i>
+                        <i  style="font-size: 32px;color: #53be6b " class="bi bi-person"></i>
                         </a>
                    
                     
@@ -370,10 +354,10 @@ function initializeApp() {
                     
                   </div>
                   <div class="col">
-                    <a href="/competitionDashboard" >
+                    <a href="/events" >
                 
                    
-                         <i  style="font-size: 32px;color: #53be6b " class="bi bi-trophy"></i>
+                         <i  style="font-size: 32px;color: #53be6b " class="bi bi-calendar-event"></i>
                         </a>    
                   </div>
 
@@ -384,7 +368,6 @@ function initializeApp() {
   
                 </div>
 
-                
             <!-- section shown above md width -- full screeen-->
             <div class="navbar-nav ml-auto d-none d-md-block">
             
@@ -411,33 +394,31 @@ function initializeApp() {
                 
                 &nbsp;&nbsp;&nbsp;
                 <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionDashboard" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span data-translate-key="competitions">Competitions</span>
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/events" id="competitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-translate-key="events">Events</span>
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="competitionsDropdown">
 
- <li> <a href="/competitionDashboard"  class="dropdown-item fs-7"><i class="bi bi-grid-fill" ></i>
+ <li> <a href="/events"  class="dropdown-item fs-7"><i class="bi bi-grid-fill" ></i>
             <span data-translate-key="Gallery">Gallery</span></a></li>
         <li> <a href="/competitionCalendar?view=multiMonthFourMonth"  class="dropdown-item fs-7"><i class="bi bi-calendar-week-fill" ></i>
             <span data-translate-key="Calendar">Calendar</span></a></li>
 
             <li>     <a href="/competitionCalendar?view=timeGridFourDay"  class="dropdown-item fs-7"><i class="bi bi-border-width" ></i>
                 <span data-translate-key="list">List</span></a></li>
-
-                                
-
-
-							
-                  
-                     <li>     <a href="/competitionSeasonRankings"  class="dropdown-item fs-7"><i class="bi bi-trophy-fill" ></i>
-                <span data-translate-key="Rankings">Rankings</span></a></li>
-					
-           
-                    <li><a class="dropdown-item fs-7" href="/myresultats"><span data-translate-key="my_resultats">My results</span></a></li>
                 </ul>
                 </li>
                 &nbsp;&nbsp;&nbsp;
-                <a href="/competitionSeasonRankings"  class="nav-link fs-9 fw-bold"></i>  <span data-translate-key="Rankings">Rankings</span></a>
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fs-7 fw-semibold" href="/competitionSeasonRankings" id="rankingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span data-translate-key="Rankings">Rankings</span>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="rankingsDropdown">
+                    <li><a class="dropdown-item fs-7" href="/competitionSeasonRankings"><i class="bi bi-trophy-fill" ></i>
+                        <span data-translate-key="Rankings">Rankings</span></a></li>
+                    <li><a class="dropdown-item fs-7" href="/myresultats"><span data-translate-key="my_resultats">My results</span></a></li>
+                </ul>
+                </li>
 
                 &nbsp;&nbsp;&nbsp;
                 <a class="nav-link fs-9 fw-bold " href="/contact"> <span data-translate-key="Contact">Contact</span> </a>
@@ -508,6 +489,68 @@ function initializeApp() {
 
         
     </nav>
+
+    <!-- outside the navbar so navbar-expand-md doesn't force it visible on desktop -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mainMenuOffcanvas" aria-labelledby="mainMenuOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title skala3ma-logo" id="mainMenuOffcanvasLabel">
+                <img src="/public/images/favicon.png" height="30"> SKALA3MA</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div id="mainMenuContext" class="d-none">
+                <hr>
+            </div>
+            <nav class="nav flex-column">
+                <a href="/activities" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-activity me-2"></i><span data-translate-key="activities">Activities</span></a>
+                <a href="/gyms" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-bricks me-2"></i><span data-translate-key="gyms">Gyms</span></a>
+                <a href="/events" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-calendar-event me-2"></i><span data-translate-key="events">Events</span></a>
+                <a href="/competitionCalendar?view=multiMonthFourMonth" class="nav-link main-menu-link-mobile main-menu-sublink py-2"><i class="bi bi-calendar-week-fill me-2"></i><span data-translate-key="Calendar">Calendar</span></a>
+                <a href="/competitionCalendar?view=timeGridFourDay" class="nav-link main-menu-link-mobile main-menu-sublink py-2"><i class="bi bi-border-width me-2"></i><span data-translate-key="list">List</span></a>
+                <a href="/competitionSeasonRankings" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-trophy-fill me-2"></i><span data-translate-key="Rankings">Rankings</span></a>
+                <a href="/contact" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-envelope me-2"></i><span data-translate-key="Contact">Contact</span></a>
+                <a href="/controversial_routes" class="nav-link main-menu-link-mobile py-2"><i class="bi bi-exclamation-triangle me-2"></i><span data-translate-key="controversial_routes">Controversial Routes</span></a>
+            </nav>
+            <hr>
+            <nav class="nav flex-column">
+                <a href="https://www.facebook.com/skala3ma" class="nav-link main-menu-link-mobile py-2"><i class="icon-facebook2 me-2"></i>Facebook page</a>
+                <a href="https://github.com/dmossakowski/skala3ma/discussions" class="nav-link main-menu-link-mobile py-2"><i class="icon-github me-2"></i>GitHub</a>
+            </nav>
+        </div>
+    </div>
+
+    <style>
+        .main-menu-link-mobile {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            color: rgba(51, 51, 51, 0.7);
+        }
+        .main-menu-link-mobile:hover {
+            color: #29c05c;
+            background-color: rgba(41, 192, 92, 0.1);
+        }
+        .main-menu-link-mobile i {
+            font-size: 1.3rem;
+            width: 30px;
+        }
+        .main-menu-sublink {
+            padding-left: 2.5rem;
+            font-size: 1rem;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menu = document.querySelector('[data-context-menu]');
+            if (!menu) return;
+            const slot = document.getElementById('mainMenuContext');
+            slot.prepend(menu);
+            menu.hidden = false;
+            slot.classList.remove('d-none');
+        });
+    </script>
 
     
 

@@ -72,6 +72,7 @@
 .tabulator-cell[data-field="present"] { padding:.5rem; }
 </style>
 <div id="climberTable"></div>
+{% include "presence-confirm.html" %}
 <script>
 
   
@@ -116,8 +117,8 @@
   }
 
 
-    function getCatKey(calc_type, competition_type, age_category_type, category){
-      var key = age_category_type+'_' + competition_type+'_' + category;
+    function getCatKey(calc_type, competition_type, category){
+      var key = calc_type+'_' + competition_type+'_' + category;
       return 'competition_category_' + key;
     }
     
@@ -134,17 +135,40 @@ document.addEventListener('DOMContentLoaded', function()
     var tableEl = document.getElementById('climberTable');
     if(!tableEl) return;
 
-    var table = new Tabulator(tableEl, {
-      layout: "fitDataStretch",
-      responsiveLayout: "collapse",
-      responsiveLayoutCollapseStartOpen: true,
-      initialSort: [{column: "fullname", dir: "asc"}],
-      columns: [
+    var usesRoutes = {{ uses_routes | default(true) | tojson }};
+    var canUpdatePresence = {{ can_update_presence | default(false) | tojson }};
+
+    function presenceSwitch(cell){
+      var d = cell.getRow().getData();
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'form-check-input presence-switch';
+      input.setAttribute('role', 'switch');
+      input.checked = !!cell.getValue();
+      input.addEventListener('click', function(e){ e.stopPropagation(); });
+      input.addEventListener('change', function(){
+        PresenceConfirm.request({
+          competitionId: competitionId,
+          climberId: d.id,
+          desired: input.checked,
+          focusEl: input,
+          onSuccess: function(present){ d.present = present; },
+          onRevert: function(){ input.checked = !!d.present; }
+        });
+      });
+      var wrap = document.createElement('div');
+      wrap.className = 'form-check form-switch d-inline-block m-0';
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    var columns = [
         {title: "{{ reference_data['current_language'].name }} ", field: "fullname", responsive: 0, headerSort: true,
           formatter: function(cell){
             var d = cell.getRow().getData();
-            var url = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
             var val = cell.getValue() || '';
+            if(!usesRoutes) return '<b>'+val+'</b>';
+            var url = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
             return '<a href="'+url+'"><b>'+val+'</b></a>';
           }
         },
@@ -160,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function()
         },
         {title: "{{ reference_data['current_language'].Present }}", field: "present", responsive: 2, hozAlign: "center", width: 120,
           formatter: function(cell){
+            if(canUpdatePresence) return presenceSwitch(cell);
             var isPresent = !!cell.getValue();
             var presentText = "{{ reference_data['current_language'].Present }}";
             var absentText = "{{ reference_data['current_language'].Absent }}";
@@ -172,20 +197,30 @@ document.addEventListener('DOMContentLoaded', function()
         {title: "{{ reference_data['current_language'].club }}", field: "club", responsive: 4},
         {title: "{{ reference_data['current_language'].category }}", field: "category", responsive: 5,
             formatter: function(cell){
-            var catKey = cell.getValue() || 'n/a';
+            var catKey = cell.getValue() || '';
             //var label = (typeof getTranslation === 'function') ? getTranslation(catKey) : catKey;
             return '<span data-translate-key="'+catKey+'">'+catKey+'</span>';
           }
         },
-        {title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6},
-        {title: "{{ reference_data['current_language'].routes_climbed }}", field: "routes", responsive: 7, hozAlign: "right",
+        {title: "{{ reference_data['current_language'].sex }}", field: "sex", responsive: 6}
+    ];
+    if(usesRoutes){
+      columns.push({title: "{{ reference_data['current_language'].routes_climbed }}", field: "routes", responsive: 7, hozAlign: "right",
           formatter: function(cell){
             var routeCount = cell.getValue() || 0;
             return '<div  title="'+routeCount+' {{ reference_data["current_language"].routes_climbed }}">'+routeCount+'</div>';
           }
-        }
-      ],
+        });
+    }
+
+    var table = new Tabulator(tableEl, {
+      layout: "fitDataStretch",
+      responsiveLayout: "collapse",
+      responsiveLayoutCollapseStartOpen: true,
+      initialSort: [{column: "fullname", dir: "asc"}],
+      columns: columns,
       rowClick: function(e, row){
+        if(!usesRoutes) return;
         var d = row.getData();
         window.location.href = '/competitionRoutesEntry/'+competitionId+'/climber/'+d.id;
       }
@@ -220,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function()
             var c = pair[1] || {};
             var routeCount = Array.isArray(c.routesClimbed) ? c.routesClimbed.length : 0;
             var rs = (c.registration_status || '').toLowerCase();
-            var catKey = getCatKey(comp.calc_type, comp.competition_type, comp.age_category_type, c.category);
+            var catKey = (c.category === null || c.category === undefined) ? '' : getCatKey(comp.calc_type, comp.competition_type, c.category);
             //var catLabel = (typeof getTranslation === 'function') ? (getTranslation(catKey) || '') : '';
             rows.push({
               id: climberId,

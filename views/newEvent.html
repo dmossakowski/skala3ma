@@ -1,0 +1,217 @@
+
+
+
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+
+			<!--div class="container"-->
+		<!--		<div class="row" style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(public/images/group-of-people-1587927.jpg);  background-size: cover;">
+					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
+
+
+					<br>	<h3>{{ subheader_message }}</h3>
+
+
+			<h4>Below tracks are in your playlist but you never added a full album of the artist. These could be some gems!</h4>
+</div>
+				</div>
+				-->
+<!--/div-->
+
+{% endblock %}
+
+
+	{% block secondarycontent %}
+
+	<div class="container-fluid">
+					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+						<br>
+						<h3>{{ reference_data['current_language'].new_event }} </h3>
+                        {% if competition_limit_reached %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ reference_data['current_language'].competition_limit_warning }}
+                            <a href="/contact">{{ reference_data['current_language'].contact_email }}</a>.
+                        </div>
+                        {% else %}
+                        <div class="container">
+                            <form id="new-event-form" action="/api1/event/create" method="post" enctype="multipart/form-data">
+                                <div class="row">
+                                    <!-- Left Column -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="name" name="name" placeholder="Name" size="40">
+                                            <label for="name">{{ reference_data['current_language'].nazwa }}:</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="date" class="form-control" id="date" name="date" placeholder="Date" size="30">
+                                            <label for="date">{{ reference_data['current_language'].date }}:</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <select class="form-control" id="gym_id" name="gym_id">
+                                                <option value="">{{ reference_data['current_language'].no_gym }}</option>
+                                                {% for gym in gyms %}
+                                                <option value="{{ gym['id'] }}">{{ gym['name'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <label for="gym_id">{{ reference_data['current_language'].gym_club }}:</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="fsgt_autrement" name="fsgt_autrement" {% if fsgt_autrement %}checked{% endif %}>
+                                            <label class="form-check-label" for="fsgt_autrement">{{ reference_data['current_language'].fsgt_competition_autrement }}</label>
+                                        </div>
+                                        <div id="fsgt-fields" class="d-none">
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="competition_type" name="competition_type">
+                                                    <option value="adult">{{ reference_data['current_language'].competition_type_adult }}</option>
+                                                    <option value="ado">{{ reference_data['current_language'].competition_type_ado }}</option>
+                                                </select>
+                                                <label for="competition_type">{{ reference_data['current_language'].competition_type_adult }} / {{ reference_data['current_language'].competition_type_ado }}</label>
+                                            </div>
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="routes" name="routes"></select>
+                                                <label for="routes">{{ reference_data['current_language'].routes }}:</label>
+                                            </div>
+                                        </div>
+                                        <div id="registration-fields">
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="audience" name="audience">
+                                                    {% for audience in reference_data['audiences'] %}
+                                                    <option value="{{ audience }}">{{ reference_data['current_language']['audience_'~audience] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <label for="audience">{{ reference_data['current_language'].audience }}:</label>
+                                            </div>
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="registration_mode" name="registration_mode">
+                                                    {% for mode in reference_data['registration_modes']|reverse %}
+                                                    <option value="{{ mode }}">{{ reference_data['current_language']['registration_mode_'~mode] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <label for="registration_mode">{{ reference_data['current_language'].registration_mode }}:</label>
+                                            </div>
+                                        </div>
+                                        <div id="max-participants-field" class="form-floating mb-3">
+                                            <input type="number" class="form-control" id="max_participants" name="max_participants" placeholder="Max Participants" size="30" value="80">
+                                            <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="file1" class="form-label">Logo (max 4MB):</label>
+                                            <input class="form-control-file" type="file" name="file1" id="file1">
+                                        </div>
+                                    </div>
+                                    <!-- Right Column -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-1">
+                                            <textarea style="height: 330px;" class="form-control" id="instructions" name="instructions" placeholder="Message" rows="20" maxlength="2000"></textarea>
+                                            <label for="instructions">{{ reference_data['current_language'].Instructions }}:</label>
+                                        </div>
+                                        <div class="form-text mb-3">{{ reference_data['current_language'].event_location_hint }}</div>
+                                    </div>
+                                </div>
+                                <div id="new-event-error" class="alert alert-danger d-none" role="alert"></div>
+                                <!-- Submit Button Row -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button id="new-event-submit" type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        
+
+					</div>
+		<div class="container">
+			<div class="row row-bottom-padded-md">
+
+
+
+
+
+
+			</div>
+		</div>
+		<!-- fh5co-blog-section -->
+
+	</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('new-event-form');
+        if (!form) {
+            return;
+        }
+        const gyms = {{ gyms | tojson }};
+        const submitButton = document.getElementById('new-event-submit');
+        const errorLabel = document.getElementById('new-event-error');
+        const gymSelect = document.getElementById('gym_id');
+        const fsgtCheckbox = document.getElementById('fsgt_autrement');
+        const fsgtFields = document.getElementById('fsgt-fields');
+        const routesSelect = document.getElementById('routes');
+        const registrationFields = document.getElementById('registration-fields');
+        const registrationSelect = document.getElementById('registration_mode');
+        const audienceSelect = document.getElementById('audience');
+        const clubOption = audienceSelect.querySelector('option[value="club"]');
+        const maxParticipantsField = document.getElementById('max-participants-field');
+        const maxParticipantsInput = document.getElementById('max_participants');
+
+        function refreshRoutes() {
+            const gym = gyms.find(g => g.id === gymSelect.value);
+            routesSelect.replaceChildren(...(gym ? gym.routesets : []).map(r => new Option(r.name, r.id)));
+            clubOption.disabled = !gym;
+            if (!gym && audienceSelect.value === 'club') {
+                audienceSelect.value = 'public';
+            }
+            refreshRegistration();
+        }
+
+        // FSGT competitions always take registrations from FSGT members
+        function refreshRegistration() {
+            const fsgt = fsgtCheckbox.checked;
+            registrationFields.classList.toggle('d-none', fsgt);
+            registrationSelect.disabled = fsgt;
+            audienceSelect.disabled = fsgt;
+            const takesRegistrations = fsgt || registrationSelect.value !== 'none';
+            maxParticipantsField.classList.toggle('d-none', !takesRegistrations);
+            maxParticipantsInput.disabled = !takesRegistrations;
+        }
+
+        function refreshFsgtFields() {
+            const fsgt = fsgtCheckbox.checked;
+            fsgtFields.classList.toggle('d-none', !fsgt);
+            routesSelect.disabled = !fsgt;
+            document.getElementById('competition_type').disabled = !fsgt;
+            refreshRegistration();
+        }
+
+        gymSelect.addEventListener('change', refreshRoutes);
+        fsgtCheckbox.addEventListener('change', refreshFsgtFields);
+        registrationSelect.addEventListener('change', refreshRegistration);
+        refreshRoutes();
+        refreshFsgtFields();
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            errorLabel.classList.add('d-none');
+            submitButton.disabled = true;
+
+            try {
+                const result = await apiFetchJson(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+                window.location.assign('/competitionDetails/' + result.id);
+            } catch (error) {
+                errorLabel.textContent = error.data && error.data.error
+                    ? error.data.error
+                    : 'Unable to create the event.';
+                errorLabel.classList.remove('d-none');
+                submitButton.disabled = false;
+            }
+        });
+    })();
+</script>
+
+{% endblock %}

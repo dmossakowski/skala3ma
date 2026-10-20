@@ -84,11 +84,11 @@
                             </div>
 
 							<div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="otherclub" name="otherclub" size="40">
+                                <input type="text" class="form-control" id="otherclub" name="otherclub" size="40" value="{% if not climber['gymid'] or climber['gymid'] == '-1' %}{{ climber['club'] or '' }}{% endif %}">
                                 <label for="otherclub">{{reference_data['current_language'].other_club_not_listed}}</label>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
                                 {{reference_data['current_language'].submit}}
                             </button>
 					</form>
@@ -154,6 +154,8 @@
                 showAlert(error_message, 'danger');
             }
         document.addEventListener('DOMContentLoaded', function() {
+            populateGymsSelect("{{ climber['gymid'] or '' }}");
+
             apiFetchJson('/api1/user')            
                 .then(data => {
                     const permissions = data.permissions;
@@ -230,8 +232,6 @@
                             });
                         });
                     }
-
-                    populateGymsSelect(data.gymid);
                 });
 
             // Fetch gyms and populate the club select element
@@ -251,7 +251,7 @@
                         const option = document.createElement('option');
                         option.value = gym.id;
                         option.textContent = gym.name;
-                        if (gym.id === clubId) {
+                        if (clubId && String(gym.id) === String(clubId)) {
                             option.selected = true;
                         }
                         

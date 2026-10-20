@@ -58,6 +58,36 @@
     <option value="ado" {% if competition['competition_type'] == 'ado' %} selected {% endif %}>{{ reference_data['current_language'].competition_type_ado }}</option>
 </select>
 
+    <br>
+    <label for="region">{{ reference_data['current_language'].region }}:</label>
+    <input name="region" size="8" value="{{ competition['region'] or '' }}" id="region"/>
+    <br>
+    <label for="series_key">{{ reference_data['current_language'].series_key }}:</label>
+    <input name="series_key" list="series_keys" size="25" value="{{ competition['series_key'] or '' }}" id="series_key"/>
+    <datalist id="series_keys">
+        {% for series_key in series_keys %}
+        <option value="{{ series_key }}">
+        {% endfor %}
+    </datalist>
+    &nbsp; &nbsp; <label for="registration_mode">{{ reference_data['current_language'].registration_mode }}:</label>
+    <select name="registration_mode" id="registration_mode">
+        {% for registration_mode in reference_data['registration_modes'] %}
+        <option value="{{ registration_mode }}" {% if competition['registration_mode'] == registration_mode %} selected {% endif %}>{{ reference_data['current_language']['registration_mode_'~registration_mode] }}</option>
+        {% endfor %}
+    </select>
+    &nbsp; &nbsp; <label for="audience">{{ reference_data['current_language'].audience }}:</label>
+    <select name="audience" id="audience">
+        {% for audience in reference_data['audiences'] %}
+        <option value="{{ audience }}" {% if competition['audience'] == audience %} selected {% endif %}>{{ reference_data['current_language']['audience_'~audience] }}</option>
+        {% endfor %}
+    </select>
+    &nbsp; &nbsp; <label for="calc_type">{{ reference_data['current_language'].calc_type }}:</label>
+    <select name="calc_type" id="calc_type" {% if competition['status'] not in ['draft', 'published'] %} disabled {% endif %}>
+        {% for calc_type in ([competition['calc_type']] + reference_data['calc_types'])|unique %}
+        <option value="{{ calc_type }}" {% if competition['calc_type'] == calc_type %} selected {% endif %}>{{ reference_data['current_language']['calc_type_'~calc_type] or calc_type }}</option>
+        {% endfor %}
+    </select>
+
 
 
     <div class="col-md-6">
@@ -120,11 +150,9 @@
 	<select name="competition_status" id="competition_status">
 		<option value="choose" size="20" >--</option>
 
-	{% for competition_status in reference_data['competition_status'] %}
-		<option value="{{reference_data['competition_status'][competition_status]}}" size="20" 
-        {% if reference_data['competition_status'][competition_status] == competition['status'] %} selected {% endif %} >
-        
-        {{ reference_data['current_language']['competition_status_'~loop.index0] }} </option>
+	{% for status in allowed_statuses %}
+		<option value="{{ status }}" size="20" {% if status == competition['status'] %} selected {% endif %} >
+        {{ reference_data['current_language']['competition_status_'~status] }} </option>
 	{% endfor %}
 
 							</select>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -208,7 +236,7 @@
 
 
 <!-- display editable fields for unclosed competitions only -->
-{% if competition['status'] < 4 %} 
+{% if competition['status'] not in ['closed', 'archived', 'cancelled'] %} 
 
 {% for climberId in competition['climbers'] %}
 <div class="card mb-2 border-secondary">

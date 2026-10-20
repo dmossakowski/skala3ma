@@ -10,108 +10,53 @@
 
 	{% block secondarycontent %}
 
-	<div class="container">
-		<!--style="background-image: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url(/public/images/pexels-vladimir-kudinov-36363-1.jpg);  background-size: cover;"-->
-
-		<!--div id="fh5co-blog-section" class="fh5co-section-gray"	-->
-					<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
-						<br>
-						<h3>{{ reference_data['current_language'].add_new }} </h3>
-
-		<form action="/gyms/add" method="post" enctype="multipart/form-data">
-
-			<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label><br>
-			<input name="gymName" size="40" id="gymName" type="text"/><br><br>
-
-				<label for="numberOfRoutes">{{ reference_data['current_language'].number_of_routes }}:</label>
-			<br><input name="numberOfRoutes" id="numberOfRoutes" size="20" type="text"/><br><br>
-
-	<label for="address">{{ reference_data['current_language'].address }}:</label><br>
-	<input name="address" id="address" type="address" size="60"/>
-							<br><br>
-	<label for="file1">Logo (max 4MB):</label><br>
-			<input type="file" name="file1" id="file1"><br>
-<br>
-<label for="url">{{ reference_data['current_language'].link }}:</label><br>
-	<input name="url" id="url"  size="60"/>
-							<br><br>
-
-    <label for="organization">{{ reference_data['current_language'].organization}}:</label><br>
-    <input name="organization" id="organization"  size="60"/>
-	
-     
-							<br><br>
-
-<button type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
-					</form>
-
-
-
+	<div class="container-fluid">
+		<div class="col-md-8 col-md-offset-2 text-left heading-section animate-box">
+			<br>
+			<h3>{{ reference_data['current_language'].add_new }} </h3>
+			<div class="container">
+				<form id="new-gym-form" action="/gyms/add" method="post" enctype="multipart/form-data">
+					<div class="row">
+						<!-- Left Column -->
+						<div class="col-md-6">
+							<div class="form-floating mb-3">
+								<input type="text" class="form-control" id="gymName" name="gymName" placeholder="Name" required>
+								<label for="gymName">{{ reference_data['current_language'].nazwa }}:</label>
+							</div>
+							<div class="form-floating mb-3">
+								<input type="number" class="form-control" id="numberOfRoutes" name="numberOfRoutes" placeholder="Routes" min="1" inputmode="numeric">
+								<label for="numberOfRoutes">{{ reference_data['current_language'].number_of_routes }}:</label>
+							</div>
+							<div class="form-floating mb-3">
+								<input type="text" class="form-control" id="address" name="address" placeholder="Address" autocomplete="street-address">
+								<label for="address">{{ reference_data['current_language'].address }}:</label>
+							</div>
+						</div>
+						<!-- Right Column -->
+						<div class="col-md-6">
+							<div class="form-floating mb-3">
+								<input type="text" class="form-control" id="url" name="url" placeholder="Link" inputmode="url">
+								<label for="url">{{ reference_data['current_language'].link }}:</label>
+							</div>
+							<div class="form-floating mb-3">
+								<input type="text" class="form-control" id="organization" name="organization" placeholder="Organization">
+								<label for="organization">{{ reference_data['current_language'].organization }}:</label>
+							</div>
+							<div class="mb-3">
+								<label for="file1" class="form-label">Logo (max 4MB):</label>
+								<input class="form-control" type="file" name="file1" id="file1" accept="image/*">
+							</div>
+						</div>
 					</div>
-
-
-		<div class="container">
-			<div class="row row-bottom-padded-md">
-
-
-
-
-
-
-{% if climber is not none and climber is not undefined  %}
-<div class="container">
-	<div class="row">
-				Name {{ climber['firstname'] }} {{ climber['lastname'] }}
-	({{ climber['sex'] }} ) from <i>{{climber['club'] }}</i>
-
-
-
-				{{ climber['routesClimbed'] }}
-
-</div>
-		<div class="row">
-			<form targt="/competitionDashboard/{{competitionId}}/updateRoutes">
-<table style="width:100%"><tr>
-
-					{% for i in range(100) %}
-<td style="width:10%">
-
-						<h3>	<a href="#" onclick="document.getElementById('route{{i}}').checked=!document.getElementById('route{{i}}').checked; return false;">
-								 {{i}}</a>
-
-
-								<input type="checkbox" id="route{{i}}" name="route{{i}}" value="{{i}}"
-								{% if i in climber['routesClimbed'] %}checked{% endif %}
-
-								></h3>
-
-</td>
-	{% if i%10==9 %} </tr><tr> {% endif %}
-
-</td>
-
-					{%endfor%}
-</tr>
-			</table>
-				<button>Submit</button>
+					<!-- Submit Button Row -->
+					<div class="row">
+						<div class="col-12">
+							<button type="submit" class="btn btn-primary btn-lg w-100">{{ reference_data['current_language'].submit }}</button>
+						</div>
+					</div>
 				</form>
-
-</div>
-	</div>
-				{% endif %}
-
-
-
-
-
-
-
-
-
 			</div>
 		</div>
-		<!-- fh5co-blog-section -->
-
 	</div>
 
 {% endblock %}
