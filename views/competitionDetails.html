@@ -28,29 +28,23 @@
 
             <div class="row align-items-md-stretch">	
            
-                <div class="row align-items-md-stretch">	
-                    <div class="col">
-                        <div class="row">
-                            <!-- competiton poster -->
-                            <div class="col-md-6 text-center">
-                                <a href="#" id="competition-poster-link">
-                                    <img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" width="65%" class=""><br><br>
-                                </a>
-                            </div>
-                            <!-- qr code -->
-                            <div class="col-md-6 text-center">
-                                <img src="/competition/{{ competitionId }}/qrcode" width="400"><br><br>
-
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-2">   </div>
-                            <div class="col">
-                                    
-                                <pre id="competition-instructions" style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 5px;"></pre>
-                            </div>
-                            <div class="col-2">   </div>
-                        </div>
+                <div class="row mx-0 g-4">
+                    <!-- competition poster -->
+                    <div class="col-12 col-md-6 text-center">
+                        <a href="#" id="competition-poster-link">
+                            <img src="{{ url_for('app_ui.image_route', img_id=competitionId) }}" class="img-fluid">
+                        </a>
+                    </div>
+                    <!-- instructions -->
+                    <div class="col-12 col-md-6">
+                        <pre id="competition-instructions" style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; background-color: #f9f9f9; padding: 10px; border-radius: 5px;"></pre>
+                    </div>
+                    <!-- qr code -->
+                    <div class="col-12 text-center mb-4">
+                        <img src="/competition/{{ competitionId }}/qrcode" width="200" class="img-fluid"><br>
+                        <a href="{{ url_for('app_ui.competition_ics', competitionid=competitionId) }}" class="btn btn-outline-secondary btn-sm mt-2">
+                            <i class="bi bi-calendar-plus me-1"></i>{{ reference_data['current_language'].add_to_calendar }}
+                        </a>
                     </div>
                 </div>
 

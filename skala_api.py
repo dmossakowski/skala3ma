@@ -1191,8 +1191,9 @@ def getCompetitionDashboard():
         c['gym'] = comps[compid].get('gym')
         c['gym_id'] = comps[compid].get('gym_id')
         c['calc_type'] = comps[compid].get('calc_type','standard')
-        for field in ('region', 'series_key', 'registration_mode'):
+        for field in ('region', 'series_key', 'registration_mode', 'audience'):
             c[field] = comps[compid].get(field)
+        c['text']['audience'] = competitionsEngine.reference_data['current_language'].get('audience_' + str(c['audience']))
         c['scored'] = comps[compid].get('calc_type') != 'none'
         if c['series_key']:
             c['text']['series'] = competitionsEngine.reference_data['current_language'].get('series_' + c['series_key'], c['series_key'])
@@ -1270,6 +1271,15 @@ def new_event_post():
     # legacy /competition/create clients send calc_type=fsgt2 instead of the checkbox
     fsgt_autrement = request.form.get('fsgt_autrement') in ('on', 'true', '1') \
         or request.form.get('calc_type') == competitionsEngine.CalculationStrategyFsgt2.name
+    if fsgt_autrement:
+        registration_mode = competitionsEngine.registration_mode_open
+        audience = competitionsEngine.audience_fsgt
+    else:
+        registration_mode = request.form.get('registration_mode') or competitionsEngine.registration_mode_open
+        audience = request.form.get('audience') or competitionsEngine.audience_public
+
+    if registration_mode == competitionsEngine.registration_mode_none:
+        max_participants = None
 
     if competition_type not in competitionsEngine.competition_types.values():
         return jsonify({'error': 'Unknown competition type'}), 400
@@ -1282,8 +1292,10 @@ def new_event_post():
         skala_db.count_competitions_by_added_by(user.id) < competitionsEngine.MAX_EVENTS):
         return jsonify({'error': 'Not authorized'}), 403
 
-    if not name or not date or not max_participants:
-        return jsonify({'error': 'Name, date and max participants are required'}), 400
+    if not name or not date:
+        return jsonify({'error': 'Name and date are required'}), 400
+    if registration_mode != competitionsEngine.registration_mode_none and not max_participants:
+        return jsonify({'error': 'Max participants is required when registration is open'}), 400
 
     if gym_id is None and routesid is not None:
         routes_gym = skala_db.get_gym_by_routes_id(routesid)
@@ -1293,9 +1305,9 @@ def new_event_post():
         settings = dict(calc_type=competitionsEngine.CalculationStrategyFsgt2.name,
                         region='idf',
                         series_key=competitionsEngine.FSGT_COMPETITION_AUTREMENT_IDF,
-                        registration_mode=competitionsEngine.registration_mode_fsgt)
+                        registration_mode=registration_mode, audience=audience)
     else:
-        settings = dict(calc_type='none', registration_mode=competitionsEngine.registration_mode_open)
+        settings = dict(calc_type='none', registration_mode=registration_mode, audience=audience)
         competition_type = competitionsEngine.competition_type_adult
 
     try:

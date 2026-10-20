@@ -208,42 +208,44 @@ def status_change_error(user, competition, new_status):
 
 FSGT_COMPETITION_AUTREMENT_IDF = 'fsgt_competition_autrement_idf'
 
+# how people sign up
 registration_mode_none = 'none'
 registration_mode_open = 'open'
-registration_mode_club = 'club'
-registration_mode_fsgt = 'fsgt'
+registration_modes = [registration_mode_none, registration_mode_open]
+
+# who may take part
+audience_public = 'public'
+audience_club = 'club'
+audience_fsgt = 'fsgt'
 
 
-# each registration mode returns an error code or '' when the registrant may register
-def _registration_check_none(competition, registrant, gymid):
-    return 'error5329'
-
-
-def _registration_check_open(competition, registrant, gymid):
+# each audience returns an error code or '' when the registrant may register
+def _audience_check_public(competition, registrant, gymid):
     return ''
 
 
-def _registration_check_club(competition, registrant, gymid):
+def _audience_check_club(competition, registrant, gymid):
     if gymid is None or gymid != competition.get('gym_id'):
         return 'error5330'
     return ''
 
 
-def _registration_check_fsgt(competition, registrant, gymid):
+def _audience_check_fsgt(competition, registrant, gymid):
     # all users are assumed to be FSGT members for now
     return ''
 
 
-registration_modes = {
-    registration_mode_none: _registration_check_none,
-    registration_mode_open: _registration_check_open,
-    registration_mode_club: _registration_check_club,
-    registration_mode_fsgt: _registration_check_fsgt,
+audiences = {
+    audience_public: _audience_check_public,
+    audience_club: _audience_check_club,
+    audience_fsgt: _audience_check_fsgt,
 }
 
 
-def registration_mode_error(competition, registrant, gymid):
-    check = registration_modes.get(competition.get('registration_mode'), _registration_check_open)
+def registration_error(competition, registrant, gymid):
+    if not _takes_registrations(competition):
+        return 'error5329'
+    check = audiences.get(competition.get('audience'), _audience_check_public)
     return check(competition, registrant, gymid)
 
 
@@ -264,12 +266,16 @@ def has_page(competition, page):
     return competition is not None and page in get_competition_pages(competition)
 
 
-# returns an error message or '' if calc_type, registration_mode and gym can be combined
-def settings_error(calc_type, registration_mode, gym_id):
+# returns an error message or '' if calc_type, registration_mode, audience and gym can be combined
+def settings_error(calc_type, registration_mode, audience, gym_id):
+    if registration_mode not in registration_modes:
+        return 'Unknown registration mode'
+    if audience not in audiences:
+        return 'Unknown audience'
     if calc_type != 'none' and registration_mode == registration_mode_none:
         return 'A scored competition needs registration'
-    if registration_mode == registration_mode_club and not gym_id:
-        return 'Club registration needs a gym'
+    if audience == audience_club and not gym_id:
+        return 'A club-only event needs a gym'
     return ''
 
 
@@ -301,7 +307,8 @@ reference_data = { "categories":categories,# "categories_ado":categories_ado,
                    "clubs":clubs, "competition_status": competition_status, "colors_fr":colors,
                   "supported_languages":supported_languages, "route_finish_status": activities_db.route_finish_status,
                   "competition_types":competition_types, "gym_status":gym_status,
-                  "registration_modes": list(registration_modes),
+                  "registration_modes": registration_modes,
+                  "audiences": list(audiences),
                   "calc_types": creatable_calc_types}
 
 
@@ -317,11 +324,11 @@ email_sender = EmailSender(
 # gym_id is empty when the event is not organized by a club
 def create_event(added_by, name, date, calc_type, max_participants, competition_type, instructions,
                  gym_id=None, routesid=None, region=None, series_key=None,
-                 registration_mode=registration_mode_open):
+                 registration_mode=registration_mode_open, audience=audience_public):
     if calc_type not in creatable_calc_types:
         raise ValueError('Unknown calculation strategy')
 
-    error = settings_error(calc_type, registration_mode, gym_id)
+    error = settings_error(calc_type, registration_mode, audience, gym_id)
     if error:
         raise ValueError(error)
 
@@ -361,6 +368,7 @@ def create_event(added_by, name, date, calc_type, max_participants, competition_
         "region": region or None,
         "series_key": series_key or None,
         "registration_mode": registration_mode,
+        "audience": audience,
         "routes": routes,
         "climbers": {}}
 
@@ -1285,12 +1293,22 @@ def _migrate_competition(competition):
         competition['status'] = competition_status_draft
         needs_updating = True
 
+    # registration_mode 'club' and 'fsgt' used to also say who may register
+    if competition.get('registration_mode') in (audience_club, audience_fsgt):
+        competition['audience'] = competition['registration_mode']
+        competition['registration_mode'] = registration_mode_open
+        needs_updating = True
+
     # competitions created before events were generalized all belong to the FSGT IDF challenge
     for key, default in (('region', 'idf'),
-                         ('series_key', FSGT_COMPETITION_AUTREMENT_IDF), ('registration_mode', registration_mode_fsgt)):
+                         ('series_key', FSGT_COMPETITION_AUTREMENT_IDF), ('registration_mode', registration_mode_open)):
         if key not in competition:
             competition[key] = default
             needs_updating = True
+
+    if 'audience' not in competition:
+        competition['audience'] = audience_fsgt if competition.get('series_key') == FSGT_COMPETITION_AUTREMENT_IDF else audience_public
+        needs_updating = True
 
     #if competition.get('gym_id') is None:
      #   raise ValueError('gym_id is missing for competition '+str(competition['id']))

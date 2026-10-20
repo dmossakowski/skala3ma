@@ -100,6 +100,7 @@ COMPETITION_COLUMNS = {
     'calc_type': 'calc_type',
     'series_key': 'series_key',
     'registration_mode': 'registration_mode',
+    'audience': 'audience',
 }
 
 def init():

@@ -75,6 +75,12 @@
         <option value="{{ registration_mode }}" {% if competition['registration_mode'] == registration_mode %} selected {% endif %}>{{ reference_data['current_language']['registration_mode_'~registration_mode] }}</option>
         {% endfor %}
     </select>
+    &nbsp; &nbsp; <label for="audience">{{ reference_data['current_language'].audience }}:</label>
+    <select name="audience" id="audience">
+        {% for audience in reference_data['audiences'] %}
+        <option value="{{ audience }}" {% if competition['audience'] == audience %} selected {% endif %}>{{ reference_data['current_language']['audience_'~audience] }}</option>
+        {% endfor %}
+    </select>
     &nbsp; &nbsp; <label for="calc_type">{{ reference_data['current_language'].calc_type }}:</label>
     <select name="calc_type" id="calc_type" {% if competition['status'] not in ['draft', 'published'] %} disabled {% endif %}>
         {% for calc_type in ([competition['calc_type']] + reference_data['calc_types'])|unique %}

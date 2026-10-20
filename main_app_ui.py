@@ -554,13 +554,16 @@ def competition_admin_post(competition_id):
         registration_mode = request.form.get('registration_mode')
         if registration_mode not in competitionsEngine.registration_modes:
             registration_mode = competition.get('registration_mode')
+        audience = request.form.get('audience')
+        if audience not in competitionsEngine.audiences:
+            audience = competition.get('audience')
         calc_type = request.form.get('calc_type') or competition.get('calc_type')
         if calc_type != competition.get('calc_type') and (
                 calc_type not in competitionsEngine.creatable_calc_types
                 or competition.get('status') not in competitionsEngine.calc_type_editable_statuses):
             resultError = 'The calculation strategy cannot be changed now'
         else:
-            resultError = competitionsEngine.settings_error(calc_type, registration_mode, competition.get('gym_id'))
+            resultError = competitionsEngine.settings_error(calc_type, registration_mode, audience, competition.get('gym_id'))
 
     if competition_update_button is not None and not resultError:
         # update gym name in the competition if Gym Name is changed somewhere else
@@ -571,6 +574,7 @@ def competition_admin_post(competition_id):
         competition['max_participants']=max_participants
         competition['competition_type'] = competition_type
         competition['registration_mode'] = registration_mode
+        competition['audience'] = audience
         competition['calc_type'] = calc_type
 
         competition['region'] = (request.form.get('region') or '').strip() or None
@@ -1058,7 +1062,7 @@ def addCompetitionClimber(competitionId):
                 error_code = "error5328"
 
             if not error_code:
-                error_code = competitionsEngine.registration_mode_error(comp, dependent, gymid)
+                error_code = competitionsEngine.registration_error(comp, dependent, gymid)
 
             if not error_code:
                 # Resolve club name
@@ -1118,7 +1122,7 @@ def addCompetitionClimber(competitionId):
             error_code = "error5321"
 
         if not error_code:
-            error_code = competitionsEngine.registration_mode_error(comp, user, gymid)
+            error_code = competitionsEngine.registration_error(comp, user, gymid)
 
         if not competitionsEngine.get_strategy(comp).uses_age_categories:
             category = None
@@ -2890,47 +2894,14 @@ def gym_routes_qr(gymid, routesid):
 def competition_qr(competitionid):
     try:
         comp = competitionsEngine.getCompetition(competitionid)
-         # Construct the URL
-        # Extract competition details
-        comp_id = comp['id']
-        comp_name = comp['name']
-        comp_date = comp['date']
-        comp_gym = comp['gym']
-        
-        # Construct the URL
-        base_url = request.url_root
-        url = f"{base_url}competitionDetails/{competitionid}"
+        if comp is None:
+            return 'Competition not found', 404
 
-        # Create vCalendar text
-        vcalendar_text = f'''
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Your Organization//Your Product//EN
-BEGIN:VEVENT
-UID:{comp_id}
-DTSTAMP:{comp_date.replace("-", "")}T120000Z
-DTSTART;TZID=Europe/Paris:{comp_date.replace("-", "")}T120000
-SUMMARY:{comp_name}
-LOCATION:{comp_gym}
-DESCRIPTION: {url}
-URL:{url}
-END:VEVENT
-END:VCALENDAR
-        '''.strip()
+        url = url_for('app_ui.getCompetition', competitionId=comp['id'], _external=True)
 
-        #img_1 = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer())
-        #img_2 = qr.make_image(image_factory=StyledPilImage, color_mask=RadialGradiantColorMask())
-        #img_1 = qr.make_image(image_factory=StyledPilImage, embeded_image_path="public/images/favicon.png")
-
-        #qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, image_factory=StyledPilImage)
-        #qr.add_data('Some data')
-
-        #img = qrcode.make(url)
-        #img = qr.make_image(embeded_image_path="images/fsgt-logo-me.png")
-        
-        # Generate QR code
-        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
-        qr.add_data(vcalendar_text)
+        # no embedded logo, so low error correction keeps the code less dense
+        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=6, border=2)
+        qr.add_data(url)
         img = qr.make_image()
 
         buffer = io.BytesIO()
@@ -2946,8 +2917,40 @@ END:VCALENDAR
     except Exception as e:
         print(e)
         return 'Internal Server Error', 500
-    
 
 
+def _ics_escape(text):
+    return (str(text or '').replace('\\', '\\\\').replace(';', '\\;')
+            .replace(',', '\\,').replace('\r', '').replace('\n', '\\n'))
 
 
+@app_ui.route('/competition/<competitionid>/calendar.ics', methods=['GET'])
+def competition_ics(competitionid):
+    comp = competitionsEngine.getCompetition(competitionid)
+    if comp is None:
+        return 'Competition not found', 404
+
+    url = url_for('app_ui.getCompetition', competitionId=comp['id'], _external=True)
+    comp_date = (comp.get('date') or '').replace('-', '')
+    dtstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+
+    lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Skala3ma//Competitions//EN',
+        'BEGIN:VEVENT',
+        f"UID:{_ics_escape(comp['id'])}@skala3ma",
+        f'DTSTAMP:{dtstamp}',
+        f'DTSTART;TZID=Europe/Paris:{comp_date}T120000',
+        f"SUMMARY:{_ics_escape(comp.get('name'))}",
+        f"LOCATION:{_ics_escape(comp.get('gym'))}",
+        f'DESCRIPTION:{_ics_escape(url)}',
+        f'URL:{url}',
+        'END:VEVENT',
+        'END:VCALENDAR',
+    ]
+
+    response = make_response('\r\n'.join(lines) + '\r\n')
+    response.mimetype = 'text/calendar'
+    response.headers['Content-Disposition'] = 'attachment; filename=competition.ics'
+    return response

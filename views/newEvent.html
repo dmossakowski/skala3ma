@@ -73,7 +73,25 @@
                                                 <label for="routes">{{ reference_data['current_language'].routes }}:</label>
                                             </div>
                                         </div>
-                                        <div class="form-floating mb-3">
+                                        <div id="registration-fields">
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="audience" name="audience">
+                                                    {% for audience in reference_data['audiences'] %}
+                                                    <option value="{{ audience }}">{{ reference_data['current_language']['audience_'~audience] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <label for="audience">{{ reference_data['current_language'].audience }}:</label>
+                                            </div>
+                                            <div class="form-floating mb-3">
+                                                <select class="form-control" id="registration_mode" name="registration_mode">
+                                                    {% for mode in reference_data['registration_modes']|reverse %}
+                                                    <option value="{{ mode }}">{{ reference_data['current_language']['registration_mode_'~mode] }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <label for="registration_mode">{{ reference_data['current_language'].registration_mode }}:</label>
+                                            </div>
+                                        </div>
+                                        <div id="max-participants-field" class="form-floating mb-3">
                                             <input type="number" class="form-control" id="max_participants" name="max_participants" placeholder="Max Participants" size="30" value="80">
                                             <label for="max_participants">{{ reference_data['current_language'].max_participants }}:</label>
                                         </div>
@@ -132,10 +150,32 @@
         const fsgtCheckbox = document.getElementById('fsgt_autrement');
         const fsgtFields = document.getElementById('fsgt-fields');
         const routesSelect = document.getElementById('routes');
+        const registrationFields = document.getElementById('registration-fields');
+        const registrationSelect = document.getElementById('registration_mode');
+        const audienceSelect = document.getElementById('audience');
+        const clubOption = audienceSelect.querySelector('option[value="club"]');
+        const maxParticipantsField = document.getElementById('max-participants-field');
+        const maxParticipantsInput = document.getElementById('max_participants');
 
         function refreshRoutes() {
             const gym = gyms.find(g => g.id === gymSelect.value);
             routesSelect.replaceChildren(...(gym ? gym.routesets : []).map(r => new Option(r.name, r.id)));
+            clubOption.disabled = !gym;
+            if (!gym && audienceSelect.value === 'club') {
+                audienceSelect.value = 'public';
+            }
+            refreshRegistration();
+        }
+
+        // FSGT competitions always take registrations from FSGT members
+        function refreshRegistration() {
+            const fsgt = fsgtCheckbox.checked;
+            registrationFields.classList.toggle('d-none', fsgt);
+            registrationSelect.disabled = fsgt;
+            audienceSelect.disabled = fsgt;
+            const takesRegistrations = fsgt || registrationSelect.value !== 'none';
+            maxParticipantsField.classList.toggle('d-none', !takesRegistrations);
+            maxParticipantsInput.disabled = !takesRegistrations;
         }
 
         function refreshFsgtFields() {
@@ -143,10 +183,12 @@
             fsgtFields.classList.toggle('d-none', !fsgt);
             routesSelect.disabled = !fsgt;
             document.getElementById('competition_type').disabled = !fsgt;
+            refreshRegistration();
         }
 
         gymSelect.addEventListener('change', refreshRoutes);
         fsgtCheckbox.addEventListener('change', refreshFsgtFields);
+        registrationSelect.addEventListener('change', refreshRegistration);
         refreshRoutes();
         refreshFsgtFields();
 

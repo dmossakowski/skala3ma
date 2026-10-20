@@ -6,9 +6,11 @@
     {% set comp_name = competition['name'] %}
     {% set comp_status = reference_data['current_language']['competition_status_'~competition['status']] %}
     {% set pages = competition_pages(competition) %}
+    {% set comp_icon = 'bi-calendar-event-fill' if competition.get('calc_type') == 'none' else 'bi-trophy-fill' %}
 {% else %}
     {% set comp_name = '' %}
     {% set comp_status = '' %}
+    {% set comp_icon = 'bi-trophy-fill' %}
     {# hidden later by JS once the competition is loaded #}
     {% set pages = ['details', 'register', 'climbers', 'routes', 'full_results', 'results', 'stats', 'contact', 'admin'] %}
 {% endif %}
@@ -23,7 +25,7 @@
 <!-- Desktop Navigation (hidden on mobile/tablet) -->
 <ul class="nav justify-content-center d-none d-md-flex">
     <a href="/competitionDetails/{{ competitionId}}" class="nav-link sf-menu2 competition-menu-link" data-page="details">
-        <i class="bi bi-trophy-fill me-1"></i>
+        <i class="bi {{ comp_icon }} me-1 js-comp-menu-icon"></i>
         <b><span class="js-comp-menu-name">{{ comp_name }}</span> (<span class="js-comp-menu-status">{{ comp_status }}</span>)</b>
     </a>
 
@@ -82,7 +84,7 @@
     </h5>
         <nav class="nav flex-column">
             <a href="/competitionDetails/{{ competitionId}}" class="nav-link competition-menu-link-mobile py-3" data-page="details">
-                <i class="bi bi-trophy-fill me-2"></i>{{ reference_data['current_language'].competition_details|default('Competition Details') }}
+                <i class="bi {{ comp_icon }} me-2 js-comp-menu-icon"></i>{{ reference_data['current_language'].competition_details|default('Competition Details') }}
             </a>
 
             {% if 'register' in pages %}
@@ -190,6 +192,9 @@
             .then(competition => {
                 document.querySelectorAll('.js-comp-menu-name').forEach(el => el.textContent = competition.name || '');
                 document.querySelectorAll('.js-comp-menu-status').forEach(el => el.textContent = statusLabels[String(competition.status)] || '');
+                if (competition.calc_type === 'none') {
+                    document.querySelectorAll('.js-comp-menu-icon').forEach(el => el.classList.replace('bi-trophy-fill', 'bi-calendar-event-fill'));
+                }
                 if (Array.isArray(competition.pages)) {
                     document.querySelectorAll('[data-page]').forEach(el => {
                         if (!competition.pages.includes(el.dataset.page)) el.remove();
