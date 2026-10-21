@@ -132,17 +132,47 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
+    function copyLayout(i) {
+        const copy = JSON.parse(JSON.stringify(draft[i]));
+        copy.valid_from = '';
+        draft.push(copy);
+        editIndex = draft.length - 1;
+        rerenderEdit();
+    }
+
+    function deleteLayout(i) {
+        if (!confirm(T.delete_layout + '?')) return;
+        draft.splice(i, 1);
+        if (editIndex >= i) editIndex = Math.max(0, editIndex - 1);
+        rerenderEdit();
+    }
+
     function renderTabs() {
         const list = draft || layouts;
         const current = draft ? editIndex : selected;
-        tabsEl.replaceChildren(...list.map((layout, i) => el('button', {
-            type: 'button',
-            className: 'btn btn-sm ' + (i === current ? 'btn-secondary' : 'btn-outline-secondary'),
-            onclick: () => {
-                if (draft) { editIndex = i; renderEdit(); } else { selected = i; renderView(); }
-                renderTabs();
-            },
-        }, layout.valid_from || '----------', layoutBadge(list, i))));
+        tabsEl.replaceChildren(...list.map((layout, i) => {
+            const btnClass = 'btn btn-sm ' + (i === current ? 'btn-secondary' : 'btn-outline-secondary');
+            const pill = el('button', {
+                type: 'button',
+                className: btnClass,
+                onclick: () => {
+                    if (draft) { editIndex = i; renderEdit(); } else { selected = i; renderView(); }
+                    renderTabs();
+                },
+            }, layout.valid_from || '----------', layoutBadge(list, i));
+            if (!draft) return pill;
+            return el('div', {className: 'btn-group'},
+                pill,
+                el('button', {
+                    type: 'button', className: btnClass + ' dropdown-toggle dropdown-toggle-split',
+                    'data-bs-toggle': 'dropdown', 'data-bs-reference': 'parent', 'aria-expanded': 'false',
+                }),
+                el('ul', {className: 'dropdown-menu'},
+                    el('li', {}, el('button', {type: 'button', className: 'dropdown-item', onclick: () => copyLayout(i)},
+                        el('i', {className: 'bi bi-files me-2'}), T.new_layout)),
+                    el('li', {}, el('button', {type: 'button', className: 'dropdown-item text-danger', onclick: () => deleteLayout(i)},
+                        el('i', {className: 'bi bi-trash me-2'}), T.delete_layout))));
+        }));
     }
 
     // ---------- view mode ----------
@@ -338,33 +368,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         return el('div', {className: 'card mb-3'},
-            el('div', {className: 'card-body d-flex gap-3'},
-                el('div', {className: 'sector-edit-photo flex-shrink-0 d-flex flex-column gap-2'},
-                    sector.thumb_id
-                        ? el('img', {src: imageUrl(sector.thumb_id), alt: '', className: 'sector-photo'})
-                        : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})),
-                    el('label', {className: 'btn btn-outline-success btn-sm mb-0'},
-                        el('i', {className: 'bi bi-camera'}), ' ' + T.photo,
-                        el('input', {
-                            type: 'file', accept: 'image/*', className: 'd-none',
-                            onchange: e => { if (e.target.files[0]) uploadPhoto(sector, e.target.files[0]); },
-                        })),
-                    sector.img_id ? el('button', {
-                        type: 'button', className: 'btn btn-outline-danger btn-sm', text: T.remove,
-                        onclick: () => { sector.img_id = ''; sector.thumb_id = ''; renderEdit(); },
-                    }) : null),
+            el('div', {className: 'card-body'},
+                el('div', {className: 'd-flex gap-2 mb-3'},
+                    el('input', {
+                        type: 'text', className: 'form-control', value: sector.name, maxlength: '100',
+                        placeholder: T.route_name, required: true,
+                        oninput: e => { sector.name = e.target.value; },
+                    }),
+                    controls()),
+                el('div', {className: 'd-flex gap-3'},
+                    el('div', {className: 'sector-edit-photo flex-shrink-0 d-flex flex-column gap-2'},
+                        sector.thumb_id
+                            ? el('img', {src: imageUrl(sector.thumb_id), alt: '', className: 'sector-photo'})
+                            : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})),
+                        el('label', {className: 'btn btn-outline-success btn-sm mb-0'},
+                            el('i', {className: 'bi bi-camera'}), ' ' + T.photo,
+                            el('input', {
+                                type: 'file', accept: 'image/*', className: 'd-none',
+                                onchange: e => { if (e.target.files[0]) uploadPhoto(sector, e.target.files[0]); },
+                            })),
+                        sector.img_id ? el('button', {
+                            type: 'button', className: 'btn btn-outline-danger btn-sm', text: T.remove,
+                            onclick: () => { sector.img_id = ''; sector.thumb_id = ''; renderEdit(); },
+                        }) : null),
 
-                el('div', {className: 'flex-grow-1 min-w-0'},
-                    el('div', {className: 'd-flex gap-2 mb-2'},
-                        el('input', {
-                            type: 'text', className: 'form-control', value: sector.name, maxlength: '100',
-                            placeholder: T.route_name, required: true,
-                            oninput: e => { sector.name = e.target.value; },
-                        }),
-                        controls()),
-
-                    heightInput,
-                    el('div', {className: 'd-flex flex-wrap gap-1'}, chips))));
+                    el('div', {className: 'flex-grow-1 min-w-0'},
+                        heightInput,
+                        el('div', {className: 'd-flex flex-wrap gap-1'}, chips)))));
     }
 
     function renderEdit() {
@@ -396,26 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     el('button', {
                         type: 'button', className: 'btn btn-outline-secondary',
                         onclick: () => { layout.sectors.push({type: 'break', name: '', img_id: '', thumb_id: '', lines: []}); renderEdit(); },
-                    }, el('i', {className: 'bi bi-arrow-return-left'}), ' ' + T.break),
-                    el('button', {
-                        type: 'button', className: 'btn btn-outline-secondary',
-                        onclick: () => {
-                            const copy = JSON.parse(JSON.stringify(layout));
-                            copy.valid_from = '';
-                            draft.push(copy);
-                            editIndex = draft.length - 1;
-                            rerenderEdit();
-                        },
-                    }, el('i', {className: 'bi bi-files'}), ' ' + T.new_layout),
-                    el('button', {
-                        type: 'button', className: 'btn btn-outline-danger',
-                        onclick: () => {
-                            if (!confirm(T.delete_layout + '?')) return;
-                            draft.splice(editIndex, 1);
-                            editIndex = Math.max(0, editIndex - 1);
-                            rerenderEdit();
-                        },
-                    }, el('i', {className: 'bi bi-trash'}), ' ' + T.delete_layout)));
+                    }, el('i', {className: 'bi bi-arrow-return-left'}), ' ' + T.break)));
         } else {
             children.push(el('button', {
                 type: 'button', className: 'btn btn-outline-success mb-4',
