@@ -232,6 +232,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         viewEl.replaceChildren(...children);
+
+        // visible smooth scroll to the middle hints that the row extends beyond the screen
+        const scroller = viewEl.querySelector('.sector-scroll');
+        setTimeout(() => {
+            const max = scroller.scrollWidth - scroller.clientWidth;
+            if (max > 0) scroller.scrollTo({left: max / 2, behavior: 'smooth'});
+        }, 400);
     }
 
     // ---------- edit mode ----------
