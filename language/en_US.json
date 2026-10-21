@@ -17,6 +17,7 @@
     "details_saved": "Your details were saved",
     "all_fields_required": "All fields are required",
     "no_competition_found": "No competition found",
+    "no_scheduled_events": "No scheduled events",
     "routes_saved": "Climber routes saved",
     "no_climber_found": "No climber found",
     "manage_competitions_and_gyms": "Manage competitions and gyms.",
@@ -401,5 +402,18 @@
     "show_only_competition_autrement_idf": "Show only FSGT IDF Competition Autrement:",
     "calc_type": "Scoring",
     "calc_type_fsgt2": "FSGT 2026",
-    "calc_type_none": "No scoring (registration only)"
+    "calc_type_none": "No scoring (registration only)",
+    "sectors": "Sectors",
+    "sector_valid_from": "Valid from",
+    "sector_current": "current",
+    "sector_planned": "planned",
+    "sector_new_layout": "New layout from this one",
+    "sector_delete_layout": "Delete layout",
+    "sector_add": "Add sector",
+    "sector_photo": "Photo",
+    "sector_height": "Height",
+    "sector_no_layouts": "No sectors defined yet.",
+    "sector_unassigned_lines": "Lines without a sector",
+    "sectors_saved": "Sectors saved",
+    "sector_save_error": "Could not save sectors"
 }

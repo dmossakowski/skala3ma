@@ -23,6 +23,7 @@ import uuid
 import time
 from datetime import datetime, date, timedelta
 import competitionsEngine
+import gym_sectors as gym_sectors_lib
 import csv
 from functools import wraps
 from dataclasses import dataclass
@@ -2561,6 +2562,63 @@ def gyms_list_by_field(field=None, value=None):
 def gym_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
     return gym
+
+
+# ?date=YYYY-MM-DD selects the active layout (default today)
+@skala_api_app.route('/gym/<gymid>/sectors', methods=['GET'])
+def gym_sectors(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    if not gym:
+        return jsonify({'error': 'gym_not_found'}), 404
+    return jsonify({
+        'layouts': gym_sectors_lib.get_layouts(gym),
+        'active': gym_sectors_lib.get_layout_for_date(gym, request.args.get('date')),
+    })
+
+
+# body: {"layouts": [...]} replaces all layouts of the gym
+@skala_api_app.route('/gym/<gymid>/sectors', methods=['POST'])
+@session_or_jwt_required
+def gym_sectors_save(gymid):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    gym = competitionsEngine.get_gym(gymid)
+    if not gym:
+        return jsonify({'error': 'gym_not_found'}), 404
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return jsonify({'error': 'forbidden'}), 403
+
+    body = request.get_json(silent=True) or {}
+    try:
+        layouts = gym_sectors_lib.validate_layouts(body.get('layouts'))
+    except ValueError as e:
+        return jsonify({'error': 'invalid', 'message': str(e)}), 400
+
+    old_layouts = gym_sectors_lib.get_layouts(gym)
+    gym[gym_sectors_lib.SECTOR_LAYOUTS_KEY] = layouts
+    competitionsEngine.update_gym(gymid, gym)
+    gym_sectors_lib.delete_unreferenced_images(old_layouts, layouts, UPLOAD_FOLDER)
+    return jsonify({'layouts': layouts})
+
+
+# multipart field 'file'; the returned ids are referenced from a layout on the next save
+@skala_api_app.route('/gym/<gymid>/sectors/photo', methods=['POST'])
+@session_or_jwt_required
+def gym_sector_photo_upload(gymid):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    gym = competitionsEngine.get_gym(gymid)
+    if not gym:
+        return jsonify({'error': 'gym_not_found'}), 404
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return jsonify({'error': 'forbidden'}), 403
+
+    upload = request.files.get('file')
+    if upload is None:
+        return jsonify({'error': 'missing_file'}), 400
+    try:
+        result = gym_sectors_lib.save_sector_photo(upload.stream, UPLOAD_FOLDER)
+    except ValueError as e:
+        return jsonify({'error': 'invalid_image', 'message': str(e)}), 400
+    return jsonify(result)
 
 
 @skala_api_app.route('/gym/<gymid>/')

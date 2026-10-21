@@ -849,7 +849,7 @@ def getCompetitionCalendar():
         can_create_competition = competitionsEngine.can_create_competition(user)
     
     #langs = competitionsEngine.reference_data['languages']
-    return render_template('competitionCalendar.html',
+    return render_template('eventsCalendar.html',
                            session=session,
                            user=user,
                            reference_data=competitionsEngine.reference_data,
@@ -2049,6 +2049,21 @@ def gym_events(gymid):
                            )
 
 
+@app_ui.route('/gyms/<gymid>/sectors')
+def gym_sectors_page(gymid):
+    gym = competitionsEngine.get_gym(gymid)
+    if gym is None or len(gym) == 0:
+        return redirect('/gyms')
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    return render_template('gym-sectors.html',
+                           gymid=gymid,
+                           gym=gym,
+                           user=user,
+                           user_can_edit_gym=competitionsEngine.can_edit_gym(user, gym),
+                           reference_data=competitionsEngine.reference_data,
+                           )
+
+
 @app_ui.route('/gyms/<gymid>/qrcode')
 def gym_qrcode_by_id(gymid):
     gym = competitionsEngine.get_gym(gymid)
@@ -2852,7 +2867,9 @@ def image_route(img_id):
             
             #mime_type = 'application/octet-stream'  # Default MIME type
         
-        return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type)
+        # sector photos get a new id on every upload so they can be cached indefinitely
+        max_age = 31536000 if img_id.startswith('sector_') else None
+        return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type, max_age=max_age)
     else:
         #return app_ui.send_static_file("images/favicon.png")
         return app_ui.send_static_file("images/fsgt-logo-me.png")

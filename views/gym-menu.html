@@ -9,6 +9,7 @@
    
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }}</a> 
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link d-none d-md-block">Stats</a>
+    <a href="/gyms/{{gymid}}/sectors" class="nav-link d-none d-md-block">{{ reference_data['current_language'].sectors }}</a>
                         <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
     <!--a href="/gyms/{{gymid}}/climbers" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a-->
     <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="nav-link">{{ reference_data['current_language'].routes }} (beta)</a--> 
@@ -36,6 +37,9 @@
             </a>
             <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}/stats" class="nav-link gym-menu-link-mobile py-3">
                 <i class="bi bi-graph-up me-2"></i>Stats
+            </a>
+            <a href="/gyms/{{ gymid }}/sectors" class="nav-link gym-menu-link-mobile py-3">
+                <i class="bi bi-grid-3x3-gap me-2"></i>{{ reference_data['current_language'].sectors }}
             </a>
             <a href="/gyms/{{ gymid }}/qrcode" class="nav-link gym-menu-link-mobile py-3">
                 <i class="bi bi-qr-code me-2"></i>QR Code

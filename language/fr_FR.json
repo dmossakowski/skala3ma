@@ -17,6 +17,7 @@
     "details_saved": "Vos informations sont sauvegardées",
     "all_fields_required": "Tous les champs sont requis",
     "no_competition_found": "Aucune compétition trouvée",
+    "no_scheduled_events": "Aucun événement prévu",
     "routes_saved": "Voies sauvegardées",
     "no_climber_found": "Aucun grimpeur",
     "manage_competitions_and_gyms": "Gestion des murs et des compétitions.",
@@ -404,5 +405,18 @@
     "calc_type_fsgt0": "FSGT : hommes et femmes calculés séparément",
     "calc_type_fsgt1": "FSGT : hommes et femmes calculés ensemble",
     "calc_type_fsgt2": "FSGT 2026",
-    "calc_type_none": "Pas de points (inscription seulement)"
+    "calc_type_none": "Pas de points (inscription seulement)",
+    "sectors": "Secteurs",
+    "sector_valid_from": "Valable à partir du",
+    "sector_current": "actuel",
+    "sector_planned": "prévu",
+    "sector_new_layout": "Nouvelle disposition à partir de celle-ci",
+    "sector_delete_layout": "Supprimer la disposition",
+    "sector_add": "Ajouter un secteur",
+    "sector_photo": "Photo",
+    "sector_height": "Hauteur",
+    "sector_no_layouts": "Aucun secteur défini.",
+    "sector_unassigned_lines": "Lignes sans secteur",
+    "sectors_saved": "Secteurs enregistrés",
+    "sector_save_error": "Impossible d'enregistrer les secteurs"
 }

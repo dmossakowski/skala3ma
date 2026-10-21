@@ -43,7 +43,8 @@ const userConfig = {
     routeListId: "{{routesid}}",
     routes: {{ (routes.routes if routes is mapping else routes) | tojson }},
     groupBy: "line", // Override the default groupBy setting
-    initialSort: [{ column: "grade", dir: "desc" }] // Override the default initialSort setting
+    initialSort: [{ column: "grade", dir: "desc" }], // Override the default initialSort setting
+    sectorDate: {{ (competition.get('date') or '') | tojson }}
 };
 
     configureRoutesTable(userConfig);
