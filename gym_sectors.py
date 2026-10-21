@@ -17,7 +17,8 @@
 # gym['sector_layouts'] = [
 #   {"valid_from": "YYYY-MM-DD",
 #    "direction": "ltr" | "rtl",   # order in which lines are numbered along the wall
-#    "sectors": [{"id", "name", "height", "img_id", "thumb_id", "lines": ["1", "2"]}]}
+#    "sectors": [{"id", "name", "height", "img_id", "thumb_id", "lines": ["1", "2"]}
+#                | {"id", "type": "break", ...empty sector fields}]}
 # ]
 # The layout in effect on a date is the one with the latest valid_from <= that date.
 
@@ -114,13 +115,20 @@ def validate_layouts(layouts):
         for sector in sectors:
             if not isinstance(sector, dict):
                 raise ValueError('each sector must be an object')
-            name = str(sector.get('name') or '').strip()
-            if not name or len(name) > MAX_NAME_LENGTH:
-                raise ValueError('sector name is required (max %d chars)' % MAX_NAME_LENGTH)
 
             sector_id = str(sector.get('id') or '')
             if not re.fullmatch(r'[0-9a-f]{32}', sector_id):
                 sector_id = uuid.uuid4().hex
+
+            # row break for the sector view; keeps the full sector shape so consumers need no special case
+            if sector.get('type') == 'break':
+                norm_sectors.append({'id': sector_id, 'type': 'break', 'name': '', 'height': None,
+                                     'img_id': '', 'thumb_id': '', 'lines': []})
+                continue
+
+            name = str(sector.get('name') or '').strip()
+            if not name or len(name) > MAX_NAME_LENGTH:
+                raise ValueError('sector name is required (max %d chars)' % MAX_NAME_LENGTH)
 
             img_id = sector.get('img_id') or ''
             thumb_id = sector.get('thumb_id') or ''

@@ -420,6 +420,7 @@
     "sector_direction": "Numérotation des lignes",
     "sector_ltr": "De gauche à droite",
     "sector_rtl": "De droite à gauche",
+    "sector_break": "Nouvelle rangée",
     "sectors_saved": "Secteurs enregistrés",
     "sector_save_error": "Impossible d'enregistrer les secteurs"
 }

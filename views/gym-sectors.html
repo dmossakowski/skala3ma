@@ -30,15 +30,22 @@
     .sector-line-chip { min-width: 2.5rem; }
     .min-w-0 { min-width: 0; }
 
-    .sector-strip { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: center; }
-    .sector-tile { width: 160px; display: flex; flex-direction: column; }
+    .sector-scroll { overflow-x: auto; padding-bottom: .5rem; }
+    .sector-rows { width: max-content; min-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sector-strip { display: flex; flex-wrap: nowrap; gap: 1rem; align-items: flex-end; }
+    .sector-tile { min-width: 160px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    /* width:0 + min-width:100% so long names wrap instead of widening the tile */
+    .sector-tile-name, .sector-tile-meta { width: 0; min-width: 100%; }
     .sector-tile-name { font-weight: 600; line-height: 1.2; word-break: break-word; }
+    .sector-tile-lines { flex-wrap: nowrap; justify-content: center; }
     .sector-tile-lines .sector-line-chip { min-width: 2rem; padding: 0 .35rem; font-size: .8rem; }
     .sector-tile .sector-photo, .sector-tile .sector-photo-placeholder { width: 160px; }
-    .sector-zoom { position: relative; z-index: 1; cursor: zoom-in; border-radius: 6px;
+    .sector-zoom { cursor: zoom-in; }
+    .sector-zoom-overlay { position: fixed; z-index: 1080; pointer-events: none; object-fit: cover; border-radius: 6px;
         transition: transform .25s ease, box-shadow .25s ease; will-change: transform; }
-    .sector-zoom.is-zoomed { z-index: 1050; cursor: zoom-out; transform: scale(var(--zoom, 2));
+    .sector-zoom-overlay.is-zoomed { pointer-events: auto; cursor: zoom-out; transform: scale(var(--zoom, 2));
         box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .35); }
+    .sector-break-card { border-style: dashed; }
 </style>
 
 <script>
@@ -59,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'direction': t.sector_direction,
         'ltr': t.sector_ltr,
         'rtl': t.sector_rtl,
+        'break': t.sector_break,
         'save_error': t.sector_save_error,
         'line': t.line,
         'routes': t.routes,
@@ -139,38 +147,68 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---------- view mode ----------
 
-    // Largest scale (max 5x) that fits the viewport, with an origin that keeps the image on screen.
-    function fitZoomOrigin(node) {
-        const r = node.getBoundingClientRect();
+    // Fixed overlay copy, since the horizontal scroll container clips transformed content.
+    let zoomOverlay = null, zoomSource = null;
+
+    function showZoom(img) {
+        hideZoom(true);
+        const r = img.getBoundingClientRect();
         const vw = document.documentElement.clientWidth, vh = window.innerHeight, pad = 8;
         const s = Math.max(1.01, Math.min(5, (vw - 2 * pad) / r.width, (vh - 2 * pad) / r.height));
         const left = Math.min(Math.max(pad, r.left + r.width * (1 - s) / 2), Math.max(pad, vw - pad - s * r.width));
         const top = Math.min(Math.max(pad, r.top + r.height * (1 - s) / 2), Math.max(pad, vh - pad - s * r.height));
-        node.style.setProperty('--zoom', s);
-        node.style.transformOrigin = (r.left - left) / (s - 1) + 'px ' + (r.top - top) / (s - 1) + 'px';
+        const overlay = el('img', {src: img.currentSrc || img.src, alt: '', className: 'sector-zoom-overlay'});
+        Object.assign(overlay.style, {left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+            transformOrigin: (r.left - left) / (s - 1) + 'px ' + (r.top - top) / (s - 1) + 'px'});
+        overlay.style.setProperty('--zoom', s);
+        document.body.appendChild(overlay);
+        overlay.getBoundingClientRect();
+        overlay.classList.add('is-zoomed');
+        zoomOverlay = overlay;
+        zoomSource = img;
     }
 
-    function clearZoom(except) {
-        viewEl.querySelectorAll('.sector-zoom.is-zoomed').forEach(n => { if (n !== except) n.classList.remove('is-zoomed'); });
+    function hideZoom(immediate) {
+        if (!zoomOverlay) return;
+        const node = zoomOverlay;
+        zoomOverlay = null;
+        zoomSource = null;
+        if (immediate) { node.remove(); return; }
+        node.classList.remove('is-zoomed');
+        setTimeout(() => node.remove(), 250);
     }
 
     function zoomable(sector) {
-        const img = el('img', {src: imageUrl(sector.img_id), loading: 'lazy', alt: sector.name, className: 'sector-photo'});
-        const wrap = el('div', {className: 'sector-zoom'}, img);
-        wrap.addEventListener('click', e => {
+        const img = el('img', {src: imageUrl(sector.img_id), loading: 'lazy', alt: sector.name, className: 'sector-photo sector-zoom'});
+        img.addEventListener('click', e => {
             e.stopPropagation();
-            const zoom = !wrap.classList.contains('is-zoomed');
-            clearZoom(wrap);
-            if (zoom) { wrap.style.transformOrigin = ''; fitZoomOrigin(wrap); }
-            wrap.classList.toggle('is-zoomed', zoom);
+            if (zoomSource === img) hideZoom(); else showZoom(img);
         });
-        return wrap;
+        return img;
     }
 
-    document.addEventListener('click', () => clearZoom(null));
-    window.addEventListener('scroll', () => clearZoom(null), {passive: true});
+    document.addEventListener('click', () => hideZoom());
+    window.addEventListener('scroll', () => hideZoom(true), {passive: true, capture: true});
+
+    function renderTile(sector, isCurrent, rtl) {
+        const lines = [...sector.lines].sort(compareLines);
+        if (rtl) lines.reverse();
+        const routeCount = lines.reduce((sum, line) => sum + (routeCountByLine[line] || 0), 0);
+        return el('div', {className: 'sector-tile'},
+            el('div', {className: 'sector-tile-name', text: sector.name}),
+            el('div', {className: 'sector-tile-meta small text-muted', title: T.height},
+                el('i', {className: 'bi bi-arrows-vertical'}),
+                (sector.height ? sector.height + ' m' : '–'),
+                isCurrent ? ' · ' + routeCount + ' ' + T.routes : ''),
+            el('div', {className: 'sector-tile-lines d-flex gap-1 my-1'},
+                lines.map(line => el('span', {className: 'btn btn-sm btn-success sector-line-chip pe-none', title: T.line + ' ' + line, text: line}))),
+            sector.img_id
+                ? zoomable(sector)
+                : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})));
+    }
 
     function renderView() {
+        hideZoom(true);
         const layout = layouts[selected];
         if (!layout) {
             viewEl.replaceChildren(el('p', {className: 'text-muted', text: T.no_layouts}));
@@ -178,26 +216,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const isCurrent = selected === activeIndex(layouts);
         const rtl = layout.direction === 'rtl';
-        const tiles = layout.sectors.map(sector => {
-            const lines = [...sector.lines].sort(compareLines);
-            if (rtl) lines.reverse();
-            const routeCount = lines.reduce((sum, line) => sum + (routeCountByLine[line] || 0), 0);
-            return el('div', {className: 'sector-tile'},
-                el('div', {className: 'sector-tile-name', text: sector.name}),
-                el('div', {className: 'small text-muted', title: T.height},
-                    el('i', {className: 'bi bi-arrows-vertical'}),
-                    (sector.height ? sector.height + ' m' : '–'),
-                    isCurrent ? ' · ' + routeCount + ' ' + T.routes : ''),
-                el('div', {className: 'sector-tile-lines d-flex flex-wrap gap-1 my-1'},
-                    lines.map(line => el('span', {className: 'btn btn-sm btn-success sector-line-chip pe-none', title: T.line + ' ' + line, text: line}))),
-                sector.img_id
-                    ? zoomable(sector)
-                    : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})));
+        const rows = [[]];
+        layout.sectors.forEach(sector => {
+            if (sector.type === 'break') rows.push([]);
+            else rows[rows.length - 1].push(renderTile(sector, isCurrent, rtl));
         });
+        const strips = rows.filter(row => row.length).map(row => el('div', {className: 'sector-strip'}, rtl ? row.reverse() : row));
 
-        // reverse the DOM order so wrapped rows still read like the wall, left to right
-        if (rtl) tiles.reverse();
-        const children = [el('div', {className: 'sector-strip'}, tiles)];
+        const children = [el('div', {className: 'sector-scroll'}, el('div', {className: 'sector-rows'}, strips))];
         if (isCurrent) {
             const assigned = new Set(layout.sectors.flatMap(s => s.lines));
             const unassigned = routeLines.filter(line => !assigned.has(line));
@@ -252,7 +278,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderSectorEditor(layout, sector, index) {
-        const usedElsewhere = new Set(layout.sectors.filter(s => s !== sector).flatMap(s => s.lines));
+        const move = delta => {
+            const target = index + delta;
+            if (target < 0 || target >= layout.sectors.length) return;
+            [layout.sectors[index], layout.sectors[target]] = [layout.sectors[target], layout.sectors[index]];
+            renderEdit();
+        };
+        const controls = () => [
+            el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === 0, onclick: () => move(-1)},
+                el('i', {className: 'bi bi-arrow-up'})),
+            el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === layout.sectors.length - 1, onclick: () => move(1)},
+                el('i', {className: 'bi bi-arrow-down'})),
+            el('button', {
+                type: 'button', className: 'btn btn-outline-danger btn-sm', title: T.remove,
+                onclick: () => { layout.sectors.splice(index, 1); renderEdit(); },
+            }, el('i', {className: 'bi bi-trash'}))];
+
+        if (sector.type === 'break') {
+            return el('div', {className: 'card mb-3 sector-break-card'},
+                el('div', {className: 'card-body py-2 d-flex align-items-center gap-2'},
+                    el('i', {className: 'bi bi-arrow-return-left text-muted'}),
+                    el('span', {className: 'flex-grow-1 text-muted', text: T.break}),
+                    controls()));
+        }
+
+        const owners = {};
+        layout.sectors.forEach(s => { if (s !== sector) s.lines.forEach(l => { owners[l] = s; }); });
         const heightInput = el('div', {className: 'input-group input-group-sm mb-2', style: 'max-width: 200px;'},
             el('span', {className: 'input-group-text', text: T.height}),
             el('input', {
@@ -265,25 +316,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const chipLines = [...new Set([...routeLines, ...sector.lines])].sort(compareLines);
         const chips = chipLines.map(line => {
             const mine = sector.lines.includes(line);
-            const taken = usedElsewhere.has(line);
+            const owner = owners[line];
             return el('button', {
                 type: 'button',
-                className: 'btn btn-sm sector-line-chip ' + (mine ? 'btn-success' : 'btn-outline-secondary'),
-                disabled: taken,
+                className: 'btn btn-sm sector-line-chip ' + (mine ? 'btn-success' : 'btn-outline-secondary') + (owner ? ' opacity-50' : ''),
+                title: owner ? owner.name : undefined,
                 text: line,
                 onclick: () => {
+                    if (owner) owner.lines = owner.lines.filter(l => l !== line);
                     sector.lines = mine ? sector.lines.filter(l => l !== line) : [...sector.lines, line].sort(compareLines);
                     renderEdit();
                 },
             });
         });
-
-        const move = delta => {
-            const target = index + delta;
-            if (target < 0 || target >= layout.sectors.length) return;
-            [layout.sectors[index], layout.sectors[target]] = [layout.sectors[target], layout.sectors[index]];
-            renderEdit();
-        };
 
         return el('div', {className: 'card mb-3'},
             el('div', {className: 'card-body d-flex gap-3'},
@@ -309,14 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             placeholder: T.route_name, required: true,
                             oninput: e => { sector.name = e.target.value; },
                         }),
-                        el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === 0, onclick: () => move(-1)},
-                            el('i', {className: 'bi bi-arrow-up'})),
-                        el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === layout.sectors.length - 1, onclick: () => move(1)},
-                            el('i', {className: 'bi bi-arrow-down'})),
-                        el('button', {
-                            type: 'button', className: 'btn btn-outline-danger btn-sm', title: T.remove,
-                            onclick: () => { layout.sectors.splice(index, 1); renderEdit(); },
-                        }, el('i', {className: 'bi bi-trash'}))),
+                        controls()),
 
                     heightInput,
                     el('div', {className: 'd-flex flex-wrap gap-1'}, chips))));
@@ -348,6 +386,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         type: 'button', className: 'btn btn-outline-success',
                         onclick: () => { layout.sectors.push({name: '', img_id: '', thumb_id: '', lines: []}); renderEdit(); },
                     }, el('i', {className: 'bi bi-plus-circle'}), ' ' + T.add_sector),
+                    el('button', {
+                        type: 'button', className: 'btn btn-outline-secondary',
+                        onclick: () => { layout.sectors.push({type: 'break', name: '', img_id: '', thumb_id: '', lines: []}); renderEdit(); },
+                    }, el('i', {className: 'bi bi-arrow-return-left'}), ' ' + T.break),
                     el('button', {
                         type: 'button', className: 'btn btn-outline-secondary',
                         onclick: () => {

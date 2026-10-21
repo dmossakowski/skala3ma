@@ -417,6 +417,7 @@
     "sector_direction": "Numeracja linii",
     "sector_ltr": "Od lewej do prawej",
     "sector_rtl": "Od prawej do lewej",
+    "sector_break": "Nowy rząd",
     "sectors_saved": "Sektory zapisane",
     "sector_save_error": "Nie udało się zapisać sektorów"
 }

@@ -417,6 +417,7 @@
     "sector_direction": "Line numbering",
     "sector_ltr": "Left to right",
     "sector_rtl": "Right to left",
+    "sector_break": "Row break",
     "sectors_saved": "Sectors saved",
     "sector_save_error": "Could not save sectors"
 }
