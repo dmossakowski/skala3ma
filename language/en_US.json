@@ -414,6 +414,9 @@
     "sector_height": "Height",
     "sector_no_layouts": "No sectors defined yet.",
     "sector_unassigned_lines": "Lines without a sector",
+    "sector_direction": "Line numbering",
+    "sector_ltr": "Left to right",
+    "sector_rtl": "Right to left",
     "sectors_saved": "Sectors saved",
     "sector_save_error": "Could not save sectors"
 }

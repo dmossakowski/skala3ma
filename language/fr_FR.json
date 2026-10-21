@@ -417,6 +417,9 @@
     "sector_height": "Hauteur",
     "sector_no_layouts": "Aucun secteur défini.",
     "sector_unassigned_lines": "Lignes sans secteur",
+    "sector_direction": "Numérotation des lignes",
+    "sector_ltr": "De gauche à droite",
+    "sector_rtl": "De droite à gauche",
     "sectors_saved": "Secteurs enregistrés",
     "sector_save_error": "Impossible d'enregistrer les secteurs"
 }

@@ -116,6 +116,11 @@
     color: #40ad48; /* Match the color of the select text */
 }
 
+.sector-thumb-zoom { cursor: zoom-in; }
+.sector-zoom-overlay { position: fixed; z-index: 1080; pointer-events: none; object-fit: cover; border-radius: 4px;
+    transition: transform .25s ease, box-shadow .25s ease; will-change: transform; }
+.sector-zoom-overlay.is-zoomed { pointer-events: auto; cursor: zoom-out; transform: scale(var(--zoom, 2)); box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .35); }
+
         </style>
     
 
@@ -932,6 +937,56 @@
       var useSectors = false;
       var tableGroupBy;
 
+      // Sector thumbnail zoom: a fixed overlay copy, since the table clips transformed content.
+      (function(){
+        var source = null, overlay = null;
+
+        function show(img){
+          hide(true);
+          var r = img.getBoundingClientRect();
+          var vw = document.documentElement.clientWidth, vh = window.innerHeight, pad = 8;
+          var s = Math.max(1.01, Math.min(5, (vw - 2 * pad) / r.width, (vh - 2 * pad) / r.height));
+          var left = Math.min(Math.max(pad, r.left + r.width * (1 - s) / 2), Math.max(pad, vw - pad - s * r.width));
+          var top = Math.min(Math.max(pad, r.top + r.height * (1 - s) / 2), Math.max(pad, vh - pad - s * r.height));
+          overlay = document.createElement('img');
+          overlay.className = 'sector-zoom-overlay';
+          overlay.src = img.currentSrc || img.src;
+          overlay.alt = '';
+          Object.assign(overlay.style, {left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+            transformOrigin: (r.left - left) / (s - 1) + 'px ' + (r.top - top) / (s - 1) + 'px'});
+          overlay.style.setProperty('--zoom', s);
+          document.body.appendChild(overlay);
+          var full = new Image(), target = overlay;
+          full.onload = function(){ target.src = full.src; };
+          full.src = img.dataset.full;
+          overlay.getBoundingClientRect();
+          overlay.classList.add('is-zoomed');
+          source = img;
+        }
+
+        function hide(immediate){
+          if (!overlay) return;
+          var node = overlay;
+          overlay = null; source = null;
+          if (immediate) { node.remove(); return; }
+          node.classList.remove('is-zoomed');
+          setTimeout(function(){ node.remove(); }, 250);
+        }
+
+        // capture phase so the click never reaches Tabulator's group toggle
+        document.addEventListener('click', function(e){
+          var img = e.target.closest && e.target.closest('.sector-thumb-zoom');
+          if (img) {
+            e.stopPropagation();
+            if (source === img) hide(); else show(img);
+          } else if (overlay) {
+            if (e.target === overlay) e.stopPropagation();
+            hide();
+          }
+        }, true);
+        window.addEventListener('scroll', function(){ hide(true); }, {passive: true, capture: true});
+      })();
+
       function setSectorLayout(layout){
         sectorsById = {};
         lineToSectorId = {};
@@ -968,9 +1023,7 @@
         if (entry && entry.sector.thumb_id){
           var fullUrl = '/image/' + encodeURIComponent(entry.sector.img_id || entry.sector.thumb_id);
           var thumbUrl = '/image/' + encodeURIComponent(entry.sector.thumb_id);
-          // stopPropagation keeps the click from collapsing the group
-          thumb = `<a href="${fullUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">` +
-                  `<img src="${thumbUrl}" loading="lazy" alt="" style="height:144px; width:108px; object-fit:cover; border-radius:4px; margin-right:8px; vertical-align:middle;"></a>`;
+          thumb = `<img class="sector-thumb-zoom" data-full="${fullUrl}" src="${thumbUrl}" loading="lazy" alt="" style="height:144px; width:108px; object-fit:cover; border-radius:4px; margin-right:8px; vertical-align:middle;">`;
         }
         return "<span style='display:inline-flex; align-items:center; vertical-align:middle;'>" + thumb +
             "<span style='display:inline-flex; flex-direction:column; line-height:1.2;'>" +
