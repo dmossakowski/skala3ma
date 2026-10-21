@@ -1,0 +1,15 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% endblock %}
+
+{% block secondarycontent %}
+<div class="container-fluid">
+    <div class="row">
+        {% with calendar_view='multiMonthFourMonth', calendar_show_filter=True %}
+        {% include "events-calendar.html" %}
+        {% endwith %}
+    </div>
+</div>
+<br><br>
+{% endblock %}

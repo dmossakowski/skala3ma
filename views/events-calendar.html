@@ -1,0 +1,307 @@
+{#
+  Reusable events calendar. Set before including (e.g. with {% with %}):
+    calendar_view        initial view, 'multiMonthFourMonth' or 'timeGridFourDay' (?view= overrides)
+    calendar_events_url  events source, defaults to /api1/competition/list
+    calendar_show_filter show the series filter dropdown
+    calendar_months      timeframe length in months, defaults to 12
+    calendar_months_back how many months before the current month the timeframe starts, defaults to 0
+    calendar_range       'future' (today + months) or 'past' (months before today); overrides calendar_months_back
+    calendar_hide_toolbar hide the title and prev/next buttons; an empty calendar is then replaced by calendar_empty_text
+    calendar_reverse     list view shows newest days first
+    calendar_auto_height size to content instead of a fixed aspect ratio
+    calendar_id          element id, needed when including more than once per page (defaults to 'calendar')
+    calendar_skip_assets set on every include after the first one on a page
+#}
+{% set cid = calendar_id or 'calendar' %}
+{% if not calendar_skip_assets %}
+<style>
+    :root {
+        --fc-button-border-color: #53be6b;
+        --fc-button-bg-color: #53be6b;
+        --fc-event-bg-color: #53be6b;
+    }
+    .fc-multimonth .fc-daygrid-event { white-space: normal; align-items: flex-start; }
+    .comp-event { min-width: 0; font-size: .75em; line-height: 1.15; overflow-wrap: anywhere; }
+    .comp-event-name { font-weight: 600; }
+    .comp-event-kind { font-style: italic; opacity: .8; }
+    /* Narrow day cells: show only the event name, details are in the tap modal */
+    @media (max-width: 576px) {
+        .fc-multimonth .fc-daygrid-event { padding: 0 1px; }
+        .fc-multimonth .fc-daygrid-event-dot { display: none; }
+        .comp-event { font-size: .65em; overflow-wrap: normal; word-break: break-word; }
+        .comp-event-gym, .comp-event-kind { display: none; }
+        .comp-event-name {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    .fc-list-day th[data-month]::before {
+        content: attr(data-month);
+        box-sizing: border-box;
+        height: 3.25rem;
+        padding: 0 .75rem .4rem;
+        display: flex;
+        align-items: flex-end;
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        text-transform: capitalize;
+        background: var(--fc-page-bg-color, #fff);
+    }
+    /* Day headers stick just below the month heading, which stays pinned until the next month replaces it */
+    .fc .fc-list-sticky .fc-list-day > th:not([data-month]) { top: 3.25rem; }
+    .fc-list-day-text { text-transform: capitalize; }
+    .fc-list-event td { padding: 4px 10px; }
+    .list-event { display: flex; align-items: center; gap: .6rem; }
+    .list-event-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    .list-event-title { font-weight: 600; }
+    .list-event-meta { font-size: .85em; color: #6c757d; }
+    /* Reversed list: rows become flex items so CSS order can sort them; stickiness moves from th to tr */
+    .fc-reversed .fc-list-table { display: block; }
+    .fc-reversed .fc-list-table tbody { display: flex; flex-direction: column; }
+    .fc-reversed .fc-list-table tr { display: flex; }
+    .fc-reversed .fc-list-day > th { flex: 1; }
+    .fc-reversed .fc-list-sticky .fc-list-day > th { position: static; }
+    .fc-reversed .fc-list-event-title { flex: 1; }
+    .fc-reversed .fc-list-sticky .fc-list-day { position: sticky; top: 0; z-index: 2; }
+    .fc-reversed .fc-list-sticky .fc-list-day:not(:has(th[data-month])) { top: 3.25rem; }
+</style>
+
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="event-content text-center">
+                    <img id="eventImage" src="" alt="" width="250">
+                    <br><br>
+                    <a id="eventLink" href="">
+                        <h1 id="eventTitle"></h1>
+                        <h3 id="eventGym"></h3>
+                    </a>
+                    <p id="eventKind"></p>
+                    <p id="eventStatus"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a id="eventButton" href="" class="btn btn-primary" data-translate-key="view"></a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate-key="close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/public/js/index.global.min.js"></script>
+{% endif %}
+
+{% if calendar_show_filter %}
+<div class="col-12 col-md-4 mb-2">
+    <select id="{{ cid }}-filter" class="form-select" aria-label="{{ reference_data['current_language'].series_key }}">
+        <option value="all">{{ reference_data['current_language'].all }}</option>
+        <option value="fsgt_competition_autrement_idf">{{ reference_data['current_language'].series_fsgt_competition_autrement_idf }}</option>
+    </select>
+</div>
+{% endif %}
+
+<div id="{{ cid }}"></div>
+<p id="{{ cid }}-empty" class="text-muted" hidden>{{ calendar_empty_text or reference_data['current_language'].no_competition_found }}</p>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const languages = ['fr', 'en', 'pl'];
+    let language = {{ (language or session.get('language') or 'fr')[:2] | tojson }};
+    if (!languages.includes(language)) {
+        language = 'fr';
+    }
+    const eventsUrl = {{ (calendar_events_url or '/api1/competition/list') | tojson }};
+    const initialView = new URLSearchParams(window.location.search).get('view') || {{ (calendar_view or 'multiMonthFourMonth') | tojson }};
+    const months = {{ (calendar_months or 12) | int }};
+    const monthsBack = {{ (calendar_months_back or 0) | int }};
+    const range = {{ (calendar_range or '') | tojson }};
+    const filterEl = document.getElementById({{ (cid ~ '-filter') | tojson }});
+    const calendarEl = document.getElementById({{ cid | tojson }});
+    const emptyEl = document.getElementById({{ (cid ~ '-empty') | tojson }});
+    const hideToolbar = {{ 'true' if calendar_hide_toolbar else 'false' }};
+    const autoHeight = {{ 'true' if calendar_auto_height else 'false' }};
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const shiftMonths = (date, n) => new Date(date.getFullYear(), date.getMonth() + n, date.getDate());
+    const visibleRange = range === 'future' ? { start: today, end: shiftMonths(today, months) }
+        : range === 'past' ? { start: shiftMonths(today, -months), end: today }
+        : null;
+
+    // multiMonth ignores dayMaxEvents and sizes rows as width / aspectRatio, so make cells taller on phones
+    function calendarAspectRatio() {
+        return window.innerWidth < 576 ? 0.55 : 1.35;
+    }
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        themeSystem: 'bootstrap',
+        plugins: FullCalendar.globalPlugins,
+        locales: languages,
+        locale: language,
+        initialView: initialView,
+        initialDate: visibleRange ? visibleRange.start : new Date(today.getFullYear(), today.getMonth() - monthsBack, 1),
+        ...(visibleRange ? { visibleRange: visibleRange } : {}),
+        firstDay: 1,
+        aspectRatio: calendarAspectRatio(),
+        ...(autoHeight ? { height: 'auto' } : {}),
+        windowResize: function() {
+            calendar.setOption('aspectRatio', calendarAspectRatio());
+        },
+        headerToolbar: hideToolbar ? false : { right: 'prev,next' },
+        views: {
+            timeGridFourDay: {
+                type: 'list',
+                duration: { months: months },
+                buttonText: 'List',
+                listDayFormat: { weekday: 'long', day: 'numeric' },
+                listDaySideFormat: false,
+                displayEventTime: false,
+                eventContent: function(info) {
+                    const p = info.event.extendedProps;
+                    const wrap = document.createElement('div');
+                    wrap.className = 'list-event';
+
+                    const img = document.createElement('img');
+                    img.className = 'list-event-img';
+                    img.src = `/image/${encodeURIComponent(p.id)}`;
+                    img.alt = '';
+                    img.loading = 'lazy';
+
+                    const body = document.createElement('div');
+                    const link = document.createElement('a');
+                    link.className = 'list-event-title';
+                    link.href = `/competitionDetails/${encodeURIComponent(p.id)}`;
+                    link.textContent = info.event.title;
+                    const meta = document.createElement('div');
+                    meta.className = 'list-event-meta';
+                    meta.textContent = [p.gym, p.text && p.text.series].filter(Boolean).join(' · ');
+                    body.append(link, meta);
+
+                    wrap.append(img, body);
+                    return { domNodes: [wrap] };
+                },
+            },
+            multiMonthFourMonth: {
+                type: 'multiMonth',
+                multiMonthMaxColumns: 1,
+                buttonText: '<i class="bi bi-calendar3"></i>',
+                duration: { months: months },
+                dayHeaders: false,
+                eventContent: function(arg) {
+                    const props = arg.event.extendedProps;
+                    const el = document.createElement('div');
+                    el.className = 'comp-event';
+                    [
+                        ['comp-event-name', arg.event.title],
+                        ['comp-event-gym', props.gym || '???'],
+                        ['comp-event-kind', (props.text && props.text.series) || '']
+                    ].forEach(([cls, text]) => {
+                        if (!text) return;
+                        const line = document.createElement('div');
+                        line.className = cls;
+                        line.textContent = text;
+                        el.appendChild(line);
+                    });
+                    return { domNodes: [el] };
+                },
+            },
+        },
+        eventClick: function(info) {
+            if (calendar.view.type !== 'multiMonthFourMonth') {
+                return;
+            }
+            info.jsEvent.preventDefault();
+
+            const p = info.event.extendedProps;
+            const detailsUrl = `/competitionDetails/${encodeURIComponent(p.id)}`;
+            document.getElementById('eventImage').src = `/image/${encodeURIComponent(p.id)}`;
+            document.getElementById('eventImage').alt = info.event.title;
+            document.getElementById('eventLink').href = detailsUrl;
+            document.getElementById('eventTitle').textContent = info.event.title;
+            document.getElementById('eventGym').textContent = p.gym || '';
+            document.getElementById('eventKind').textContent = (p.text && p.text.series) || '';
+            document.getElementById('eventStatus').textContent = (p.text && p.text.status) || '';
+            document.getElementById('eventButton').href = detailsUrl;
+
+            new bootstrap.Modal(document.getElementById('eventModal')).show();
+        },
+        noEventsContent: function() {
+            return ':|';
+        },
+        events: function(info, successCallback, failureCallback) {
+            fetch(eventsUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const filter = filterEl ? filterEl.value : 'all';
+                    const events = (Array.isArray(data) ? data : [])
+                        .filter(ev => filter === 'all' || ev.series_key === filter)
+                        // Expose all top-level fields via event.extendedProps
+                        .map(ev => {
+                            const { extendedProps, ...rest } = ev;
+                            return { ...ev, extendedProps: { ...rest, ...(extendedProps || {}) } };
+                        });
+                    successCallback(events);
+
+                    // Without a toolbar there's no navigation, so replace an empty calendar with a plain message
+                    if (hideToolbar) {
+                        const start = info.startStr.slice(0, 10);
+                        const end = info.endStr.slice(0, 10);
+                        const isEmpty = !events.some(ev => ev.date >= start && ev.date < end);
+                        calendarEl.hidden = isEmpty;
+                        emptyEl.hidden = !isEmpty;
+                        if (!isEmpty) calendar.updateSize();
+                    }
+                })
+                .catch(failureCallback);
+        },
+    });
+
+    calendar.render();
+
+    const reverse = {{ 'true' if calendar_reverse else 'false' }};
+    if (reverse) calendarEl.classList.add('fc-reversed');
+
+    // FullCalendar can't sort the list descending, so reverse day blocks with CSS order (keeps its DOM untouched).
+    // Also label the first displayed day of each month so CSS can render a month heading above it.
+    function decorateList() {
+        const blocks = [];
+        calendarEl.querySelectorAll('.fc-list-table tbody > tr').forEach(tr => {
+            if (tr.classList.contains('fc-list-day') || !blocks.length) blocks.push([]);
+            blocks[blocks.length - 1].push(tr);
+        });
+        if (reverse) {
+            blocks.reverse();
+            blocks.forEach((rows, i) => rows.forEach((tr, j) => {
+                const order = String(i * 1000 + j);
+                if (tr.style.order !== order) tr.style.order = order;
+            }));
+        }
+        let prevMonth = null;
+        blocks.forEach(rows => {
+            const tr = rows[0];
+            const th = tr.classList.contains('fc-list-day') && tr.querySelector('th');
+            if (!th) return;
+            const date = tr.dataset.date || '';
+            const month = date.slice(0, 7);
+            if (month && month !== prevMonth) {
+                const label = new Date(date + 'T00:00:00').toLocaleDateString(language, { month: 'long', year: 'numeric' });
+                if (th.dataset.month !== label) th.dataset.month = label;
+            } else if (th.hasAttribute('data-month')) {
+                th.removeAttribute('data-month');
+            }
+            prevMonth = month;
+        });
+    }
+    decorateList();
+    new MutationObserver(decorateList).observe(calendarEl, { childList: true, subtree: true });
+
+    if (filterEl) {
+        filterEl.addEventListener('change', () => calendar.refetchEvents());
+    }
+});
+</script>

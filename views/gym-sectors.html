@@ -1,0 +1,496 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% include "gym-menu.html" %}
+{% endblock %}
+
+{% block secondarycontent %}
+{% set t = reference_data['current_language'] %}
+
+<div class="container-fluid my-3">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <h4 class="mb-0">{{ t.sectors }}</h4>
+        {% if user_can_edit_gym %}
+        <button id="sectorsEditBtn" type="button" class="btn btn-success btn-sm">
+            <i class="bi bi-pencil"></i> {{ t.edit }}
+        </button>
+        {% endif %}
+    </div>
+    <div id="sectorsTabs" class="d-flex flex-wrap gap-2 mb-3"></div>
+    <div id="sectorsView"></div>
+    <div id="sectorsEdit" class="d-none"></div>
+</div>
+
+<style>
+    .sector-photo { width: 120px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; display: block; }
+    .sector-photo-placeholder { width: 120px; aspect-ratio: 3 / 4; border-radius: 6px; background: #f1f3f5; color: #adb5bd;
+        display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .sector-edit-photo { width: 96px; }
+    .sector-edit-photo .sector-photo, .sector-edit-photo .sector-photo-placeholder { width: 96px; }
+    .sector-line-chip { min-width: 2.5rem; }
+    .min-w-0 { min-width: 0; }
+
+    .sector-scroll { overflow-x: auto; padding-bottom: .5rem; }
+    .sector-rows { width: max-content; min-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sector-strip { display: flex; flex-wrap: nowrap; gap: 1rem; align-items: flex-end; }
+    .sector-tile { min-width: 160px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    /* width:0 + min-width:100% so long names wrap instead of widening the tile */
+    .sector-tile-name, .sector-tile-meta { width: 0; min-width: 100%; }
+    .sector-tile-name { font-weight: 600; line-height: 1.2; word-break: break-word; }
+    .sector-tile-lines { flex-wrap: nowrap; justify-content: center; }
+    .sector-tile-lines .sector-line-chip { min-width: 2rem; padding: 0 .35rem; font-size: .8rem; }
+    .sector-tile .sector-photo, .sector-tile .sector-photo-placeholder { width: 160px; }
+    .sector-zoom { cursor: zoom-in; }
+    .sector-zoom-overlay { position: fixed; z-index: 1080; pointer-events: none; object-fit: cover; border-radius: 6px;
+        transition: transform .25s ease, box-shadow .25s ease; will-change: transform; }
+    .sector-zoom-overlay.is-zoomed { pointer-events: auto; cursor: zoom-out; transform: scale(var(--zoom, 2));
+        box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .35); }
+    .sector-break-card { border-style: dashed; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const gymId = {{ gymid | tojson }};
+    const canEdit = {{ user_can_edit_gym | tojson }};
+    const T = {{ {
+        'valid_from': t.sector_valid_from,
+        'current': t.sector_current,
+        'planned': t.sector_planned,
+        'new_layout': t.sector_new_layout,
+        'delete_layout': t.sector_delete_layout,
+        'add_sector': t.sector_add,
+        'photo': t.sector_photo,
+        'height': t.sector_height,
+        'no_layouts': t.sector_no_layouts,
+        'unassigned': t.sector_unassigned_lines,
+        'direction': t.sector_direction,
+        'ltr': t.sector_ltr,
+        'rtl': t.sector_rtl,
+        'break': t.sector_break,
+        'save_error': t.sector_save_error,
+        'line': t.line,
+        'routes': t.routes,
+        'route_name': t.route_name,
+        'save': t.save,
+        'cancel': t.cancel,
+        'remove': t.remove
+    } | tojson }};
+
+    const tabsEl = document.getElementById('sectorsTabs');
+    const viewEl = document.getElementById('sectorsView');
+    const editEl = document.getElementById('sectorsEdit');
+    const editBtn = document.getElementById('sectorsEditBtn');
+
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+    let layouts = [];
+    let selected = -1;
+    let draft = null;          // deep copy of layouts while editing
+    let uploading = 0;
+    let routeLines = [];       // lines present in the gym's current routeset
+    let routeCountByLine = {};
+
+    function el(tag, props, ...children) {
+        const node = document.createElement(tag);
+        Object.entries(props || {}).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
+            if (key === 'text') node.textContent = value;
+            else if (key === 'className') node.className = value;
+            else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+            else if (key in node && typeof value !== 'string') node[key] = value;
+            else node.setAttribute(key, value);
+        });
+        children.flat().forEach(child => {
+            if (child === null || child === undefined || child === false) return;
+            node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+        });
+        return node;
+    }
+
+    function imageUrl(id) {
+        return '/image/' + encodeURIComponent(id);
+    }
+
+    function compareLines(a, b) {
+        return String(a).localeCompare(String(b), undefined, {numeric: true, sensitivity: 'base'});
+    }
+
+    function activeIndex(list) {
+        let best = -1;
+        list.forEach((layout, i) => {
+            if (layout.valid_from && layout.valid_from <= today &&
+                (best < 0 || layout.valid_from > list[best].valid_from)) best = i;
+        });
+        return best;
+    }
+
+    function layoutBadge(list, i) {
+        const layout = list[i];
+        if (i === activeIndex(list)) return el('span', {className: 'badge text-bg-success ms-1', text: T.current});
+        if (layout.valid_from > today) return el('span', {className: 'badge text-bg-info ms-1', text: T.planned});
+        return null;
+    }
+
+    function copyLayout(i) {
+        const copy = JSON.parse(JSON.stringify(draft[i]));
+        copy.valid_from = '';
+        draft.push(copy);
+        editIndex = draft.length - 1;
+        rerenderEdit();
+    }
+
+    function deleteLayout(i) {
+        if (!confirm(T.delete_layout + '?')) return;
+        draft.splice(i, 1);
+        if (editIndex >= i) editIndex = Math.max(0, editIndex - 1);
+        rerenderEdit();
+    }
+
+    function renderTabs() {
+        const list = draft || layouts;
+        const current = draft ? editIndex : selected;
+        tabsEl.replaceChildren(...list.map((layout, i) => {
+            const btnClass = 'btn btn-sm ' + (i === current ? 'btn-secondary' : 'btn-outline-secondary');
+            const pill = el('button', {
+                type: 'button',
+                className: btnClass,
+                onclick: () => {
+                    if (draft) { editIndex = i; renderEdit(); } else { selected = i; renderView(); }
+                    renderTabs();
+                },
+            }, layout.valid_from || '----------', layoutBadge(list, i));
+            if (!draft) return pill;
+            return el('div', {className: 'btn-group'},
+                pill,
+                el('button', {
+                    type: 'button', className: btnClass + ' dropdown-toggle dropdown-toggle-split',
+                    'data-bs-toggle': 'dropdown', 'data-bs-reference': 'parent', 'aria-expanded': 'false',
+                }),
+                el('ul', {className: 'dropdown-menu'},
+                    el('li', {}, el('button', {type: 'button', className: 'dropdown-item', onclick: () => copyLayout(i)},
+                        el('i', {className: 'bi bi-files me-2'}), T.new_layout)),
+                    el('li', {}, el('button', {type: 'button', className: 'dropdown-item text-danger', onclick: () => deleteLayout(i)},
+                        el('i', {className: 'bi bi-trash me-2'}), T.delete_layout))));
+        }));
+    }
+
+    // ---------- view mode ----------
+
+    // Fixed overlay copy, since the horizontal scroll container clips transformed content.
+    let zoomOverlay = null, zoomSource = null;
+
+    function showZoom(img) {
+        hideZoom(true);
+        const r = img.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth, vh = window.innerHeight, pad = 8;
+        const s = Math.max(1.01, Math.min(5, (vw - 2 * pad) / r.width, (vh - 2 * pad) / r.height));
+        const left = Math.min(Math.max(pad, r.left + r.width * (1 - s) / 2), Math.max(pad, vw - pad - s * r.width));
+        const top = Math.min(Math.max(pad, r.top + r.height * (1 - s) / 2), Math.max(pad, vh - pad - s * r.height));
+        const overlay = el('img', {src: img.currentSrc || img.src, alt: '', className: 'sector-zoom-overlay'});
+        Object.assign(overlay.style, {left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+            transformOrigin: (r.left - left) / (s - 1) + 'px ' + (r.top - top) / (s - 1) + 'px'});
+        overlay.style.setProperty('--zoom', s);
+        document.body.appendChild(overlay);
+        overlay.getBoundingClientRect();
+        overlay.classList.add('is-zoomed');
+        zoomOverlay = overlay;
+        zoomSource = img;
+    }
+
+    function hideZoom(immediate) {
+        if (!zoomOverlay) return;
+        const node = zoomOverlay;
+        zoomOverlay = null;
+        zoomSource = null;
+        if (immediate) { node.remove(); return; }
+        node.classList.remove('is-zoomed');
+        setTimeout(() => node.remove(), 250);
+    }
+
+    function zoomable(sector) {
+        const img = el('img', {src: imageUrl(sector.img_id), loading: 'lazy', alt: sector.name, className: 'sector-photo sector-zoom'});
+        img.addEventListener('click', e => {
+            e.stopPropagation();
+            if (zoomSource === img) hideZoom(); else showZoom(img);
+        });
+        return img;
+    }
+
+    document.addEventListener('click', () => hideZoom());
+    window.addEventListener('scroll', () => hideZoom(true), {passive: true, capture: true});
+
+    function renderTile(sector, isCurrent, rtl) {
+        const lines = [...sector.lines].sort(compareLines);
+        if (rtl) lines.reverse();
+        const routeCount = lines.reduce((sum, line) => sum + (routeCountByLine[line] || 0), 0);
+        return el('div', {className: 'sector-tile'},
+            el('div', {className: 'sector-tile-name', text: sector.name}),
+            el('div', {className: 'sector-tile-meta small text-muted', title: T.height},
+                el('i', {className: 'bi bi-arrows-vertical'}),
+                (sector.height ? sector.height + ' m' : '–'),
+                isCurrent ? ' · ' + routeCount + ' ' + T.routes : ''),
+            el('div', {className: 'sector-tile-lines d-flex gap-1 my-1'},
+                lines.map(line => el('span', {className: 'btn btn-sm btn-success sector-line-chip pe-none', title: T.line + ' ' + line, text: line}))),
+            sector.img_id
+                ? zoomable(sector)
+                : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})));
+    }
+
+    function renderView() {
+        hideZoom(true);
+        const layout = layouts[selected];
+        if (!layout) {
+            viewEl.replaceChildren(el('p', {className: 'text-muted', text: T.no_layouts}));
+            return;
+        }
+        const isCurrent = selected === activeIndex(layouts);
+        const rtl = layout.direction === 'rtl';
+        const rows = [[]];
+        layout.sectors.forEach(sector => {
+            if (sector.type === 'break') rows.push([]);
+            else rows[rows.length - 1].push(renderTile(sector, isCurrent, rtl));
+        });
+        const strips = rows.filter(row => row.length).map(row => el('div', {className: 'sector-strip'}, rtl ? row.reverse() : row));
+
+        const children = [el('div', {className: 'sector-scroll'}, el('div', {className: 'sector-rows'}, strips))];
+        if (isCurrent) {
+            const assigned = new Set(layout.sectors.flatMap(s => s.lines));
+            const unassigned = routeLines.filter(line => !assigned.has(line));
+            if (unassigned.length) {
+                children.push(el('p', {className: 'text-muted mt-3'}, T.unassigned + ': ' + unassigned.join(', ')));
+            }
+        }
+        viewEl.replaceChildren(...children);
+
+        // visible smooth scroll to the middle hints that the row extends beyond the screen
+        const scroller = viewEl.querySelector('.sector-scroll');
+        setTimeout(() => {
+            const max = scroller.scrollWidth - scroller.clientWidth;
+            if (max > 0) scroller.scrollTo({left: max / 2, behavior: 'smooth'});
+        }, 400);
+    }
+
+    // ---------- edit mode ----------
+
+    let editIndex = 0;
+
+    function startEdit() {
+        draft = JSON.parse(JSON.stringify(layouts));
+        if (draft.length === 0) draft.push({valid_from: today, direction: 'ltr', sectors: []});
+        editIndex = Math.max(0, Math.min(selected, draft.length - 1));
+        viewEl.classList.add('d-none');
+        editEl.classList.remove('d-none');
+        if (editBtn) editBtn.classList.add('d-none');
+        renderTabs();
+        renderEdit();
+    }
+
+    function stopEdit() {
+        draft = null;
+        editEl.classList.add('d-none');
+        viewEl.classList.remove('d-none');
+        if (editBtn) editBtn.classList.remove('d-none');
+        renderTabs();
+        renderView();
+    }
+
+    function rerenderEdit() {
+        renderTabs();
+        renderEdit();
+    }
+
+    function uploadPhoto(sector, file) {
+        const form = new FormData();
+        form.append('file', file);
+        uploading++;
+        renderEdit();
+        apiFetchJson(`/api1/gym/${encodeURIComponent(gymId)}/sectors/photo`, {method: 'POST', body: form})
+            .then(result => {
+                sector.img_id = result.img_id;
+                sector.thumb_id = result.thumb_id;
+            })
+            .catch(err => alert((err && err.data && err.data.message) || T.save_error))
+            .finally(() => { uploading--; renderEdit(); });
+    }
+
+    function renderSectorEditor(layout, sector, index) {
+        const move = delta => {
+            const target = index + delta;
+            if (target < 0 || target >= layout.sectors.length) return;
+            [layout.sectors[index], layout.sectors[target]] = [layout.sectors[target], layout.sectors[index]];
+            renderEdit();
+        };
+        const controls = () => [
+            el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === 0, onclick: () => move(-1)},
+                el('i', {className: 'bi bi-arrow-up'})),
+            el('button', {type: 'button', className: 'btn btn-outline-secondary btn-sm', disabled: index === layout.sectors.length - 1, onclick: () => move(1)},
+                el('i', {className: 'bi bi-arrow-down'})),
+            el('button', {
+                type: 'button', className: 'btn btn-outline-danger btn-sm', title: T.remove,
+                onclick: () => { layout.sectors.splice(index, 1); renderEdit(); },
+            }, el('i', {className: 'bi bi-trash'}))];
+
+        if (sector.type === 'break') {
+            return el('div', {className: 'card mb-3 sector-break-card'},
+                el('div', {className: 'card-body py-2 d-flex align-items-center gap-2'},
+                    el('i', {className: 'bi bi-arrow-return-left text-muted'}),
+                    el('span', {className: 'flex-grow-1 text-muted', text: T.break}),
+                    controls()));
+        }
+
+        const owners = {};
+        layout.sectors.forEach(s => { if (s !== sector) s.lines.forEach(l => { owners[l] = s; }); });
+        const heightInput = el('div', {className: 'input-group input-group-sm mb-2', style: 'max-width: 200px;'},
+            el('span', {className: 'input-group-text', text: T.height}),
+            el('input', {
+                type: 'number', className: 'form-control', min: '0', max: '100', step: '0.1',
+                value: sector.height ?? '',
+                oninput: e => { sector.height = e.target.value === '' ? null : Number(e.target.value); },
+            }),
+            el('span', {className: 'input-group-text', text: 'm'}));
+
+        const chipLines = [...new Set([...routeLines, ...sector.lines])].sort(compareLines);
+        const chips = chipLines.map(line => {
+            const mine = sector.lines.includes(line);
+            const owner = owners[line];
+            return el('button', {
+                type: 'button',
+                className: 'btn btn-sm sector-line-chip ' + (mine ? 'btn-success' : 'btn-outline-secondary') + (owner ? ' opacity-50' : ''),
+                title: owner ? owner.name : undefined,
+                text: line,
+                onclick: () => {
+                    if (owner) owner.lines = owner.lines.filter(l => l !== line);
+                    sector.lines = mine ? sector.lines.filter(l => l !== line) : [...sector.lines, line].sort(compareLines);
+                    renderEdit();
+                },
+            });
+        });
+
+        return el('div', {className: 'card mb-3'},
+            el('div', {className: 'card-body'},
+                el('div', {className: 'd-flex gap-2 mb-3'},
+                    el('input', {
+                        type: 'text', className: 'form-control', value: sector.name, maxlength: '100',
+                        placeholder: T.route_name, required: true,
+                        oninput: e => { sector.name = e.target.value; },
+                    }),
+                    controls()),
+                el('div', {className: 'd-flex gap-3'},
+                    el('div', {className: 'sector-edit-photo flex-shrink-0 d-flex flex-column gap-2'},
+                        sector.thumb_id
+                            ? el('img', {src: imageUrl(sector.thumb_id), alt: '', className: 'sector-photo'})
+                            : el('div', {className: 'sector-photo-placeholder'}, el('i', {className: 'bi bi-image'})),
+                        el('label', {className: 'btn btn-outline-success btn-sm mb-0'},
+                            el('i', {className: 'bi bi-camera'}), ' ' + T.photo,
+                            el('input', {
+                                type: 'file', accept: 'image/*', className: 'd-none',
+                                onchange: e => { if (e.target.files[0]) uploadPhoto(sector, e.target.files[0]); },
+                            })),
+                        sector.img_id ? el('button', {
+                            type: 'button', className: 'btn btn-outline-danger btn-sm', text: T.remove,
+                            onclick: () => { sector.img_id = ''; sector.thumb_id = ''; renderEdit(); },
+                        }) : null),
+
+                    el('div', {className: 'flex-grow-1 min-w-0'},
+                        heightInput,
+                        el('div', {className: 'd-flex flex-wrap gap-1'}, chips)))));
+    }
+
+    function renderEdit() {
+        const layout = draft[editIndex];
+        const children = [];
+
+        if (layout) {
+            children.push(
+                el('div', {className: 'mb-3'},
+                    el('label', {className: 'form-label', text: T.valid_from}),
+                    el('input', {
+                        type: 'date', className: 'form-control', value: layout.valid_from, required: true,
+                        onchange: e => { layout.valid_from = e.target.value; renderTabs(); },
+                    })),
+                el('div', {className: 'mb-3'},
+                    el('label', {className: 'form-label d-block', text: T.direction}),
+                    el('div', {className: 'btn-group btn-group-sm', role: 'group'},
+                        ['ltr', 'rtl'].map(dir => el('button', {
+                            type: 'button',
+                            className: 'btn ' + ((layout.direction || 'ltr') === dir ? 'btn-secondary' : 'btn-outline-secondary'),
+                            onclick: () => { layout.direction = dir; renderEdit(); },
+                        }, el('i', {className: 'bi ' + (dir === 'ltr' ? 'bi-arrow-right' : 'bi-arrow-left')}), ' ' + T[dir])))),
+                layout.sectors.map((sector, i) => renderSectorEditor(layout, sector, i)),
+                el('div', {className: 'd-flex flex-wrap gap-2 mb-4'},
+                    el('button', {
+                        type: 'button', className: 'btn btn-outline-success',
+                        onclick: () => { layout.sectors.push({name: '', img_id: '', thumb_id: '', lines: []}); renderEdit(); },
+                    }, el('i', {className: 'bi bi-plus-circle'}), ' ' + T.add_sector),
+                    el('button', {
+                        type: 'button', className: 'btn btn-outline-secondary',
+                        onclick: () => { layout.sectors.push({type: 'break', name: '', img_id: '', thumb_id: '', lines: []}); renderEdit(); },
+                    }, el('i', {className: 'bi bi-arrow-return-left'}), ' ' + T.break)));
+        } else {
+            children.push(el('button', {
+                type: 'button', className: 'btn btn-outline-success mb-4',
+                onclick: () => { draft.push({valid_from: today, direction: 'ltr', sectors: []}); editIndex = 0; rerenderEdit(); },
+            }, el('i', {className: 'bi bi-plus-circle'}), ' ' + T.new_layout));
+        }
+
+        children.push(
+            el('div', {className: 'd-flex gap-2'},
+                el('button', {
+                    type: 'button', className: 'btn btn-success', disabled: uploading > 0, onclick: save,
+                }, uploading > 0 ? el('span', {className: 'spinner-border spinner-border-sm me-1'}) : null, T.save),
+                el('button', {type: 'button', className: 'btn btn-secondary', text: T.cancel, onclick: stopEdit})),
+            el('div', {id: 'sectorsError', className: 'text-danger mt-2'}));
+
+        editEl.replaceChildren(...children.flat());
+    }
+
+    function save() {
+        const editedDate = draft[editIndex] && draft[editIndex].valid_from;
+        apiFetchJson(`/api1/gym/${encodeURIComponent(gymId)}/sectors`, {method: 'POST', body: {layouts: draft}})
+            .then(result => {
+                layouts = result.layouts || [];
+                const idx = layouts.findIndex(l => l.valid_from === editedDate);
+                selected = idx >= 0 ? idx : activeIndex(layouts);
+                showAlert('sectors_saved', 'success');
+                stopEdit();
+            })
+            .catch(err => {
+                document.getElementById('sectorsError').textContent =
+                    (err && err.data && err.data.message) || T.save_error;
+            });
+    }
+
+    // ---------- load ----------
+
+    function loadRouteLines() {
+        return apiFetchJson(`/api1/gym/${encodeURIComponent(gymId)}/routes`)
+            .then(data => (typeof data === 'string' ? JSON.parse(data) : data) || [])
+            .catch(() => []);
+    }
+
+    Promise.all([
+        apiFetchJson(`/api1/gym/${encodeURIComponent(gymId)}/sectors`),
+        loadRouteLines(),
+    ]).then(([sectorData, routes]) => {
+        layouts = sectorData.layouts || [];
+        selected = activeIndex(layouts);
+        if (selected < 0 && layouts.length) selected = 0;
+        routeCountByLine = {};
+        (Array.isArray(routes) ? routes : []).forEach(route => {
+            const line = String(route.line ?? '').trim();
+            if (line) routeCountByLine[line] = (routeCountByLine[line] || 0) + 1;
+        });
+        routeLines = Object.keys(routeCountByLine).sort(compareLines);
+        renderTabs();
+        renderView();
+    }).catch(err => {
+        console.error('Failed to load sectors', err);
+        viewEl.replaceChildren(el('p', {className: 'text-danger', text: T.save_error}));
+    });
+
+    if (editBtn && canEdit) editBtn.addEventListener('click', startEdit);
+});
+</script>
+
+{% endblock %}
