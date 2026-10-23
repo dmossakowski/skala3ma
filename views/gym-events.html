@@ -7,18 +7,19 @@
 {% block secondarycontent %}
 <div class="container-fluid my-3" >
     {% set events_url = '/api1/competition/list?gym_id=' ~ (gymid | urlencode) %}
+    {% set empty_events_text = reference_data['current_language'].no_events_found %}
 
     <h4>{{ reference_data['current_language'].upcoming }}</h4>
     {% with calendar_id='calendarUpcoming', calendar_view='timeGridFourDay', calendar_range='future',
             calendar_months=12, calendar_hide_toolbar=True, calendar_auto_height=True, calendar_events_url=events_url,
-            calendar_empty_text=reference_data['current_language'].no_scheduled_events %}
+            calendar_empty_text=empty_events_text %}
     {% include "events-calendar.html" %}
     {% endwith %}
 
     <h4 class="mt-4">{{ reference_data['current_language'].past_events }}</h4>
     {% with calendar_id='calendarPast', calendar_view='timeGridFourDay', calendar_range='past',
             calendar_months=36, calendar_hide_toolbar=True, calendar_auto_height=True, calendar_reverse=True, calendar_events_url=events_url,
-            calendar_skip_assets=True %}
+            calendar_empty_text=empty_events_text, calendar_skip_assets=True %}
     {% include "events-calendar.html" %}
     {% endwith %}
 </div>

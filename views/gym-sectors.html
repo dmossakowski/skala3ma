@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'photo': t.sector_photo,
         'height': t.sector_height,
         'no_layouts': t.sector_no_layouts,
+        'start': t.sector_start,
         'unassigned': t.sector_unassigned_lines,
         'direction': t.sector_direction,
         'ltr': t.sector_ltr,
@@ -240,8 +241,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderView() {
         hideZoom(true);
         const layout = layouts[selected];
-        if (!layout) {
-            viewEl.replaceChildren(el('p', {className: 'text-muted', text: T.no_layouts}));
+        const empty = !layout || layout.sectors.length === 0;
+        if (editBtn) editBtn.classList.toggle('d-none', empty);
+        if (empty) {
+            viewEl.replaceChildren(canEdit
+                ? el('div', {className: 'text-center py-5'},
+                    el('button', {type: 'button', className: 'btn btn-success btn-lg px-5 py-3', onclick: startEdit},
+                        el('i', {className: 'bi bi-plus-circle me-2'}), T.start))
+                : el('p', {className: 'text-muted', text: T.no_layouts}));
             return;
         }
         const isCurrent = selected === activeIndex(layouts);
@@ -279,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
         draft = JSON.parse(JSON.stringify(layouts));
         if (draft.length === 0) draft.push({valid_from: today, direction: 'ltr', sectors: []});
         editIndex = Math.max(0, Math.min(selected, draft.length - 1));
+        if (draft[editIndex].sectors.length === 0) draft[editIndex].sectors.push({name: '', img_id: '', thumb_id: '', lines: []});
         viewEl.classList.add('d-none');
         editEl.classList.remove('d-none');
         if (editBtn) editBtn.classList.add('d-none');

@@ -19,6 +19,17 @@ https://skala3ma.com
 - Google and Facebook logins
 - Printable route page for gyms
 
+### Club rankings
+
+Season and per-competition club rankings group registered clubs by gym ID, not
+by their stored display names. Clubs without a registered gym ID are grouped by
+their trimmed club name. Club ranking display names are trimmed; individual
+scores and stored registration data are unchanged.
+
+Club rankings and individual season rankings give equal point totals the same
+rank, using competition numbering (for example, 1, 2, 2, 4). Participation counts
+only order tied entries; they do not break rank ties. Tied individual season
+ranks receive the same club-placement bonus.
 
 
 ## Technologies used
@@ -115,7 +126,5 @@ keytool -genkeypair -v -keystore skala3ma-upload.keystore -alias skala3ma \
 
   ````
   We will try to provide a test database that will have a good set of working data soon.
-
-
 
 

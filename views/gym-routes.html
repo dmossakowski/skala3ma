@@ -26,19 +26,15 @@
      
                
                 
-                <div class="row">
-                    <div class="col-1 text-end">
-                         <label for="default_routes" class="col-form-label">{{ reference_data['current_language'].routes }}:  </label>
-                     </div>
-                     <div class="col">
-                         <select name="default_routes" class="form-select" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
+                <div class="d-flex flex-wrap align-items-center gap-2 text-start">
+                         <label for="default_routes" class="col-form-label flex-shrink-0">{{ reference_data['current_language'].routes }}:  </label>
+                         <select name="default_routes" class="form-select w-auto mw-100 flex-grow-1" id="default_routes" onchange="document.location.href='/gyms/{{gym['id']}}/'+this.value">
              
                          {% for route in all_routes %}
                              <option name="id" value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == routes['id'] %} selected {% endif %}  >{{all_routes[route]['name']}}</option>
                          {% endfor %}
              
                          </select>
-                     </div>
                  </div>
 
         </div>
