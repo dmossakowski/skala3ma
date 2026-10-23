@@ -45,7 +45,7 @@ sql_lock = RLock()
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, jsonify, Response, \
     stream_with_context, copy_current_request_context
 
-from functools import lru_cache, reduce
+from functools import lru_cache
 import logging
 
 DATA_DIRECTORY = os.getenv('DATA_DIRECTORY')
@@ -800,7 +800,24 @@ def make_name_key(firstname, lastname):
     return f"{parts[0]}|{parts[1]}"
 
 
-# FSGT rules: top 30 of each category score 30..1 points, best 5 results count, ties broken by participations;
+def _club_ranking_key(climber):
+    gymid = climber.get('gymid')
+    if gymid and gymid not in (-1, '-1', 'other'):
+        return ('gymid', gymid)
+    return ('club', (climber.get('club') or '').strip())
+
+
+def _assign_points_ranks(rows, points_key):
+    previous_points = None
+    rank = 0
+    for position, row in enumerate(rows, start=1):
+        if row[points_key] != previous_points:
+            rank = position
+            previous_points = row[points_key]
+        row['rank'] = rank
+
+
+# FSGT rules: top 30 of each category score 30..1 points, best 5 results count, equal totals share ranks;
 # clubs get 1 point per participant plus 5..1 for top 5 places in each category
 def compute_series_rankings(series_key, season, competition_type, calc_type):
     date_from, date_to = season_range(season)
@@ -872,8 +889,7 @@ def compute_series_rankings(series_key, season, competition_type, calc_type):
                 del gender_category_rankings[gender][category]
                 continue
             climbers.sort(key=lambda x: (x['total_points'], x['participations']), reverse=True)
-            for idx, climber in enumerate(climbers):
-                climber['rank'] = idx + 1
+            _assign_points_ranks(climbers, 'total_points')
         if not gender_category_rankings[gender]:
             del gender_category_rankings[gender]
 
@@ -882,28 +898,28 @@ def compute_series_rankings(series_key, season, competition_type, calc_type):
     for gender in gender_category_rankings:
         for climbers in gender_category_rankings[gender].values():
             for climber in climbers:
-                club = climber['club']
+                club = (climber['club'] or '').strip()
                 if not club:
                     continue
-                if club not in club_scores:
-                    club_scores[club] = {'club': club, 'gymid': climber.get('gymid', ''), 'points': 0,
+                club_key = _club_ranking_key(climber)
+                if club_key not in club_scores:
+                    club_scores[club_key] = {'club': club, 'gymid': climber.get('gymid', ''), 'points': 0,
                                          'participants_m': 0, 'participants_f': 0, 'total_participants': 0}
-                    club_participants[club] = set()
+                    club_participants[club_key] = set()
 
-                if climber['name_key'] not in club_participants[club]:
-                    club_participants[club].add(climber['name_key'])
-                    club_scores[club]['points'] += 1
-                    club_scores[club]['total_participants'] += 1
-                    club_scores[club]['participants_f' if climber['sex'] == 'F' else 'participants_m'] += 1
+                if climber['name_key'] not in club_participants[club_key]:
+                    club_participants[club_key].add(climber['name_key'])
+                    club_scores[club_key]['points'] += 1
+                    club_scores[club_key]['total_participants'] += 1
+                    club_scores[club_key]['participants_f' if climber['sex'] == 'F' else 'participants_m'] += 1
 
                 if climber['rank'] <= 5:
-                    club_scores[club]['points'] += 6 - climber['rank']
+                    club_scores[club_key]['points'] += 6 - climber['rank']
 
     club_rankings = sorted(club_scores.values(),
                            key=lambda x: (x['points'], x['total_participants'], x['participants_f']),
                            reverse=True)
-    for idx, club in enumerate(club_rankings):
-        club['rank'] = idx + 1
+    _assign_points_ranks(club_rankings, 'points')
 
     competitors_m = sum(len(c) for c in gender_category_rankings.get('M', {}).values())
     competitors_f = sum(len(c) for c in gender_category_rankings.get('F', {}).values())
@@ -949,9 +965,12 @@ def get_sorted_rankings(competition):
     a = competition.get('climbers').values()
     #clubs = set(competition.get('climbers')[k]['category'])
 
-    clubs = reduce(lambda acc, c: acc.update({ competition['climbers'][c]['club'] :{"M":0, "F":0, "MC":0, "FC":0, "TOTAL":0 }})
-                                        or acc if competition['climbers'][c]['club'] not in acc else acc,
-                   competition.get('climbers'), {})
+    clubs = {}
+    for climber in competition['climbers'].values():
+        club_key = _club_ranking_key(climber)
+        if club_key not in clubs:
+            clubs[club_key] = {'name': (climber.get('club') or '').strip(),
+                               'M': 0, 'F': 0, 'MC': 0, 'FC': 0, 'TOTAL': 0}
 
     # do not generate rankings for all users together for the fsgt0 calculation
     # because in fsgt0 points for each route are divided separately by men and woman
@@ -983,38 +1002,24 @@ def get_sorted_rankings(competition):
         if climber['score']==0:
             continue
         # add one point for each climber
-        points = clubs[climber['club']][sex]
-        clubs[climber['club']][sex] = points + 1
+        club_key = _club_ranking_key(climber)
+        points = clubs[club_key][sex]
+        clubs[club_key][sex] = points + 1
 
         if classement<6:
-            points = clubs[climber['club']][sex+"C"]
-            clubs[climber['club']][sex+"C"] = points + 6 - classement
+            points = clubs[club_key][sex+"C"]
+            clubs[club_key][sex+"C"] = points + 6 - classement
 
     for clubname in clubs:
         total = clubs[clubname]['M']+clubs[clubname]['F']+clubs[clubname]['MC']+clubs[clubname]['FC']
         clubs[clubname]['TOTAL'] = total
 
     sortedclubs = []
-    prevTotal = -1
-    #prevClub
-    rank = 0
     for club in sorted(clubs, key=lambda x:(clubs[x]['TOTAL'], clubs[x]['F']+clubs[x]['M'], clubs[x]['F']),reverse=True):
-        if club in ['other','Autre club non répertorié']:
+        if clubs[club]['name'] in ['other','Autre club non répertorié']:
             continue
-        clubs[club]['name'] = club
-        if prevTotal != clubs[club]['TOTAL']:
-            rank = rank + 1
-            prevTotal = clubs[club]['TOTAL']
-        else:
-            if clubs[club]['M'] == clubs[prevClub]['M']:
-                if clubs[club]['F'] < clubs[prevClub]['F']:
-                    rank = rank + 1
-            else:
-                rank = rank + 1
-
-        clubs[club]['rank'] = rank
         sortedclubs.append(clubs[club])
-        prevClub = club
+    _assign_points_ranks(sortedclubs, 'TOTAL')
 
     rankings['club']=sortedclubs
     return rankings
@@ -2409,5 +2414,3 @@ if __name__ == '__main__':
     #library = loadLibraryFromFiles()
 
     #getOrphanedTracks(library)
-
-
