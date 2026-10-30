@@ -155,8 +155,9 @@
     <div class="row">
         <div class="col m-2 bg-light border rounded-1">
             <div class="row bg-body-secondary">
-            <div class="col text-start">{{ reference_data['current_language'].about}}</div>
-            <div class="col text-end"> <a href="/gyms/{{gym['id']}}/edit" title="Edit"><span alt="alttext" class="icon-wrench "></span></a></div>
+            <div class="col text-START ">{{ reference_data['current_language'].about}}       </a>
+</div>
+            <div class="col text-end"> </div>
         </div>
             <div class="h-100 p-4 mb-3  text-center">
 
@@ -171,7 +172,7 @@
 
           
 
-            {{ gym['address'] }} <!--i class="icon-location"></i--><br>
+            {{ gym['address'] }}   <a href="/gyms/{{gym['id']}}/edit" title="Edit"><span alt="alttext" class="bi bi-pencil"></span></a><!--i class="icon-location"></i--><br>
             <a href="{{gym['homepage']}}" alt="{{gym['homepage']}}" target="tab">{{gym['homepage']}}</a>
             </div>
         </div>
