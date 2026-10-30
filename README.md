@@ -115,6 +115,20 @@ You can also run the server using gunicorn:
   - logout and sign up some anonymous users
   - manage the state of competition through admin console
 
+### Sector photos on mobile and desktop
+
+The sector photo button uses an unfiltered file input, like the gym-logo upload.
+On mobile this lets the browser offer its native camera/files chooser instead
+of an image-only picker; the exact options depend on the browser and OS.
+On desktop it opens the normal file chooser. We intentionally omit `capture`
+so users can still choose existing photos rather than being sent directly to
+the camera. Only supported images up to 15 MB are accepted by the server;
+videos and other unsupported files display an upload error.
+
+To check this flow, edit a gym's sectors and use the photo button to upload an
+existing image and, on a phone, a newly taken camera photo. Confirm the preview
+updates and saving retains the photo. Cancelling the chooser should leave the
+photo unchanged; selecting a video or non-image file should display an error.
 
 
 9 Create trust store for android:
@@ -126,5 +140,4 @@ keytool -genkeypair -v -keystore skala3ma-upload.keystore -alias skala3ma \
 
   ````
   We will try to provide a test database that will have a good set of working data soon.
-
 

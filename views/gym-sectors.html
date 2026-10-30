@@ -392,7 +392,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         el('label', {className: 'btn btn-outline-success btn-sm mb-0'},
                             el('i', {className: 'bi bi-camera'}), ' ' + T.photo,
                             el('input', {
-                                type: 'file', accept: 'image/*', className: 'd-none',
+                                // Leave accept/capture unset so mobile browsers can offer camera and files, as for gym logos.
+                                type: 'file', className: 'd-none',
                                 onchange: e => { if (e.target.files[0]) uploadPhoto(sector, e.target.files[0]); },
                             })),
                         sector.img_id ? el('button', {

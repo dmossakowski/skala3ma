@@ -520,6 +520,17 @@ function initializeApp() {
     </div>
 
     <style>
+        .mobile-menu-gym-logo {
+            display: block;
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        #contextMenuToggleCol {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .main-menu-link-mobile {
             min-height: 44px;
             display: flex;
@@ -549,6 +560,16 @@ function initializeApp() {
             slot.prepend(menu);
             menu.hidden = false;
             slot.classList.remove('d-none');
+
+            const logoUrl = menu.getAttribute('data-mobile-menu-logo');
+            const menuToggle = document.getElementById('contextMenuToggle');
+            if (logoUrl && menuToggle) {
+                const logo = document.createElement('img');
+                logo.src = logoUrl;
+                logo.alt = menu.getAttribute('data-mobile-menu-logo-alt') || '';
+                logo.className = 'mobile-menu-gym-logo';
+                menuToggle.replaceChildren(logo);
+            }
         });
     </script>
 
@@ -692,4 +713,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-
