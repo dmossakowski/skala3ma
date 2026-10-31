@@ -2267,21 +2267,22 @@ def get_myskala():
         routes_climbed2 = {}
         if climber is not None:
             
-            routes_climbed2=climber['routesClimbed2']
-            routes_climbed_count += len(climber['routesClimbed2'] )
+            routes_climbed2 = climber.get('routesClimbed2', [])
+            routes_climbed_count += len(routes_climbed2)
+            points_earned = climber.get('points_earned', [])
             #grades_climbed = []
             for idx, route in enumerate(routes_climbed2):
                 route['competitionName'] = competition['name']
                 route['competitionDate'] = competition['date']
                 route['gym'] = competition['gym']
                 grade = route.get('grade')
-                points = round(climber['points_earned'][idx])
+                points = round(points_earned[idx]) if idx < len(points_earned) else 0
                 stats['personalstats']['all_grades'].append(route.get('grade'))
                 route['points'] = points
-                route['rank']  = climber['rank']
+                route['rank']  = climber.get('rank')
                 #grades_climbed.append(' '+str(grade) + ' ('+str(points)+')')
             #competition['grades_climbed'] = grades_climbed
-            competition['points_earned'] = climber['points_earned']
+            competition['points_earned'] = points_earned
             competition['routesClimbed2'] = routes_climbed2
             competition
         # clear unnecessary data for other
