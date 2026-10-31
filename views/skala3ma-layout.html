@@ -277,11 +277,7 @@ function initializeApp() {
                     <a href="/myresultats" class="nav-link fs-4 fw-medium"><span data-translate-key="my_resultats">My results</span></a>
                     <a href="/logout" class="nav-link fs-4 fw-medium"><span data-translate-key="logout">Logout</span></a>
 
-                    {% if session['is_admin']  %}
-                    <a href="/app_admin1" class="nav-link fs-4">Admin</a></li>
-                  
-
-                    {% endif %}
+                    <a href="/app_admin1" class="nav-link fs-4" hidden data-permission="admin">Admin</a>
                 
                 {% else %}
 
@@ -315,6 +311,7 @@ function initializeApp() {
                       
                 <br>
                 <hr>
+                <li><a href="https://www.instagram.com/skala3ma/" class="nav-link fs-4"><i class="icon-instagram"></i> Instagram</a></li>
                 <li><a href="https://www.facebook.com/skala3ma" class="nav-link fs-4"><i class="icon-facebook2"></i> Facebook page</a></li>
                 <li><a href="https://github.com/dmossakowski/skala3ma/discussions" class="nav-link fs-4"><i class="icon-github"></i> GitHub</a> </li>
                    
@@ -341,7 +338,7 @@ function initializeApp() {
                   <div class="col">
                     <a href="/profile" >
                 
-                        <i  style="font-size: 32px;color: #53be6b " class="bi bi-person"></i>
+                        <i  style="font-size: 32px;color: #53be6b " class="bi bi-house"></i>
                         </a>
                    
                     
@@ -469,10 +466,7 @@ function initializeApp() {
                 
                     <a href="/logout" class="dropdown-item fs-7"><span data-translate-key="logout">Logout</span></a>
 
-                    {% if session['is_admin']  %}
-                    <a href="/app_admin1" class="dropdown-item fs-7">Admin</a></li>
-
-                    {% endif %}
+                    <a href="/app_admin1" class="dropdown-item fs-7" hidden data-permission="admin">Admin</a>
                 </div>
                 </li>
             {% else %}
@@ -513,6 +507,7 @@ function initializeApp() {
             </nav>
             <hr>
             <nav class="nav flex-column">
+                <a href="https://www.instagram.com/skala3ma/" class="nav-link main-menu-link-mobile py-2"><i class="icon-instagram me-2"></i>Instagram</a>
                 <a href="https://www.facebook.com/skala3ma" class="nav-link main-menu-link-mobile py-2"><i class="icon-facebook2 me-2"></i>Facebook page</a>
                 <a href="https://github.com/dmossakowski/skala3ma/discussions" class="nav-link main-menu-link-mobile py-2"><i class="icon-github me-2"></i>GitHub</a>
             </nav>
@@ -520,7 +515,8 @@ function initializeApp() {
     </div>
 
     <style>
-        .mobile-menu-gym-logo {
+        .mobile-menu-gym-logo,
+        .mobile-menu-event-poster {
             display: block;
             width: 40px;
             height: 40px;
@@ -554,6 +550,8 @@ function initializeApp() {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            Skala.applyPermissions().catch(err => console.error('Failed to load user permissions', err));
+
             const menu = document.querySelector('[data-context-menu]');
             if (!menu) return;
             const slot = document.getElementById('mainMenuContext');
@@ -561,14 +559,25 @@ function initializeApp() {
             menu.hidden = false;
             slot.classList.remove('d-none');
 
-            const logoUrl = menu.getAttribute('data-mobile-menu-logo');
+            const context = Skala.getContext();
             const menuToggle = document.getElementById('contextMenuToggle');
-            if (logoUrl && menuToggle) {
-                const logo = document.createElement('img');
-                logo.src = logoUrl;
-                logo.alt = menu.getAttribute('data-mobile-menu-logo-alt') || '';
-                logo.className = 'mobile-menu-gym-logo';
-                menuToggle.replaceChildren(logo);
+            if (context?.type === 'gym' && menuToggle) {
+                Skala.store.getGym(context.id).then(gym => {
+                    if (!gym?.logo_img_id) return;
+                    const logo = document.createElement('img');
+                    logo.src = `/image/${encodeURIComponent(gym.logo_img_id)}`;
+                    logo.alt = `${gym.name || ''} logo`;
+                    logo.className = 'mobile-menu-gym-logo';
+                    menuToggle.replaceChildren(logo);
+                }).catch(err => console.error('Failed to load gym for mobile menu', err));
+            } else if (context?.type === 'competition' && menuToggle) {
+                const poster = document.createElement('img');
+                poster.alt = '';
+                poster.className = 'mobile-menu-event-poster';
+                poster.onload = () => menuToggle.replaceChildren(poster);
+                poster.onerror = () => console.warn('Event poster unavailable for mobile menu', context.id);
+                // Missing posters must not be replaced by the backend's default FSGT logo.
+                poster.src = `/image/${encodeURIComponent(context.id)}?fallback=0`;
             }
         });
     </script>
