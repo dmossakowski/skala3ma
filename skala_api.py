@@ -1620,6 +1620,7 @@ def get_user():
     # User is now a User object, serialize to dict
     user_dict = user.to_dict()
     user_dict['picture'] = user.get_picture_url()
+    user_dict['is_admin'] = User.is_admin(user)
     
     return jsonify(user_dict)
 

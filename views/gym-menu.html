@@ -1,13 +1,13 @@
 
 <ul class="nav d-flex flex-nowrap align-items-start">
-   <div class="flex-shrink-0"> <a href="/gyms/{{ gymid}}/main"  class="nav-link d-flex align-items-center"><img src="/image/{{  gym.get('logo_img_id') }}"  height="40" class="me-2"/>
+   <div class="flex-shrink-0 d-none d-md-block"> <a href="/gyms/{{ gymid}}/main"  class="nav-link d-flex align-items-center"><img src="/image/{{  gym.get('logo_img_id') }}"  height="40" class="me-2"/>
     </a></div>
 
     <div class="flex-grow-1 d-flex flex-wrap align-items-start">
     
-    <a href="/gyms/{{ gymid}}/main"  class="nav-link"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
+    <a href="/gyms/{{ gymid}}/main"  class="nav-link d-none d-md-block"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
    
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }} aaa</a> 
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link d-none d-md-block">Stats</a>
     <a href="/gyms/{{gymid}}/sectors" class="nav-link d-none d-md-block">{{ reference_data['current_language'].sectors }}</a>
                         <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
@@ -24,14 +24,21 @@
 </ul>
 
 <!-- moved into the layout's left mobile menu by skala3ma-layout.html -->
-<div hidden data-context-menu{% if gym.get('logo_img_id') %} data-mobile-menu-logo="/image/{{ gym.get('logo_img_id') }}" data-mobile-menu-logo-alt="{{ gym['name'] }} logo"{% endif %}>
+<script>Skala.setContext('gym', {{ gymid | tojson }});</script>
+
+<div hidden data-context-menu>
     <h5 class="mb-2">
-        <img src="/image/{{ gym.get('logo_img_id') }}" height="30" class="me-2"/>{{ gym['name'] }}
+        <img src="/image/{{ gym.get('logo_img_id') }}" height="30" class="me-2"/>{{ gym['name'] }} 
     </h5>
         <nav class="nav flex-column">
             <a href="/gyms/{{ gymid }}/main" class="nav-link gym-menu-link-mobile py-3">
-                <i class="bi bi-house me-2"></i>{{ gym['name'] }}
+                <i class="bi bi-house me-2"></i>{{ gym['name'] }} 
             </a>
+            
+            <a href="/gyms/{{ gymid }}/edit" class="nav-link gym-menu-link-mobile py-3" hidden data-permission="edit-gym">
+                <i class="bi bi-pencil me-2"></i>{{ reference_data['current_language'].Admin }}
+            </a>
+
             <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}" class="nav-link gym-menu-link-mobile py-3">
                 <i class="bi bi-pin-map me-2"></i>{{ reference_data['current_language'].topo }}
             </a>
