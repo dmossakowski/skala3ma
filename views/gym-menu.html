@@ -6,8 +6,9 @@
     <div class="flex-grow-1 d-flex flex-wrap align-items-start">
     
     <a href="/gyms/{{ gymid}}/main"  class="nav-link d-none d-md-block"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
+
    
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }} aaa</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }}</a> 
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link d-none d-md-block">Stats</a>
     <a href="/gyms/{{gymid}}/sectors" class="nav-link d-none d-md-block">{{ reference_data['current_language'].sectors }}</a>
                         <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
@@ -19,6 +20,11 @@
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link d-none d-md-block">{{ reference_data['current_language'].Discs }}</a> 
 
     <a href="/gyms/{{gymid}}/events" class="nav-link d-none d-md-block">{{ reference_data['current_language'].events }}</a> 
+
+
+      <a href="/gyms/{{ gymid }}/edit" class="nav-link d-none d-md-block" hidden data-permission="edit-gym">
+                <i class="bi bi-pencil me-2"></i>{{ reference_data['current_language'].Admin }}
+            </a>
     
  </div>
 </ul>

@@ -179,7 +179,7 @@
   <h4 style="margin:8px 0 8px 0; font-size:1rem;">&nbsp;<span data-translate-key="rate">&nbsp;</span></h4>
     <div class="form-row row">
         <div id="route-status-picker" class="btn-group w-100" role="group" aria-label="Route finish status" style="display:flex; gap:8px; justify-content:space-between;">
-          <input type="hidden" id="routeFinishStatus" name="route_finish_status" value="climbed">
+          <input type="hidden" id="routeFinishStatus" name="route_finish_status" value="">
           <button type="button" class="btn btn-light status-btn" data-status="attempted" onclick="setRouteFinishStatus('attempted')">
             <img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" alt="attempted" width="40" height="40">
           </button>
@@ -214,8 +214,7 @@
               }
             });
           }
-          // Initialize default selection similar to resetFlashImage()
-          (function(){ setRouteFinishStatus('climbed'); })();
+          (function(){ setRouteFinishStatus(''); })();
         </script>
         </div>
         <div class="row" style="margin-top:8px;">
@@ -596,6 +595,10 @@
 
 
         function routeDetail(data) {
+            setRouteFinishStatus('');
+            document.querySelectorAll('#route-stars input[name="route_stars"]').forEach(input => {
+                input.checked = false;
+            });
         	//console.log("routeDetail.. "+data+" - ");
             currentRow=data;
             console.log('routeId '+data.id);
@@ -1069,6 +1072,18 @@
             },
         
         },
+          // only shown when sorting by something other than line (i.e. when sector grouping is off)
+          {title: "{{ reference_data['current_language'].sector }}", field: "_sector", visible:false, "responsive": 0, minWidth:10, headerVertical:false,
+            formatter:function(cell){
+                var entry = sectorsById[getSectorKey(cell.getRow().getData())];
+                return escapeSectorHtml(entry ? entry.sector.name : OTHER_SECTOR_LABEL);
+            },
+            sorter:function(a, b, aRow, bRow){
+                var cmp = getSectorIndex(aRow.getData()) - getSectorIndex(bRow.getData());
+                if (cmp !== 0) return cmp;
+                return String(aRow.getData().line ?? '').localeCompare(String(bRow.getData().line ?? ''), undefined, {numeric:true, sensitivity:'base'});
+            },
+          },
           {title: "{{ reference_data['current_language'].color }}", field: "color1", 
            "responsive": 0 , minWidth:10, 
            formatter:function(cell, formatterParams, onRendered){ 
@@ -1102,13 +1117,13 @@
               return html;
            }
           },
+          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 0, minWidth:10},
           
           {title: "{{ reference_data['current_language'].route_name }}", field: "name", "responsive": 0 , minWidth:10},
           /*{title: "Difficulty", field: "difficulty_rating", "responsive": 0 , minWidth:10, formatter:"star", formatterParams:{
             stars:5,
             }},*/
           {title: "{{ reference_data['current_language'].route_opened_by}}", field: "openedby", "responsive": 2 , minWidth:10},
-          {title: "{{ reference_data['current_language'].route_opened_date}}", field: "opendate", "responsive": 3},
           {title: "{{ reference_data['current_language'].notes}}", field: "notes", "responsive": 5 , formatter:"plaintext"}
           ];
       
@@ -1214,10 +1229,16 @@
             //sorters - an array of the sorters currently applied
             
             table.setGroupBy(false); 
-            if (sorters.length >0 && sorters[0].field == 'line'){
+            var groupedByLine = sorters.length >0 && sorters[0].field == 'line';
+            if (groupedByLine){
                 table.setGroupBy(tableGroupBy);
             }else{
                 table.setGroupBy(false);
+            }
+            if (useSectors && !groupedByLine){
+                table.showColumn("_sector");
+            }else{
+                table.hideColumn("_sector");
             }
             
         });
@@ -1461,4 +1482,3 @@
       
       
       
-

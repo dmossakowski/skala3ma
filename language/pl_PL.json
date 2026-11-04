@@ -405,6 +405,7 @@
     "calc_type_fsgt2": "FSGT 2026",
     "calc_type_none": "Bez punktacji (tylko zapisy)",
     "sectors": "Sektory",
+    "sector": "Sektor",
     "sector_valid_from": "Obowiązuje od",
     "sector_current": "aktualny",
     "sector_planned": "planowany",
