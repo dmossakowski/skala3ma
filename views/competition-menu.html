@@ -1,6 +1,7 @@
 					<!-- START #fh5co-menu-wrap -->
 
 {% if competitionId is defined %}
+<script>Skala.setContext('competition', {{ competitionId | tojson }});</script>
 {% set competition_loaded = competition is defined and competition is not none %}
 {% if competition_loaded %}
     {% set comp_name = competition['name'] %}

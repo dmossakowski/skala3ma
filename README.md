@@ -19,6 +19,12 @@ https://skala3ma.com
 - Google and Facebook logins
 - Printable route page for gyms
 
+On event pages, the mobile menu button displays the event poster when it loads
+successfully; otherwise it keeps the hamburger icon. This uses
+`/image/<event-id>?fallback=0`, which returns 404 for a missing image instead of
+the default FSGT logo. Image requests without this option retain the default logo
+fallback.
+
 ### Club rankings
 
 Season and per-competition club rankings group registered clubs by gym ID, not

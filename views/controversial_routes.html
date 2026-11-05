@@ -212,9 +212,8 @@
             explainer.dataset.translateKey = 'disagreements_explainer';
             explainer.textContent = '';
             container.appendChild(explainer);
-            // Build responsive Bootstrap layout; no header row
             const grid = document.createElement('div');
-            grid.className = 'container-fluid';
+            grid.className = 'route-dis-list';
             list.forEach(r => {
                 const userGrades = Array.from(r.userGrades).sort();
                 const upgrades = userGrades.filter(g=> g!==r.grade && gradeHarder(g,r.grade)).length;
@@ -224,19 +223,9 @@
                 const flashPct = statusTotal ? (r.statuses.flashed/statusTotal*100).toFixed(0) : 0;
                 const climbedPct = statusTotal ? (r.statuses.climbed/statusTotal*100).toFixed(0) : 0;
                 const colorDivHTML = (typeof getColorSVGDiv === 'function' && r.color1) ? getColorSVGDiv(r.color1, r.color2, r.color_modifier, '65px', '28px',r.grade) : `<div style='width:55px; height:20px; background:#ddd; border-radius:4px; margin-bottom:.3rem;'></div>`;
-                // Wrapper per route using Bootstrap rows/cols
                 const routeCard = document.createElement('div');
                 routeCard.className = 'route-dis-card';
-                const row = document.createElement('div');
-                row.className = 'row g-3 align-items-start';
 
-                // Route details column (min 300px)
-                const cRoute = document.createElement('div');
-                cRoute.className = 'col-12 col-md route-detail';
-                cRoute.style.minWidth = '300px';
-                const flex = document.createElement('div'); flex.className = 'route-dis-flex';
-                
-                // Gym logo and name section
                 const gymInfo = document.createElement('div'); gymInfo.className = 'route-gym-info';
                 const gymRef = gymsData.find(g => g.id == r.gym_id) || {};
                 if(gymRef.logo_img_id || gymRef.logoimg){
@@ -247,9 +236,7 @@
                     logoImg.loading = 'lazy';
                     gymInfo.appendChild(logoImg);
                 }
-                //const gymNameDiv = document.createElement('div'); gymNameDiv.className = 'route-gym-name-small'; gymNameDiv.textContent = r.gym_name;
-                //gymInfo.appendChild(gymNameDiv);
-                flex.appendChild(gymInfo);
+                routeCard.appendChild(gymInfo);
                 
                 const colorBox = document.createElement('div'); colorBox.className = 'route-color-box'; colorBox.innerHTML = colorDivHTML;
                 const meta = document.createElement('div'); meta.className = 'route-meta';
@@ -257,26 +244,26 @@
                     <div class='route-gym'>${r.gym_name}</div>
                    
                     <div class='route-open'>Opened by: ${r.openedby || 'Unknown'}${r.opendate? ' · '+r.opendate : ''}</div>`;
-                flex.appendChild(colorBox); flex.appendChild(meta); cRoute.appendChild(flex);
-                row.appendChild(cRoute);
+                routeCard.appendChild(meta);
+                routeCard.appendChild(colorBox);
 
-                // User grades column
+                const feedback = document.createElement('div');
+                feedback.className = 'route-feedback';
                 const cGrades = document.createElement('div');
-                cGrades.className = 'col-6 col-md-3';
+                cGrades.className = 'route-user-grades';
                 userGrades.forEach(gVal => {
                     const chip = document.createElement('span');
                     chip.className = 'chip-grade ' + (gVal===r.grade?'':(gradeHarder(gVal,r.grade)?'up':'down'));
                     chip.textContent = gVal;
                     cGrades.appendChild(chip);
                 });
-                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`; cGrades.appendChild(upDown); grid.appendChild(cGrades);
-                row.appendChild(cGrades);
+                const upDown = document.createElement('div'); upDown.className = 'dis-updown'; upDown.textContent = `Up ${upgrades} · Down ${downgrades}`;
+                feedback.appendChild(cGrades);
+                feedback.appendChild(upDown);
+                routeCard.appendChild(feedback);
 
-                // Status mix column
                 const cStatus = document.createElement('div');
-                cStatus.className = 'col-6 col-md-3';
-                //const statusLabel = document.createElement('span'); statusLabel.className = 'statuses-label'; statusLabel.dataset.translateKey = 'statuses_label'; statusLabel.textContent = 'Statuses';
-                //cStatus.appendChild(statusLabel);
+                cStatus.className = 'route-status';
                 const barWrapper = document.createElement('div'); barWrapper.className = 'disagreements-summary-bar';
                 const barAttempt = document.createElement('span'); barAttempt.className = 'attempts'; barAttempt.style.width = `${attemptPct}%`;
                 const barFlashed = document.createElement('span'); barFlashed.className = 'flashes'; barFlashed.style.left = `${attemptPct}%`; barFlashed.style.width = `${flashPct}%`;
@@ -288,15 +275,12 @@
                 const flashedIcon = statusIcon('flashed');
                 const climbedIcon = statusIcon('climbed');
                 statusBreakdown.innerHTML = `
-                    <img src="${attemptedIcon}" alt="attempted" class="status-icon"><span class='badge attempts status-badge'> ${r.statuses.attempted||0}</span>&nbsp;&nbsp;
-                     <img src="${flashedIcon}" alt="flashed" class="status-icon"><span class='badge flashes status-badge'> ${r.statuses.flashed||0}</span>&nbsp;&nbsp;
-                    <img src="${climbedIcon}" alt="climbed" class="status-icon"><span class='badge climbs status-badge'> ${r.statuses.climbed||0}</span>
+                    <span class="status-count"><img src="${attemptedIcon}" alt="attempted" class="status-icon"><span class='badge attempts status-badge'> ${r.statuses.attempted||0}</span></span>
+                    <span class="status-count"><img src="${flashedIcon}" alt="flashed" class="status-icon"><span class='badge flashes status-badge'> ${r.statuses.flashed||0}</span></span>
+                    <span class="status-count"><img src="${climbedIcon}" alt="climbed" class="status-icon"><span class='badge climbs status-badge'> ${r.statuses.climbed||0}</span></span>
                 `;
                 cStatus.appendChild(statusBreakdown);
-                row.appendChild(cStatus);
-
-                // Append row to grid container
-                routeCard.appendChild(row);
+                routeCard.appendChild(cStatus);
                 grid.appendChild(routeCard);
             });
             container.appendChild(grid);

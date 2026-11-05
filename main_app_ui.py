@@ -35,7 +35,7 @@ import skala_db
 
 from flask import Flask, redirect, url_for, session, request, render_template, send_file, send_from_directory, \
     jsonify, Response, \
-    stream_with_context, copy_current_request_context, make_response
+    stream_with_context, copy_current_request_context, make_response, abort
 
 import logging
 
@@ -2871,6 +2871,8 @@ def image_route(img_id):
         max_age = 31536000 if img_id.startswith('sector_') else None
         return send_from_directory(UPLOAD_FOLDER, img_id, mimetype=mime_type, max_age=max_age)
     else:
+        if request.args.get('fallback') == '0':
+            abort(404)
         #return app_ui.send_static_file("images/favicon.png")
         return app_ui.send_static_file("images/fsgt-logo-me.png")
     

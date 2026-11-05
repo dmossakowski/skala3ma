@@ -100,14 +100,60 @@ window.apiFetch = apiFetch;
 window.apiFetchJson = apiFetchJson;
 window.decodeJwtPayload = decodeJwtPayload;
 
-// One request per competition per page, shared by the menu and page scripts
-const _competitionCache = {};
-function getCompetitionData(competitionId) {
-    if (!_competitionCache[competitionId]) {
-        _competitionCache[competitionId] = apiFetchJson(`/api1/competition/${encodeURIComponent(competitionId)}?remove=routesClimbed2`)
-            .catch(err => { delete _competitionCache[competitionId]; throw err; });
+// ================= STORE =================
+// The cache holds records by entity key and is rebuilt on every page load.
+// The current context ({type, id}) is set explicitly by the page, so code always
+// looks up the entity the page is about instead of whatever was fetched last.
+const Skala = window.Skala = window.Skala || {};
+
+Skala.store = (() => {
+    const cache = new Map();
+    function cached(key, url) {
+        if (!cache.has(key)) {
+            cache.set(key, apiFetchJson(url).catch(err => { cache.delete(key); throw err; }));
+        }
+        return cache.get(key);
     }
-    return _competitionCache[competitionId];
+    return {
+        // Resolves to null when not logged in (401)
+        getUser: () => cached('user', '/api1/user').catch(err => {
+            if (err && err.status === 401) return null;
+            throw err;
+        }),
+        getGym: id => cached(`gym:${id}`, `/api1/gym/${encodeURIComponent(id)}`),
+        getCompetition: id => cached(`competition:${id}`, `/api1/competition/${encodeURIComponent(id)}?remove=routesClimbed2`),
+    };
+})();
+
+let _currentContext = null;
+Skala.setContext = (type, id) => { _currentContext = Object.freeze({ type, id }); };
+Skala.getContext = () => _currentContext;
+
+// UI visibility only; the server still enforces every permission.
+// Mirrors competitionsEngine.can_edit_gym / User.is_admin.
+Skala.permissions = {
+    isAdmin: user => !!user?.is_admin,
+    canEditGym: (user, gymId) => !!user && (!!user.is_admin || (user.permissions?.gyms || []).includes(gymId)),
+    has(user, name) {
+        const context = Skala.getContext();
+        switch (name) {
+            case 'admin': return this.isAdmin(user);
+            case 'edit-gym': return context?.type === 'gym' && this.canEditGym(user, context.id);
+            default: return false;
+        }
+    },
+};
+
+// Reveals elements marked <... hidden data-permission="name"> the user is allowed to see
+Skala.applyPermissions = (root = document) => Skala.store.getUser().then(user => {
+    root.querySelectorAll('[data-permission]').forEach(el => {
+        el.hidden = !Skala.permissions.has(user, el.dataset.permission);
+    });
+    return user;
+});
+
+function getCompetitionData(competitionId) {
+    return Skala.store.getCompetition(competitionId);
 }
 window.getCompetitionData = getCompetitionData;
 

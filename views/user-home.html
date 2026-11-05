@@ -58,16 +58,7 @@
                                 </a>
                             </div>
                         </div>
-                        <div class="skala-tile-grid">
-                            <a id="ud-greeting-gym-tile" class="skala-gym-tile" href="#">
-                                <img id="ud-greeting-logo" alt="Gym logo" style="display:none;">
-                                <span id="ud-greeting-gym-text" class="skala-gym-tile-name"></span>
-                            </a>
-                            <a id="action-add-activity" href="#" class="skala-tile" title="Add activity">
-                                <svg aria-hidden="true"><use href="/public/images/icons/skala-icons.svg#icon-add-activity"/></svg>
-                                <span class="skala-tile-label" data-translate-key="add_activity">Add activity</span>
-                            </a>
-                        </div>
+                        <div id="ud-homegym-chip" class="skala-tile-grid"></div>
                     </div>
                 </div>
            
@@ -156,9 +147,7 @@
 
             const els = {
                 greetName: document.getElementById('ud-greeting-name'),
-                greetGymTile: document.getElementById('ud-greeting-gym-tile'),
-                greetGymText: document.getElementById('ud-greeting-gym-text'),
-                greetLogo: document.getElementById('ud-greeting-logo'),
+                homeGymChip: document.getElementById('ud-homegym-chip'),
                 // home gym inline editing removed; go to /user
                 homeNote: document.getElementById('ud-homegym-update-note'),
                 managedGymsList: document.getElementById('managed-gyms-card-list'),
@@ -192,24 +181,120 @@
                 }
             };
 
-            const setGreetingGym = (gym, gid) => {
-                if (!gym) return;
-                if (els.greetGymText) els.greetGymText.textContent = gym.name || '';
-                if (els.greetGymTile) {
-                    els.greetGymTile.href = `/gyms/${gid}`;
-                    els.greetGymTile.title = gym.name || '';
+            const L = {
+                topo: {{ reference_data['current_language'].topo | tojson }},
+                sectors: {{ reference_data['current_language'].sectors | tojson }},
+                discs: {{ reference_data['current_language'].Discs | tojson }},
+                events: {{ reference_data['current_language'].events | tojson }},
+                admin: {{ reference_data['current_language'].Admin | tojson }},
+                addActivity: {{ reference_data['current_language'].add_activity | tojson }}
+            };
+            const ICONS = '/public/images/icons/skala-icons.svg';
+            const enc = encodeURIComponent;
+
+            const startActivity = (gid) => {
+                const fn = window.createAndRedirectToNewActiviity;
+                if (typeof fn !== 'function') {
+                    console.error('createAndRedirectToNewActiviity is not available');
+                    return;
                 }
-                if (els.greetLogo) {
-                    // /image/<gymid> falls back to the default FSGT logo on the server
-                    els.greetLogo.src = `/image/${gym.logo_img_id || gid}`;
-                    els.greetLogo.style.display = 'inline-block';
+                try { fn(gid, null, null); } catch (err) { console.error('Failed to start new activity', err); }
+            };
+
+            const actionEl = (tag, iconId, label) => {
+                const el = document.createElement(tag);
+                el.className = 'skala-chip-action';
+                el.title = label;
+                el.setAttribute('aria-label', label);
+                el.innerHTML = `<svg aria-hidden="true"><use href="${ICONS}#${iconId}"/></svg><span class="skala-chip-action-label"></span>`;
+                el.querySelector('.skala-chip-action-label').textContent = label;
+                return el;
+            };
+
+            const menuItem = (href, iconClass, label) => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item';
+                a.href = href;
+                a.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i><span></span>`;
+                a.querySelector('span').textContent = label;
+                li.appendChild(a);
+                return li;
+            };
+
+            // Primary actions stay visible; the rest of gym-menu.html goes into the ⋮ dropdown
+            const buildGymChip = (gym, gid, user) => {
+                const base = `/gyms/${enc(gid)}`;
+                const routes = gym.routesid ? `${base}/${enc(gym.routesid)}` : null;
+
+                const chip = document.createElement('div');
+                chip.className = 'skala-gym-chip';
+
+                const main = document.createElement('a');
+                main.className = 'skala-gym-chip-main';
+                main.href = base;
+                main.title = gym.name || '';
+                const img = document.createElement('img');
+                // /image/<id> falls back to the default FSGT logo on the server
+                img.src = `/image/${enc(gym.logo_img_id || gid)}`;
+                img.alt = `${gym.name || ''} logo`;
+                img.loading = 'lazy';
+                const name = document.createElement('span');
+                name.className = 'skala-gym-tile-name';
+                name.textContent = gym.name || '';
+                main.append(img, name);
+                chip.appendChild(main);
+
+                const actions = document.createElement('div');
+                actions.className = 'skala-gym-chip-actions';
+                if (routes) {
+                    const topo = actionEl('a', 'icon-topo', L.topo);
+                    topo.href = routes;
+                    const stats = actionEl('a', 'icon-stats', 'Stats');
+                    stats.href = `${routes}/stats`;
+                    actions.append(topo, stats);
                 }
+                const add = actionEl('button', 'icon-add-activity', L.addActivity);
+                add.type = 'button';
+                add.addEventListener('click', () => startActivity(gid));
+                actions.appendChild(add);
+
+                const menu = document.createElement('ul');
+                menu.className = 'dropdown-menu dropdown-menu-end';
+                menu.appendChild(menuItem(`${base}/sectors`, 'bi-grid', L.sectors));
+                menu.appendChild(menuItem(`${base}/qrcode`, 'bi-qr-code', 'QR Code'));
+                if (routes) menu.appendChild(menuItem(`${routes}/discs`, 'bi-circle', L.discs));
+                menu.appendChild(menuItem(`${base}/events`, 'bi-calendar-event', L.events));
+                if (window.Skala?.permissions?.canEditGym(user, gid)) {
+                    const divider = document.createElement('li');
+                    divider.innerHTML = '<hr class="dropdown-divider">';
+                    menu.append(divider, menuItem(`${base}/edit`, 'bi-pencil', L.admin));
+                }
+
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown d-flex';
+                const more = actionEl('button', 'icon-more', 'More');
+                more.type = 'button';
+                more.classList.add('skala-chip-more');
+                more.setAttribute('data-bs-toggle', 'dropdown');
+                more.setAttribute('aria-expanded', 'false');
+                more.querySelector('.skala-chip-action-label').remove();
+                dropdown.append(more, menu);
+                actions.appendChild(dropdown);
+
+                chip.appendChild(actions);
+                return chip;
+            };
+
+            const setGreetingGym = (gym, gid, user) => {
+                if (!gym || !els.homeGymChip) return;
+                els.homeGymChip.replaceChildren(buildGymChip(gym, gid, user));
                 if (els.homeNote) els.homeNote.style.display = 'none';
             };
 
             // Gym search removed; edits should be done on /user.
 
-            const renderManagedGyms = async (gymIds) => {
+            const renderManagedGyms = async (gymIds, user) => {
                 if (!Array.isArray(gymIds) || gymIds.length === 0) return;
                 const fetches = gymIds.map(id => apiFetchJson(`/api1/gym/${id}`).catch(() => null));
                 const gyms = await Promise.all(fetches);
@@ -217,24 +302,7 @@
                     .filter(gym => gym && gym.id !== undefined && gym.name)
                     .forEach(gym => {
                         if (!els.managedGymsList) return;
-
-                        const tile = document.createElement('a');
-                        tile.className = 'skala-gym-tile';
-                        tile.href = `/gyms/${gym.id}`;
-                        tile.title = gym.name;
-
-                        const img = document.createElement('img');
-                        img.src = `/image/${gym.id}`;
-                        img.alt = `${gym.name} logo`;
-                        img.loading = 'lazy';
-                        tile.appendChild(img);
-
-                        const name = document.createElement('span');
-                        name.className = 'skala-gym-tile-name';
-                        name.textContent = gym.name;
-                        tile.appendChild(name);
-
-                        els.managedGymsList.appendChild(tile);
+                        els.managedGymsList.appendChild(buildGymChip(gym, gym.id, user));
                         if (els.managedGymsEmpty) els.managedGymsEmpty.style.display = 'none';
                     });
             };
@@ -324,27 +392,12 @@
                     if (gid) {
                         try {
                             const gym = await apiFetchJson(`/api1/gym/${gid}`);
-                            setGreetingGym(gym, gid);
+                            setGreetingGym(gym, gid, user);
                         } catch (e) {
                             dbg('Failed to fetch home gym', e);
                         }
-                    } else {
-                        // No home gym set: show placeholder and contextual note
-                        if (els.greetLogo) els.greetLogo.style.display = 'none';
-                        if (els.greetGymText) {
-                            const clubName = (user.club || '').trim();
-                            els.greetGymText.textContent = clubName || '';
-                            els.greetGymTile.removeAttribute('href');
-                            if (!clubName) els.greetGymTile.style.display = 'none';
-                        }
-                        // Hide Add Activity when no gymid
-                        const addActBtn = document.getElementById('action-add-activity');
-                        if (addActBtn) addActBtn.style.display = 'none';
-                        if (els.homeNote) {
-                            const clubName = (user.club || '').trim();
-                            
-                            els.homeNote.style.display = 'block';
-                        }
+                    } else if (els.homeNote) {
+                        els.homeNote.style.display = 'block';
                     }
 
                     const genPerms = Array.isArray(permissions.general) ? permissions.general : [];
@@ -359,7 +412,7 @@
                     if (gymPerms.length === 0) {
                         if (els.managedGymsCard) els.managedGymsCard.style.display = 'none';
                     } else {
-                        await renderManagedGyms(gymPerms);
+                        await renderManagedGyms(gymPerms, user);
                     }
 
                     // Competitions card
@@ -371,29 +424,6 @@
                         if (els.managedCompetitionsCard) els.managedCompetitionsCard.style.display = 'none';
                     } else {
                         await renderManagedCompetitions(compPerms);
-                    }
-                    // Hook up Add Activity action
-                    const addAct = document.getElementById('action-add-activity');
-                    if (addAct) {
-                        addAct.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            const gid = user.gymid || null;
-                            if (!gid) {
-                                showAlert('Please set your home gym first', 'warning');
-                                return;
-                            }
-                            try {
-                                if (typeof createAndRedirectToNewActiviity === 'function') {
-                                    createAndRedirectToNewActiviity(gid, null, null);
-                                } else if (typeof window.createAndRedirectToNewActiviity === 'function') {
-                                    window.createAndRedirectToNewActiviity(gid, null, null);
-                                } else {
-                                    console.error('createAndRedirectToNewActiviity is not available');
-                                }
-                            } catch (err) {
-                                console.error('Failed to start new activity', err);
-                            }
-                        });
                     }
                     if (typeof replaceTranslations === 'function') { try { replaceTranslations(); } catch (e) {} }
 
