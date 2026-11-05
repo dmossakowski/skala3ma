@@ -1609,6 +1609,42 @@ a.skala-gym-chip-main:focus-visible { outline:3px solid var(--skala-primary); ou
 .route-color-box { flex:0 0 auto; display:flex; align-items:center; justify-content:center; min-width:55px; }
 .route-meta { flex:1 1 auto; }
 .route-color-box .route-color-fallback { margin-bottom:.3rem; }
+/* Route cards use explicit areas so their content stays aligned when stacked. */
+#controversialSection .route-dis-list { display:grid; gap:.75rem; }
+#controversialSection .route-dis-card {
+  display:grid;
+  grid-template-columns:84px minmax(0, 1.4fr) minmax(0, 1fr) minmax(200px, .8fr);
+  grid-template-areas:"logo meta feedback status" "color meta feedback status";
+  align-items:center;
+  gap:.75rem 1rem;
+  padding:1rem;
+  margin:0;
+}
+#controversialSection .route-dis-card > * { min-width:0; }
+#controversialSection .route-gym-info { grid-area:logo; }
+#controversialSection .route-meta { grid-area:meta; overflow-wrap:anywhere; line-height:1.45; }
+#controversialSection .route-name { font-size:1rem; margin-bottom:.2rem; }
+#controversialSection .route-gym { margin-bottom:.15rem; }
+#controversialSection .route-color-box { grid-area:color; }
+#controversialSection .route-feedback { grid-area:feedback; display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .85rem; }
+#controversialSection .route-user-grades { display:flex; flex-wrap:wrap; gap:.35rem; min-width:0; }
+#controversialSection .chip-grade { margin:0; }
+#controversialSection .dis-updown { margin:0; white-space:nowrap; }
+#controversialSection .route-status { grid-area:status; display:grid; gap:.65rem; padding-left:1rem; border-left:1px solid rgba(0,0,0,.1); }
+#controversialSection .disagreements-summary-bar { display:block; margin:0; }
+#controversialSection .status-breakdown { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.5rem; }
+#controversialSection .status-count { display:inline-flex; align-items:center; gap:.35rem; }
+@media (max-width: 991px) {
+  #controversialSection .route-dis-card {
+    grid-template-columns:72px minmax(0, 1fr);
+    grid-template-areas:"logo meta" "color feedback" "status status";
+    gap:.85rem .75rem;
+    padding:.85rem;
+  }
+  #controversialSection .route-gym-logo { width:72px; height:56px; }
+  #controversialSection .route-status { padding: .85rem 0 0; border-left:0; border-top:1px solid rgba(0,0,0,.1); }
+  #controversialSection .status-breakdown { justify-content:flex-start; gap:.5rem 1.25rem; }
+}
 @media (max-width: 300px) {
   .route-dis-flex { flex-direction:column; align-items:flex-start; }
   .route-color-box { margin-bottom:.4rem; }
@@ -1639,4 +1675,3 @@ a.skala-gym-chip-main:focus-visible { outline:3px solid var(--skala-primary); ou
 .timeline-header { font-size:.75rem; font-weight:600; margin:.15rem 0 .35rem; }
 .diff-badge { font-size:.55rem; background:#ffdddd; padding:.15rem .3rem; border-radius:4px; }
 .route-color-fallback { width:55px; height:20px; background:#ddd; border-radius:4px; }
-
