@@ -14,7 +14,7 @@
   .ce-route:hover { background-color: rgba(41,192,92,.08); }
   .ce-route:active { background-color: rgba(41,192,92,.18); }
   .ce-route.ce-off { background-color: var(--bs-tertiary-bg, #e9ecef); }
-  .ce-route.ce-off > :not(.ce-toggle) { opacity: .55; }
+  .ce-route.ce-off > :not(.ce-toggle):not(.ce-badges) { opacity: .3; filter: grayscale(.6); }
   /* big square toggle: route number when in the competition, + when not */
   .ce-toggle { width: 3.5rem; height: 3.5rem; padding: 0; flex-shrink: 0; border-width: 2px; border-radius: .6rem;
                display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;
@@ -176,7 +176,7 @@
         <div class="fw-semibold text-truncate">${esc(r.name) || '<span class="text-muted">—</span>'}</div>
         <div class="small text-muted text-truncate">${meta}</div>
       </div>
-      <div class="text-end small">${badges(x, num)}</div>
+      <div class="text-end small ce-badges">${badges(x, num)}</div>
       <button type="button" class="btn ce-toggle ${on ? 'btn-success' : 'btn-outline-success ce-toggle-off'}"
         aria-pressed="${on}" title="${esc(on ? cfg.removeLabel : cfg.addLabel)}"
         aria-label="${esc(on ? cfg.removeLabel : cfg.addLabel)} ${esc(r.line || '')} ${esc(r.name || '')}">

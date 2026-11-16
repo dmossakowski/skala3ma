@@ -922,12 +922,8 @@ def new_event():
 
     all_gyms = competitionsEngine.get_gyms()
 
-    gyms = []
-    for gymid in all_gyms:
-        routes = competitionsEngine.get_routes_by_gym_id(gymid)
-        gyms.append({'id': gymid, 'name': all_gyms[gymid]['name'],
-                     'routesets': [{'id': routeid, 'name': routes[routeid]['name']} for routeid in routes]})
-    gyms = sorted(gyms, key=lambda g: (g['name'] or '').lower())
+    gyms = sorted(({'id': gymid, 'name': all_gyms[gymid]['name']} for gymid in all_gyms),
+                  key=lambda g: (g['name'] or '').lower())
 
     return render_template('newEvent.html',
                            session=session,

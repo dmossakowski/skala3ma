@@ -339,7 +339,10 @@ def create_event(added_by, name, date, calc_type, max_participants, competition_
             raise ValueError('Gym not found')
 
     routes = []
-    if get_strategy({'calc_type': calc_type}).uses_routes and not routesid:
+    uses_routes = get_strategy({'calc_type': calc_type}).uses_routes
+    if uses_routes and not routesid and gym is not None:
+        routesid = gym.get('routesid')
+    if uses_routes and not routesid:
         raise ValueError('Routes are required for a scored competition')
     if routesid:
         if gym is None:

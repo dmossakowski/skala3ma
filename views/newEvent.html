@@ -68,10 +68,6 @@
                                                 </select>
                                                 <label for="competition_type">{{ reference_data['current_language'].competition_type_adult }} / {{ reference_data['current_language'].competition_type_ado }}</label>
                                             </div>
-                                            <div class="form-floating mb-3">
-                                                <select class="form-control" id="routes" name="routes"></select>
-                                                <label for="routes">{{ reference_data['current_language'].routes }}:</label>
-                                            </div>
                                         </div>
                                         <div id="registration-fields">
                                             <div class="form-floating mb-3">
@@ -149,7 +145,6 @@
         const gymSelect = document.getElementById('gym_id');
         const fsgtCheckbox = document.getElementById('fsgt_autrement');
         const fsgtFields = document.getElementById('fsgt-fields');
-        const routesSelect = document.getElementById('routes');
         const registrationFields = document.getElementById('registration-fields');
         const registrationSelect = document.getElementById('registration_mode');
         const audienceSelect = document.getElementById('audience');
@@ -157,9 +152,8 @@
         const maxParticipantsField = document.getElementById('max-participants-field');
         const maxParticipantsInput = document.getElementById('max_participants');
 
-        function refreshRoutes() {
+        function refreshGym() {
             const gym = gyms.find(g => g.id === gymSelect.value);
-            routesSelect.replaceChildren(...(gym ? gym.routesets : []).map(r => new Option(r.name, r.id)));
             clubOption.disabled = !gym;
             if (!gym && audienceSelect.value === 'club') {
                 audienceSelect.value = 'public';
@@ -181,15 +175,14 @@
         function refreshFsgtFields() {
             const fsgt = fsgtCheckbox.checked;
             fsgtFields.classList.toggle('d-none', !fsgt);
-            routesSelect.disabled = !fsgt;
             document.getElementById('competition_type').disabled = !fsgt;
             refreshRegistration();
         }
 
-        gymSelect.addEventListener('change', refreshRoutes);
+        gymSelect.addEventListener('change', refreshGym);
         fsgtCheckbox.addEventListener('change', refreshFsgtFields);
         registrationSelect.addEventListener('change', refreshRegistration);
-        refreshRoutes();
+        refreshGym();
         refreshFsgtFields();
 
         form.addEventListener('submit', async function (event) {
