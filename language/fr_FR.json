@@ -246,6 +246,7 @@
     "reset_password_email_text1": "Cliquez ici pour réinitialiser votre mot de passe",
     "Instructions": "Instructions",
     "Admin": "Admin",
+    "competition_details": "Détails de la compétition",
     "edit_competition": "Modifier la compétition",
     "create_competition": "Créer une compétition",
     "update_routes": "Mettre à jour les voies dans une competition",

@@ -243,6 +243,7 @@
     "reset_password_email_text1": "Click here to reset your password",
     "Instructions": "Instructions",
     "Admin": "Admin",
+    "competition_details": "Competition details",
     "edit_competition": "Edit competition",
     "create_competition": "Create competition",
     "update_routes": "Update routes in a competition",
