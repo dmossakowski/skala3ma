@@ -1896,8 +1896,11 @@ def routes_climbed(competitionId, climberId):
     #    return redirect(url_for('app_ui.competitionRoutesList', competitionId=competitionId))
 
 
-    routesid = competition.get('routesid')
-    routes = competitionsEngine.get_routes(routesid)
+    competition_routes = competition.get('routes')
+    if competition_routes is not None:
+        routes = {'routes': competition_routes}
+    else:
+        routes = competitionsEngine.get_routes(competition.get('routesid'))
 
     climber_name = climber.get('name')
     climber_club = climber.get('club')
