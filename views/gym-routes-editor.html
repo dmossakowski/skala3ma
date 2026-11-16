@@ -1,0 +1,323 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% include "gym-menu.html" %}
+{% endblock %}
+
+{% block secondarycontent %}
+{% set lang = reference_data['current_language'] %}
+<style>
+  .re-wrap { max-width: 960px; margin: 0 auto; padding: 0 .5rem 6rem; }
+  .re-swatch { flex-shrink: 0; line-height: 0; }
+  .re-route { cursor: pointer; }
+  .re-route:hover { background: rgba(41,192,92,.06); }
+  .re-line { min-width: 3.2rem; font-size: 1.6rem; font-weight: 700; line-height: 1; text-align: left; white-space: nowrap; }
+  .re-line sup { font-size: .75rem; font-weight: 600; color: #6c757d; margin-left: 1px; }
+  .re-actions .btn { width: 40px; height: 40px; }
+  .re-toolbar { position: sticky; top: 0; z-index: 10; background: var(--bs-body-bg, #fff); }
+  .re-removed { background: rgba(0,0,0,.03); }
+  .re-removed .re-line, .re-removed .re-swatch, .re-removed .fw-semibold { opacity: .45; }
+  .re-removed .fw-semibold { text-decoration: line-through; }
+</style>
+
+<div class="re-wrap">
+
+  <div class="card shadow-sm mt-3 mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <h5 class="mb-0 me-auto">{{ gym['name'] }}</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="/gyms/{{ gymid }}/{{ routes['id'] }}" target="_blank">
+          <i class="bi bi-eye"></i> {{ lang.view or 'View' }}</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/gyms/{{ gymid }}/{{ routes['id'] }}/routes_csv">
+          <i class="bi bi-download"></i> {{ lang.download or 'CSV' }}</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="re-toolbar py-2 d-flex gap-2 align-items-center">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="routeSearch" type="search" class="form-control" placeholder="{{ lang.route_name or 'Search' }} / {{ lang.grade or 'grade' }}">
+    </div>
+    <div class="form-check form-switch text-nowrap mb-0">
+      <input class="form-check-input" type="checkbox" role="switch" id="showRemoved" checked>
+      <label class="form-check-label small" for="showRemoved">{{ lang.show_removed_routes or 'Show removed' }}</label>
+    </div>
+    <span id="routeCount" class="badge text-bg-secondary"></span>
+    <button id="addRouteBtn" class="btn btn-success text-nowrap" type="button">
+      <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">{{ lang.add or 'Add' }}</span></button>
+  </div>
+
+  <div id="routesList" class="list-group shadow-sm"></div>
+  <div id="emptyState" class="text-center text-muted py-5 d-none">
+    <i class="bi bi-inboxes fs-1"></i><div>No routes</div>
+  </div>
+</div>
+
+<!-- route editor modal: fullscreen on phones -->
+<div class="modal fade" id="routeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-scrollable">
+    <form id="routeForm" class="modal-content" novalidate>
+      <div class="modal-header">
+        <span id="modalSwatch" class="re-swatch me-2"></span>
+        <h5 class="modal-title" id="modalTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="f_id">
+        <input type="hidden" id="f_routenum">
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label" for="f_line">{{ lang.line or 'Line' }}</label>
+            <input id="f_line" type="text" inputmode="numeric" class="form-control form-control-lg">
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="f_grade">{{ lang.grade or 'Grade' }}</label>
+            <select id="f_grade" class="form-select form-select-lg"></select>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="f_name">{{ lang.route_name or 'Name' }}</label>
+            <input id="f_name" type="text" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label d-block">{{ lang.color or 'Color' }}</label>
+            <div class="btn-group mb-2" role="group">
+              <input type="radio" class="btn-check" name="f_modifier" id="f_mod_solid" value="solid">
+              <label class="btn btn-outline-secondary" for="f_mod_solid">{{ lang.solid or 'solid' }}</label>
+              <input type="radio" class="btn-check" name="f_modifier" id="f_mod_marble" value="marble">
+              <label class="btn btn-outline-secondary" for="f_mod_marble">{{ lang.marble or 'marble' }}</label>
+            </div>
+            <div class="d-flex gap-3">
+              <input id="f_color1" type="color" class="form-control form-control-color" style="width:4rem;height:3rem">
+              <input id="f_color2" type="color" class="form-control form-control-color" style="width:4rem;height:3rem">
+            </div>
+          </div>
+          <div class="col-7">
+            <label class="form-label" for="f_openedby">{{ lang.route_opened_by or 'Opened by' }}</label>
+            <input id="f_openedby" type="text" class="form-control">
+          </div>
+          <div class="col-5">
+            <label class="form-label" for="f_opendate">{{ lang.route_opened_date or 'Date' }}</label>
+            <input id="f_opendate" type="date" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="f_notes">{{ lang.notes or 'Notes' }}</label>
+            <textarea id="f_notes" rows="2" class="form-control"></textarea>
+          </div>
+          <div class="col-7 d-flex align-items-end">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" role="switch" id="f_removed">
+              <label class="form-check-label" for="f_removed">{{ lang.route_removed or 'Removed from the gym' }}</label>
+            </div>
+          </div>
+          <div class="col-5">
+            <label class="form-label" for="f_removed_date">{{ lang.route_removed_date or 'Removed date' }}</label>
+            <input id="f_removed_date" type="date" class="form-control" disabled>
+          </div>
+        </div>
+        <div id="modalError" class="text-danger mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="modalDeleteBtn" type="button" class="btn btn-outline-danger me-auto"><i class="bi bi-trash"></i></button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ lang.cancel or 'Cancel' }}</button>
+        <button id="modalSaveBtn" type="submit" class="btn btn-success">{{ lang.save or 'Save' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  const cfg = {
+    gymid: {{ gymid|tojson }},
+    routesid: {{ routes['id']|tojson }},
+    errorText: {{ (lang['error5315'] or 'Error saving')|tojson }},
+    lineLabel: {{ (lang.line or 'Line')|tojson }},
+    addLabel: {{ (lang.add or 'Add')|tojson }},
+    removedLabel: {{ (lang.route_removed_badge or 'removed')|tojson }},
+    removeLabel: {{ (lang.route_removed or 'Removed from the gym')|tojson }},
+    restoreLabel: {{ (lang.route_restore or 'Back in the gym')|tojson }},
+  };
+  const GRADES = ['?','1','2','3','4a','4b','4c','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+',
+                  '6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a','9a+','9b','9b+','9c'];
+  const FIELDS = ['id','routenum','line','color1','color2','colorfr','color_modifier','grade','name','openedby','opendate','notes','removed','removed_date'];
+
+  let routes = {{ (routes['routes'] or [])|tojson }};
+  const $ = id => document.getElementById(id);
+  const modal = bootstrap.Modal.getOrCreateInstance($('routeModal'));
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeColor = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#cccccc';
+  // same route color image as component-routes
+  const swatch = (r, w = '70px', h = '32px') =>
+    getColorSVGDiv(safeColor(r.color1), safeColor(r.color2 || r.color1), r.color_modifier, w, h, r.grade || '?');
+  const pick = r => ({ ...Object.fromEntries(FIELDS.map(f => [f, r[f] ?? ''])), removed: !!r.removed });
+  const today = () => new Date().toLocaleDateString('en-CA');
+
+  async function postJson(url, body) {
+    const res = await apiFetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body });
+    if (res.status === 401) { window.location.assign('/loginchoice'); throw new Error('unauthorized'); }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  async function saveOne(route) {
+    // saveone does json.loads(request.get_json()), so the body must be a JSON-encoded string
+    const data = await postJson(`/api1/gym/${cfg.gymid}/${cfg.routesid}/saveone`, JSON.stringify(JSON.stringify(route)));
+    routes = data.routes || [];
+    render();
+  }
+
+  function render() {
+    const q = $('routeSearch').value.trim().toLowerCase();
+    const list = $('routesList');
+    list.innerHTML = '';
+    const showRemoved = $('showRemoved').checked;
+    const shown = routes.filter(r => (showRemoved || !r.removed) && (!q ||
+      ['name','grade','line','openedby','notes'].some(f => String(r[f] ?? '').toLowerCase().includes(q))))
+      .sort(byLine);
+    shown.forEach(r => list.appendChild(routeItem(r)));
+    const active = routes.filter(r => !r.removed).length;
+    const total = active === routes.length ? `${routes.length}` : `${active} (+${routes.length - active} ${cfg.removedLabel})`;
+    $('routeCount').textContent = shown.length !== routes.length ? `${shown.length}/${total}` : total;
+    $('emptyState').classList.toggle('d-none', shown.length > 0);
+  }
+
+  // natural line order ("10" after "9"), then routenum - same as component-routes
+  function byLine(a, b) {
+    const cmp = String(a.line ?? '').localeCompare(String(b.line ?? ''), undefined, {numeric: true, sensitivity: 'base'});
+    return cmp || (parseFloat(a.routenum) || 0) - (parseFloat(b.routenum) || 0);
+  }
+
+  const removeButton = r => r.removed
+    ? `<button type="button" class="btn btn-sm btn-outline-success" data-act="del" title="${esc(cfg.restoreLabel)}"><i class="bi bi-arrow-counterclockwise"></i></button>`
+    : `<button type="button" class="btn btn-sm btn-outline-danger" data-act="del" title="${esc(cfg.removeLabel)}"><i class="bi bi-archive"></i></button>`;
+
+  function routeItem(r) {
+    const el = document.createElement('div');
+    el.className = 'list-group-item d-flex align-items-center gap-2 re-route' + (r.removed ? ' re-removed' : '');
+    const meta = [esc(r.openedby), esc(r.opendate)].filter(Boolean).join(' · ');
+    const removedBadge = r.removed
+      ? `<span class="badge text-bg-secondary"><i class="bi bi-archive"></i> ${esc(cfg.removedLabel)}${r.removed_date ? ' ' + esc(r.removed_date) : ''}</span>`
+      : '';
+    el.innerHTML = `
+      <span class="re-line" title="${esc(cfg.lineLabel)} ${esc(r.line)}">${esc(r.line) || '–'}<sup>${esc(r.routenum)}</sup></span>
+      <span class="re-swatch">${swatch(r)}</span>
+      <div class="flex-grow-1 overflow-hidden">
+        <div class="fw-semibold text-truncate">${esc(r.name) || '<span class="text-muted">—</span>'}</div>
+        <div class="small text-muted text-truncate">${meta}</div>
+      </div>
+      ${removedBadge}
+      <div class="re-actions d-flex gap-1">
+        ${removeButton(r)}
+      </div>`;
+    el.addEventListener('click', e => {
+      if (e.target.closest('[data-act="del"]')) toggleRemoved(r);
+      else openEditor(r);
+    });
+    return el;
+  }
+
+  function fillGrades(current) {
+    const opts = GRADES.includes(current) || !current ? GRADES : [current, ...GRADES];
+    $('f_grade').innerHTML = opts.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+    $('f_grade').value = current || '?';
+  }
+
+  function updateColorUi() {
+    const marble = $('f_mod_marble').checked;
+    $('f_color2').classList.toggle('d-none', !marble);
+    $('modalSwatch').innerHTML = swatch({
+      color_modifier: marble ? 'marble' : 'solid', color1: $('f_color1').value, color2: $('f_color2').value,
+      grade: $('f_grade').value }, '90px', '40px');
+  }
+
+  // route = existing route to edit; after = insert a new route after this one (null = start of list)
+  function openEditor(route, after) {
+    const isNew = !route;
+    // new routes start blank; only the position comes from `after`
+    const base = route || {
+      id: '',
+      routenum: String((after ? Number(after.routenum) : 0) + 0.5),
+      line: '', color1: '', color2: '', color_modifier: 'solid', grade: '?', name: '',
+      openedby: '', opendate: '', notes: '', removed: false, removed_date: '',
+    };
+    $('modalTitle').textContent = isNew ? cfg.addLabel : `#${base.routenum} ${base.name || ''}`;
+    $('f_id').value = base.id || '';
+    $('f_routenum').value = base.routenum;
+    $('f_line').value = base.line ?? '';
+    fillGrades(base.grade);
+    $('f_name').value = base.name ?? '';
+    $('f_color1').value = safeColor(base.color1);
+    $('f_color2').value = safeColor(base.color2 || base.color1);
+    $(base.color_modifier === 'marble' ? 'f_mod_marble' : 'f_mod_solid').checked = true;
+    $('f_openedby').value = base.openedby ?? '';
+    $('f_opendate').value = base.opendate ?? '';
+    $('f_notes').value = base.notes ?? '';
+    $('f_removed').checked = !!base.removed;
+    $('f_removed_date').value = base.removed_date ?? '';
+    $('f_removed_date').disabled = !base.removed;
+    $('modalDeleteBtn').classList.toggle('d-none', isNew);
+    $('modalDeleteBtn').classList.toggle('btn-outline-danger', !base.removed);
+    $('modalDeleteBtn').classList.toggle('btn-outline-success', !!base.removed);
+    $('modalDeleteBtn').title = base.removed ? cfg.restoreLabel : cfg.removeLabel;
+    $('modalDeleteBtn').innerHTML = `<i class="bi ${base.removed ? 'bi-arrow-counterclockwise' : 'bi-archive'}"></i> ${esc(base.removed ? cfg.restoreLabel : cfg.removeLabel)}`;
+    $('modalError').textContent = '';
+    updateColorUi();
+    modal.show();
+  }
+
+  function formRoute() {
+    const modifier = $('f_mod_marble').checked ? 'marble' : 'solid';
+    return {
+      id: $('f_id').value, routenum: $('f_routenum').value, line: $('f_line').value.trim(),
+      color1: $('f_color1').value, colorfr: $('f_color1').value,
+      color2: modifier === 'marble' ? $('f_color2').value : $('f_color1').value,
+      color_modifier: modifier, grade: $('f_grade').value, name: $('f_name').value.trim(),
+      openedby: $('f_openedby').value.trim(), opendate: $('f_opendate').value, notes: $('f_notes').value.trim(),
+      removed: $('f_removed').checked, removed_date: $('f_removed').checked ? ($('f_removed_date').value || today()) : '',
+    };
+  }
+
+  async function toggleRemoved(r) {
+    const removing = !r.removed;
+    const label = removing ? cfg.removeLabel : cfg.restoreLabel;
+    if (!confirm(`${label}: ${r.line ? cfg.lineLabel + ' ' + r.line + ' · ' : ''}${r.name || ''}?`)) return;
+    try {
+      await saveOne({ ...pick(r), removed: removing, removed_date: removing ? today() : '' });
+      modal.hide();
+      showAlert('routes_saved', 'success');
+    } catch (e) { console.error(e); showAlert(cfg.errorText, 'danger'); }
+  }
+
+  $('routeForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('modalSaveBtn');
+    btn.disabled = true;
+    try {
+      await saveOne(formRoute());
+      modal.hide();
+      showAlert('routes_saved', 'success');
+    } catch (err) {
+      console.error(err);
+      $('modalError').textContent = cfg.errorText;
+    } finally { btn.disabled = false; }
+  });
+
+  $('modalDeleteBtn').addEventListener('click', () => {
+    const r = routes.find(x => x.id === $('f_id').value);
+    if (r) toggleRemoved(r);
+  });
+  ['f_color1', 'f_color2', 'f_mod_solid', 'f_mod_marble', 'f_grade'].forEach(id => $(id).addEventListener('input', updateColorUi));
+  $('f_removed').addEventListener('change', e => {
+    $('f_removed_date').disabled = !e.target.checked;
+    if (e.target.checked && !$('f_removed_date').value) $('f_removed_date').value = today();
+  });
+  $('routeSearch').addEventListener('input', render);
+  $('showRemoved').addEventListener('change', render);
+  $('addRouteBtn').addEventListener('click', () => openEditor(null, routes[routes.length - 1] || null));
+
+  render();
+})();
+</script>
+{% endblock %}

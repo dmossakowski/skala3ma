@@ -83,7 +83,7 @@
                     try {
                         const resp = await apiFetch(`/api1/gym/${gymId}/routes/${routesId}`);
                         const data = await resp.json().catch(()=>({}));
-                        const routesArr = (data && data.routes) ? data.routes : [];
+                        const routesArr = ((data && data.routes) ? data.routes : []).filter(r => r && !r.removed);
                         routesArr.forEach(r => { if(r && r.grade && gradeCounts[r.grade] !== undefined){ gradeCounts[r.grade]++; } });
                     } catch(err){ console.warn('Failed to fetch routes', err); }
 

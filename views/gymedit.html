@@ -14,13 +14,22 @@
 	{% block secondarycontent %}
 
 	
-<div class=" text-center heading-section animate-box">
-                <br>
-                <h3>{{ gym['name'] }}</h3>   
-                               
-                                <a href="/gyms/{{gym['id']}}/{{ routes['id']}}/edit" alt="{{gym['homepage']}}" class="nav-link active p-1">
-                                    <i class="icon-list"></i>Route sets</a>
-                             
+<div class="container mt-3 mb-4">
+    <div class="summary-card">
+        <h5>{{ gym['name'] }}</h5>
+
+                <div class="skala-tile-grid">
+                    <a href="/gyms/{{ gym['id'] }}/{{ gym['routesid'] }}/routes-editor" class="skala-tile"
+                       title="{{ reference_data['current_language'].route_editor }}">
+                        <i class="bi bi-columns-gap" style="font-size: 44px; line-height: 1;" aria-hidden="true"></i>
+                        <span class="skala-tile-label">{{ reference_data['current_language'].route_editor }}</span>
+                    </a>
+                    <a href="/gyms/{{ gym['id'] }}/admins" class="skala-tile" title="{{ reference_data['current_language'].gym_admins }}">
+                        <i class="bi bi-people" style="font-size: 44px; line-height: 1;" aria-hidden="true"></i>
+                        <span class="skala-tile-label">{{ reference_data['current_language'].gym_admins }}</span>
+                    </a>
+                </div>
+    </div>
 </div>
 
 
@@ -146,25 +155,6 @@ function deleteRow(id) {
             <input class="form-control" name="organization" id="organization" type="organization" value="{{ gym['organization'] }}" size="80"/>
                                     <br>
 
-           
-                <label for="default_routes">{{ reference_data['current_language'].routes }}</label>
-                <select class="form-control" name="default_routes" id="default_routes">
-                    {% for route in all_routes %}
-                        <option value="{{all_routes[route]['id']}}" {% if all_routes[route]['id'] == gym['routesid'] %} selected {% endif %}>
-                            {{all_routes[route]['name']}}
-                        </option>
-                    {% endfor %}
-                </select>
-           
-                <br>
-
-                <!-- Input field for look-ahead search -->
-                <div class="form-group">
-                    <label for="user-search"> {{ reference_data['current_language'].authorized_user}} </label>
-                    <input type="text" class="form-control" id="user-search" placeholder="Search for users...">
-                    <input type="hidden" id="userId" name="userId">
-                    <div id="suggestions" class="list-group mt-2"></div>
-                </div>
             </div>
 
 
@@ -184,11 +174,6 @@ function deleteRow(id) {
 
   
     <br><br>
-    <script>
-       
-   // Add DOMContentLoaded event listener using the named function
-   document.addEventListener('DOMContentLoaded', loadUserLookAhead());
-</script>
 <br><br><br><br><br><br><br><br><br><br>
 
 

@@ -1,0 +1,277 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% endblock %}
+
+{% block secondarycontent %}
+{% set lang = reference_data['current_language'] %}
+{% include "competition-menu.html" %}
+<style>
+  .ce-wrap { max-width: 960px; margin: 0 auto; padding: 0 .5rem 7rem; }
+  .ce-swatch { flex-shrink: 0; line-height: 0; }
+  /* the whole row toggles the route */
+  .ce-route { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: background-color .1s; }
+  .ce-route:hover { background-color: rgba(41,192,92,.08); }
+  .ce-route:active { background-color: rgba(41,192,92,.18); }
+  .ce-route.ce-off { background-color: var(--bs-tertiary-bg, #e9ecef); }
+  .ce-route.ce-off > :not(.ce-toggle) { opacity: .55; }
+  /* big square toggle: route number when in the competition, + when not */
+  .ce-toggle { width: 3.5rem; height: 3.5rem; padding: 0; flex-shrink: 0; border-width: 2px; border-radius: .6rem;
+               display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700;
+               box-shadow: 0 2px 4px rgba(0,0,0,.15); touch-action: manipulation; }
+  .ce-toggle.ce-toggle-off { border-style: dashed; font-size: 1.6rem; background: var(--bs-body-bg, #fff); }
+  .ce-toggle { position: relative; }
+  .ce-route:active .ce-toggle { transform: scale(.94); }
+  /* small x on the selected button: tapping removes the route */
+  .ce-toggle-x { position: absolute; top: -.45rem; right: -.45rem; width: 1.25rem; height: 1.25rem; border-radius: 50%;
+                 display: flex; align-items: center; justify-content: center; font-size: .7rem; line-height: 1;
+                 background: var(--bs-body-bg, #fff); color: var(--bs-danger, #dc3545);
+                 border: 1.5px solid var(--bs-danger, #dc3545); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .ce-line { min-width: 3.2rem; font-size: 1.6rem; font-weight: 700; line-height: 1; white-space: nowrap; }
+  .ce-toolbar { position: sticky; top: 0; z-index: 10; background: var(--bs-body-bg, #fff); }
+  .ce-footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bs-body-bg, #fff);
+               border-top: 1px solid rgba(0,0,0,.1); box-shadow: 0 -2px 8px rgba(0,0,0,.06); }
+  .ce-missing { background-color: var(--bs-orange, #fd7e14); color: #fff; }
+</style>
+
+<div class="ce-wrap">
+
+  <div class="card shadow-sm mt-3 mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <h5 class="mb-0 me-auto"><i class="bi bi-pencil"></i> {{ lang.edit_competition_routes or 'Edit competition routes' }}</h5>
+        <span class="text-muted">{{ gym['name'] }}</span>
+      </div>
+      <p class="small text-muted mb-3">{{ lang.edit_competition_routes_hint or 'Mark the routes to be used in the competition.' }}</p>
+
+      {% if locked %}
+      <div class="alert alert-warning py-2"><i class="bi bi-lock"></i> {{ lang.competition_routes_locked_warning or 'This competition is closed. Changing its routes changes its history.' }}</div>
+      {% endif %}
+      {% if has_results %}
+      <div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle"></i> {{ lang.competition_routes_have_results_warning or 'Climbers have already entered routes. Changing routes now can make their results point at different routes.' }}</div>
+      {% endif %}
+
+      {% if not routesid %}
+      <div class="alert alert-info mb-0">{{ lang.no_routes or 'No routes' }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ce-toolbar py-2 d-flex flex-wrap gap-2 align-items-center">
+    <div class="input-group flex-grow-1" style="min-width: 12rem; flex-basis: 12rem;">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="routeSearch" type="search" class="form-control" placeholder="{{ lang.route_name or 'Search' }} / {{ lang.grade or 'grade' }} / {{ lang.line or 'line' }}">
+    </div>
+    <span id="routeCount" class="badge text-bg-success fs-6"></span>
+    <div class="btn-group">
+      <button id="selectAllBtn" class="btn btn-outline-secondary btn-sm" type="button"><i class="bi bi-check2-all"></i> {{ lang.select_all or 'All' }}</button>
+      <button id="selectNoneBtn" class="btn btn-outline-secondary btn-sm" type="button"><i class="bi bi-x-lg"></i> {{ lang.select_none or 'None' }}</button>
+    </div>
+  </div>
+
+  <div id="noOverlapHint" class="alert alert-info py-2 d-none">
+    {{ lang.competition_routes_no_overlap or 'None of these routes are in the competition yet. Use "All" or tick the routes in play.' }}
+  </div>
+
+  <div id="routesList" class="list-group shadow-sm"></div>
+  <div id="emptyState" class="text-center text-muted py-5 d-none">
+    <i class="bi bi-inboxes fs-1"></i><div>{{ lang.no_routes or 'No routes' }}</div>
+  </div>
+
+</div>
+
+<div class="ce-footer py-2">
+  <div class="ce-wrap pb-0 d-flex flex-wrap align-items-center gap-2">
+    <span id="dirtyHint" class="small text-muted me-auto"></span>
+    <a class="btn btn-secondary" href="/competitionRoutes/{{ competitionId }}">{{ lang.cancel or 'Cancel' }}</a>
+    <button id="saveBtn" class="btn btn-success" type="button" {% if not routesid %}disabled{% endif %}>
+      <i class="bi bi-check-lg"></i> {{ lang.save or 'Save' }}</button>
+  </div>
+</div>
+
+<!-- shown when the selection would make already entered results point at other routes -->
+<div class="modal fade" id="conflictModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-warning"></i> {{ lang.competition_routes_conflict_title or 'Results would change' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ lang.competition_routes_conflict_text or 'Some route numbers already entered by climbers would point at a different route or disappear:' }}</p>
+        <ul id="conflictList" class="list-unstyled mb-0"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ lang.cancel or 'Cancel' }}</button>
+        <button id="forceSaveBtn" type="button" class="btn btn-danger">{{ lang.save_anyway or 'Save anyway' }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const cfg = {
+    competitionId: {{ competitionId|tojson }},
+    errorText: {{ (lang['error5315'] or 'Error saving')|tojson }},
+    unsavedHint: {{ (lang.unsaved_changes or 'Unsaved changes')|tojson }},
+    selectAtLeastOne: {{ (lang.select_at_least_one_route or 'Select at least one route')|tojson }},
+    newLabel: {{ (lang.new or 'new')|tojson }},
+    changedLabel: {{ (lang.route_changed_in_gym or 'changed in gym')|tojson }},
+    removedLabel: {{ (lang.route_will_be_removed or 'will be removed')|tojson }},
+    missingLabel: {{ (lang.route_not_in_routeset or 'no longer in the gym')|tojson }},
+    climbersLabel: {{ (lang.climbers or 'climbers')|tojson }},
+    addLabel: {{ (lang.add or 'Add')|tojson }},
+    removeLabel: {{ (lang.remove or 'Remove')|tojson }},
+  };
+
+  // gym routes and competition routes no longer in the gym (missing), in competition numbering order
+  const rows = {{ correlation.routes|tojson }};
+  const $ = id => document.getElementById(id);
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeColor = c => /^#[0-9a-fA-F]{6}$/.test(c || '') ? c : '#cccccc';
+  // same route color image as component-routes
+  const swatch = r =>
+    getColorSVGDiv(safeColor(r.color1), safeColor(r.color2 || r.color1), r.color_modifier, '70px', '32px', r.grade || '?');
+
+  const selected = new Set(rows.filter(x => x.in_competition).map(x => x.key));
+  const initial = new Set(selected);
+
+  const isDirty = () => selected.size !== initial.size || [...selected].some(id => !initial.has(id));
+
+  function newNumbers() {
+    const nums = {};
+    let n = 0;
+    rows.forEach(x => { if (selected.has(x.key)) nums[x.key] = ++n; });
+    return nums;
+  }
+
+  function badges(x, num) {
+    const out = [];
+    const on = num !== undefined;
+    if (x.in_competition) {
+      if (!on) out.push(`<span class="badge text-bg-danger">${esc(cfg.removedLabel)} #${esc(x.competition_routenum)}</span>`);
+      if (x.changed) out.push(`<span class="badge text-bg-info">${esc(cfg.changedLabel)}</span>`);
+    } else if (on) {
+      out.push(`<span class="badge text-bg-primary">${esc(cfg.newLabel)}</span>`);
+    }
+    // routes deleted from the routeset or flagged removed are no longer climbable in the gym
+    if (x.missing || x.route.removed) {
+      out.push(`<span class="badge ce-missing"><i class="bi bi-exclamation-triangle-fill"></i> ${esc(cfg.missingLabel)}</span>`);
+    }
+    return out.join(' ');
+  }
+
+  function routeItem(x, num, q) {
+    const r = x.route;
+    const on = num !== undefined;
+    const el = document.createElement('div');
+    el.className = 'list-group-item d-flex align-items-center gap-2 ce-route' + (on ? '' : ' ce-off');
+    const meta = [esc(r.openedby), esc(r.opendate)].filter(Boolean).join(' · ');
+    el.innerHTML = `
+      <span class="ce-line">${esc(r.line) || '–'}</span>
+      <span class="ce-swatch">${swatch(r)}</span>
+      <div class="flex-grow-1 overflow-hidden">
+        <div class="fw-semibold text-truncate">${esc(r.name) || '<span class="text-muted">—</span>'}</div>
+        <div class="small text-muted text-truncate">${meta}</div>
+      </div>
+      <div class="text-end small">${badges(x, num)}</div>
+      <button type="button" class="btn ce-toggle ${on ? 'btn-success' : 'btn-outline-success ce-toggle-off'}"
+        aria-pressed="${on}" title="${esc(on ? cfg.removeLabel : cfg.addLabel)}"
+        aria-label="${esc(on ? cfg.removeLabel : cfg.addLabel)} ${esc(r.line || '')} ${esc(r.name || '')}">
+        ${on ? '#' + num + '<span class="ce-toggle-x" aria-hidden="true"><i class="bi bi-x-lg"></i></span>' : '<i class="bi bi-plus-lg"></i>'}</button>`;
+    // button clicks bubble up here too, so this single handler covers both
+    el.addEventListener('click', () => {
+      if (on) selected.delete(x.key); else selected.add(x.key);
+      render();
+    });
+    return el;
+  }
+
+  function matches(r, q) {
+    return !q || ['name', 'grade', 'line', 'openedby', 'notes'].some(f => String(r[f] ?? '').toLowerCase().includes(q));
+  }
+
+  function render() {
+    const q = $('routeSearch').value.trim().toLowerCase();
+    const nums = newNumbers();
+    const list = $('routesList');
+    list.innerHTML = '';
+    let shown = 0;
+    rows.forEach(x => {
+      if (!matches(x.route, q)) return;
+      list.appendChild(routeItem(x, nums[x.key], q));
+      shown++;
+    });
+    $('routeCount').textContent = `${selected.size} / ${rows.length}`;
+    $('emptyState').classList.toggle('d-none', shown > 0);
+    $('noOverlapHint').classList.toggle('d-none', !(rows.length > 0 && initial.size === 0 && selected.size === 0));
+    $('dirtyHint').textContent = isDirty() ? cfg.unsavedHint : '';
+  }
+
+  function setAll(visibleOnly, on) {
+    const q = $('routeSearch').value.trim().toLowerCase();
+    rows.forEach(x => {
+      if (visibleOnly && !matches(x.route, q)) return;
+      if (on) selected.add(x.key); else selected.delete(x.key);
+    });
+    render();
+  }
+
+  function describe(r) {
+    if (!r) return '—';
+    return `${esc(r.line) || '–'} · ${esc(r.grade || '?')} ${esc(r.name || '')}`;
+  }
+
+  function showConflicts(conflicts) {
+    $('conflictList').innerHTML = conflicts.map(c => `
+      <li class="mb-2">
+        <b>#${esc(c.routenum)}</b> (${c.climbers} ${esc(cfg.climbersLabel)}):
+        <span class="text-danger">${describe(c.old)}</span> → <span class="text-success">${describe(c.new)}</span>
+      </li>`).join('');
+    bootstrap.Modal.getOrCreateInstance($('conflictModal')).show();
+  }
+
+  let saving = false;
+  async function save(force) {
+    if (saving) return;
+    if (selected.size === 0) { showAlert(cfg.selectAtLeastOne, 'warning'); return; }
+    saving = true;
+    $('saveBtn').disabled = true;
+    $('forceSaveBtn').disabled = true;
+    try {
+      const res = await apiFetch(`/api1/competition/${cfg.competitionId}/routes`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ route_ids: rows.map(x => x.key).filter(key => selected.has(key)), force: !!force }),
+      });
+      if (res.status === 401) { window.location.assign('/loginchoice'); return; }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409) { showConflicts(data.conflicts || []); return; }
+      if (!res.ok) { showAlert(data.error || cfg.errorText, 'danger'); return; }
+      initial.clear();
+      selected.forEach(id => initial.add(id));
+      window.location.href = `/competitionRoutes/${cfg.competitionId}`;
+    } catch (e) {
+      console.error(e);
+      showAlert(cfg.errorText, 'danger');
+    } finally {
+      saving = false;
+      $('saveBtn').disabled = false;
+      $('forceSaveBtn').disabled = false;
+    }
+  }
+
+  $('routeSearch').addEventListener('input', render);
+  $('selectAllBtn').addEventListener('click', () => setAll(true, true));
+  $('selectNoneBtn').addEventListener('click', () => setAll(true, false));
+  $('saveBtn').addEventListener('click', () => save(false));
+  $('forceSaveBtn').addEventListener('click', () => {
+    bootstrap.Modal.getOrCreateInstance($('conflictModal')).hide();
+    save(true);
+  });
+
+  render();
+})();
+</script>
+{% endblock %}

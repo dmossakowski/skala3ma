@@ -621,7 +621,7 @@
                         .then(r=>r.json())
                         .then(data=>{
                             console.log('Fetched routes:', data?.routes?.length);
-                            __cachedRoutes = data.routes || [];
+                            __cachedRoutes = (data.routes || []).filter(r => !r.removed);
                             // Sort routes by line (natural/alphanumeric order) then by route number
                             __cachedRoutes.sort((a, b) => {
                                 const lineA = (a.line || '').trim();

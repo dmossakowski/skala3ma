@@ -1602,6 +1602,39 @@ def setClimberAsPresent(competitionId,climberId,present):
     return {"success": True}
 
 
+# selects which routes of a gym routeset are in play for a competition
+# body: {"route_ids": ["..."], "force": false}; the competition's route set is used (gym default if none)
+# route data is always copied from the db; only route ids are taken from the client
+@skala_api_app.route('/competition/<competitionId>/routes', methods=['POST'])
+@session_or_jwt_required
+def set_competition_routes(competitionId):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    competition = competitionsEngine.getCompetition(competitionId)
+    if competition is None:
+        return jsonify({'error': 'competition_not_found'}), 404
+    if user is None or not competitionsEngine.can_edit_competition(user, competition):
+        return jsonify({'error': 'not_authorized'}), 403
+
+    data = request.get_json(silent=True) or {}
+    route_ids = data.get('route_ids')
+    if not isinstance(route_ids, list):
+        return jsonify({'error': 'route_ids must be a list'}), 400
+
+    try:
+        gym = competitionsEngine.get_gym(competition.get('gym_id')) if competition.get('gym_id') else None
+        result = competitionsEngine.set_competition_route_selection(
+            competitionId, competitionsEngine.get_competition_routesid(competition, gym), route_ids,
+            force=bool(data.get('force')))
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    if 'competition' not in result:
+        return jsonify({'error': 'conflicts', 'conflicts': result['conflicts']}), 409
+
+    saved = result['competition']
+    return jsonify({'routesid': saved.get('routesid'), 'routes_count': len(saved.get('routes') or [])})
+
+
 
 ### USER
 # @TODO this incorrectly adds persisted permissions (to db) when the check was meant to be for the current session only
@@ -2815,39 +2848,6 @@ def get_gym_routes_enhanced_with_activities_stats(gymid, routesid):
 
 
 
-@skala_api_app.route('/gym/<gymid>/<routesid>/add', methods=['POST'])
-@session_or_jwt_required
-def route_add(gymid, routesid):
-
-    routedata = request.get_json()
-    routedata = json.loads(routedata)
-
-    
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("skala_api_app.fsgtlogin"))
-
-    all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
-    allroutes = all_routes.get(routesid)
-
-    routeset = allroutes.get('routes')
-    if not isinstance(routeset, list):
-        return jsonify({'error': 'routeset_not_list'}), 400
-    # Update or append the route by id
-    updated = False
-    for idx, existing in enumerate(routeset):
-        if existing.get('id') == routedata.get('id'):
-            routeset[idx] = routedata
-            updated = True
-            break
-    if not updated:
-        routeset.append(routedata)
-
-    return json.dumps(allroutes)
-
-
 # the input is json of a single route
 # the response is all the routes as they have been saved
 # this should be made thread safe but it isn't right now
@@ -2867,35 +2867,150 @@ def route_save(gymid, routesid):
     all_routes = competitionsEngine.get_routes_by_gym_id(gymid)
     routeset = all_routes.get(routesid)
 
-    logging.info("routesid: "+routedata['id'])
-    routes = routeset.get('routes')
-    if routedata['id'] is None or routedata['id'] == '':
-        routedata['id'] = str(uuid.uuid4().hex)
-    
-    #idx = 0
-    #while idx < int(routedata['routenum']):
-    renumerate = False
+    if routeset is None:
+        return jsonify({'error': 'routes_not_found'}), 404
 
-    for idx, x in enumerate(routes):
-            
-        if x['id'] == routedata['id']:
-            if routedata['routenum'] == '-1':
-                routes.pop(idx)
-            else:
-                x.update(routedata)
-            break
-        # check if routenum is 3.5
-        ##if float(routedata['routenum']) > float(x['routenum']) and float(routedata['routenum']) < float(x['routenum'])+1:
-        if float(routedata['routenum']) % 1 == 0.5:
-            routedata['routenum']= int(x['routenum'])+1
-            routes.insert(int(x['routenum']),routedata )
-           
-    for idx, x in enumerate(routes):
-        x['routenum']=int(idx)+1
-    
+    routes = routeset.get('routes') or []
+    routeset['routes'] = routes
+    if not routedata.get('id'):
+        routedata['id'] = uuid.uuid4().hex
+
+    # removed routes are kept in the set (activity history, competitions) but hidden from public views
+    if 'removed' in routedata:
+        removed = routedata.get('removed')
+        removed = removed.strip().lower() in ('true', '1', 'yes', 'on') if isinstance(removed, str) else bool(removed)
+        routedata['removed'] = removed
+        routedata['removed_date'] = (routedata.get('removed_date') or datetime.now().strftime('%Y-%m-%d')) if removed else ''
+
+    routenum = str(routedata.get('routenum', ''))
+    existing_idx = next((i for i, r in enumerate(routes) if r.get('id') == routedata['id']), None)
+
+    if existing_idx is not None:
+        if routenum == '-1':
+            routes.pop(existing_idx)
+        else:
+            routes[existing_idx].update(routedata)
+    elif routenum != '-1':
+        # new route: "3.5" = insert after route 3, "0.5" = before the first route
+        try:
+            position = int(float(routenum))
+        except ValueError:
+            position = len(routes)
+        routes.insert(max(0, min(position, len(routes))), routedata)
+
+    for idx, r in enumerate(routes):
+        r['routenum'] = idx + 1
+
     competitionsEngine.upsert_routes(routesid, gymid, routeset)
-
     return routeset
+
+
+@skala_api_app.route('/gym/<gymid>/<routesid>/copy', methods=['POST'])
+@session_or_jwt_required
+def routes_copy(gymid, routesid):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return jsonify({'error': 'not_authorized'}), 401
+
+    routeset = competitionsEngine.get_routes_by_gym_id(gymid).get(routesid)
+    if routeset is None:
+        return jsonify({'error': 'routes_not_found'}), 404
+
+    data = request.get_json(silent=True) or {}
+    new_id = uuid.uuid4().hex
+    new_routeset = {
+        'id': new_id,
+        'name': (data.get('name') or '').strip() or f"{routeset.get('name', '')} copy",
+        'routes': deepcopy(routeset.get('routes') or []),
+    }
+    competitionsEngine.upsert_routes(new_id, gymid, new_routeset)
+    return jsonify({'id': new_id, 'name': new_routeset['name']})
+
+
+@skala_api_app.route('/gym/<gymid>/<routesid>/rename', methods=['POST'])
+@session_or_jwt_required
+def routes_rename(gymid, routesid):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    gym = competitionsEngine.get_gym(gymid)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return jsonify({'error': 'not_authorized'}), 401
+
+    routeset = competitionsEngine.get_routes_by_gym_id(gymid).get(routesid)
+    if routeset is None:
+        return jsonify({'error': 'routes_not_found'}), 404
+
+    name = ((request.get_json(silent=True) or {}).get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'name_required'}), 400
+
+    routeset['name'] = name
+    competitionsEngine.upsert_routes(routesid, gymid, routeset)
+    return jsonify({'id': routesid, 'name': name})
+
+
+def _gym_admins_payload(gymid):
+    admins = []
+    for userd in skala_db.get_users_with_gym_id(gymid):
+        u = User.from_dict(userd)
+        firstname = (u.firstname or '').strip()
+        lastname = (u.lastname or '').strip()
+        if not firstname and not lastname:
+            firstname = (u.nick or '').strip() or (u.email or '').split('@')[0]
+        admins.append({'id': u.id, 'firstname': firstname, 'lastname': lastname,
+                       'club': u.club or '', 'pictureurl': u.getPictureUrl()})
+    return sorted(admins, key=lambda a: (a['firstname'].lower(), a['lastname'].lower()))
+
+
+def _gym_admin_context(gymid):
+    """Returns (current_user, gym, error_response)."""
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    gym = competitionsEngine.get_gym(gymid)
+    if gym is None:
+        return user, gym, (jsonify({'error': 'gym_not_found'}), 404)
+    if not competitionsEngine.can_edit_gym(user, gym):
+        return user, gym, (jsonify({'error': 'not_authorized'}), 401)
+    return user, gym, None
+
+
+@skala_api_app.route('/gym/<gymid>/admins', methods=['GET'])
+@session_or_jwt_required
+def gym_admins_list(gymid):
+    _, _, err = _gym_admin_context(gymid)
+    if err:
+        return err
+    return jsonify(_gym_admins_payload(gymid))
+
+
+@skala_api_app.route('/gym/<gymid>/admins', methods=['POST'])
+@session_or_jwt_required
+def gym_admins_add(gymid):
+    _, _, err = _gym_admin_context(gymid)
+    if err:
+        return err
+    user_id = ((request.get_json(silent=True) or {}).get('user_id') or '').strip()
+    newuser = competitionsEngine.get_user(user_id) if user_id else None
+    if newuser is None:
+        return jsonify({'error': 'user_not_found'}), 404
+    competitionsEngine.add_user_permissions_to_gym(newuser, gymid)
+    return jsonify(_gym_admins_payload(gymid))
+
+
+@skala_api_app.route('/gym/<gymid>/admins/<user_id>', methods=['DELETE'])
+@session_or_jwt_required
+def gym_admins_remove(gymid, user_id):
+    current, _, err = _gym_admin_context(gymid)
+    if err:
+        return err
+    if current is not None and current.id == user_id:
+        return jsonify({'error': 'cannot_remove_self'}), 400
+    admins = _gym_admins_payload(gymid)
+    if not any(a['id'] == user_id for a in admins):
+        return jsonify({'error': 'user_not_found'}), 404
+    if len(admins) <= 1:
+        return jsonify({'error': 'cannot_remove_last_admin'}), 400
+    competitionsEngine.remove_user_permissions_to_gym(competitionsEngine.get_user(user_id), gymid)
+    return jsonify(_gym_admins_payload(gymid))
 
 
 
@@ -2968,132 +3083,6 @@ def get_activity_routes_by_gym_id(gym_id):
    
 
 
-@skala_api_app.route('/gym/<gymid>/save', methods=['POST'])
-@session_or_jwt_required
-def gym_save(gymid):
-
-    formdata = request.form.to_dict(flat=False)
-
-    args1 = request.args
-    body = request.data
-    bodyj = request.json
-
-    routeid = formdata['routeid']
-    routeline = formdata['routeline']
-    color1 = formdata['color1']
-    color2 = formdata['color2']
-    #iscolor2same = formdata['iscolor2same']
-    color_modifier = formdata['color_modifier']
-    routegrade = formdata['routegrade']
-    routename = formdata['routename']
-    openedby = formdata['openedby']
-    opendate = formdata['opendate']
-    notes = formdata['notes']
-    routesname = formdata['name'][0]
-    permissioned_user = formdata['permissioned_user'][0]
-
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("skala_api_app.fsgtlogin"))
-
-    routes = []
-    for i, routeline1 in enumerate(routeline):
-        print (i)
-        if routeid[i] == '0':
-            routeid[i]=str(uuid.uuid4().hex)
-        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i], color2[i],
-                                                     color_modifier[i], routegrade[i],
-                                           routename[i], openedby[i], opendate[i], notes[i])
-        routes.append(oneline)
-
-    routes_dict = {}
-    routes_dict['id'] = gym['routesid']
-    routes_dict['name'] = routesname
-    routes_dict['routes'] = routes
-
-    gym['routes'] = []
-
-    competitionsEngine.update_gym(gym['id'], gym)
-    competitionsEngine.update_routes(gym['routesid'], routes_dict)
-
-    gym = competitionsEngine.get_gym(gym['id'])
-    gym['routes'] = []
-    routes = competitionsEngine.get_routes(gym['routesid'])
-
-    return routes
-
-
-
-
-@skala_api_app.route('/gyms/<gymid>/<routesid>/save', methods=['POST'])
-@session_or_jwt_required
-def gym_routes_save(gymid, routesid):
-    formdata = request.form.to_dict(flat=False)
-
-    args1 = request.args
-    body = request.data
-    bodyj = request.json
-
-    routeid = formdata['routeid']
-    routeline = formdata['routeline']
-    color1 = formdata['color1']
-    color2 = formdata['color2']
-    #iscolor2same = formdata['iscolor2same']
-    color_modifier = formdata['color_modifier']
-    routegrade = formdata['routegrade']
-    routename = formdata['routename']
-    openedby = formdata['openedby']
-    opendate = formdata['opendate']
-    notes = formdata['notes']
-    routesname = formdata['name'][0]
-
-    delete = formdata.get('delete')
-    save = formdata.get('save')
-    copy = formdata.get('copy')
-
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return Response("{'a':'b'}", status=401, mimetype='application/json')
-
-    routes = []
-    for i, routeline1 in enumerate(routeline):
-        if routeid[i] == '0':
-            routeid[i]=str(uuid.uuid4().hex)
-        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i], color2[i],
-                                                     color_modifier[i], routegrade[i],
-                                           routename[i], openedby[i], opendate[i], notes[i])
-        routes.append(oneline)
-
-    routes_dict = {}
-    routes_dict['id'] = routesid
-    routes_dict['name'] = routesname
-    routes_dict['routes'] = routes
-
-    if copy is not None:
-        newroutesid = str(uuid.uuid4().hex)
-        routes_dict['id'] = newroutesid
-        routes_dict['name'] = routes_dict['name']+' copy'
-        competitionsEngine.upsert_routes(newroutesid, gymid, routes_dict)
-        return redirect(f'/gyms/{gymid}/{newroutesid}/edit')
-
-    competitionsEngine.update_routes(routesid, routes_dict)
-
-    # pickup the default routes to be rendered
-    routes = competitionsEngine.get_routes(gym.get('routesid'))
-
-    return routes
-
-
-
-
-
-
-
-
 @skala_api_app.route('/gyms/<gym_id>/update', methods=['POST'])
 @session_or_jwt_required
 def gyms_update(gym_id):
@@ -3125,6 +3114,7 @@ def gyms_update(gym_id):
     organization = formdata['organization'][0]
     permissioned_user = request.form.get('permissioned_user')
 
+    routesid = None
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]

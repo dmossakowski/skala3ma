@@ -1,0 +1,139 @@
+{% extends "skala3ma-layout.html" %}
+
+{% block topcontent %}
+{% include "gym-menu.html" %}
+{% endblock %}
+
+{% block secondarycontent %}
+{% set lang = reference_data['current_language'] %}
+<div class="container" style="max-width: 720px;">
+    <div class="d-flex align-items-center gap-2 my-3">
+        <a href="/gyms/{{ gym['id'] }}/edit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+        <h4 class="mb-0">{{ gym['name'] }}</h4>
+    </div>
+    <div id="gym-admins" class="card shadow-sm mb-4" style="scroll-margin-top: 80px;">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-people me-2"></i>{{ lang.gym_admins }}</h5>
+            <p class="text-muted small mb-3">{{ lang.gym_admins_help }}</p>
+
+            <div id="gym-admins-list" class="list-group mb-3">
+                <div class="list-group-item text-muted"><span class="spinner-border spinner-border-sm"></span></div>
+            </div>
+
+            <div class="position-relative">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-plus"></i></span>
+                    <input type="search" class="form-control" id="admin-search" autocomplete="off"
+                           placeholder="{{ lang.gym_admins_search }}">
+                </div>
+                <div id="admin-suggestions" class="list-group mt-1"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const gymid = {{ gym['id']|tojson }};
+    const currentUserId = {{ (user.id if user else '')|tojson }};
+    const t = {
+        none: {{ (lang.gym_admins_none or 'No admins yet')|tojson }},
+        add: {{ (lang.add or 'Add')|tojson }},
+        remove: {{ (lang.Delete or 'Remove')|tojson }},
+        saved: {{ (lang.save or 'Saved')|tojson }},
+        error: {{ (lang['error5315'] or 'Error')|tojson }},
+        cannot_remove_self: {{ (lang.cannot_remove_self or 'You cannot remove yourself')|tojson }},
+        cannot_remove_last_admin: {{ (lang.cannot_remove_last_admin or 'The last admin cannot be removed')|tojson }},
+    };
+    const list = document.getElementById('gym-admins-list');
+    const search = document.getElementById('admin-search');
+    const suggestions = document.getElementById('admin-suggestions');
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const avatar = url => `<img src="${esc(url || '/public/images/favicon.png')}" width="36" height="36" class="rounded-circle flex-shrink-0"
+        style="object-fit:cover" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src='/public/images/favicon.png'" alt="">`;
+    let admins = [];
+
+    async function call(method, url, body) {
+        const res = await apiFetch(url, { method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(t[data.error] || t.error);
+        return data;
+    }
+
+    function render() {
+        if (!admins.length) {
+            list.innerHTML = `<div class="list-group-item text-muted">${esc(t.none)}</div>`;
+            return;
+        }
+        list.innerHTML = admins.map(a => `
+            <div class="list-group-item d-flex align-items-center gap-2">
+                ${avatar(a.pictureurl)}
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-semibold text-truncate">${esc(a.firstname)} ${esc(a.lastname)}</div>
+                    ${a.club ? `<div class="small text-muted text-truncate">${esc(a.club)}</div>` : ''}
+                </div>
+                ${a.id === currentUserId || admins.length <= 1 ? '' :
+                  `<button type="button" class="btn btn-sm btn-outline-danger" data-remove="${esc(a.id)}" title="${esc(t.remove)}">
+                       <i class="bi bi-person-dash"></i></button>`}
+            </div>`).join('');
+    }
+
+    async function load() {
+        try { admins = await call('GET', `/api1/gym/${encodeURIComponent(gymid)}/admins`); render(); }
+        catch (e) { list.innerHTML = `<div class="list-group-item text-danger">${esc(e.message)}</div>`; }
+    }
+
+    list.addEventListener('click', async e => {
+        const btn = e.target.closest('[data-remove]');
+        if (!btn) return;
+        const a = admins.find(x => x.id === btn.dataset.remove);
+        if (!a || !confirm(`${t.remove} ${a.firstname} ${a.lastname}?`)) return;
+        btn.disabled = true;
+        try {
+            admins = await call('DELETE', `/api1/gym/${encodeURIComponent(gymid)}/admins/${encodeURIComponent(a.id)}`);
+            render();
+        } catch (err) { btn.disabled = false; showAlert(err.message, 'danger'); }
+    });
+
+    let timer;
+    search.addEventListener('input', () => {
+        clearTimeout(timer);
+        // the search endpoint only accepts a single alphanumeric word
+        const word = search.value.trim().split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}]/gu, ''))
+            .sort((x, y) => y.length - x.length)[0] || '';
+        if (word.length < 2) { suggestions.innerHTML = ''; return; }
+        timer = setTimeout(async () => {
+            try {
+                const res = await apiFetch('/api1/users/search/?q=' + encodeURIComponent(word));
+                const users = (await res.json()) || [];
+                const known = new Set(admins.map(a => a.id));
+                suggestions.innerHTML = users.slice(0, 10).map(u => `
+                    <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+                            data-add="${esc(u.id)}" ${known.has(u.id) ? 'disabled' : ''}>
+                        ${avatar(u.pictureurl)}
+                        <span class="flex-grow-1 text-start text-truncate">${esc(u.firstname)} ${esc(u.lastname)}
+                            ${u.nick ? `<i class="text-muted">(${esc(u.nick)})</i>` : ''}
+                            ${u.club ? `<span class="small text-muted"> · ${esc(u.club)}</span>` : ''}</span>
+                        ${known.has(u.id) ? '<i class="bi bi-check-lg text-success"></i>'
+                                          : `<span class="badge text-bg-success"><i class="bi bi-plus-lg"></i> ${esc(t.add)}</span>`}
+                    </button>`).join('');
+            } catch (e) { console.error(e); }
+        }, 300);
+    });
+
+    suggestions.addEventListener('click', async e => {
+        const btn = e.target.closest('[data-add]');
+        if (!btn) return;
+        btn.disabled = true;
+        try {
+            admins = await call('POST', `/api1/gym/${encodeURIComponent(gymid)}/admins`, { user_id: btn.dataset.add });
+            render();
+            search.value = '';
+            suggestions.innerHTML = '';
+        } catch (err) { btn.disabled = false; showAlert(err.message, 'danger'); }
+    });
+
+    load();
+})();
+</script>
+{% endblock %}

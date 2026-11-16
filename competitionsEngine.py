@@ -17,6 +17,7 @@
 import base64
 import json
 import os
+import re
 import glob
 import random
 from datetime import datetime, date, timedelta
@@ -38,7 +39,6 @@ import skala_db
 import activities_db
 
 from src.User import User
-from src.Route import Route
 from src.Gym import Gym
 
 sql_lock = RLock()
@@ -388,80 +388,208 @@ def update_competition_details(competition, name, date, instructions):
     return competition
     
 
-# this updates the routeset of a competition
-def update_competition_routes(competition, routesid, force=False):
-    # only update routes if it is different
-    #if competition.get('routes') is None or competition.get('routesid') != routesid:
-    if routesid is None:
-        logging.error('Routesid cannot be None '+str(routesid))
-        raise ValueError('Cannot update competition routeset. routesid cannot be None')
+def _natural_key(value):
+    return [(0, int(part), '') if part.isdigit() else (1, 0, part.lower())
+            for part in re.split(r'(\d+)', str(value or '')) if part != '']
 
-    competition['routesid'] = routesid
-    routes = skala_db.get_routes_by_id(routesid)
 
-    if (routes is None or len(routes)==0):
-        logging.error('Routes not found '+str(competition.get('id')))
-        raise ValueError('Routes not found')
-    
-    if status_allows(competition, 'locked'):
-        if not force:
-            logging.error('Cannot update routes when competition is locked '+str(competition.get('id')))
-            raise ValueError('Cannot update routes when competition is closed')
-
-    competition['routes'] = routes.get('routes')
-
-    # after a new routeset is set, we need to update each climber with routes they climbed
+def _routenum_key(value):
     try:
-        setRoutesClimbed2(competition)
-    except Exception as e:
-        logging.error('error setting routes climbed2: ' + str(e))
-        raise ValueError('Cannot update competition routeset.  ' + str(e))
-    
-    skala_db._update_competition(competition['id'], competition)
-
-    return competition
+        return float(value)
+    except (TypeError, ValueError):
+        return 0
 
 
-# compare the competition's static routeset with the current routeset in the db
-# the competition routeset is a snapshot taken when the routeset was assigned
-# if the db routeset has been modified since, this returns the differences
-def get_routeset_differences(competition):
-    routesid = competition.get('routesid')
-    if routesid is None:
-        return None
+# natural line order ("10" after "9"), then gym routenum - same order as the route editors
+def _route_line_order_key(route):
+    return (_natural_key(route.get('line')), _routenum_key(route.get('gym_routenum', route.get('routenum'))))
 
+
+def _route_signature(route):
+    return (str(route.get('line') or ''), str(route.get('grade') or ''),
+            str(route.get('color1') or '').lower(), str(route.get('name') or ''))
+
+
+_route_compare_fields = ('line', 'grade', 'name', 'color1', 'color_modifier', 'openedby', 'opendate', 'notes')
+
+
+# ignores legacy/derived fields (colorfr, routenum) and color2 unless the route is marbled
+def _route_differs(gym_route, comp_route):
+    fields = list(_route_compare_fields)
+    if gym_route.get('color_modifier') == 'marble' or comp_route.get('color_modifier') == 'marble':
+        fields.append('color2')
+    return any(str(gym_route.get(k) or '').lower() != str(comp_route.get(k) or '').lower() for k in fields)
+
+
+# matches each gym route with a route of the competition snapshot: by id, else by line/grade/color/name
+# returns one list for the competition routes editor: competition routes in competition order, gym routes
+# not in the competition merged in by gym line order; selecting rows in this order keeps the numbering
+# competition routes no longer in the gym routeset are included in place with 'missing': True
+# 'key' identifies a row when saving a selection
+def correlate_competition_routes(competition, gym_routes):
     comp_routes = competition.get('routes') or []
-    db_routeset = skala_db.get_routes_by_id(routesid)
-    if db_routeset is None:
-        return {'error': 'routeset not found in db', 'routesid': routesid}
+    comp_index = {id(r): i for i, r in enumerate(comp_routes)}
+    comp_by_id = {str(r.get('id')): r for r in comp_routes if r.get('id')}
+    comp_by_signature = {}
+    for r in comp_routes:
+        comp_by_signature.setdefault(_route_signature(r), r)
 
-    db_routes = db_routeset.get('routes') or []
+    gym_sorted = sorted(gym_routes or [], key=_route_line_order_key)
+    # match by id first so a signature match cannot take a competition route owned by another gym route
+    matches = {}
+    matched = set()
+    for idx, gym_route in enumerate(gym_sorted):
+        comp_route = comp_by_id.get(str(gym_route.get('id'))) if gym_route.get('id') else None
+        if comp_route is not None and id(comp_route) not in matched:
+            matches[idx] = comp_route
+            matched.add(id(comp_route))
+    for idx, gym_route in enumerate(gym_sorted):
+        if idx in matches:
+            continue
+        candidate = comp_by_signature.get(_route_signature(gym_route))
+        if candidate is not None and id(candidate) not in matched:
+            matches[idx] = candidate
+            matched.add(id(candidate))
 
-    # build lookup by route id
-    comp_by_id = {str(r.get('id')): r for r in comp_routes}
-    db_by_id = {str(r.get('id')): r for r in db_routes}
+    keys = set()
 
-    added = []    # routes in db but not in competition
-    removed = []  # routes in competition but not in db
-    modified = [] # routes present in both but with different field values
+    def unique_key(key):
+        base, n = key, 1
+        while key in keys:
+            n += 1
+            key = base + '#' + str(n)
+        keys.add(key)
+        return key
 
-    for rid, route in db_by_id.items():
-        if rid not in comp_by_id:
-            added.append(route)
-        elif route != comp_by_id[rid]:
-            modified.append({'id': rid, 'competition': comp_by_id[rid], 'db': route})
+    annotated = []
+    for idx, gym_route in enumerate(gym_sorted):
+        comp_route = matches.get(idx)
+        annotated.append({
+            'key': unique_key(str(gym_route.get('id')) if gym_route.get('id') else 'gym:' + str(gym_route.get('routenum'))),
+            'route': gym_route,
+            'in_competition': comp_route is not None,
+            'competition_index': comp_index[id(comp_route)] if comp_route is not None else None,
+            'missing': False,
+            'competition_routenum': comp_route.get('routenum') if comp_route is not None else None,
+            'changed': comp_route is not None and _route_differs(gym_route, comp_route),
+        })
 
-    for rid, route in comp_by_id.items():
-        if rid not in db_by_id:
-            removed.append(route)
+    for comp_route in comp_routes:
+        if id(comp_route) in matched:
+            continue
+        annotated.append({
+            'key': unique_key('competition:' + (str(comp_route.get('id')) if comp_route.get('id') else str(comp_route.get('routenum')))),
+            'route': comp_route,
+            'in_competition': True,
+            'competition_index': comp_index[id(comp_route)],
+            'missing': True,
+            'competition_routenum': comp_route.get('routenum'),
+            'changed': False,
+        })
 
-    has_differences = len(added) > 0 or len(removed) > 0 or len(modified) > 0
-    return {
-        'has_differences': has_differences,
-        'added': added,
-        'removed': removed,
-        'modified': modified
-    }
+    # competition routes keep the competition order (download_tiles / routes entry order) even when the gym
+    # routeset was renumbered or reordered; gym routes not in the competition go right after their nearest
+    # preceding gym route that is in the competition (or first when there is none)
+    by_comp_index = {row['competition_index']: row for row in annotated if row['in_competition']}
+    leading = []
+    following = {}
+    anchor = None
+    for row in annotated:
+        if row['missing']:
+            continue
+        if row['in_competition']:
+            anchor = row['competition_index']
+        elif anchor is None:
+            leading.append(row)
+        else:
+            following.setdefault(anchor, []).append(row)
+
+    ordered = list(leading)
+    for comp_idx in sorted(by_comp_index):
+        ordered.append(by_comp_index[comp_idx])
+        ordered.extend(following.get(comp_idx, []))
+    return {'routes': ordered}
+
+
+# the route set a competition picks its routes from: its own, else the gym default
+def get_competition_routesid(competition, gym):
+    routesid = competition.get('routesid')
+    if routesid and skala_db.get_routes_by_id(routesid):
+        return routesid
+    return (gym or {}).get('routesid')
+
+
+def competition_has_results(competition):
+    return any((climber or {}).get('routesClimbed') for climber in (competition.get('climbers') or {}).values())
+
+
+# replaces the competition routes with the selected routes of a gym routeset
+# route_ids are row keys from correlate_competition_routes; gym routes are copied from the gym
+# (gym routenum kept as gym_routenum), routes no longer in the gym are kept from the competition snapshot
+# all selected routes are numbered 1..K in line order
+# returns {'conflicts': [...]} without saving when already ticked route numbers would point at
+# a different route or disappear, unless force is True
+def set_competition_route_selection(competition_id, routesid, route_ids, force=False):
+    if not routesid:
+        raise ValueError('routesid is required')
+    route_ids = [str(r) for r in (route_ids or [])]
+    if len(route_ids) == 0:
+        raise ValueError('Select at least one route')
+
+    with sql_lock:
+        competition = get_competition(competition_id)
+        if competition is None:
+            raise ValueError('Competition not found')
+
+        routes_gym = skala_db.get_gym_by_routes_id(routesid)
+        routeset = skala_db.get_routes_by_id(routesid)
+        if not routeset or routes_gym is None or routes_gym.get('id') != competition.get('gym_id'):
+            raise ValueError('Routes not found for this gym')
+
+        selected_ids = set(route_ids)
+        selected = []
+        selected_origin = []
+        for row in correlate_competition_routes(competition, routeset.get('routes') or [])['routes']:
+            if row['key'] not in selected_ids:
+                continue
+            route = copy.deepcopy(row['route'])
+            if not row['missing']:
+                route['gym_routenum'] = route.get('routenum')
+            selected.append(route)
+            selected_origin.append(row['competition_index'])
+        if len(selected) == 0:
+            raise ValueError('Selected routes not found in the routeset')
+
+        for idx, route in enumerate(selected):
+            route['routenum'] = idx + 1
+
+        # a ticked number is safe when its new route is the same competition route it pointed at before
+        old_routes = competition.get('routes') or []
+        old_by_num = {str(r.get('routenum')): (i, r) for i, r in enumerate(old_routes)}
+        new_by_num = {str(r.get('routenum')): (selected_origin[i], r) for i, r in enumerate(selected)}
+        conflicts = {}
+        for climber in (competition.get('climbers') or {}).values():
+            for num in (climber or {}).get('routesClimbed') or []:
+                key = str(num)
+                old_index, old = old_by_num.get(key, (None, None))
+                new_origin, new = new_by_num.get(key, (None, None))
+                if old is None and new is None:
+                    continue
+                if old is not None and new is not None and new_origin == old_index:
+                    continue
+                conflict = conflicts.setdefault(key, {'routenum': num, 'old': old, 'new': new, 'climbers': 0})
+                conflict['climbers'] += 1
+
+        conflicts = sorted(conflicts.values(), key=lambda c: _routenum_key(c['routenum']))
+        if conflicts and not force:
+            return {'conflicts': conflicts}
+
+        competition['routesid'] = routesid
+        competition['routes'] = selected
+        setRoutesClimbed2(competition)
+        _update_competition(competition['id'], competition)
+
+    return {'competition': competition, 'conflicts': conflicts}
 
 
 
@@ -2150,24 +2278,6 @@ def update_gym_coordinates(gymJson, lat, lon):
     gymJson['lat'] = lat
     gymJson['lon'] = lon
     return gymJson
-
-
-def _get_route_dict(routeid, routenum, line, color1, color2, color_modifier, grade, name, openedby, opendate, notes):
-    route = Route(
-        id=routeid,
-        routenum=str(routenum) if routenum is not None else "",
-        line=str(line) if line is not None else "",
-        colorfr=color1 or "",
-        color1=color1 or "",
-        color2=color2 or "",    
-        grade=grade or "",
-        color_modifier=color_modifier or "solid",
-        name=name or "",
-        openedby=openedby or "",
-        opendate=opendate or "",
-        notes=notes or "",
-    )
-    return route.as_dict()
 
 
 # replaces or adds routes depending if routesid is found
