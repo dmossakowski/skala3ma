@@ -649,6 +649,20 @@ def get_users_with_competition_id(competition_id):
     return filtered_users
 
 
+def get_users_with_gym_id(gym_id):
+    """Return user dicts whose permissions.gyms list contains gym_id."""
+    conn = lite.connect(COMPETITIONS_DB)
+    try:
+        rows = conn.execute("""
+            SELECT DISTINCT climbers.jsondata
+            FROM climbers, json_each(climbers.jsondata, '$.permissions.gyms')
+            WHERE json_each.value = ?
+        """, (gym_id,)).fetchall()
+    finally:
+        conn.close()
+    return [json.loads(row[0]) for row in rows]
+
+
 
 def get_all_competition_ids():
     db = lite.connect(COMPETITIONS_DB)

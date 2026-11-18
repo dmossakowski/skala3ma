@@ -8,22 +8,22 @@
     <a href="/gyms/{{ gymid}}/main"  class="nav-link d-none d-md-block"><span id="{{ gym['name'] }}">{{ gym['name'] }}</span> </a>
 
    
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block">{{ reference_data['current_language'].topo }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}" class="nav-link d-none d-md-block"><span data-translate-key="topo">Topo</span></a> 
     <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/stats" class="nav-link d-none d-md-block">Stats</a>
-    <a href="/gyms/{{gymid}}/sectors" class="nav-link d-none d-md-block">{{ reference_data['current_language'].sectors }}</a>
-                        <!--li><a href="/competitionDetails/{{ competitionId}}">{{ reference_data['current_language'].climbers }}</a> </li-->
-    <!--a href="/gyms/{{gymid}}/climbers" class="nav-link sf-menu2">{{ reference_data['current_language'].climbers }}</a-->
-    <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="nav-link">{{ reference_data['current_language'].routes }} (beta)</a--> 
+    <a href="/gyms/{{gymid}}/sectors" class="nav-link d-none d-md-block"><span data-translate-key="sectors">Sectors</span></a>
+                        <!--li><a href="/competitionDetails/{{ competitionId}}"><span data-translate-key="climbers">Climbers</span></a> </li-->
+    <!--a href="/gyms/{{gymid}}/climbers" class="nav-link sf-menu2"><span data-translate-key="climbers">Climbers</span></a-->
+    <!--a href="/gyms/{{gymid}}/{{ gym['routesid']}}/beta" class="nav-link"><span data-translate-key="routes">Routes</span> (beta)</a--> 
 
     <a href="/gyms/{{gymid}}/qrcode" class="nav-link d-none d-md-block">QR Code</a> 
 
-    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link d-none d-md-block">{{ reference_data['current_language'].Discs }}</a> 
+    <a href="/gyms/{{gymid}}/{{ gym['routesid']}}/discs" class="nav-link d-none d-md-block"><span data-translate-key="Discs">Discs</span></a> 
 
-    <a href="/gyms/{{gymid}}/events" class="nav-link d-none d-md-block">{{ reference_data['current_language'].events }}</a> 
+    <a href="/gyms/{{gymid}}/events" class="nav-link d-none d-md-block"><span data-translate-key="events">Events</span></a> 
 
 
       <a href="/gyms/{{ gymid }}/edit" class="nav-link d-none d-md-block" hidden data-permission="edit-gym">
-                <i class="bi bi-pencil me-2"></i>{{ reference_data['current_language'].Admin }}
+                <i class="bi bi-pencil me-2"></i><span data-translate-key="Admin">Admin</span>
             </a>
     
  </div>
@@ -42,26 +42,26 @@
             </a>
             
             <a href="/gyms/{{ gymid }}/edit" class="nav-link gym-menu-link-mobile py-3" hidden data-permission="edit-gym">
-                <i class="bi bi-pencil me-2"></i>{{ reference_data['current_language'].Admin }}
+                <i class="bi bi-pencil me-2"></i><span data-translate-key="Admin">Admin</span>
             </a>
 
             <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}" class="nav-link gym-menu-link-mobile py-3">
-                <i class="bi bi-pin-map me-2"></i>{{ reference_data['current_language'].topo }}
+                <i class="bi bi-pin-map me-2"></i><span data-translate-key="topo">Topo</span>
             </a>
             <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}/stats" class="nav-link gym-menu-link-mobile py-3">
                 <i class="bi bi-graph-up me-2"></i>Stats
             </a>
             <a href="/gyms/{{ gymid }}/sectors" class="nav-link gym-menu-link-mobile py-3">
-                <i class="bi bi-grid me-2"></i>{{ reference_data['current_language'].sectors }}
+                <i class="bi bi-grid me-2"></i><span data-translate-key="sectors">Sectors</span>
             </a>
             <a href="/gyms/{{ gymid }}/qrcode" class="nav-link gym-menu-link-mobile py-3">
                 <i class="bi bi-qr-code me-2"></i>QR Code
             </a>
             <a href="/gyms/{{ gymid }}/{{ gym['routesid'] }}/discs" class="nav-link gym-menu-link-mobile py-3">
-                <i class="bi bi-circle me-2"></i>{{ reference_data['current_language'].Discs }}
+                <i class="bi bi-circle me-2"></i><span data-translate-key="Discs">Discs</span>
             </a>
             <a href="/gyms/{{ gymid }}/events" class="nav-link gym-menu-link-mobile py-3">
-                <i class="bi bi-calendar-event me-2"></i>{{ reference_data['current_language'].events }}
+                <i class="bi bi-calendar-event me-2"></i><span data-translate-key="events">Events</span>
             </a>
         </nav>
 </div>

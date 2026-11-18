@@ -361,8 +361,6 @@ def competition_admin_get(competition_id):
         session["wants_url"] = request.url
         return redirect(url_for('app_ui.getCompetition', competitionId=competition['id']))
 
-    all_routes = competitionsEngine.get_routes_by_gym_id(competition.get('gym_id'))
-
     all_gyms = competitionsEngine.get_gyms()
 
     all_clubs = []
@@ -373,18 +371,13 @@ def competition_admin_get(competition_id):
     # sort clubs by gymname
     all_clubs = sorted(all_clubs, key=lambda x: x['gymname'])
 
-    # compare the competition.get('routes) with the routes of the gym if they match
-    diff = competitionsEngine.get_routeset_differences(competition)
-
     return render_template('competitionAdmin.html',
                            user=user,
                            competition=competition,
                            user_list=user_list,
                            competitionId=competition_id,
-                           all_routes = all_routes,
                            reference_data=competitionsEngine.reference_data,
                             all_clubs=all_clubs,
-                           routeset_diff=diff,
                            allowed_statuses=competitionsEngine.get_allowed_statuses(competition),
                            series_keys=skala_db.get_series_keys(),
                            id=id)
@@ -407,7 +400,6 @@ def competition_admin_post(competition_id):
     delete_competition_button = request.form.get('delete_competition_button')
     change_poster_button = request.form.get('change_poster_button')
     email_sending_button = request.form.get('email_sending_button')
-    competition_routes_update_button = request.form.get('competition_routes_update_button')
     
     edittype = request.form.get('edittype')
     permissioned_user = request.form.get('permissioned_user')
@@ -583,14 +575,6 @@ def competition_admin_post(competition_id):
         competitionsEngine.update_competition_details(competition, competition_name, competition_date, instructions)
         resultMessage= "Competition details updated"
 
-
-    if competition_routes_update_button is not None:
-        competition_routes = request.form.get('competition_routes')
-        resultMessage= "Competition routes updated"
-        try:
-            competitionsEngine.update_competition_routes(competition, competition_routes, True)
-        except ValueError as e:
-            resultError = str(e)
 
     if delete_competition_button is not None:
         if competitionsEngine.competition_can_be_deleted(competition):
@@ -938,12 +922,8 @@ def new_event():
 
     all_gyms = competitionsEngine.get_gyms()
 
-    gyms = []
-    for gymid in all_gyms:
-        routes = competitionsEngine.get_routes_by_gym_id(gymid)
-        gyms.append({'id': gymid, 'name': all_gyms[gymid]['name'],
-                     'routesets': [{'id': routeid, 'name': routes[routeid]['name']} for routeid in routes]})
-    gyms = sorted(gyms, key=lambda g: (g['name'] or '').lower())
+    gyms = sorted(({'id': gymid, 'name': all_gyms[gymid]['name']} for gymid in all_gyms),
+                  key=lambda g: (g['name'] or '').lower())
 
     return render_template('newEvent.html',
                            session=session,
@@ -1801,9 +1781,6 @@ def competitionRoutes(competitionId):
     else:
         routes = competition_routes
 
-    routesName = db_routes.get('name')
-
-
     # library= {}
     # library['tracks'] = tracks
     # playlist = json.dumps(playlist)
@@ -1820,10 +1797,58 @@ def competitionRoutes(competitionId):
                            gym=gym,
                            gymid=gymid,
                            routesid=routesid,
-                           routesName=routesName,
                            routes=routes,
                            competition=competition,
                            competitionId=competitionId,
+                           can_edit=user is not None and competitionsEngine.can_edit_competition(user, competition),
+                           reference_data=competitionsEngine.reference_data,
+                           **session)
+
+
+# admin page to pick which routes of a gym routeset are in play for a competition
+@app_ui.route('/competitionRoutes/<competitionId>/edit')
+@login_required
+def competitionRoutesEdit(competitionId):
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    competition = competitionsEngine.getCompetition(competitionId)
+    if competition is None:
+        return render_template('competitionNoPermission.html',
+                               error_code='no_competition_found',
+                               competitionId=None,
+                               gyms=None,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
+
+    if user is None or not competitionsEngine.can_edit_competition(user, competition):
+        return render_template('competitionNoPermission.html',
+                               error_code="error5315",
+                               competitionId=competitionId,
+                               gyms=None,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
+
+    gymid = competition.get('gym_id')
+    gym = competitionsEngine.get_gym(gymid) if gymid else None
+    if gym is None:
+        abort(404)
+
+    all_routes = competitionsEngine.get_routes_by_gym_id(gymid) or {}
+    routesid = competitionsEngine.get_competition_routesid(competition, gym)
+    routeset = all_routes.get(routesid) if routesid else None
+
+    correlation = competitionsEngine.correlate_competition_routes(
+        competition, (routeset or {}).get('routes') or [])
+
+    return render_template("competitionRoutesEdit.html",
+                           user=user,
+                           gym=gym,
+                           gymid=gymid,
+                           routesid=routesid if routeset else None,
+                           correlation=correlation,
+                           competition=competition,
+                           competitionId=competitionId,
+                           has_results=competitionsEngine.competition_has_results(competition),
+                           locked=competitionsEngine.status_allows(competition, 'locked'),
                            reference_data=competitionsEngine.reference_data,
                            **session)
 
@@ -1863,8 +1888,11 @@ def routes_climbed(competitionId, climberId):
     #    return redirect(url_for('app_ui.competitionRoutesList', competitionId=competitionId))
 
 
-    routesid = competition.get('routesid')
-    routes = competitionsEngine.get_routes(routesid)
+    competition_routes = competition.get('routes')
+    if competition_routes is not None:
+        routes = {'routes': competition_routes}
+    else:
+        routes = competitionsEngine.get_routes(competition.get('routesid'))
 
     climber_name = climber.get('name')
     climber_club = climber.get('club')
@@ -2321,36 +2349,61 @@ def gym_edit(gymid):
                            )
 
 
-
-
-# this is the old HTML javascript form batch routes editor
-@app_ui.route('/gyms/<gym_id>/<routesid>/edit', methods=['GET'])
+@app_ui.route('/gyms/<gym_id>/admins', methods=['GET'])
 @login_required
-def gym_routes_edit(gym_id, routesid):
+def gym_admins(gym_id):
     gym = competitionsEngine.get_gym(gym_id)
-    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
-    routes = all_routes.get(routesid)
-
+    if gym is None:
+        abort(404)
     user = competitionsEngine.get_user_by_email(session.get('email'))
-
-
     if not competitionsEngine.has_permission_for_gym(gym_id, user):
         return render_template('competitionNoPermission.html',
                                error_code="error5315",
                                competitionId=None,
-                               gyms=gyms,
+                               gyms=None,
                                reference_data=competitionsEngine.reference_data,
                                **session)
 
-    return render_template('gym-routes-batch-edit.html',
+    return render_template('gym-admins.html',
                            gymid=gym_id,
-                           gyms=None,
+                           gym=gym,
+                           user=user,
+                           reference_data=competitionsEngine.reference_data)
+
+
+@app_ui.route('/gyms/<gym_id>/<routesid>/routes-editor', methods=['GET'])
+@login_required
+def gym_routes_editor(gym_id, routesid):
+    gym = competitionsEngine.get_gym(gym_id)
+    if gym is None:
+        abort(404)
+    all_routes = competitionsEngine.get_routes_by_gym_id(gym_id)
+    routes = all_routes.get(routesid)
+    if routes is None:
+        abort(404)
+
+    user = competitionsEngine.get_user_by_email(session.get('email'))
+    if not competitionsEngine.has_permission_for_gym(gym_id, user):
+        return render_template('competitionNoPermission.html',
+                               error_code="error5315",
+                               competitionId=None,
+                               gyms=None,
+                               reference_data=competitionsEngine.reference_data,
+                               **session)
+
+    return render_template('gym-routes-editor.html',
+                           gymid=gym_id,
                            gym=gym,
                            routes=routes,
-                           all_routes=all_routes,
                            user=user,
-                           reference_data=competitionsEngine.reference_data,
-                           )
+                           reference_data=competitionsEngine.reference_data)
+
+
+
+# the legacy batch routes editor was removed; keep old links working
+@app_ui.route('/gyms/<gym_id>/<routesid>/edit', methods=['GET'])
+def gym_routes_edit(gym_id, routesid):
+    return redirect(url_for('app_ui.gym_routes_editor', gym_id=gym_id, routesid=routesid))
 
 
 
@@ -2394,89 +2447,6 @@ def request_entity_too_large(error):
     return 'Request Too Large', 413
 
 
-#saving old type of html routes editor
-@app_ui.route('/gyms/<gymid>/<routesid>/edit', methods=['POST'])
-@login_required
-def gym_routes_save(gymid, routesid):
-    #args1 = request.args
-
-    #body = request.data
-    #bodyj = request.json
-
-    formdata = request.form.to_dict(flat=False)
-
-    routeid = formdata['routeid']
-    routeline = formdata['routeline']
-    color1 = formdata['color1']
-    color2 = formdata['color2']
-    #iscolor2same = formdata['iscolor2same']
-    color_modifier = formdata['color_modifier']
-    routegrade = formdata['routegrade']
-    routename = formdata['routename']
-    openedby = formdata['openedby']
-    opendate = formdata['opendate']
-    notes = formdata['notes']
-    routesname = formdata['name'][0]
-
-    delete = formdata.get('delete')
-    save = formdata.get('save')
-    copy = formdata.get('copy')
-
-    user = competitionsEngine.get_user_by_email(session['email'])
-
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return redirect(url_for("app_ui.fsgtlogin"))
-
-    if delete is not None:
-        
-        result = competitionsEngine.delete_routes(routesid)
-
-        if result.get('status') == 'success':
-            gymroutes = gym.get('routesid')
-        
-            return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=gymroutes, label=result.get('label'), 
-                                    top_notification_label=result.get('message'), top_notification_level='success'))
-        else:
-            message = result.get('message')
-            return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=routesid, label=result.get('label'), 
-                                    top_notification_label=result.get('message'), top_notification_level='danger'))
-
-
-    routes = []
-    for i, routeline1 in enumerate(routeline):
-        if routeid[i] == '0':
-            routeid[i]=str(uuid.uuid4().hex)
-        oneline = competitionsEngine._get_route_dict(routeid[i], str(i+1), routeline[i], color1[i], color2[i],
-                                                     color_modifier[i], routegrade[i],
-                                           routename[i], openedby[i], opendate[i], notes[i])
-        routes.append(oneline)
-
-    routes_dict = {}
-    routes_dict['id'] = routesid
-    routes_dict['name'] = routesname
-    routes_dict['routes'] = routes
-
-    if copy is not None:
-        newroutesid = str(uuid.uuid4().hex)
-        routes_dict['id'] = newroutesid
-        routes_dict['name'] = routes_dict['name']+' copy'
-        competitionsEngine.upsert_routes(newroutesid, gymid, routes_dict)
-        return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=newroutesid, top_notification_label="routes_copied", top_notification_level='success'))
-
-    competitionsEngine.update_routes(routesid, routes_dict)
-
-    # pickup the default routes to be rendered
-    routes = competitionsEngine.get_routes(gym.get('routesid'))
-
-    return redirect(url_for('app_ui.gym_routes_edit', 
-                                    gym_id=gymid, routesid=routesid, top_notification_label="routes_saved", top_notification_level='success'))
-   
-
-
 @app_ui.route('/gyms/<gym_id>/<routesid>/routes_csv')
 def downloadRoutesCsv(gym_id, routesid):
 
@@ -2496,21 +2466,19 @@ def downloadRoutesCsv(gym_id, routesid):
     data_file = open('jsonoutput2.csv', 'w', newline='')
     csv_writer = csv.writer(data_file)
 
-    count = 0
+    # routes can have different keys (e.g. removed/removed_date only on some), so use the union as header
+    header = []
     for route in routes:
         route.pop('id',None)
         route.pop('colorfr',None)
-        
-        if count == 0:
-            header = route.keys()
-            csv_writer.writerow(header)
-            writer.writerow(header)
-            count += 1
-        out = {}
-        
+        header.extend(k for k in route.keys() if k not in header)
+    csv_writer.writerow(header)
+    writer.writerow(header)
 
-        csv_writer.writerow(route.values())
-        writer.writerow(route.values())
+    for route in routes:
+        values = [route.get(k, '') for k in header]
+        csv_writer.writerow(values)
+        writer.writerow(values)
 
     data_file.close()
 
@@ -2748,7 +2716,6 @@ def gyms_update(gym_id):
     address = formdata['address'][0]
     url = formdata['url'][0]
     organization = formdata['organization'][0]
-    permissioned_user_id = request.form.get('userId')
     lat = formdata['lat'][0]
     lon = formdata['lon'][0]
 
@@ -2782,6 +2749,8 @@ def gyms_update(gym_id):
             logging.error(f"Error retrieving coordinates: {e}")
 
 
+    # a gym has a single routeset; keep it unless the form explicitly sends one
+    routesid = None
     routesidlist = formdata.get('default_routes')
     if routesidlist is not None:
         routesid = formdata['default_routes'][0]
@@ -2797,10 +2766,6 @@ def gyms_update(gym_id):
     if routesid is None or len(routesid)==0:
         routesid = gym['routesid']
 
-    if len(permissioned_user_id)>2:
-        newuser = competitionsEngine.get_user(permissioned_user_id)
-        if newuser is not None:
-            competitionsEngine.add_user_permissions_to_gym(newuser, gym_id)
 
     #gymid, routesid, name, added_by, logo_img_id, homepage, address, organization, routesA):
     gym_json = competitionsEngine.get_gym_json(gym_id, routesid, gymName, None, imgfilename, url, address, organization, None)

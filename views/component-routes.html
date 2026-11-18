@@ -177,6 +177,25 @@
                     
 <div id='route-rating-div' style="display:none; padding:8px; margin-top:8px; border-top:1px solid #ddd;">
   <h4 style="margin:8px 0 8px 0; font-size:1rem;">&nbsp;<span data-translate-key="rate">&nbsp;</span></h4>
+    <!-- shown when "add" is clicked without a finish status; choosing one submits immediately -->
+    <div id="route-status-required" style="display:none; text-align:center;">
+        <p style="font-weight:600; margin:8px 0;" data-translate-key="choose_route_status"></p>
+        <div class="btn-group w-100" role="group" aria-label="Choose route finish status" style="display:flex; gap:8px; justify-content:space-between;">
+          <button type="button" class="btn btn-light status-btn" onclick="chooseStatusAndRate('attempted')">
+            <img src="/public/images/4125784_confounded_confused_emoji_emotion_fail_icon.png" alt="attempted" width="40" height="40">
+          </button>
+          <button type="button" class="btn btn-light status-btn" onclick="chooseStatusAndRate('climbed')">
+            <img src="/public/images/1398911_correct_mark_success_tick_valid_icon.png" alt="climbed" width="40" height="40">
+          </button>
+          <button type="button" class="btn btn-light status-btn" onclick="chooseStatusAndRate('flashed')">
+            <img src="/public/images/2682840_bolt_elictricity_light_lightning_storm_icon.png" alt="flashed" width="40" height="40">
+          </button>
+        </div>
+        <div style="margin-top:8px;">
+          <button type="button" class="btn btn-secondary w-100" onclick="showStatusRequired(false)" data-translate-key="cancel"></button>
+        </div>
+    </div>
+    <div id="route-rating-form">
     <div class="form-row row">
         <div id="route-status-picker" class="btn-group w-100" role="group" aria-label="Route finish status" style="display:flex; gap:8px; justify-content:space-between;">
           <input type="hidden" id="routeFinishStatus" name="route_finish_status" value="">
@@ -289,6 +308,7 @@
           <button type="button" class="btn btn-secondary flex-grow-1" onclick="hideModal()" data-translate-key="cancel"></button>
           <button type="button" class="btn btn-danger flex-grow-1" style="display:none;" data-translate-key="Delete"></button>
         </div>
+    </div>
     </div>               
     <!-- end user rating -->
 
@@ -472,16 +492,15 @@
             }
 
 
+            // marks the route as removed from the gym (kept in the routeset for competitions and activity history)
             function deleteContent(){
+                const label = document.getElementById('deletebutton').textContent.trim();
+                if (!confirm(label + ' ' + (document.getElementById('name').value || '') + '?')) return;
                 mod_type='delete'
-                document.getElementById('routenum').value=-1
-                var data = getFormData();
-                
-                saveData(data)
-                //mainModalMenuDiv.style.display='none'
-                //editDiv.style.display='none';
-                //modal.style.display='none'
-                
+                var data = JSON.parse(getFormData());
+                data.removed = true;
+                data.removed_date = new Date().toLocaleDateString('en-CA');
+                saveData(JSON.stringify(data))
             }
 
             // Function to display the modal dialog
@@ -596,6 +615,7 @@
 
         function routeDetail(data) {
             setRouteFinishStatus('');
+            showStatusRequired(false);
             document.querySelectorAll('#route-stars input[name="route_stars"]').forEach(input => {
                 input.checked = false;
             });
@@ -819,7 +839,8 @@
                 sectorsLoaded
               ])
               .then(([data]) => {
-                routes=data.routes
+                // routes removed from the gym are hidden on the public routes page
+                routes = (data.routes || []).filter(r => !r.removed)
                 renderTabulatorTable(routes);
               })
               .catch(error => console.error(error));
@@ -1129,7 +1150,7 @@
       
           // Create the Tabulator table
         table = new Tabulator("#tabulator-table", {
-            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} - {{ routes['name'] }} </h1>", // set header content on printed table
+            printHeader:"<h1>SKALA3MA - {{ gym['name'] }} </h1>", // set header content on printed table
             printFooter:"<h3></h3>", // set footer content on printed table
             printAsHtml:true,
             //printStyled:true, //copy Tabulator styling to HTML table
@@ -1414,7 +1435,9 @@
             .then(data => {
                 //console.log('inputData:', inputData);
                 
-                routes=data.routes
+                // removed routes are hidden on this page
+                (data.routes || []).filter(r => r.removed).forEach(r => { if (table.getRow(r.id)) table.deleteRow(r.id); });
+                routes = (data.routes || []).filter(r => !r.removed)
                 showAlert('routes_saved', 'success')
                 //renderTabulatorTable(routes);
                 table.updateOrAddData(routes);
@@ -1432,7 +1455,22 @@
             }
 
 
+        function showStatusRequired(show){
+            document.getElementById('route-status-required').style.display = show ? 'block' : 'none';
+            document.getElementById('route-rating-form').style.display = show ? 'none' : 'block';
+        }
+
+        function chooseStatusAndRate(status){
+            setRouteFinishStatus(status);
+            showStatusRequired(false);
+            rateRoute();
+        }
+
         function rateRoute(){
+                if (!window.routeFinishStatus) {
+                    showStatusRequired(true);
+                    return false;
+                }
                 mod_type='rate'
                 var data = getFormData();
                 //console.log('rating route '+mod_type)    

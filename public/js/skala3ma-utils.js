@@ -239,6 +239,9 @@ function getColorSVG(color1, color2, colorModifier, grade='', width='90px', heig
                 baseSvg = bgSvg + `</svg>`;
 
   }
+    // Thin outline so light colors (e.g. white) don't blend into the page background
+    baseSvg = baseSvg.replace('</svg>',
+        `<rect x="0.5" y="0.5" width="${widthNum - 1}" height="${heightNum - 1}" style="fill: none; stroke: rgba(0,0,0,0.25); stroke-width: 1px;"/></svg>`);
     // Add grade overlay scaled proportionally to passed width/height (centered) if provided
     if (grade) {
         //console.log('Adding grade overlay:', grade);

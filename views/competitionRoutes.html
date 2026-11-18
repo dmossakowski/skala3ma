@@ -24,7 +24,14 @@
 		
         <br>
      
-        <span data-translate-key="routes"></span> - </label> {{routesName }}      
+        <span data-translate-key="routes"></span></label>      
+
+        {% if can_edit %}
+        <div class="mt-2">
+            <a href="/competitionRoutes/{{ competitionId }}/edit" class="btn btn-success btn-sm">
+                <i class="bi bi-pencil"></i> {{ reference_data['current_language'].edit or 'Edit' }}</a>
+        </div>
+        {% endif %}
      
 
              <a href="/competition/{{competitionId}}/download_tiles" alt="{{gym['homepage']}}"  class="nav-link active  p-1" target="_tab">

@@ -26,9 +26,8 @@ var routes;
 		.then(data => {
 			// use the retrieved data here
 			console.log(data);
-			routes=data.routes
+			routes=(data.routes || []).filter(r => !r.removed)
 			renderTabulatorTable(routes);
-			  
 	
 		})
 		.catch(error => console.error(error));
