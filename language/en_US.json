@@ -456,5 +456,6 @@
     "unsaved_changes": "Unsaved changes",
     "unsaved_changes_confirm": "You have unsaved changes. Discard them?",
     "select_at_least_one_route": "Select at least one route",
-    "no_routes": "No routes"
+    "no_routes": "No routes",
+    "route_removed_before_competition": "removed before the competition"
 }

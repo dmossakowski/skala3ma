@@ -120,6 +120,7 @@
     changedLabel: {{ (lang.route_changed_in_gym or 'changed in gym')|tojson }},
     removedLabel: {{ (lang.route_will_be_removed or 'will be removed')|tojson }},
     missingLabel: {{ (lang.route_not_in_routeset or 'no longer in the gym')|tojson }},
+    removedBeforeLabel: {{ (lang.route_removed_before_competition or 'removed before the competition')|tojson }},
     climbersLabel: {{ (lang.climbers or 'climbers')|tojson }},
     addLabel: {{ (lang.add or 'Add')|tojson }},
     removeLabel: {{ (lang.remove or 'Remove')|tojson }},
@@ -156,9 +157,12 @@
     } else if (on) {
       out.push(`<span class="badge text-bg-primary">${esc(cfg.newLabel)}</span>`);
     }
-    // routes deleted from the routeset or flagged removed are no longer climbable in the gym
-    if (x.missing || x.route.removed) {
+    // warn only when the route is not on the wall on the competition date (decided on the server)
+    if (x.missing) {
       out.push(`<span class="badge ce-missing"><i class="bi bi-exclamation-triangle-fill"></i> ${esc(cfg.missingLabel)}</span>`);
+    } else if (!x.available) {
+      const when = x.route.removed_date ? ' ' + esc(x.route.removed_date) : '';
+      out.push(`<span class="badge ce-missing"><i class="bi bi-exclamation-triangle-fill"></i> ${esc(cfg.removedBeforeLabel)}${when}</span>`);
     }
     return out.join(' ');
   }

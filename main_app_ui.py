@@ -1781,9 +1781,6 @@ def competitionRoutes(competitionId):
     else:
         routes = competition_routes
 
-    routesName = db_routes.get('name')
-
-
     # library= {}
     # library['tracks'] = tracks
     # playlist = json.dumps(playlist)
@@ -1800,7 +1797,6 @@ def competitionRoutes(competitionId):
                            gym=gym,
                            gymid=gymid,
                            routesid=routesid,
-                           routesName=routesName,
                            routes=routes,
                            competition=competition,
                            competitionId=competitionId,

@@ -457,5 +457,6 @@
     "unsaved_changes": "Niezapisane zmiany",
     "unsaved_changes_confirm": "Masz niezapisane zmiany. Odrzucić je?",
     "select_at_least_one_route": "Wybierz co najmniej jedną drogę",
-    "no_routes": "Brak dróg"
+    "no_routes": "Brak dróg",
+    "route_removed_before_competition": "usunięta przed zawodami"
 }

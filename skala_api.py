@@ -2905,29 +2905,6 @@ def route_save(gymid, routesid):
     return routeset
 
 
-@skala_api_app.route('/gym/<gymid>/<routesid>/copy', methods=['POST'])
-@session_or_jwt_required
-def routes_copy(gymid, routesid):
-    user = competitionsEngine.get_user_by_email(session.get('email'))
-    gym = competitionsEngine.get_gym(gymid)
-    if not competitionsEngine.can_edit_gym(user, gym):
-        return jsonify({'error': 'not_authorized'}), 401
-
-    routeset = competitionsEngine.get_routes_by_gym_id(gymid).get(routesid)
-    if routeset is None:
-        return jsonify({'error': 'routes_not_found'}), 404
-
-    data = request.get_json(silent=True) or {}
-    new_id = uuid.uuid4().hex
-    new_routeset = {
-        'id': new_id,
-        'name': (data.get('name') or '').strip() or f"{routeset.get('name', '')} copy",
-        'routes': deepcopy(routeset.get('routes') or []),
-    }
-    competitionsEngine.upsert_routes(new_id, gymid, new_routeset)
-    return jsonify({'id': new_id, 'name': new_routeset['name']})
-
-
 def _gym_admins_payload(gymid):
     admins = []
     for userd in skala_db.get_users_with_gym_id(gymid):

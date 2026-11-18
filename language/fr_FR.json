@@ -459,5 +459,6 @@
     "unsaved_changes": "Modifications non enregistrées",
     "unsaved_changes_confirm": "Vous avez des modifications non enregistrées. Les abandonner ?",
     "select_at_least_one_route": "Sélectionnez au moins une voie",
-    "no_routes": "Aucune voie"
+    "no_routes": "Aucune voie",
+    "route_removed_before_competition": "retirée avant la compétition"
 }

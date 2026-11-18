@@ -408,11 +408,6 @@ def _route_line_order_key(route):
     return (_natural_key(route.get('line')), _routenum_key(route.get('gym_routenum', route.get('routenum'))))
 
 
-def _route_signature(route):
-    return (str(route.get('line') or ''), str(route.get('grade') or ''),
-            str(route.get('color1') or '').lower(), str(route.get('name') or ''))
-
-
 _route_compare_fields = ('line', 'grade', 'name', 'color1', 'color_modifier', 'openedby', 'opendate', 'notes')
 
 
@@ -424,7 +419,7 @@ def _route_differs(gym_route, comp_route):
     return any(str(gym_route.get(k) or '').lower() != str(comp_route.get(k) or '').lower() for k in fields)
 
 
-# matches each gym route with a route of the competition snapshot: by id, else by line/grade/color/name
+# matches each gym route with a route of the competition snapshot by route id
 # returns one list for the competition routes editor: competition routes in competition order, gym routes
 # not in the competition merged in by gym line order; selecting rows in this order keeps the numbering
 # competition routes no longer in the gym routeset are included in place with 'missing': True
@@ -433,12 +428,9 @@ def correlate_competition_routes(competition, gym_routes):
     comp_routes = competition.get('routes') or []
     comp_index = {id(r): i for i, r in enumerate(comp_routes)}
     comp_by_id = {str(r.get('id')): r for r in comp_routes if r.get('id')}
-    comp_by_signature = {}
-    for r in comp_routes:
-        comp_by_signature.setdefault(_route_signature(r), r)
 
     gym_sorted = sorted(gym_routes or [], key=_route_line_order_key)
-    # match by id first so a signature match cannot take a competition route owned by another gym route
+    # routes are matched only by id: line/grade/colour get reused when a wall is reset
     matches = {}
     matched = set()
     for idx, gym_route in enumerate(gym_sorted):
@@ -446,13 +438,6 @@ def correlate_competition_routes(competition, gym_routes):
         if comp_route is not None and id(comp_route) not in matched:
             matches[idx] = comp_route
             matched.add(id(comp_route))
-    for idx, gym_route in enumerate(gym_sorted):
-        if idx in matches:
-            continue
-        candidate = comp_by_signature.get(_route_signature(gym_route))
-        if candidate is not None and id(candidate) not in matched:
-            matches[idx] = candidate
-            matched.add(id(candidate))
 
     keys = set()
 
@@ -511,7 +496,23 @@ def correlate_competition_routes(competition, gym_routes):
     for comp_idx in sorted(by_comp_index):
         ordered.append(by_comp_index[comp_idx])
         ordered.extend(following.get(comp_idx, []))
+    # 'available': the route is on the wall on the competition date (single rule used by the editor);
+    # unavailable routes cannot be picked, but routes already in the competition stay listed (with a warning)
+    # so they are never dropped silently; missing routes were deleted from the gym, their date is unknown
+    for row in ordered:
+        row['available'] = not row['missing'] and _route_available_on(row['route'], competition.get('date'))
+    ordered = [row for row in ordered if row['in_competition'] or row['available']]
     return {'routes': ordered}
+
+
+# a gym route is available on a date (YYYY-MM-DD) unless it was removed before that date
+# without a competition date only current (not removed) routes are available
+def _route_available_on(route, date):
+    if not route.get('removed'):
+        return True
+    removed_date = str(route.get('removed_date') or '')[:10]
+    date = str(date or '')[:10]
+    return bool(removed_date and date and removed_date >= date)
 
 
 # the route set a competition picks its routes from: its own, else the gym default
@@ -556,6 +557,9 @@ def set_competition_route_selection(competition_id, routesid, route_ids, force=F
             if row['key'] not in selected_ids:
                 continue
             route = copy.deepcopy(row['route'])
+            # gym lifecycle flags do not belong in the competition copy (would hide the route if filtered)
+            route.pop('removed', None)
+            route.pop('removed_date', None)
             if not row['missing']:
                 route['gym_routenum'] = route.get('routenum')
             selected.append(route)
