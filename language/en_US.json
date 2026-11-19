@@ -430,6 +430,7 @@
     "sector_height": "Height",
     "sector_no_layouts": "No sectors defined yet.",
     "sector_start": "Start defining sectors",
+    "sector_ask_admin": "Ask a gym admin to add them.",
     "sector_unassigned_lines": "Lines without a sector",
     "sector_direction": "Line numbering",
     "sector_ltr": "Left to right",
