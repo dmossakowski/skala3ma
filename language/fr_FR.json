@@ -433,6 +433,7 @@
     "sector_height": "Hauteur",
     "sector_no_layouts": "Aucun secteur défini.",
     "sector_start": "Commencer à définir les secteurs",
+    "sector_ask_admin": "Demandez à un administrateur de la salle de les ajouter.",
     "sector_unassigned_lines": "Lignes sans secteur",
     "sector_direction": "Numérotation des lignes",
     "sector_ltr": "De gauche à droite",

@@ -59,7 +59,7 @@
                     // Disc visualization logic for gym routes
                     // Requirements implemented:
                     //  * Maintain original route order (sorted by line then routenum)
-                    //  * Divide sequentially into discs of configurable size (default 6, max 8)
+                    //  * Divide sequentially into discs of configurable size (default 6, max 10)
                     //  * Per-disc size adjustable; only the last disc absorbs the change
                     //  * Render each disc as an SVG radial chart ("disc") with slices colored
                     //  * color_modifier "marble" -> gradient / mixed look
@@ -70,7 +70,7 @@
                         gymid: "{{gymid}}",
                         routeListId: "{{routesid}}",
                         defaultRoutesPerDisc: 6,
-                        maxPerDisc: 8,
+                        maxPerDisc: 10,
                         discSizePx: 420,
                         faviconPath: '/public/images/favicon-skala3ma-128.png',
                         //faviconPath: '/gym/{{gymid}}/{{routesid}}/qr',
@@ -244,7 +244,7 @@
 
                     function groupRoutesIntoDiscs(routes, cfg, perDiscTargets) {
                         if (!routes.length) return [];
-                        const maxPerDisc = cfg.maxPerDisc || 8;
+                        const maxPerDisc = cfg.maxPerDisc || 10;
                         const defaultSize = cfg.defaultRoutesPerDisc || 6;
                         const discs = [];
                         let offset = 0;
@@ -385,9 +385,11 @@
                             5: [1, 2, 2],
                             6: [1, 2, 2, 1],
                             7: [1, 2, 2, 2],
-                            8: [2, 2, 2, 2]
+                            8: [2, 2, 2, 2],
+                            9: [2, 3, 2, 2],
+                            10: [2, 3, 3, 2]
                         };
-                        const rows = rowLayouts[Math.min(n, 8)] || rowLayouts[8];
+                        const rows = rowLayouts[Math.min(n, 10)] || rowLayouts[10];
                         const numRows = rows.length;
                         const rowH = size / numRows;
                         const gap = 2; // gap between cells
@@ -451,10 +453,12 @@
                                 const rawNote = noteRaw == null ? '' : (typeof noteRaw === 'string' ? noteRaw : String(noteRaw));
                                 const note = sanitizeInfo(rawNote.length > 45 ? rawNote.slice(0, 45) + '\u2026' : rawNote);
 
+                                const gradeFs = itemsInRow >= 3 ? 32 : 44;
+                                const lineFs = itemsInRow >= 3 ? 19 : 26;
                                 const foX = x + 4, foY = y + 2;
                                 const foW = cellW - 8, foH = rowH - 4;
                                 let html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${foW.toFixed(0)}px;height:${foH.toFixed(0)}px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-family:Arial,sans-serif;line-height:1.25;padding:2px;">`;
-                                html += `<div style="display:flex;gap:4px;align-items:baseline;justify-content:center;white-space:nowrap;"><span style="font-weight:800;font-size:44px;color:${textColor};text-shadow:${shadow};">${grade}</span>${line ? `<span style="font-size:26px;font-weight:700;color:${subColor};text-shadow:${shadow};">- ${line}</span>` : ''}</div>`;
+                                html += `<div style="display:flex;gap:4px;align-items:baseline;justify-content:center;white-space:nowrap;"><span style="font-weight:800;font-size:${gradeFs}px;color:${textColor};text-shadow:${shadow};">${grade}</span>${line ? `<span style="font-size:${lineFs}px;font-weight:700;color:${subColor};text-shadow:${shadow};">- ${line}</span>` : ''}</div>`;
                                 if (name) html += `<div style="font-size:12px;font-weight:600;color:${textColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">${name}</div>`;
                                 if (openedBy || openDate) {
                                     html += `<div style="font-size:10px;color:${subColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-shadow:${shadow};">`;
@@ -682,7 +686,7 @@
                             if (!btn) return;
                             const idx = parseInt(btn.dataset.discIndex,10);
                             if (isNaN(idx)) return;
-                            const maxPerDisc = userConfig.maxPerDisc || 8;
+                            const maxPerDisc = userConfig.maxPerDisc || 10;
                             const totalRoutes = __cachedRoutes.length;
                             const discCount = __currentDiscs.length;
                             if (discCount === 0) return;

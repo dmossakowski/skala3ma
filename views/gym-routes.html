@@ -63,6 +63,21 @@
                    
                 </div>
            </div>
+            {% if not gym.get('sector_layouts') %}
+            <div class="row">
+                <div class="col">
+                    <div class="alert alert-info d-flex align-items-center py-2 my-2" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span><span data-translate-key="sector_no_layouts">No sectors defined yet.</span>
+                            {% if user_can_edit_gym %}
+                            <a href="/gyms/{{gymid}}/sectors" class="alert-link" data-translate-key="sector_start">Start defining sectors</a>
+                            {% else %}
+                            <span data-translate-key="sector_ask_admin">Ask a gym admin to add them.</span>
+                            {% endif %}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
             <div class="row">
 
                 {% include "component-routes.html" %}
