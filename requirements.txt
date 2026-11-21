@@ -29,7 +29,7 @@ pycparser==2.21
 pydantic==2.5.3
 pydantic_core==2.14.6
 pypng==0.20220715.0
-python-dotenv==0.21.1
+python-dotenv==1.2.4
 pytz==2025.1
 qrcode==7.4.2
 requests==2.34.2
