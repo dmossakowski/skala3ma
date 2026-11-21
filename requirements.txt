@@ -16,7 +16,7 @@ flask-simple-captcha==5.5.5
 flask-babel==4.0.0
 gevent==23.9.0
 greenlet==3.0.1
-gunicorn==20.0.4
+gunicorn==23.0.0
 idna==3.20
 importlib-metadata==6.7.0
 itsdangerous==2.2.0
