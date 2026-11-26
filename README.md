@@ -22,6 +22,30 @@ https://skala3ma.com
 
 
 
+### Topo route editor and ratings dialog
+
+The route list in `views/component-routes.html` is a Tabulator table that groups
+routes by sector (when the gym has sectors) or by line. Clicking a route opens
+a modal dialog. It shows the route number, name, line, colours, grade (with the
+climbers' average grade), opener, open date, notes and the average star rating.
+Users who can edit the gym (`user_can_edit_gym`) also see **Edit** and **Add new
+route** buttons. These open the route editor, where you can set the line,
+primary and secondary colours, solid or marble hold style, grade, name, opener,
+open date and notes. Saves go to `/api1/gym/<gymid>/<routesid>/saveone`.
+Removing a route marks it as removed instead of deleting it, so it stays in
+the route set for competitions and activity history.
+
+Logged-in climbers see a rating panel in the same dialog. They choose a finish
+status (attempted, climbed or flashed), propose their own grade and give the
+route 0–3 stars. The rating is posted to `/api1/gym/<gymid>/<routesid>/rate`.
+If they submit without choosing a status, the dialog asks for one and submits
+as soon as it's selected. The aggregated star rating (`rating_avg`,
+`rating_count`) and the average user grade appear in the dialog header and the
+route table's rating and grade columns.
+
+
+<img src="public/images/skala3ma-main-topo-edit.png" alt="logo" width="400">
+
 ### Club rankings
 
 Season and per-competition club rankings group registered clubs by gym ID, not
@@ -35,7 +59,7 @@ only order tied entries; they do not break rank ties. Tied individual season
 ranks receive the same club-placement bonus.
 
 
-### Sector photos on mobile and desktop
+### Sector definitions with photos 
 
 The sector photo button uses an unfiltered file input, like the gym-logo upload.
 On mobile this lets the browser offer its native camera/files chooser instead
@@ -50,12 +74,13 @@ existing image and, on a phone, a newly taken camera photo. Confirm the preview
 updates and saving retains the photo. Cancelling the chooser should leave the
 photo unchanged; selecting a video or non-image file should display an error.
 
+<img src="public/images/skala3ma-topo-sectors.png" alt="logo" width="400">
+
 
 ## Technologies used
 
 - Python 3
 - Flask
-  - OAuth libraries for authentication
 - Jinja2 templates
 - Apexcharts https://apexcharts.com/
 - Tabulator https://tabulator.info/
@@ -63,15 +88,6 @@ photo unchanged; selecting a video or non-image file should display an error.
 
 
 
-![logo](public/images/skala3ma-main-topo-edit.png)
-
-
-![logo](public/images/skala3ma-topo-edit.png)
-
-
-![logo](public/images/skala3ma-topo-sectors.png)
-
-<img src="public/images/skala3ma-front.png" alt="logo" width="600">
 
 
 
@@ -79,7 +95,7 @@ photo unchanged; selecting a video or non-image file should display an error.
 
 The following instructions are for local development. 
 
-Minimum version of Python is 3.7. You will need to have either Google or Facebook developer account and add the app there to enable local authentication.
+Minimum version of Python is 3.12. You will need to have either Google or Facebook developer account and add the app there to enable local authentication.
 
 1. Create certificate and key files:
 ``` 
