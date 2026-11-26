@@ -13,17 +13,14 @@ https://skala3ma.com
 - View graph of activities
 - Create a competition with a poster
 - Public competition registration link
-- Easy route entry during competition
-- Instant scoring and downloadable CSV results
+- Easy completed route entry during competition
+- Instant scoring and downloadable results
 - Multi-language
 - Google and Facebook logins
 - Printable route page for gyms
+- Gym disques for printing and posting in the gym
 
-On event pages, the mobile menu button displays the event poster when it loads
-successfully; otherwise it keeps the hamburger icon. This uses
-`/image/<event-id>?fallback=0`, which returns 404 for a missing image instead of
-the default FSGT logo. Image requests without this option retain the default logo
-fallback.
+
 
 ### Club rankings
 
@@ -38,6 +35,22 @@ only order tied entries; they do not break rank ties. Tied individual season
 ranks receive the same club-placement bonus.
 
 
+### Sector photos on mobile and desktop
+
+The sector photo button uses an unfiltered file input, like the gym-logo upload.
+On mobile this lets the browser offer its native camera/files chooser instead
+of an image-only picker; the exact options depend on the browser and OS.
+On desktop it opens the normal file chooser. We intentionally omit `capture`
+so users can still choose existing photos rather than being sent directly to
+the camera. Only supported images up to 15 MB are accepted by the server;
+videos and other unsupported files display an upload error.
+
+To check this flow, edit a gym's sectors and use the photo button to upload an
+existing image and, on a phone, a newly taken camera photo. Confirm the preview
+updates and saving retains the photo. Cancelling the chooser should leave the
+photo unchanged; selecting a video or non-image file should display an error.
+
+
 ## Technologies used
 
 - Python 3
@@ -50,7 +63,17 @@ ranks receive the same club-placement bonus.
 
 
 
-![logo](public/images/skala3ma-route-edit.png)
+![logo](public/images/skala3ma-main-topo-edit.png)
+
+
+![logo](public/images/skala3ma-topo-edit.png)
+
+
+![logo](public/images/skala3ma-topo-sectors.png)
+
+<img src="public/images/skala3ma-front.png" alt="logo" width="600">
+
+
 
 ## Development environment setup
 
@@ -118,26 +141,13 @@ You can also run the server using gunicorn:
   - create a gym 
   - create a competition 
   - sign up yourself for the competition
-  - logout and sign up some anonymous users
+  - logout and sign up with another email address to create second account
+  - register for the competition
   - manage the state of competition through admin console
 
-### Sector photos on mobile and desktop
-
-The sector photo button uses an unfiltered file input, like the gym-logo upload.
-On mobile this lets the browser offer its native camera/files chooser instead
-of an image-only picker; the exact options depend on the browser and OS.
-On desktop it opens the normal file chooser. We intentionally omit `capture`
-so users can still choose existing photos rather than being sent directly to
-the camera. Only supported images up to 15 MB are accepted by the server;
-videos and other unsupported files display an upload error.
-
-To check this flow, edit a gym's sectors and use the photo button to upload an
-existing image and, on a phone, a newly taken camera photo. Confirm the preview
-updates and saving retains the photo. Cancelling the chooser should leave the
-photo unchanged; selecting a video or non-image file should display an error.
 
 
-9 Create trust store for android:
+8. Create trust store for android:
 
 ```
 cd /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/app
