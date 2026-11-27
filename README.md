@@ -13,17 +13,38 @@ https://skala3ma.com
 - View graph of activities
 - Create a competition with a poster
 - Public competition registration link
-- Easy route entry during competition
-- Instant scoring and downloadable CSV results
+- Easy completed route entry during competition
+- Instant scoring and downloadable results
 - Multi-language
 - Google and Facebook logins
 - Printable route page for gyms
+- Gym disques for printing and posting in the gym
 
-On event pages, the mobile menu button displays the event poster when it loads
-successfully; otherwise it keeps the hamburger icon. This uses
-`/image/<event-id>?fallback=0`, which returns 404 for a missing image instead of
-the default FSGT logo. Image requests without this option retain the default logo
-fallback.
+
+
+### Topo route editor and ratings dialog
+
+The route list in `views/component-routes.html` is a Tabulator table that groups
+routes by sector (when the gym has sectors) or by line. Clicking a route opens
+a modal dialog. It shows the route number, name, line, colours, grade (with the
+climbers' average grade), opener, open date, notes and the average star rating.
+Users who can edit the gym (`user_can_edit_gym`) also see **Edit** and **Add new
+route** buttons. These open the route editor, where you can set the line,
+primary and secondary colours, solid or marble hold style, grade, name, opener,
+open date and notes. Saves go to `/api1/gym/<gymid>/<routesid>/saveone`.
+Removing a route marks it as removed instead of deleting it, so it stays in
+the route set for competitions and activity history.
+
+Logged-in climbers see a rating panel in the same dialog. They choose a finish
+status (attempted, climbed or flashed), propose their own grade and give the
+route 0–3 stars. The rating is posted to `/api1/gym/<gymid>/<routesid>/rate`.
+If they submit without choosing a status, the dialog asks for one and submits
+as soon as it's selected. The aggregated star rating (`rating_avg`,
+`rating_count`) and the average user grade appear in the dialog header and the
+route table's rating and grade columns.
+
+
+<img src="public/images/skala3ma-main-topo-edit.png" alt="logo" width="400">
 
 ### Club rankings
 
@@ -38,11 +59,28 @@ only order tied entries; they do not break rank ties. Tied individual season
 ranks receive the same club-placement bonus.
 
 
+### Sector definitions with photos 
+
+The sector photo button uses an unfiltered file input, like the gym-logo upload.
+On mobile this lets the browser offer its native camera/files chooser instead
+of an image-only picker; the exact options depend on the browser and OS.
+On desktop it opens the normal file chooser. We intentionally omit `capture`
+so users can still choose existing photos rather than being sent directly to
+the camera. Only supported images up to 15 MB are accepted by the server;
+videos and other unsupported files display an upload error.
+
+To check this flow, edit a gym's sectors and use the photo button to upload an
+existing image and, on a phone, a newly taken camera photo. Confirm the preview
+updates and saving retains the photo. Cancelling the chooser should leave the
+photo unchanged; selecting a video or non-image file should display an error.
+
+<img src="public/images/skala3ma-topo-sectors.png" alt="logo" width="400">
+
+
 ## Technologies used
 
 - Python 3
 - Flask
-  - OAuth libraries for authentication
 - Jinja2 templates
 - Apexcharts https://apexcharts.com/
 - Tabulator https://tabulator.info/
@@ -50,13 +88,14 @@ ranks receive the same club-placement bonus.
 
 
 
-![logo](public/images/skala3ma-route-edit.png)
+
+
 
 ## Development environment setup
 
 The following instructions are for local development. 
 
-Minimum version of Python is 3.7. You will need to have either Google or Facebook developer account and add the app there to enable local authentication.
+Minimum version of Python is 3.12. You will need to have either Google or Facebook developer account and add the app there to enable local authentication.
 
 1. Create certificate and key files:
 ``` 
@@ -118,26 +157,13 @@ You can also run the server using gunicorn:
   - create a gym 
   - create a competition 
   - sign up yourself for the competition
-  - logout and sign up some anonymous users
+  - logout and sign up with another email address to create second account
+  - register for the competition
   - manage the state of competition through admin console
 
-### Sector photos on mobile and desktop
-
-The sector photo button uses an unfiltered file input, like the gym-logo upload.
-On mobile this lets the browser offer its native camera/files chooser instead
-of an image-only picker; the exact options depend on the browser and OS.
-On desktop it opens the normal file chooser. We intentionally omit `capture`
-so users can still choose existing photos rather than being sent directly to
-the camera. Only supported images up to 15 MB are accepted by the server;
-videos and other unsupported files display an upload error.
-
-To check this flow, edit a gym's sectors and use the photo button to upload an
-existing image and, on a phone, a newly taken camera photo. Confirm the preview
-updates and saving retains the photo. Cancelling the chooser should leave the
-photo unchanged; selecting a video or non-image file should display an error.
 
 
-9 Create trust store for android:
+8. Create trust store for android:
 
 ```
 cd /Users/david/dev/gitrepos/skala3ma/mobile/Skala3maMobile/android/app
